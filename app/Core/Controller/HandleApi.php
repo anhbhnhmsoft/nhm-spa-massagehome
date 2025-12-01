@@ -16,6 +16,7 @@ trait HandleApi
     protected function sendSuccess(array $data = [], string $message = 'Success', int $code = 200): JsonResponse
     {
         return response()->json([
+            'success' => true,
             'data'    => $data,
             'message' => $message,
         ], $code);
@@ -31,6 +32,7 @@ trait HandleApi
     protected function sendValidation(string $message = 'Validation Error', array $errors = [], int $code = 422): JsonResponse
     {
         return response()->json([
+            'success' => false,
             'message' => $message,
             'errors'  => $errors,
         ], $code);
@@ -45,6 +47,7 @@ trait HandleApi
     protected function sendError(string $message = 'Error', int $code = 400): JsonResponse
     {
         return response()->json([
+            'success' => false,
             'message' => $message,
         ], $code);
     }
