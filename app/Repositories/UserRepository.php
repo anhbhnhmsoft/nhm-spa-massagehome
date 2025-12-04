@@ -3,6 +3,8 @@
 namespace App\Repositories;
 
 use App\Core\BaseRepository;
+use App\Enums\BookingStatus;
+use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -18,6 +20,35 @@ class UserRepository extends BaseRepository
         return User::class;
     }
 
+
+    /**
+     * Lấy query dành riêng cho KTV
+     * @return Builder
+     */
+    public function queryKTV(): Builder
+    {
+        return $this->query()
+            ->where('role', UserRole::KTV->value)
+            ->where('is_active', true)
+            ->with(['profile', 'reviewApplication', 'services'])
+            // Tính trung bình Rating (chỉ lấy review không bị ẩn)
+            ->withAvg(['reviewsReceived' => function (Builder $query) {
+                    $query->where('hidden', false); // Quan trọng: Chỉ tính review công khai
+                }], 'rating')
+            ->withCount([
+                // Đếm số lượng review (chỉ đếm review không bị ẩn)
+                'reviewsReceived' => function (Builder $query) {
+                    $query->where('hidden', false);
+                },
+                // Đếm số lượng job (chỉ đếm job đã hoàn thành)
+                'jobsReceived' => function (Builder $query) {
+                    $query->where('status', BookingStatus::COMPLETED->value);
+                },
+                'services'
+            ]);
+    }
+
+
     /**
      * Lọc query theo điều kiện
      * @param Builder $query
@@ -26,6 +57,10 @@ class UserRepository extends BaseRepository
      */
     public function filterQuery(Builder $query, array $filters): Builder
     {
+        // Lọc theo vai trò
+        if (isset($filters['role'])) {
+            $query->where('role', $filters['role']);
+        }
 
         return $query;
     }
@@ -42,8 +77,16 @@ class UserRepository extends BaseRepository
         if (!in_array($direction, ['asc', 'desc'])) {
             $direction = 'desc';
         }
-        if (empty($column)) {
-            $column = 'created_at';
+        switch ($sortBy) {
+            case 'rating':
+                $column = 'reviews_received_avg_rating';
+                break;
+            case 'review_count':
+                $column = 'reviews_received_count';
+                break;
+            default:
+                $column = 'created_at';
+                break;
         }
         $query->orderBy($column, $direction);
         return $query;

@@ -14,6 +14,7 @@ class UserResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $profile = $this->profile;
         return [
             'id' => $this->id,
             'name' => $this->name,
@@ -23,6 +24,16 @@ class UserResource extends JsonResource
             'role' => $this->role,
             'language' => $this->language,
             'referred_by_user_id' => $this->referred_by_user_id,
+            'profile' => [
+                'avatar_url' => $profile->avatar_url,
+                'date_of_birth' => $profile->date_of_birth,
+                'gender' => $profile->gender,
+                'address' => $profile->address,
+                'province_code' => $profile->province_code?->name ?? null,
+                'district_code' => $profile->district_code?->name ?? null,
+                'ward_code' => $profile->ward_code?->name ?? null,
+                'bio' => $profile->bio,
+            ]
         ];
     }
 }

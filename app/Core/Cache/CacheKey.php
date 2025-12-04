@@ -5,19 +5,21 @@ namespace App\Core\Cache;
 enum CacheKey: string
 {
     /**
-     * Lưu mã OTP đăng ký/đăng nhập.
+     * Lưu mã OTP đăng ký.
      */
-    case CACHE_KEY_OTP_AUTH = 'CACHE_KEY_OTP_AUTH';
+    case CACHE_KEY_OTP_REGISTER = 'CACHE_KEY_OTP_REGISTER';
 
     /**
-     * Đếm số lần nhập sai OTP.
+     * Lưu số lần nhập sai OTP đăng ký.
      */
-    case CACHE_KEY_OTP_ATTEMPTS = 'CACHE_KEY_OTP_ATTEMPTS';
+    case CACHE_KEY_OTP_REGISTER_ATTEMPTS = 'CACHE_KEY_OTP_REGISTER_ATTEMPTS';
 
     /**
-     * Chặn request khi nhập sai quá nhiều.
+     * Lưu số lần gửi lại OTP đăng ký.
      */
-    case CACHE_KEY_OTP_BLOCK = 'CACHE_KEY_OTP_BLOCK';
+    case CACHE_KEY_RESEND_REGISTER_OTP = 'CACHE_KEY_RESEND_REGISTER_OTP';
+
+
 
      /**
       * Lưu token đăng ký tài khoản.

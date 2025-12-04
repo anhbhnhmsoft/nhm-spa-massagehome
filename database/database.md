@@ -20,37 +20,6 @@
     - division_type (varchar, nullable) -- cấp hành chính
     - timestamps
 
-# districts
-    # note
-    - Bảng districts lưu trữ các quận huyện.
-
-    # relations
-    - Quan hệ 1-n với bảng provinces.
-
-    # cấu trúc
-    - id (bigint, primary key, auto-increment)
-    - name (varchar) -- tên quận huyện
-    - code (varchar, unique) -- mã quận huyện
-    - province_code (varchar, foreign key to provinces.code) -- mã tỉnh thành
-    - division_type (varchar, nullable) -- cấp hành chính
-    - timestamps
-
-# wards
-    # note
-    - Bảng wards lưu trữ các phường xã.
-
-    # relations
-    - Quan hệ 1-n với bảng districts.
-
-    # cấu trúc
-    - id (bigint, primary key, auto-increment)
-    - name (varchar) -- tên phường xã
-    - code (varchar, unique) -- mã phường xã
-    - district_code (varchar, foreign key to districts.code) -- mã quận huyện
-    - division_type (varchar, nullable) -- cấp hành chính
-    - timestamps
-
-
 # users
     # note
     - Bảng users lưu trữ thông tin người dùng của hệ thống.
@@ -63,10 +32,34 @@
     - name (varchar) -- tên người dùng
     - role (smallint) -- vai trò người dùng (trong enum UserRole)
     - language (varchar, nullable) -- ngôn ngữ (trong enum Language)
-    - is_active (boolean) -- trạng thái hoạt động
+    - is_active (boolean) -- trạng thái bị khóa
     - referral_code (varchar, unique, nullable) -- mã giới thiệu
     - referred_by_user_id (bigint, nullable) -- id người giới thiệu
     - last_login_at (timestamp, nullable) -- thời gian đăng nhập cuối cùng
+    - softDeletes
+    - timestamps
+
+# user_review_application
+    # note
+    - Bảng user_review_application lưu trữ thông tin duyệt hồ sơ để thành KTV hoặc Agency.
+
+    # relations
+    - Quan hệ 1-1 với bảng users.
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - user_id (bigint, foreign key to users.id) -- id người dùng
+    - status (smallint) -- trạng thái ứng dụng (trong enum ReviewApplicationStatus)
+
+    - province_code (varchar, nullable, foreign key to provinces.code) -- mã tỉnh thành
+    - address (varchar, nullable) -- địa chỉ chi tiết
+    - latitude (decimal(10,8), nullable) -- vĩ độ
+    - longitude (decimal(11,8), nullable) -- kinh độ
+
+    - bio (text, nullable) -- thông tin cá nhân
+    - experience (integer, nullable) -- kinh nghiệm (năm)
+    - skills (json, nullable) -- kỹ năng (dạng mảng string mô tả kỹ năng)
+
     - softDeletes
     - timestamps
 
@@ -77,27 +70,13 @@
     # relations
     - Quan hệ 1-1 với bảng users.
     - Quan hệ 1-n với bảng user_files.
-    - Quan hệ 1-1 với bảng wallets.
-    - Quan hệ 1-1 với bảng .
 
     # cấu trúc
     - user_id (bigint, foreign key to users.id) -- id người dùng
     - avatar_url (varchar, nullable) -- URL ảnh đại diện
     - date_of_birth (date, nullable) -- ngày sinh
     - gender (smallint, nullable) -- giới tính (trong enum Gender)
-    
-    
-    - province_code (varchar, nullable, foreign key to provinces.code) -- mã tỉnh thành
-    - district_code (varchar, nullable, foreign key to districts.code) -- mã quận huyện
-    - ward_code (varchar, nullable, foreign key to wards.code) -- mã phường xã
-    - address (varchar, nullable) -- địa chỉ chi tiết
-    - latitude (decimal(10,8), nullable) -- vĩ độ
-    - longitude (decimal(11,8), nullable) -- kinh độ
-
-   
     - bio (text, nullable) -- thông tin cá nhân
-    - experience (integer, nullable) -- kinh nghiệm (tháng)
-    - skills (json, nullable) -- kỹ năng (dạng mảng enum, thuộc enum UserSkill)
     
     - softDeletes
     - timestamps
@@ -112,7 +91,7 @@
     # cấu trúc
     - id (bigint, primary key, auto-increment)
     - user_id (bigint, foreign key to users.id) -- id người dùng
-    - file_type (smallint) -- loại tệp tin (trong enum UserFileType)
+    - type (smallint) -- loại tệp tin (trong enum UserFileType)
     - file_path (varchar) -- đường dẫn tệp tin
     - file_name (varchar, nullable) -- tên tệp tin
     - file_size (varchar, nullable) -- kích thước tệp tin (byte)
@@ -203,7 +182,6 @@
     - softDeletes
     - timestamps
 
-
 # categories
     # note
     - Bảng categories lưu trữ thông tin danh mục dịch vụ.
@@ -211,6 +189,10 @@
     - id (bigint, primary key, auto-increment)
     - name (varchar) -- tên danh mục
     - description (text, nullable) -- mô tả danh mục
+    - image_url (varchar, nullable) -- URL hình ảnh danh mục
+    - position (smallint, default 0) -- vị trí hiển thị (số càng nhỏ thì hiển thị càng lên trên)
+    - is_featured (boolean, default false) -- có hiển thị nổi bật hay không
+    - usage_count (bigint, default 0) -- số lần sử dụng
     - is_active (boolean) -- trạng thái kích hoạt
     - softDeletes
     - timestamps
@@ -219,34 +201,31 @@
     # note
     - Bảng services lưu trữ thông tin dịch vụ.
     # relations
-    - Quan hệ n-n với bảng categories.
+    - Quan hệ 1-n với bảng categories.
     - Quan hệ 1-n với bảng users.
 
      # cấu trúc
     - id (bigint, primary key, auto-increment)
     - user_id (bigint, foreign key to users.id) -- id người dùng cung cấp dịch vụ
-
+    - category_id (bigint, foreign key to categories.id) -- id danh mục dịch vụ
     - name (varchar) -- tên dịch vụ
     - description (text, nullable) -- mô tả dịch vụ (có html tag)
-    - price (decimal(15,2)) -- giá dịch vụ
     - is_active (boolean) -- trạng thái kích hoạt
     - image_url (varchar, nullable) -- URL hình ảnh dịch vụ
-    - duration (json, required) -- thời gian thực hiện dịch vụ (dạng json, lưu mảng các enum ServiceDuration - minutes)
-    
     - softDeletes
     - timestamps
 
-# service_categories
+# service_options
     # note
-    - Bảng service_categories lưu trữ quan hệ n-n giữa dịch vụ và danh mục.
+    - Bảng service_options lưu trữ thông tin tùy chọn dịch vụ (ví dụ: thời gian thực hiện, giá).
 
-    # relations
-    - Quan hệ n-n với bảng services.
-    - Quan hệ n-n với bảng categories.
-
+    #relations
+    - Quan hệ 1-n với bảng services.
     # cấu trúc
+    - id (bigint, primary key, auto-increment)
     - service_id (bigint, foreign key to services.id) -- id dịch vụ
-    - category_id (bigint, foreign key to categories.id) -- id danh mục
+    - duration (smallint) -- thời gian thực hiện dịch vụ (dạng enum ServiceDuration - minutes)
+    - price (decimal(15,2)) -- giá tùy chọn
     - softDeletes
     - timestamps
 
@@ -263,12 +242,72 @@
     - user_id (bigint, foreign key to users.id) -- id người dùng đặt lịch
     - service_id (bigint, foreign key to services.id) -- id dịch vụ
     - duration (smallint) -- thời gian thực hiện dịch vụ (dạng enum ServiceDuration - minutes)
+    - booking_time (timestamp) -- thời gian đặt lịch
     - start_time (timestamp) -- thời gian bắt đầu
     - end_time (timestamp) -- thời gian kết thúc
     - status (smallint) -- trạng thái đặt lịch (trong enum BookingStatus)
     - price (decimal(15,2)) -- giá dịch vụ (lưu trữ giá trị thực tế khi đặt lịch)
     - note (text, nullable) -- ghi chú
+    - address (varchar, nullable) -- địa chỉ hẹn
+    - payment_type (smallint) -- hình thức thanh toán (trong enum PaymentType)
+    - latitude (decimal(10,8), nullable) -- vĩ độ
+    - longitude (decimal(11,8), nullable) -- kinh độ
+    - softDeletes
+    - timestamps
+
+# coupons
+    # note
+    - Bảng coupons lưu trữ thông tin mã giảm giá.
+
+    # relations
+    - Quan hệ 1-n với bảng service_bookings.
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - code (varchar) -- mã giảm giá
+    - discount_type (smallint) -- kiểu giảm giá (trong enum CouponDiscountType)
+    - discount_value (decimal(15,2)) -- giá trị giảm giá
+    - max_discount (decimal(15,2), nullable) -- giá trị giảm giá tối đa
+    - start_date (date) -- ngày bắt đầu áp dụng
+    - end_date (date) -- ngày kết thúc áp dụng
+    - usage_limit (bigint, nullable) -- số lần sử dụng tối đa
+    - used_count (bigint, default 0) -- số lần đã sử dụng
+    - is_active (boolean) -- trạng thái kích hoạt
     - softDeletes
     - timestamps
 
 
+# reviews 
+    # note
+    - Bảng reviews lưu trữ thông tin đánh giá dịch vụ.
+
+    # relations
+    - Quan hệ 1-n với bảng users.
+    - Quan hệ 1-n với bảng services.
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - user_id (bigint, foreign key to users.id) -- id người được đánh giá
+    - review_by (bigint, foreign key to users.id) -- id người dùng đánh giá
+    - rating (smallint) -- xếp hạng (dạng số từ 1-5)
+    - comment (text, nullable) -- bình luận
+    - review_at (timestamp) -- thời gian đánh giá
+    - hidden (boolean, default false) -- có ẩn hay không
+    - softDeletes
+    - timestamps
+
+# configs
+    # note
+    - Bảng configs lưu trữ thông tin cấu hình hệ thống.
+
+    # relations
+    - Quan hệ 1-n với bảng service_bookings.
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - config_key (varchar , unique) -- khóa cấu hình
+    - config_type (smallint) -- kiểu cấu hình (trong enum ConfigType)
+    - config_value (text) -- giá trị cấu hình
+    - description (text, nullable) -- mô tả cấu hình
+    - softDeletes
+    - timestamps

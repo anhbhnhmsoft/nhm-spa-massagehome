@@ -19,14 +19,17 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
+        'id',
         'phone',
+        'phone_verified_at',
         'password',
         'name',
-        'role',
+        'role', // Cast enum UserRole
         'language',
-        'disabled',
+        'is_active',
         'referral_code',
         'referred_by_user_id',
+        'last_login_at',
     ];
 
     /**
@@ -50,31 +53,72 @@ class User extends Authenticatable
             'referred_by_user_id' => 'string',
             'phone_verified_at' => 'datetime',
             'password' => 'hashed',
-            'disabled' => 'boolean',
+            'is_active' => 'boolean',
         ];
     }
 
-    /**
-     * Get the profile associated with the user.
-     */
+    // Relations
     public function profile()
     {
-        return $this->hasOne(UserProfile::class, 'user_id', 'id');
+        return $this->hasOne(UserProfile::class);
     }
 
-    /**
-     * Get the wallet associated with the user.
-     */
+    public function reviewApplication()
+    {
+        return $this->hasOne(UserReviewApplication::class);
+    }
+
+    public function files()
+    {
+        return $this->hasMany(UserFile::class);
+    }
+
     public function wallet()
     {
-        return $this->hasOne(Wallet::class, 'user_id', 'id');
+        return $this->hasOne(Wallet::class);
+    }
+
+    public function services()
+    {
+        return $this->hasMany(Service::class);
+    }
+
+    // Người giới thiệu mình
+    public function referrer()
+    {
+        return $this->belongsTo(User::class, 'referred_by_user_id');
+    }
+
+    // Những người mình giới thiệu
+    public function referrals()
+    {
+        return $this->hasMany(User::class, 'referred_by_user_id');
     }
 
     /**
-     * Get the referred users by the user.
+     * Lấy các đánh giá mà User này NHẬN ĐƯỢC (với tư cách là Provider/KTV)
+     * Logic: reviews.user_id = users.id
      */
-    public function referredUsers()
+    public function reviewsReceived()
     {
-        return $this->hasMany(User::class, 'referred_by_user_id', 'id');
+        return $this->hasMany(Review::class, 'user_id');
     }
+
+    /**
+     * Lấy danh sách Booking mà User này NHẬN ĐƯỢC (với tư cách là KTV).
+     * Logic: User (Provider) -> Service -> ServiceBooking
+     */
+    public function jobsReceived()
+    {
+        return $this->hasManyThrough(
+            ServiceBooking::class, // Bảng đích (Booking)
+            Service::class,        // Bảng trung gian (Service)
+            'user_id',             // Khóa ngoại trên bảng Service (services.user_id = user.id)
+            'service_id',          // Khóa ngoại trên bảng Booking (service_bookings.service_id = service.id)
+            'id',                  // Khóa chính bảng User
+            'id'                   // Khóa chính bảng Service
+        );
+    }
+
+
 }

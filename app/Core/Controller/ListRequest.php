@@ -79,11 +79,15 @@ class ListRequest extends FormRequest
         // Xử lý filter: Chỉ lấy các filter có trong $allowedFilters
         $filters = [];
         if (!empty($validated['filter'])) {
-            foreach ($this->allowedFilters as $key) {
-                // Chỉ lấy key-value nếu nó tồn tại và không null
-                if (isset($validated['filter'][$key])) {
-                    $filters[$key] = $validated['filter'][$key];
+            if (!empty($this->allowedFilters)) {
+                foreach ($this->allowedFilters as $key) {
+                    // Chỉ lấy key-value nếu nó tồn tại và không null
+                    if (isset($validated['filter'][$key])) {
+                        $filters[$key] = $validated['filter'][$key];
+                    }
                 }
+            }else{
+                $filters = $validated['filter'];
             }
         }
 

@@ -9,11 +9,11 @@ trait HandleApi
     /**
      * Gửi response thành công (Success).
      *
-     * @param  array  $data    Dữ liệu trả về (mảng, object, v.v.)
+     * @param  mixed  $data    Dữ liệu trả về (mảng, object, v.v.)
      * @param  string $message Tin nhắn
      * @param  int    $code    HTTP Status Code (mặc định 200)
      */
-    protected function sendSuccess(array $data = [], string $message = 'Success', int $code = 200): JsonResponse
+    protected function sendSuccess($data = [], string $message = 'Success', int $code = 200): JsonResponse
     {
         return response()->json([
             'success' => true,

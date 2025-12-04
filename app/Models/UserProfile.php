@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Core\GenerateId\HasBigIntId;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class UserProfile extends Model
 {
-    use HasFactory;
+    use HasFactory, HasBigIntId;
 
     protected $table = 'user_profiles';
     protected $primaryKey = 'user_id';
@@ -18,8 +19,7 @@ class UserProfile extends Model
         'user_id',
         'avatar_url',
         'date_of_birth',
-        'gender',
-        'address',
+        'gender', // Cast Enum Gender
         'bio',
     ];
     protected $casts = [
@@ -34,4 +34,6 @@ class UserProfile extends Model
     {
         return $this->belongsTo(User::class, 'user_id', 'id');
     }
+
+
 }

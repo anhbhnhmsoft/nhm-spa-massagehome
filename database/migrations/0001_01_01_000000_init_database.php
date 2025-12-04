@@ -21,32 +21,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Tạo bảng districts để lưu trữ thông tin về các quận huyện
-        Schema::create('districts', function (Blueprint $table) {;
-            $table->id();
-            $table->comment('Bảng districts lưu trữ các quận huyện');
-            $table->string('name')->comment('Tên');
-            $table->string('code')->unique()->comment('Mã');
-            $table->string('division_type')->nullable()->comment('Cấp hành chính');
-            $table->string('province_code');
-            $table->foreign('province_code')->references('code')->on('provinces')->cascadeOnDelete();
-            $table->timestamps();
-        });
-
-        // Tạo bảng districts để lưu trữ thông tin về các phường xã
-        Schema::create('wards', function (Blueprint $table) {;
-            $table->id();
-            $table->comment('Bảng ward lưu trữ các phường xã');
-            $table->string('name')->comment('Tên');
-            $table->string('code')->unique()->comment('Mã');
-            $table->string('division_type')->nullable()->comment('Cấp hành chính');
-
-            // Khóa ngoại nối bằng code
-            $table->string('district_code');
-            $table->foreign('district_code')->references('code')->on('districts')->cascadeOnDelete();
-            $table->timestamps();
-        });
-
         // Tạo bảng users để lưu trữ thông tin người dùng
         Schema::create('users', function (Blueprint $table) {
             $table->comment('Bảng users lưu trữ thông tin người dùng');
@@ -59,18 +33,39 @@ return new class extends Migration
             $table->smallInteger('role')->comment('Vai trò người dùng (trong enum UserRole)');
             $table->string('language', 5)->nullable()->default('vn')->comment('Ngôn ngữ (trong enum Language)');
             // false: hoạt động, true: bị vô hiệu hóa
-            $table->boolean('disabled')->default(false)->comment('Trạng thái hoạt động');
+            $table->boolean('is_active')->default(true)->comment('Trạng thái hoạt động');
             // Mã giới thiệu CỦA TÔI
             $table->string('referral_code', 20)->unique()->nullable()->comment('Mã giới thiệu');
             // ID của người giới thiệu TÔI
             $table->bigInteger('referred_by_user_id')->nullable()->comment('ID người giới thiệu');
             $table->timestamp('last_login_at')->nullable()->comment('Thời gian đăng nhập cuối cùng');
+
             $table->softDeletes();
             $table->timestamps();
 
             // Indexes
             $table->index('role');
             $table->index('referral_code');
+        });
+
+        // Tạo bảng user_review_application để lưu trữ thông tin duyệt hồ sơ để thành KTV hoặc Agency
+        Schema::create('user_review_application', function (Blueprint $table) {
+            $table->comment('Bảng user_review_application lưu trữ thông tin duyệt hồ sơ để thành KTV hoặc Agency');
+            $table->id();
+            $table->bigInteger('user_id')->unique()->comment('ID người dùng');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->smallInteger('status')->comment('Trạng thái ứng dụng (trong enum ReviewApplicationStatus)');
+            $table->string('province_code')->nullable()->comment('Mã tỉnh thành');
+            $table->foreign('province_code')->references('code')->on('provinces')->cascadeOnDelete();
+            $table->string('address')->nullable()->comment('Địa chỉ chi tiết');
+            $table->decimal('latitude', 10, 8)->nullable()->comment('Vĩ độ');
+            $table->decimal('longitude', 11, 8)->nullable()->comment('Kinh độ');
+            $table->text('bio')->nullable()->comment('Thông tin cá nhân');
+            $table->integer('experience')->nullable()->comment('Kinh nghiệm - theo năm');
+            $table->json('skills')->nullable()->comment('Kỹ năng (dạng mảng string mô tả kỹ năng)');
+
+            $table->softDeletes();
+            $table->timestamps();
         });
 
         // Tạo bảng user_profiles để lưu trữ thông tin hồ sơ người dùng
@@ -82,29 +77,18 @@ return new class extends Migration
             $table->string('avatar_url')->nullable()->comment('URL ảnh đại diện');
             $table->date('date_of_birth')->nullable()->comment('Ngày sinh');
             $table->smallInteger('gender')->nullable()->comment('Giới tính (trong enum Gender)');
-
-            // Các trường thông tin địa lý
-            $table->string('province_code')->nullable()->comment('Mã tỉnh thành');
-            $table->string('district_code')->nullable()->comment('Mã quận huyện');
-            $table->string('ward_code')->nullable()->comment('Mã phường xã');
-            $table->string('address')->nullable()->comment('Địa chỉ chi tiết');
-            $table->decimal('latitude', 10, 8)->nullable()->comment('Vĩ độ');
-            $table->decimal('longitude', 11, 8)->nullable()->comment('Kinh độ');
-            // Các trường thông tin cá nhân
             $table->text('bio')->nullable()->comment('Thông tin cá nhân');
-            $table->integer('experience')->nullable()->comment('Kinh nghiệm - theo tháng');
-            $table->json('skills')->nullable()->comment('Kỹ năng (dạng mảng enum, thuộc enum UserSkill)');
-
             // Bỏ softDeletes
             $table->timestamps();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
 
+
         // Tạo bảng user_files để lưu trữ thông tin tệp tin (như ảnh, video) của người dùng
         Schema::create('user_files', function (Blueprint $table) {
             $table->id();
             $table->bigInteger('user_id');
-            $table->smallInteger('file_type')->comment('Loại tệp tin (trong enum UserFileType)');
+            $table->smallInteger('type')->comment('Loại tệp tin (trong enum UserFileType)');
             $table->string('file_path');
             $table->string('file_name')->nullable();
             $table->string('file_size')->nullable();
@@ -121,6 +105,10 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->text('description')->nullable();
+            $table->string('image_url')->nullable()->comment('URL hình ảnh danh mục');
+            $table->smallInteger('position')->default(0)->comment('Vị trí hiển thị (số càng nhỏ thì hiển thị càng lên trên)');
+            $table->boolean('is_featured')->default(false)->comment('Có hiển thị nổi bật hay không');
+            $table->bigInteger('usage_count')->default(0)->comment('Số lần sử dụng');
             $table->boolean('is_active')->default(true);
             $table->softDeletes();
             $table->timestamps();
@@ -131,30 +119,54 @@ return new class extends Migration
             $table->comment('Bảng services lưu trữ thông tin dịch vụ');
             $table->id();
             $table->bigInteger('user_id');
+            $table->unsignedBigInteger('category_id');
+            $table->foreign('category_id')->references('id')->on('categories')->onDelete('cascade');
             $table->string('name')->comment('Tên dịch vụ');
             $table->text('description')->nullable()->comment('Mô tả dịch vụ (có html tag)');
-            $table->decimal('price', 15, 2)->comment('Giá dịch vụ');
             $table->boolean('is_active')->default(true)->comment('Trạng thái kích hoạt');
             $table->string('image_url')->nullable()->comment('URL hình ảnh dịch vụ');
-            $table->json('duration')->comment('Thời gian thực hiện dịch vụ (dạng json, lưu mảng các enum ServiceDuration - minutes)');
             $table->softDeletes();
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
 
-        // Tạo bảng service_categories để lưu trữ quan hệ n-n giữa dịch vụ và danh mục
-        Schema::create('service_categories', function (Blueprint $table) {
-            $table->comment('Bảng service_categories lưu trữ quan hệ n-n giữa dịch vụ và danh mục');
+        // Tạo bảng service_options để lưu trữ thông tin tùy chọn dịch vụ
+        Schema::create('service_options', function (Blueprint $table) {
+            $table->comment('Bảng service_options lưu trữ thông tin tùy chọn dịch vụ');
             $table->id();
-            $table->bigInteger('service_id');
-            $table->bigInteger('category_id');
+            $table->unsignedBigInteger('service_id');
             $table->foreign('service_id')->references('id')->on('services')->onDelete('cascade');
-            $table->foreign('category_id')->references('id')->on('categories')->onDelete('cascade');
+            $table->smallInteger('duration')->comment('Thời gian thực hiện dịch vụ (dạng enum ServiceDuration - minutes)');
+            $table->decimal('price', 15, 2)->comment('Giá tùy chọn');
+            $table->softDeletes();
+            $table->timestamps();
         });
 
-        Schema::create();
+        // Tạo bảng service_bookings để lưu trữ thông tin đặt lịch hẹn
+        Schema::create('service_bookings', function (Blueprint $table) {
+            $table->comment('Bảng service_bookings lưu trữ thông tin đặt lịch hẹn');
+            $table->id();
+            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('service_id');
+            $table->smallInteger('duration')->comment('Thời gian thực hiện dịch vụ (dạng enum ServiceDuration - minutes)');
+            $table->timestamp('booking_time')->comment('Thời gian đặt lịch');
+            $table->timestamp('start_time')->comment('Thời gian bắt đầu');
+            $table->timestamp('end_time')->comment('Thời gian kết thúc');
+            $table->smallInteger('status')->comment('Trạng thái đặt lịch (trong enum BookingStatus)');
+            $table->decimal('price', 15, 2)->comment('Giá dịch vụ (lưu trữ giá trị thực tế khi đặt lịch)');
+            $table->text('note')->nullable()->comment('Ghi chú');
+            // address
+            $table->string('address')->comment('Địa chỉ cụ thể');
+            $table->decimal('latitude', 10, 8)->comment('Vĩ độ');
+            $table->decimal('longitude', 11, 8)->comment('Kinh độ');
 
+            $table->softDeletes();
+            $table->timestamps();
+
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('service_id')->references('id')->on('services')->onDelete('cascade');
+        });
 
         // Tạo bảng wallets để lưu trữ thông tin ví tiền của người dùng
         Schema::create('wallets', function (Blueprint $table) {
@@ -239,6 +251,38 @@ return new class extends Migration
             $table->foreign('transaction_id')->references('id')->on('wallet_transactions');
         });
 
+        /**
+         * Bảng reviews lưu trữ thông tin đánh giá dịch vụ.
+         */
+        Schema::create('reviews', function (Blueprint $table) {
+            $table->comment('Bảng reviews lưu trữ thông tin đánh giá dịch vụ.');
+            $table->id();
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('review_by')->constrained('users')->onDelete('cascade');
+            $table->timestamp('review_at')->useCurrent()->comment('Thời gian đánh giá');
+            $table->boolean('hidden')->default(false)->comment('Có ẩn hay không');
+            $table->smallInteger('rating')->unsigned()->default(0)->comment('Đánh giá từ 1-5');
+            $table->text('comment')->nullable()->comment('Bình luận');
+            $table->softDeletes();
+            $table->timestamps();
+        });
+
+
+        /**
+         * Bảng configs lưu trữ thông tin cấu hình hệ thống.
+         */
+        Schema::create('configs', function (Blueprint $table) {
+            $table->comment('Bảng configs lưu trữ thông tin cấu hình hệ thống.');
+            $table->id();
+            $table->string('config_key')->unique()->comment('Khóa cấu hình');
+            $table->smallInteger('config_type')->comment('Kiểu cấu hình (trong enum ConfigType)');
+            $table->text('config_value')->comment('Giá trị cấu hình');
+            $table->text('description')->nullable()->comment('Mô tả cấu hình');
+            $table->softDeletes();
+            $table->timestamps();
+        });
+
+
 
         /**
          * Các bảng của Laravel
@@ -308,22 +352,44 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('personal_access_tokens');
-        Schema::dropIfExists('failed_jobs');
-        Schema::dropIfExists('job_batches');
-        Schema::dropIfExists('jobs');
-        Schema::dropIfExists('cache_locks');
-        Schema::dropIfExists('cache');
-        Schema::dropIfExists('sessions');
-        Schema::dropIfExists('affiliate_earnings');
-        Schema::dropIfExists('affiliate_configs');
-        Schema::dropIfExists('affiliate_registrations');
-        Schema::dropIfExists('wallet_transactions');
-        Schema::dropIfExists('wallets');
-        Schema::dropIfExists('user_profiles');
-        Schema::dropIfExists('users');
-        Schema::dropIfExists('wards');
-        Schema::dropIfExists('districts');
-        Schema::dropIfExists('provinces');
+        // Disable FK checks to avoid constraint errors while dropping tables
+        Schema::disableForeignKeyConstraints();
+
+        $tables = [
+            'personal_access_tokens',
+            'failed_jobs',
+            'job_batches',
+            'jobs',
+            'cache_locks',
+            'cache',
+            'sessions',
+
+            'configs',
+            'reviews',
+
+            'affiliate_earnings',
+            'affiliate_configs',
+            'affiliate_registrations',
+
+            'wallet_transactions',
+            'wallets',
+
+            'service_bookings',
+            'services',
+            'categories',
+
+            'user_files',
+            'user_profiles',
+            'user_review_application',
+            'users',
+
+            'provinces',
+        ];
+
+        foreach ($tables as $table) {
+            Schema::dropIfExists($table);
+        }
+
+        Schema::enableForeignKeyConstraints();
     }
 };

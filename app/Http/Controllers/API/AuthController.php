@@ -25,17 +25,18 @@ class AuthController extends BaseController
     }
 
     /**
-     * Kiểm tra số điện thoại và gửi OTP đăng ký.
+     * Xác thực đăng nhập bằng số điện thoại.
+     * Nếu tồn tại tài khoản với số điện thoại này, thì sẽ cần yêu cầu thêm mật khẩu, còn không sẽ gửi OTP đăng ký.
      * @param Request $request
      * @return JsonResponse
      */
-    public function sendOtpRegister(Request $request): JsonResponse
+    public function authenticate(Request $request): JsonResponse
     {
         $data = $request->validate([
             'phone' => [new PhoneRule()],
         ]);
 
-        $resService = $this->authService->sendOtpRegister(
+        $resService = $this->authService->authenticate(
             phone: $data['phone'],
         );
         if ($resService->isError()) {
@@ -43,8 +44,13 @@ class AuthController extends BaseController
                 message: $resService->getMessage(),
             );
         }
+        $dataService = $resService->getData();
         return $this->sendSuccess(
-            message: __('auth.success.otp_register'),
+            data: [
+                'need_register' => $dataService['need_register'],
+                'expire_minutes' => $dataService['expire_minutes'] ?? null,
+            ],
+            message: __('auth.success.authenticate'),
         );
     }
 
@@ -58,14 +64,11 @@ class AuthController extends BaseController
     {
         $data = $request->validate([
             'phone' => [new PhoneRule()],
-            'otp' => ['required', 'numeric', 'min:6', 'max:6'],
+            'otp' => ['required', 'numeric'],
         ], [
             'otp.required' => __('auth.error.invalid_otp'),
             'otp.numeric' => __('auth.error.invalid_otp'),
-            'otp.min' => __('auth.error.invalid_otp'),
-            'otp.max' => __('auth.error.invalid_otp'),
         ]);
-
         // Kiểm tra OTP và lấy token
         $resService = $this->authService->verifyOtpRegister(
             phone: $data['phone'],
@@ -86,6 +89,35 @@ class AuthController extends BaseController
     }
 
     /**
+     * Gửi lại OTP đăng ký.
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function resendOtpRegister(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'phone' => [new PhoneRule()],
+        ]);
+
+        // Gửi lại OTP đăng ký
+        $resService = $this->authService->resendOtpRegister(
+            phone: $data['phone'],
+        );
+        if ($resService->isError()) {
+            return $this->sendError(
+                message: $resService->getMessage(),
+            );
+        }
+        $dataService = $resService->getData();
+        return $this->sendSuccess(
+            data: [
+                'expire_minutes' => $dataService['expire_minutes'],
+            ],
+            message: __('auth.success.resend_register_otp'),
+        );
+    }
+
+    /**
      * Đăng ký tài khoản mới.
      * @param Request $request
      * @return JsonResponse
@@ -101,8 +133,8 @@ class AuthController extends BaseController
             'password' => [new PasswordRule()],
             'referral_code' => ['nullable', 'string'],
             'name' => ['required', 'string', 'max:255'],
-            'gender' => ['nullable', Rule::in(Gender::cases())],
-            'language' => ['nullable', Rule::in(Language::cases())],
+            'gender' => ['required', Rule::in(Gender::cases())],
+            'language' => ['required', Rule::in(Language::cases())],
         ], [
             'token.required' => __('auth.error.invalid_token_register'),
             'token.string' => __('auth.error.invalid_token_register'),
@@ -110,7 +142,9 @@ class AuthController extends BaseController
             'name.required' => __('validation.name.required'),
             'name.string' => __('validation.name.string'),
             'name.max' => __('validation.name.max', ['max' => 255]),
+            'gender.required' => __('validation.gender.required'),
             'gender.in' => __('validation.gender.in'),
+            'language.required' => __('validation.language.required'),
             'language.in' => __('validation.language.in'),
         ]);
 
@@ -120,8 +154,8 @@ class AuthController extends BaseController
             password: $data['password'],
             name: $data['name'],
             referralCode: $data['referral_code'] ?? null,
-            gender: $data['gender'] ?? null,
-            language: $data['language'] ?? null,
+            gender: Gender::from($data['gender']),
+            language: Language::from($data['language']),
         );
         if ($resService->isError()) {
             return $this->sendError(
@@ -174,7 +208,7 @@ class AuthController extends BaseController
      * Lấy thông tin người dùng.
      * @return JsonResponse
      */
-    public function user(): JsonResponse
+    public function getProfile(): JsonResponse
     {
         $resService = $this->authService->user();
         if ($resService->isError()) {
@@ -188,6 +222,32 @@ class AuthController extends BaseController
                 'user' => new UserResource($dataService['user']),
             ],
             message: __('auth.success.user'),
+        );
+    }
+
+    /**
+     * Cập nhật ngôn ngữ cho user.
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function setLanguage(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'language' => ['required', Rule::in(Language::cases())],
+        ], [
+            'language.required' => __('auth.error.language_invalid'),
+            'language.in' => __('auth.error.language_invalid'),
+        ]);
+        $resService = $this->authService->setLanguage(
+            language: Language::from($data['language']),
+        );
+        if ($resService->isError()) {
+            return $this->sendError(
+                message: $resService->getMessage(),
+            );
+        }
+        return $this->sendSuccess(
+            message: __('auth.success.set_language'),
         );
     }
 }

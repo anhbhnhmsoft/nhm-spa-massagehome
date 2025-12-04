@@ -2,6 +2,7 @@
 
 namespace App\Core;
 
+use App\Enums\Language;
 use App\Enums\UserRole;
 use Illuminate\Support\Str;
 
@@ -39,5 +40,15 @@ final class Helper
     public static function generateTokenRandom(): string
     {
         return Str::random(60);
+    }
+
+    /**
+     * Kiểm tra ngôn ngữ có hợp lệ không.
+     * @param string|null $language
+     * @return bool
+     */
+    public static function checkLanguage(?string $language = null): bool
+    {
+        return in_array($language, [Language::VIETNAMESE->value, Language::ENGLISH->value, Language::CHINESE], true);
     }
 }
