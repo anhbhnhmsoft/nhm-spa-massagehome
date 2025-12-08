@@ -3,11 +3,14 @@
 namespace App\Providers;
 
 use App\Repositories\CategoryRepository;
+use App\Repositories\ConfigRepository;
 use App\Repositories\ServiceRepository;
 use App\Repositories\UserProfileRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\WalletRepository;
 use App\Services\AuthService;
+use App\Services\ConfigService;
+use App\Services\PayOsService;
 use App\Services\ServiceService;
 use App\Services\UserService;
 use Illuminate\Support\ServiceProvider;
@@ -36,6 +39,7 @@ class AppServiceProvider extends ServiceProvider
 
     protected function registerRepository(): void
     {
+        $this->app->singleton(ConfigRepository::class);
         $this->app->singleton(UserRepository::class);
         $this->app->singleton(UserProfileRepository::class);
         $this->app->singleton(WalletRepository::class);
@@ -50,6 +54,8 @@ class AppServiceProvider extends ServiceProvider
     protected function registerService(): void
     {
         // Register AuthService
+        $this->app->singleton(ConfigService::class);
+        $this->app->singleton(PayOsService::class);
         $this->app->singleton(AuthService::class);
         $this->app->singleton(ServiceService::class);
         $this->app->singleton(UserService::class);

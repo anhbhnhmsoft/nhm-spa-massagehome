@@ -3,11 +3,42 @@
 namespace App\Core;
 
 use App\Enums\Language;
+use App\Enums\PaymentType;
 use App\Enums\UserRole;
+use Carbon\Carbon;
 use Illuminate\Support\Str;
 
 final class Helper
 {
+
+    /**
+     * Tạo ID duy nhất dựa trên timestamp hiện tại.
+     * @return int
+     */
+    public static function getTimestampAsId(): int
+    {
+        // Get microtime float
+        $microFloat = microtime(true);
+        $microTime = Carbon::createFromTimestamp($microFloat);
+        $formatted = $microTime->format('ymdHisu');
+        usleep(100);
+        return (int)$formatted;
+    }
+
+    /**
+     * Tạo mô tả ngắn cho thanh toán.
+     * @param PaymentType $paymentType
+     * @return string
+     */
+    public static function createDescPayment(PaymentType $paymentType): string
+    {
+        return match ($paymentType) {
+            PaymentType::CASH => 'Pay cash',
+            PaymentType::QR_BANKING => "QRBK".self::getTimestampAsId(),
+            PaymentType::ZALO_PAY => "ZLPY".self::getTimestampAsId(),
+            PaymentType::MOMO_PAY => "MMPY".self::getTimestampAsId(),
+        };
+    }
 
     /**
      * Tạo mã tham gia mới cho người dùng dựa trên vai trò.

@@ -2,7 +2,9 @@
 
 namespace App\Enums;
 
-class ConfigType
+enum ConfigType: int
 {
-
+    case STRING = 1;
+    case NUMBER = 2;
 }
+

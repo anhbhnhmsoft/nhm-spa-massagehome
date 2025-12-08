@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Core\Cache\CacheKey;
+use App\Core\Cache\Caching;
 use App\Core\GenerateId\HasBigIntId;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -13,11 +15,6 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable, SoftDeletes, HasBigIntId, HasApiTokens;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'id',
         'phone',
@@ -32,29 +29,27 @@ class User extends Authenticatable
         'last_login_at',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
     protected $hidden = [
         'password',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
+    protected $casts = [
+        'id' => 'string',
+        'referred_by_user_id' => 'string',
+        'phone_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'last_login_at' => 'datetime',
+        'is_active' => 'boolean',
+    ];
+
+    protected $appends = ['is_online'];
+
+    public function getIsOnlineAttribute()
     {
-        return [
-            'id' => 'string',
-            'referred_by_user_id' => 'string',
-            'phone_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'is_active' => 'boolean',
-        ];
+        return Caching::hasCache(
+            key: CacheKey::CACHE_USER_HEARTBEAT,
+            uniqueKey: $this->id
+        );
     }
 
     // Relations

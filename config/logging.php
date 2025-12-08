@@ -51,10 +51,52 @@ return [
     */
 
     'channels' => [
+        /**
+         * |--------------------------------------------------------------------------
+         * | KÊNH LOG HÀNH ĐỘNG (ACTION)
+         * |--------------------------------------------------------------------------
+         * | Ghi log nghiệp vụ
+         *
+         * | Sẽ lưu vào file: storage/logs/actions-YYYY-MM-DD.log
+         */
+        'actions' => [
+            'driver' => 'daily', // <-- Yêu cầu 1: Lưu hàng ngày
+            'path' => storage_path('logs/actions.log'),
+            'level' => 'info', // Bắt đầu ghi từ level 'info' trở lên
+            'days' => 30,     // Xóa log cũ sau 30 ngày
+        ],
+
+        /**
+         * |--------------------------------------------------------------------------
+         * | KÊNH LOG CONSOLE (DEBUG)
+         * |--------------------------------------------------------------------------
+         * | Ghi log debug (ví dụ: dump biến, kiểm tra giá trị)
+         * | Sẽ lưu vào file: storage/logs/console-YYYY-MM-DD.log
+         */
+        'console' => [
+            'driver' => 'daily', // <-- Yêu cầu 1: Lưu hàng ngày
+            'path' => storage_path('logs/console.log'),
+            'level' => 'debug', // Bắt đầu ghi từ level 'debug' (tất cả)
+            'days' => 7,       // Giữ log debug trong 7 ngày
+        ],
+
+        /**
+         * |--------------------------------------------------------------------------
+         * | KÊNH LOG LỖI (ERROR)
+         * |--------------------------------------------------------------------------
+         * | Chỉ ghi các lỗi hệ thống (Exception, 500...)
+         * | Sẽ lưu vào file: storage/logs/errors-YYYY-MM-DD.log
+         */
+        'errors' => [
+            'driver' => 'daily', // <-- Yêu cầu 1: Lưu hàng ngày
+            'path' => storage_path('logs/errors.log'),
+            'level' => 'error', // <-- Chỉ ghi từ 'error' trở lên
+            'days' => 30,      // Giữ log lỗi 30 ngày
+        ],
 
         'stack' => [
             'driver' => 'stack',
-            'channels' => explode(',', (string) env('LOG_STACK', 'single')),
+            'channels' => explode(',', (string)env('LOG_STACK', 'single')),
             'ignore_exceptions' => false,
         ],
 
@@ -89,7 +131,7 @@ return [
             'handler_with' => [
                 'host' => env('PAPERTRAIL_URL'),
                 'port' => env('PAPERTRAIL_PORT'),
-                'connectionString' => 'tls://'.env('PAPERTRAIL_URL').':'.env('PAPERTRAIL_PORT'),
+                'connectionString' => 'tls://' . env('PAPERTRAIL_URL') . ':' . env('PAPERTRAIL_PORT'),
             ],
             'processors' => [PsrLogMessageProcessor::class],
         ],

@@ -19,10 +19,20 @@ enum CacheKey: string
      */
     case CACHE_KEY_RESEND_REGISTER_OTP = 'CACHE_KEY_RESEND_REGISTER_OTP';
 
+    /**
+     * Lưu token đăng ký tài khoản.
+     */
+    case CACHE_KEY_REGISTER_TOKEN = 'CACHE_KEY_REGISTER_TOKEN';
+
+    /**
+     * Lưu cấu hình hệ thống.
+     */
+    case CACHE_KEY_CONFIG = 'CACHE_KEY_CONFIG';
+
+    /**
+     * Lưu thông tin online của người dùng.
+     */
+    case CACHE_USER_HEARTBEAT = 'CACHE_USER_HEARTBEAT';
 
 
-     /**
-      * Lưu token đăng ký tài khoản.
-      */
-     case CACHE_KEY_REGISTER_TOKEN = 'CACHE_KEY_REGISTER_TOKEN';
 }

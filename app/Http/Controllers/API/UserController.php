@@ -37,7 +37,7 @@ class UserController extends BaseController
      * @param int $id
      * @return JsonResponse
      */
-    public function getKtv(int $id): \Illuminate\Http\JsonResponse
+    public function detailKtv(int $id): \Illuminate\Http\JsonResponse
     {
         $result = $this->userService->getKtvById(id: $id);
         if ($result->isError()) {

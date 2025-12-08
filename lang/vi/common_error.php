@@ -18,4 +18,5 @@ return [
     'data_exists' => 'Dữ liệu đã tồn tại, vui lòng thử lại.',
     'validation_failed' => 'Dữ liệu không hợp lệ.',
     'inappropriate_language' => 'Nội dung không phù hợp với chính sách của hệ thống.',
+    'payment_error' => 'Có lỗi xảy ra trong quá trình thanh toán, vui lòng thử lại sau.',
 ];

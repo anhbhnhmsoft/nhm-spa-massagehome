@@ -3,15 +3,19 @@
 namespace Database\Seeders;
 
 use App\Core\Helper;
+use App\Enums\ConfigName;
+use App\Enums\ConfigType;
 use App\Enums\Gender;
 use App\Enums\Language;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\ServiceDuration;
 use App\Enums\UserRole;
 use App\Models\Category;
+use App\Models\Config;
 use App\Models\Province;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
@@ -23,12 +27,11 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
 //        $this->seedProvince();
-//
 //        $this->seedCategory();
-//
 //        $this->seedAdmin();
+//        $this->seedKTV();
 
-        $this->seedKTV();
+//        $this->seedConfig();
     }
 
     protected function seedAdmin(): void
@@ -130,8 +133,7 @@ class DatabaseSeeder extends Seeder
                 }
 
             }
-        }
-        catch (\Exception $exception) {
+        } catch (\Exception $exception) {
             dump($exception);
             DB::rollBack();
         }
@@ -194,7 +196,7 @@ class DatabaseSeeder extends Seeder
 
         } catch (\Exception $e) {
             DB::rollBack();
-            dump($exception);
+            dump($e);
             return false;
         }
         DB::commit();
@@ -233,5 +235,43 @@ class DatabaseSeeder extends Seeder
             dump($exception);
             return false;
         }
+    }
+
+    protected function seedConfig(): bool
+    {
+        DB::beginTransaction();
+        try {
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::PAYOS_CLIENT_ID->value],
+                [
+                    'config_value' => '3199a47f-9162-4d98-9908-9732432cf365',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'Mã client ID PayOS dùng để tích hợp thanh toán PayOS.',
+                ]
+            );
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::PAYOS_API_KEY->value],
+                [
+                    'config_value' => '18e78b87-1300-4e2d-adef-0de1423d89a8',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'Mã secret key PayOS dùng để tích hợp thanh toán PayOS.',
+                ]
+            );
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::PAYOS_CHECKSUM_KEY->value],
+                [
+                    'config_value' => 'bcdaecc9ad73edff55c076519e5ab5e127fd9681c13cfd19de1dfa29d9d8fce9',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'Mã checksum key PayOS dùng để tích hợp thanh toán PayOS.',
+                ]
+            );
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            dump($e);
+            return false;
+        }
+        DB::commit();
+        return true;
     }
 }

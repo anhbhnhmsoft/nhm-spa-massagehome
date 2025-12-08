@@ -17,6 +17,7 @@ use App\Repositories\UserProfileRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\WalletRepository;
 use Exception;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -397,7 +398,41 @@ class AuthService extends BaseService
         );
     }
 
+    /**
+     * Cập nhật heartbeat cho user.
+     * @return ServiceReturn
+     */
+    public function heartbeat(): ServiceReturn
+    {
+        try {
+            $user = Auth::user();
+            if (!$user) {
+                return ServiceReturn::error(message: __('auth.error.unauthorized'));
+            }
 
-
+            Caching::setCache(
+                key: CacheKey::CACHE_USER_HEARTBEAT,
+                value: true,
+                uniqueKey: $user->id,
+                expire: 5 // 5 phút
+            );
+            // --- TẦNG 2: DATABASE (LỊCH SỬ) ---
+            // Kiểm tra heartbeat có quá 15 phút không
+            $now = now();
+            $lastUpdate = $user->last_login_at ? Carbon::parse($user->last_login_at) : $now->subYears(1);
+            if ($lastUpdate->diffInMinutes($now) > 15) {
+                $user->timestamps = false; // Không đổi updated_at
+                $user->last_login_at = $now;
+                $user->save();
+            }
+            return ServiceReturn::success();
+        } catch (Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi AuthService@heartbeat",
+                ex: $exception
+            );
+            return ServiceReturn::error(message: __('common_error.server_error'));
+        }
+    }
 
 }

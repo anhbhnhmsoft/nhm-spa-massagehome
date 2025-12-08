@@ -101,4 +101,32 @@ class ServiceService extends BaseService
             );
         }
     }
+
+    /**
+     * Lấy chi tiết dịch vụ
+     * @param int $id
+     * @return ServiceReturn
+     */
+    public function getDetailService(int $id): ServiceReturn
+    {
+        try {
+            $service = $this->serviceRepository->queryService()->find($id);
+            if (!$service) {
+                return ServiceReturn::error(
+                    message: __("messages.service_not_found")
+                );
+            }
+            return ServiceReturn::success(
+                data: $service
+            );
+        } catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi ServiceService@getDetailService",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: __("common_error.server_error")
+            );
+        }
+    }
 }

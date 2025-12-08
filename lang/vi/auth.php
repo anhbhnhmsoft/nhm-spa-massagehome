@@ -25,5 +25,6 @@ return [
         'disabled' => 'Tài khoản này đã bị khóa, vui lòng liên hệ với quản trị viên để được hỗ trợ.',
         'invalid_login' => 'Số điện thoại hoặc mật khẩu không đúng.',
         'language_invalid' => 'Ngôn ngữ không hợp lệ.',
+        'unauthorized' => 'Bạn không có quyền thực hiện hành động này.',
     ],
 ];

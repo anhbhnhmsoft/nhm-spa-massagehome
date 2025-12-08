@@ -260,21 +260,27 @@
     - Bảng coupons lưu trữ thông tin mã giảm giá.
 
     # relations
-    - Quan hệ 1-n với bảng service_bookings.
+    - Quan hệ 1-n với bảng users.
 
     # cấu trúc
     - id (bigint, primary key, auto-increment)
     - code (varchar) -- mã giảm giá
-    - discount_type (smallint) -- kiểu giảm giá (trong enum CouponDiscountType)
-    - discount_value (decimal(15,2)) -- giá trị giảm giá
+    - label (varchar) -- tên mã giảm giá
+    - description (text, nullable) -- mô tả mã giảm giá
+    - created_by (bigint, foreign key to users.id) -- id người dùng tạo mã giảm giá
+    - for_service_id (bigint, foreign key to services.id, nullable) -- id dịch vụ áp dụng mã giảm giá (nếu null thì áp dụng cho tất cả dịch vụ)
+    - is_percentage (boolean, default false) -- có phải là phần trăm giảm giá hay không (nếu là false thì là giảm giá cố định)
+    - discount_value (decimal(15,2)) -- giá trị giảm giá 
+    - min_order_value (decimal(15,2), nullable) -- giá trị đơn hàng tối thiểu để áp dụng mã giảm giá
     - max_discount (decimal(15,2), nullable) -- giá trị giảm giá tối đa
-    - start_date (date) -- ngày bắt đầu áp dụng
-    - end_date (date) -- ngày kết thúc áp dụng
+    - start_at (timestamp) -- ngày bắt đầu áp dụng
+    - end_at (timestamp) -- ngày kết thúc áp dụng
     - usage_limit (bigint, nullable) -- số lần sử dụng tối đa
     - used_count (bigint, default 0) -- số lần đã sử dụng
     - is_active (boolean) -- trạng thái kích hoạt
     - softDeletes
     - timestamps
+    - unique (code, created_by) -- mã giảm giá phải là duy nhất cho từng người dùng
 
 
 # reviews 

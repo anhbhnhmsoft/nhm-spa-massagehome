@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\API\PaymentController;
 use App\Http\Controllers\API\ServiceController;
 use App\Http\Controllers\API\UserController;
 use Illuminate\Http\Request;
@@ -31,6 +32,8 @@ Route::middleware('set-locale')->group(function () {
             Route::get('profile', [AuthController::class, 'getProfile']);
             // Cập nhật ngôn ngữ hệ thống.
             Route::post('set-language', [AuthController::class, 'setLanguage']);
+            // Cập nhật heartbeat cho user.
+            Route::post('heartbeat', [AuthController::class, 'heartbeat']);
         });
     });
 
@@ -40,11 +43,9 @@ Route::middleware('set-locale')->group(function () {
         // Lấy danh sách KTV
         Route::get('list-ktv', [UserController::class, 'listKtv']);
 
-        // router cần auth
-        Route::middleware(['auth:sanctum'])->group(function () {
-            // Lấy thông tin KTV
-            Route::get('ktv/{id}', [UserController::class, 'getKtv'])->where('id', '[0-9]+');
-        });
+
+        Route::get('ktv/{id}', [UserController::class, 'detailKtv'])->where('id', '[0-9]+');
+
     });
 
     // Service routes
@@ -56,8 +57,23 @@ Route::middleware('set-locale')->group(function () {
 
         // Lấy danh sách dịch vụ
         Route::get('list', [ServiceController::class, 'listServices']);
+
+        Route::get('detail/{id}', [ServiceController::class, 'detailService'])->where('id', '[0-9]+');
     });
 
+
+    Route::prefix('payment')->group(function () {
+        // router không cần auth
+        // dịch vụ Sepay
+        Route::prefix('webhook')->group(function () {
+            Route::post('payos', [PaymentController::class, 'handleWebhookPayOs']);
+        });
+
+        // Lấy danh sách dịch vụ
+        Route::middleware(['auth:sanctum'])->group(function () {
+            Route::post('create-payment-service', [PaymentController::class, 'createPaymentService']);
+        });
+    });
 });
 
 

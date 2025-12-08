@@ -250,4 +250,19 @@ class AuthController extends BaseController
             message: __('auth.success.set_language'),
         );
     }
+
+    /**
+     * Cập nhật heartbeat cho user.
+     * @return JsonResponse
+     */
+    public function heartbeat(): JsonResponse
+    {
+        $resService = $this->authService->heartbeat();
+        if ($resService->isError()) {
+            return $this->sendError(
+                message: $resService->getMessage(),
+            );
+        }
+        return $this->sendSuccess();
+    }
 }

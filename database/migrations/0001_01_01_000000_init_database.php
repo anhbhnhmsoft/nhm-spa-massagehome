@@ -11,7 +11,6 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Tạo bảng provinces để lưu trữ thông tin về các tỉnh thành
         Schema::create('provinces', function (Blueprint $table) {;
             $table->id();
             $table->comment('Bảng provinces lưu trữ các tỉnh thành');
@@ -21,7 +20,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Tạo bảng users để lưu trữ thông tin người dùng
         Schema::create('users', function (Blueprint $table) {
             $table->comment('Bảng users lưu trữ thông tin người dùng');
             // Dùng BIGINT ID (Snowflake), không auto-increment
@@ -48,7 +46,6 @@ return new class extends Migration
             $table->index('referral_code');
         });
 
-        // Tạo bảng user_review_application để lưu trữ thông tin duyệt hồ sơ để thành KTV hoặc Agency
         Schema::create('user_review_application', function (Blueprint $table) {
             $table->comment('Bảng user_review_application lưu trữ thông tin duyệt hồ sơ để thành KTV hoặc Agency');
             $table->id();
@@ -68,7 +65,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Tạo bảng user_profiles để lưu trữ thông tin hồ sơ người dùng
         Schema::create('user_profiles', function (Blueprint $table) {
             $table->comment('Bảng user_profiles lưu trữ thông tin hồ sơ người dùng');
             // Dùng user_id làm Khóa chính & Khóa ngoại (Quan hệ 1-1)
@@ -83,8 +79,6 @@ return new class extends Migration
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
 
-
-        // Tạo bảng user_files để lưu trữ thông tin tệp tin (như ảnh, video) của người dùng
         Schema::create('user_files', function (Blueprint $table) {
             $table->id();
             $table->bigInteger('user_id');
@@ -99,7 +93,6 @@ return new class extends Migration
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
 
-        // Tạo bảng categories để lưu trữ thông tin danh mục dịch vụ
         Schema::create('categories', function (Blueprint $table) {
             $table->comment('Bảng categories lưu trữ thông tin danh mục dịch vụ');
             $table->id();
@@ -114,7 +107,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Tạo bảng services để lưu trữ thông tin dịch vụ
         Schema::create('services', function (Blueprint $table) {
             $table->comment('Bảng services lưu trữ thông tin dịch vụ');
             $table->id();
@@ -131,7 +123,6 @@ return new class extends Migration
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
 
-        // Tạo bảng service_options để lưu trữ thông tin tùy chọn dịch vụ
         Schema::create('service_options', function (Blueprint $table) {
             $table->comment('Bảng service_options lưu trữ thông tin tùy chọn dịch vụ');
             $table->id();
@@ -143,7 +134,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Tạo bảng service_bookings để lưu trữ thông tin đặt lịch hẹn
         Schema::create('service_bookings', function (Blueprint $table) {
             $table->comment('Bảng service_bookings lưu trữ thông tin đặt lịch hẹn');
             $table->id();
@@ -168,7 +158,6 @@ return new class extends Migration
             $table->foreign('service_id')->references('id')->on('services')->onDelete('cascade');
         });
 
-        // Tạo bảng wallets để lưu trữ thông tin ví tiền của người dùng
         Schema::create('wallets', function (Blueprint $table) {
             $table->comment('Bảng wallets lưu trữ thông tin ví tiền của người dùng');
             // Dùng user_id làm Khóa chính & Khóa ngoại (Quan hệ 1-1)
@@ -183,7 +172,6 @@ return new class extends Migration
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
 
-        // Tạo bảng wallet_transactions để lưu trữ thông tin giao dịch ví tiền của người dùng
         Schema::create('wallet_transactions', function (Blueprint $table) {
             $table->id();
             $table->bigInteger('wallet_id');
@@ -198,9 +186,6 @@ return new class extends Migration
             $table->foreign('wallet_id')->references('user_id')->on('wallets');
         });
 
-        /**
-         * Bảng affiliate_registrations lưu trữ thông tin đăng ký Affiliate
-         */
         Schema::create('affiliate_registrations', function (Blueprint $table) {
             $table->id();
             $table->bigInteger('user_id');
@@ -213,9 +198,6 @@ return new class extends Migration
             $table->foreign('user_id')->references('id')->on('users');
         });
 
-        /**
-         * Bảng affiliate_configs lưu trữ thông tin cấu hình Affiliate
-         */
         Schema::create('affiliate_configs', function (Blueprint $table) {
             $table->comment('Bảng affiliate_configs lưu trữ thông tin cấu hình Affiliate');
             $table->id();
@@ -230,9 +212,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        /**
-         * Bảng affiliate_earnings lưu trữ thông tin doanh thu Affiliate
-         */
         Schema::create('affiliate_earnings', function (Blueprint $table) {
             $table->comment('Bảng affiliate_earnings lưu trữ thông tin doanh thu Affiliate');
             $table->id();
@@ -251,9 +230,6 @@ return new class extends Migration
             $table->foreign('transaction_id')->references('id')->on('wallet_transactions');
         });
 
-        /**
-         * Bảng reviews lưu trữ thông tin đánh giá dịch vụ.
-         */
         Schema::create('reviews', function (Blueprint $table) {
             $table->comment('Bảng reviews lưu trữ thông tin đánh giá dịch vụ.');
             $table->id();
@@ -267,10 +243,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-
-        /**
-         * Bảng configs lưu trữ thông tin cấu hình hệ thống.
-         */
         Schema::create('configs', function (Blueprint $table) {
             $table->comment('Bảng configs lưu trữ thông tin cấu hình hệ thống.');
             $table->id();
@@ -282,7 +254,43 @@ return new class extends Migration
             $table->timestamps();
         });
 
-
+        Schema::create('coupons', function (Blueprint $table) {
+            $table->comment('Bảng coupons lưu trữ thông tin mã giảm giá.');
+            $table->id();
+            $table->string('code')->unique()->comment('Mã giảm giá');
+            $table->string('label')->comment('Tên mã giảm giá');
+            $table->text('description')->nullable()->comment('Mô tả mã giảm giá');
+            $table->foreignId('created_by')
+                ->constrained('users')
+                ->onDelete('cascade');
+            $table->foreignId('for_service_id')
+                ->nullable()
+                ->constrained('services')
+                ->onDelete('cascade');
+            $table->boolean('is_percentage')
+                ->default(false)
+                ->comment('Có phải là phần trăm giảm giá hay không (nếu là false thì là giảm giá cố định)');
+            $table->decimal('discount_value', 15, 2)
+                ->comment('Giá trị giảm giá');
+            $table->decimal('min_order_value', 15, 2)
+                ->nullable()->comment('Giá trị đơn hàng tối thiểu để áp dụng mã giảm giá');
+            $table->decimal('max_discount', 15, 2)
+                ->nullable()
+                ->comment('Giá trị giảm giá tối đa');
+            $table->timestamp('start_at')
+                ->comment('Ngày bắt đầu áp dụng');
+            $table->timestamp('end_at')
+                ->comment('Ngày kết thúc áp dụng');
+            $table->bigInteger('usage_limit')
+                ->nullable()->comment('Số lần sử dụng tối đa');
+            $table->bigInteger('used_count')
+                ->default(0)->comment('Số lần đã sử dụng');
+            $table->boolean('is_active')
+                ->default(true)->comment('Trạng thái kích hoạt');
+            $table->softDeletes();
+            $table->timestamps();
+            $table->unique(['code', 'created_by']);
+        });
 
         /**
          * Các bảng của Laravel
@@ -364,25 +372,22 @@ return new class extends Migration
             'cache',
             'sessions',
 
+
+
             'configs',
             'reviews',
-
             'affiliate_earnings',
             'affiliate_configs',
             'affiliate_registrations',
-
             'wallet_transactions',
             'wallets',
-
             'service_bookings',
             'services',
             'categories',
-
             'user_files',
             'user_profiles',
             'user_review_application',
             'users',
-
             'provinces',
         ];
 
