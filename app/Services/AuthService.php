@@ -306,6 +306,9 @@ class AuthService extends BaseService
             if (!$user) {
                 return ServiceReturn::error(message: __('auth.error.invalid_login'));
             }
+            if ($user->role != UserRole::ADMIN->value) {
+                return ServiceReturn::error(message: __('auth.error.invalid_login'));
+            }
             // Kiểm tra password
             if (!Hash::check($password, $user->password)) {
                 return ServiceReturn::error(message: __('auth.error.invalid_login'));
@@ -318,7 +321,6 @@ class AuthService extends BaseService
             // $user->last_login_at = now();
             // $user->save();
 
-            // Login
             Auth::login($user);
 
             return ServiceReturn::success(data: [

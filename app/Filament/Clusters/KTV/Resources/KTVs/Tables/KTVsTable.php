@@ -1,9 +1,10 @@
 <?php
 
-namespace App\Filament\Clusters\Organization\Resources\KTVs\Tables;
+namespace App\Filament\Clusters\KTV\Resources\KTVs\Tables;
 
 use App\Enums\Gender;
 use App\Enums\UserRole;
+use App\Filament\Clusters\KTV\Resources\KTVs\KTVResource;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -40,6 +41,7 @@ class KTVsTable
                     ->label(__('admin.common.table.phone')),
                 TextColumn::make('address')
                     ->searchable()
+                    ->limit(100)
                     ->label(__('admin.common.table.address')),
                 TextColumn::make('profile.date_of_birth')
                     ->searchable()
@@ -62,11 +64,13 @@ class KTVsTable
                     ->label(__('admin.common.table.status'))
                     ->toggleable(),
             ])
+            ->defaultSort('created_at', 'desc')
             ->recordActions([
                 ActionGroup::make([
                     ViewAction::make()
                         ->label(__('admin.common.action.view'))
                         ->tooltip(__('admin.common.tooltip.view'))
+                        ->action(fn(KTVResource $resource, $record) => $resource->getRecordViewForm($record))
                         ->icon('heroicon-o-eye'),
 
                     EditAction::make()

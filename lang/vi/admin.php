@@ -2,10 +2,10 @@
 return
     [
         "nav" => [
-            "unit_organization" => "Quản trị người dùng"
+            "ktv" => "Quản lý kỹ thuật viên"
         ],
         "user" => [
-            "label" => "Người dùng"
+            "label" => "Kỹ thuật viên"
         ],
         "common" => [
             'table' => [
@@ -26,6 +26,7 @@ return
                 'account_info' => 'Thông tin tài khoản',
                 'role' => 'Vai trò',
                 'password' => 'Mật khẩu',
+                'bio' => 'Giới thiệu',
             ],
             'action' => [
                 'view' => 'Xem',

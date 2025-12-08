@@ -1,13 +1,15 @@
 <?php
 
-namespace App\Filament\Clusters\Organization\Resources\KTVs;
+namespace App\Filament\Clusters\KTV\Resources\KTVs;
 
 use App\Enums\UserRole;
-use App\Filament\Clusters\Organization\Resources\KTVs\Tables\KTVsTable;
-use App\Filament\Clusters\Organization\Resources\KTVs\Pages\CreateKTV;
-use App\Filament\Clusters\Organization\Resources\KTVs\Pages\ListKTVs;
-use App\Filament\Clusters\Organization\Resources\KTVs\Schemas\KTVForm;
-use App\Filament\Clusters\Organization\Resources\KTVs\Pages\EditKTV;
+use App\Filament\Clusters\KTV\KTVCluster;
+use App\Filament\Clusters\KTV\Resources\KTVs\Tables\KTVsTable;
+use App\Filament\Clusters\KTV\Resources\KTVs\Pages\CreateKTV;
+use App\Filament\Clusters\KTV\Resources\KTVs\Pages\ListKTVs;
+use App\Filament\Clusters\KTV\Resources\KTVs\Schemas\KTVForm;
+use App\Filament\Clusters\KTV\Resources\KTVs\Pages\EditKTV;
+use App\Filament\Clusters\KTV\Resources\KTVs\Pages\ViewKTV;
 use App\Models\User;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -23,6 +25,7 @@ class KTVResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
+    protected static ?string $cluster = KTVCluster::class;
 
     protected static ?string $recordTitleAttribute = 'User';
 
@@ -47,10 +50,10 @@ class KTVResource extends Resource
             ]);
     }
 
-    public static function getNavigationGroup(): \UnitEnum|string|null
-    {
-        return __('admin.nav.unit_organization');
-    }
+    // public static function getNavigationGroup(): \UnitEnum|string|null
+    // {
+    //     return __('admin.nav.ktv');
+    // }
 
     public static function getNavigationLabel(): string
     {

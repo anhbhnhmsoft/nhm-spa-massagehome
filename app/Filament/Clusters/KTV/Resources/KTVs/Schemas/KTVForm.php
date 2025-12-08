@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Clusters\Organization\Resources\KTVs\Schemas;
+namespace App\Filament\Clusters\KTV\Resources\KTVs\Schemas;
 
 use App\Enums\Gender;
 use App\Enums\UserRole;
@@ -65,12 +65,17 @@ class KTVForm
                             ->tel()
                             ->maxLength(20)
                             ->numeric()
+                            ->required()
+                            ->unique(ignoreRecord: true)
                             ->validationMessages([
                                 'max'      => __('common.error.max_length', ['max' => 20]),
                                 'numeric'  => __('common.error.numeric'),
-                                'max_digits' => __('common.error.max_digits', ['max' => 20])
+                                'max_digits' => __('common.error.max_digits', ['max' => 20]),
+                                'required' => __('common.error.required'),
+                                'unique'   => __('common.error.unique'),
                             ]),
                         Textarea::make('profile.bio')
+                            ->label(__('admin.common.table.bio'))
                             ->rows(3),
                         Select::make('profile.gender')
                             ->label(__('admin.common.table.gender'))
@@ -90,6 +95,7 @@ class KTVForm
                         Select::make('role')
                             ->label(__('admin.common.table.role'))
                             ->options(UserRole::toOptions())
+                            ->default(UserRole::KTV->value)
                             ->disabled(),
 
                         Toggle::make('is_active')

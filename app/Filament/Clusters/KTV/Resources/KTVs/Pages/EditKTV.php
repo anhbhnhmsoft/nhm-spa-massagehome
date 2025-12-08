@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Filament\Clusters\Organization\Resources\KTVs\Pages;
+namespace App\Filament\Clusters\KTV\Resources\KTVs\Pages;
 
-use App\Filament\Clusters\Organization\Resources\KTVs\KTVResource;
+use App\Filament\Clusters\KTV\Resources\KTVs\KTVResource;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\RestoreAction;
