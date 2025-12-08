@@ -99,6 +99,12 @@ class ViewKTVApply extends ViewRecord
             ];
         }
 
+        // Load files data
+        if ($this->record->files) {
+            $data['files'] = $this->record->files->toArray();
+        }
+
+
         return $data;
     }
 }

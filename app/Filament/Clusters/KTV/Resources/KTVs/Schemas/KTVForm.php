@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\KTV\Resources\KTVs\Schemas;
 
+use App\Enums\DirectFile;
 use App\Enums\Gender;
 use App\Enums\UserRole;
 use Filament\Forms\Components\DateTimePicker;
@@ -34,6 +35,7 @@ class KTVForm
                             ->label(__('admin.common.table.avatar'))
                             ->image()
                             ->disk('public')
+                            ->directory(DirectFile::KTVA->value)
                             ->required()
                             ->downloadable()
                             ->maxSize(102400)

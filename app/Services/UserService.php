@@ -3,19 +3,29 @@
 namespace App\Services;
 
 use App\Core\Controller\FilterDTO;
+use App\Core\Helper;
 use App\Core\LogHelper;
 use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
+use App\Enums\ReviewApplicationStatus;
+use App\Enums\UserRole;
+use App\Repositories\UserFileRepository;
+use App\Repositories\UserProfileRepository;
 use App\Repositories\UserRepository;
+use App\Repositories\UserReviewApplicationRepository;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class UserService extends BaseService
 {
     public function __construct(
         protected UserRepository $userRepository,
-    )
-    {
+        protected UserFileRepository $userFileRepository,
+        protected UserReviewApplicationRepository $userReviewApplicationRepository,
+        protected UserProfileRepository $userProfileRepository
+    ) {
         parent::__construct();
     }
 
@@ -84,6 +94,72 @@ class UserService extends BaseService
             );
             return ServiceReturn::error(
                 message: "Không tìm thấy KTV"
+            );
+        }
+    }
+
+    public function makeNewApplyKTV(array $data)
+    {
+        DB::beginTransaction(); 
+        try {
+            $userCheck = $this->userRepository->query()->where('phone', $data['phone'])->first();
+            if ($userCheck) {
+                throw new ServiceException(
+                    message: __("common_error.data_exists")
+                );
+            }
+
+            $user = $this->userRepository->create([
+                'name' => $data['name'],
+                'phone' => $data['phone'],
+                'password' => $data['password'],
+                'role' => UserRole::KTV->value,
+                'phone_verified_at' => now(),
+                'is_active' => false,
+                'referral_code' => Helper::generateReferCodeUser(UserRole::KTV)
+            ]);
+
+            $userReviewApplication = $this->userReviewApplicationRepository->create([
+                'user_id' => $user->id,
+                'status' => ReviewApplicationStatus::PENDING->value,
+                'province_code' => $data['reviewApplication']['province']['name'],
+                'address' => $data['reviewApplication']['address'],
+                'experience' => $data['reviewApplication']['experience'],
+                'skills' => $data['reviewApplication']['skills'],
+                'bio' => $data['reviewApplication']['bio']
+            ]);
+
+            $userProfile = $this->userProfileRepository->create([
+                'avatar_url' => $data['profile']['avatar_url'],
+                'user_id' => $user->id,
+                'gender' => $data['profile']['gender'],
+                'date_of_birth' => $data['profile']['date_of_birth'],
+                'bio' => $data['profile']['bio']
+            ]);
+
+            foreach($data['files'] as $file){
+                $this->userFileRepository->create([
+                    'user_id' => $user->id,
+                    'type' => $file['type'],
+                    'file_path' => $file['file_path']
+                ]);
+            }
+            DB::commit();
+            return ServiceReturn::success(
+                data: $user->with('reviewApplication', 'profile', 'files')->first()
+            );
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            LogHelper::error(
+                message: "Lỗi UserService@makeNewApplyKTV",
+                ex: $exception
+            );
+            foreach($data['files'] as $file){
+                Storage::delete($file['file_path']);
+            }
+            Storage::delete($data['profile']['avatar_url']);
+            return ServiceReturn::error(
+                message: "Lỗi khi tạo yêu cầu"
             );
         }
     }

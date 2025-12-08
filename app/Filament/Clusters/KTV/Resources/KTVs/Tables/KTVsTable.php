@@ -3,7 +3,6 @@
 namespace App\Filament\Clusters\KTV\Resources\KTVs\Tables;
 
 use App\Enums\Gender;
-use App\Enums\UserRole;
 use App\Filament\Clusters\KTV\Resources\KTVs\KTVResource;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
@@ -14,6 +13,7 @@ use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
@@ -50,6 +50,9 @@ class KTVsTable
                 TextColumn::make('profile.gender')
                     ->label(__('admin.common.table.gender'))
                     ->formatStateUsing(fn($state) => Gender::getLabel($state)),
+                IconColumn::make('is_online')
+                    ->boolean()
+                    ->label(__('admin.common.table.is_online')),
                 TextColumn::make('created_at')
                     ->label(__('admin.common.table.created_at'))
                     ->dateTime(),

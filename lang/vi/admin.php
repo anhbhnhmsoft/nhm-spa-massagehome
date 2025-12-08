@@ -27,6 +27,7 @@ return
                 'role' => 'Vai trò',
                 'password' => 'Mật khẩu',
                 'bio' => 'Giới thiệu',
+                'is_online' => 'Trạng thái online',
             ],
             'action' => [
                 'view' => 'Xem',
@@ -126,5 +127,15 @@ return
             "ktv" => "Kỹ thuật viên",
             "agency" => "Đối tác",
             "admin" => "Quản trị viên",
+        ],
+        'notification' => [
+            'success' => [
+                'update_success' => 'Cập nhật thành công',
+                'create_success' => 'Tạo thành công',
+            ],
+            'error' => [
+                'update_error' => 'Cập nhật thất bại',
+                'create_error' => 'Tạo thất bại',
+            ],
         ]
     ];

@@ -2,10 +2,13 @@
 
 namespace App\Filament\Clusters\KTV\Resources\KTVApplies\Pages;
 
-use App\Enums\ReviewApplicationStatus;
+use App\Core\Service\ServiceReturn;
 use App\Enums\UserRole;
 use App\Filament\Clusters\KTV\Resources\KTVApplies\KTVApplyResource;
+use App\Services\UserService;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Database\Eloquent\Model;
 
 class CreateKTVApply extends CreateRecord
 {
@@ -18,26 +21,35 @@ class CreateKTVApply extends CreateRecord
         return $data;
     }
 
-    protected function afterCreate(): void
+    /**
+     * @param array $data
+     * @return Model
+     */
+    protected function handleRecordCreation(array $data): Model
     {
-        $data = $this->form->getState();
+        $userService = app(UserService::class);
+        /**
+         * @var ServiceReturn $result
+         */
+        $result = $userService->makeNewApplyKTV($data);
 
-        $data['reviewApplication']['status'] = ReviewApplicationStatus::PENDING->value;
+        if ($result->isSuccess()) {
+            Notification::make()
+                ->title(__('admin.notification.success.create_success'))
+                ->success()
+                ->send();
 
-        // Handle profile data
-        if (isset($data['profile'])) {
-            $this->record->profile()->updateOrCreate(
-                ['user_id' => $this->record->id],
-                $data['profile']
-            );
+            return $result->getData();
         }
 
-        // Handle review application data
-        if (isset($data['reviewApplication'])) {
-            $this->record->reviewApplication()->updateOrCreate(
-                ['user_id' => $this->record->id],
-                $data['reviewApplication']
-            );
-        }
+        Notification::make()
+            ->title(__('admin.notification.error.create_error'))
+            ->body($result->getMessage())
+            ->warning()
+            ->send();
+        $this->halt();
+        $modelClass = static::getModel();
+
+        return new $modelClass();
     }
 }
