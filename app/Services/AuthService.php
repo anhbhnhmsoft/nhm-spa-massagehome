@@ -70,11 +70,9 @@ class AuthService extends BaseService
                     'expire_minutes' => $this->otpTtl,
                 ]);
             }
-        }
-        catch (ServiceException $exception) {
+        } catch (ServiceException $exception) {
             return ServiceReturn::error(message: $exception->getMessage());
-        }
-        catch (Exception $exception){
+        } catch (Exception $exception) {
             LogHelper::error(
                 message: "Lỗi AuthService@authenticate",
                 ex: $exception
@@ -134,8 +132,7 @@ class AuthService extends BaseService
             return ServiceReturn::success(data: [
                 'token' => $token,
             ]);
-        }
-        catch (Exception $exception) {
+        } catch (Exception $exception) {
             LogHelper::error(
                 message: "Lỗi AuthService@verifyOtpRegister",
                 ex: $exception
@@ -153,9 +150,9 @@ class AuthService extends BaseService
             return ServiceReturn::success(data: [
                 'expire_minutes' => $this->otpTtl,
             ]);
-        }catch (ServiceException $exception) {
+        } catch (ServiceException $exception) {
             return ServiceReturn::error(message: $exception->getMessage());
-        }catch (Exception $exception){
+        } catch (Exception $exception) {
             LogHelper::error(
                 message: "Lỗi AuthService@resendOtpRegister",
                 ex: $exception
@@ -163,6 +160,7 @@ class AuthService extends BaseService
             return ServiceReturn::error(message: __('common_error.server_error'));
         }
     }
+
     /**
      * Đăng ký tài khoản mới.
      * @param $token -- Token dùng để đăng ký tài khoản.
@@ -241,11 +239,10 @@ class AuthService extends BaseService
                 'user' => $user,
             ]);
 
-        }catch (ServiceException $exception) {
+        } catch (ServiceException $exception) {
             DB::rollBack();
             return ServiceReturn::error(message: $exception->getMessage());
-        }
-        catch (Exception $exception) {
+        } catch (Exception $exception) {
             DB::rollBack();
             LogHelper::error(
                 message: "Lỗi AuthService@register",
@@ -435,4 +432,44 @@ class AuthService extends BaseService
         }
     }
 
+    /**
+     * Cập nhật device cho user.
+     * @param string $token
+     * @param string $deviceId
+     * @param string|null $platform
+     * @param string|null $deviceName
+     * @return ServiceReturn
+     */
+    public function setDevice(
+        string  $token,
+        string  $deviceId,
+        ?string $platform = null,
+        ?string $deviceName = null,
+    ): ServiceReturn
+    {
+        try {
+            $user = Auth::user();
+            if (!$user) {
+                return ServiceReturn::error(message: __('auth.error.unauthorized'));
+            }
+            $user->devices()->updateOrCreate(
+                [
+                    'device_id' => $deviceId,
+                ],
+                [
+                    'token'       => $token,
+                    'device_type'  => $platform ?? 'unknown',
+                    'device_name' => $deviceName ?? 'Unknown Device',
+                    'updated_at'  => now(),
+                ]
+            );
+            return ServiceReturn::success();
+        } catch (Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi AuthService@setDevice",
+                ex: $exception
+            );
+            return ServiceReturn::error(message: __('common_error.server_error'));
+        }
+    }
 }

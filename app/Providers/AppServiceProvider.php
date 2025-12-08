@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Repositories\BookingRepository;
 use App\Repositories\CategoryRepository;
 use App\Repositories\ConfigRepository;
+use App\Repositories\CouponRepository;
 use App\Repositories\ServiceRepository;
 use App\Repositories\UserProfileRepository;
 use App\Repositories\UserRepository;
@@ -45,6 +47,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(WalletRepository::class);
         $this->app->singleton(ServiceRepository::class);
         $this->app->singleton(CategoryRepository::class);
+        $this->app->singleton(BookingRepository::class);
+        $this->app->singleton(CouponRepository::class);
     }
 
     /**

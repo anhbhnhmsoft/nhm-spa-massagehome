@@ -134,28 +134,71 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        Schema::create('coupons', function (Blueprint $table) {
+            $table->comment('Bảng coupons lưu trữ thông tin mã giảm giá.');
+            $table->id();
+            $table->string('code')->unique()->comment('Mã giảm giá');
+            $table->string('label')->comment('Tên mã giảm giá');
+            $table->text('description')->nullable()->comment('Mô tả mã giảm giá');
+            $table->foreignId('created_by')
+                ->constrained('users')
+                ->onDelete('cascade');
+            $table->foreignId('for_service_id')
+                ->nullable()
+                ->constrained('services')
+                ->onDelete('cascade');
+            $table->boolean('is_percentage')
+                ->default(false)
+                ->comment('Có phải là phần trăm giảm giá hay không (nếu là false thì là giảm giá cố định)');
+            $table->decimal('discount_value', 15, 2)
+                ->comment('Giá trị giảm giá');
+            $table->decimal('min_order_value', 15, 2)
+                ->nullable()->comment('Giá trị đơn hàng tối thiểu để áp dụng mã giảm giá');
+            $table->decimal('max_discount', 15, 2)
+                ->nullable()
+                ->comment('Giá trị giảm giá tối đa');
+            $table->timestamp('start_at')
+                ->comment('Ngày bắt đầu áp dụng');
+            $table->timestamp('end_at')
+                ->comment('Ngày kết thúc áp dụng');
+            $table->bigInteger('usage_limit')
+                ->nullable()->comment('Số lần sử dụng tối đa');
+            $table->bigInteger('used_count')
+                ->default(0)->comment('Số lần đã sử dụng');
+            $table->boolean('is_active')
+                ->default(true)->comment('Trạng thái kích hoạt');
+            $table->softDeletes();
+            $table->timestamps();
+            $table->unique(['code', 'created_by']);
+        });
+
         Schema::create('service_bookings', function (Blueprint $table) {
             $table->comment('Bảng service_bookings lưu trữ thông tin đặt lịch hẹn');
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->unsignedBigInteger('service_id');
+            $table->unsignedBigInteger('coupon_id')->nullable()->comment('Mã giảm giá áp dụng');
             $table->smallInteger('duration')->comment('Thời gian thực hiện dịch vụ (dạng enum ServiceDuration - minutes)');
             $table->timestamp('booking_time')->comment('Thời gian đặt lịch');
-            $table->timestamp('start_time')->comment('Thời gian bắt đầu');
-            $table->timestamp('end_time')->comment('Thời gian kết thúc');
+            $table->timestamp('start_time')->nullable()->comment('Thời gian bắt đầu');
+            $table->timestamp('end_time')->nullable()->comment('Thời gian kết thúc');
             $table->smallInteger('status')->comment('Trạng thái đặt lịch (trong enum BookingStatus)');
             $table->decimal('price', 15, 2)->comment('Giá dịch vụ (lưu trữ giá trị thực tế khi đặt lịch)');
+            $table->decimal('price_before_discount', 15, 2)->comment('Giá dịch vụ trước khi áp dụng mã giảm giá');
             $table->text('note')->nullable()->comment('Ghi chú');
             // address
             $table->string('address')->comment('Địa chỉ cụ thể');
             $table->decimal('latitude', 10, 8)->comment('Vĩ độ');
             $table->decimal('longitude', 11, 8)->comment('Kinh độ');
 
+            $table->smallInteger('payment_type')->nullable()->comment('hình thức thanh toán (trong enum PaymentType), null là khi dịch vụ chưa được xác nhận');
+
             $table->softDeletes();
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreign('service_id')->references('id')->on('services')->onDelete('cascade');
+            $table->foreign('coupon_id')->references('id')->on('coupons')->onDelete('set null');
         });
 
         Schema::create('wallets', function (Blueprint $table) {
@@ -254,44 +297,17 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('coupons', function (Blueprint $table) {
-            $table->comment('Bảng coupons lưu trữ thông tin mã giảm giá.');
+        Schema::create('user_devices', function (Blueprint $table) {
+            $table->comment('Bảng user_devices lưu trữ thông tin các thiết bị của người dùng.');
             $table->id();
-            $table->string('code')->unique()->comment('Mã giảm giá');
-            $table->string('label')->comment('Tên mã giảm giá');
-            $table->text('description')->nullable()->comment('Mô tả mã giảm giá');
-            $table->foreignId('created_by')
-                ->constrained('users')
-                ->onDelete('cascade');
-            $table->foreignId('for_service_id')
-                ->nullable()
-                ->constrained('services')
-                ->onDelete('cascade');
-            $table->boolean('is_percentage')
-                ->default(false)
-                ->comment('Có phải là phần trăm giảm giá hay không (nếu là false thì là giảm giá cố định)');
-            $table->decimal('discount_value', 15, 2)
-                ->comment('Giá trị giảm giá');
-            $table->decimal('min_order_value', 15, 2)
-                ->nullable()->comment('Giá trị đơn hàng tối thiểu để áp dụng mã giảm giá');
-            $table->decimal('max_discount', 15, 2)
-                ->nullable()
-                ->comment('Giá trị giảm giá tối đa');
-            $table->timestamp('start_at')
-                ->comment('Ngày bắt đầu áp dụng');
-            $table->timestamp('end_at')
-                ->comment('Ngày kết thúc áp dụng');
-            $table->bigInteger('usage_limit')
-                ->nullable()->comment('Số lần sử dụng tối đa');
-            $table->bigInteger('used_count')
-                ->default(0)->comment('Số lần đã sử dụng');
-            $table->boolean('is_active')
-                ->default(true)->comment('Trạng thái kích hoạt');
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->string('token')->comment('Token của thiết bị.');
+            $table->string('device_id')->comment('ID của thiết bị.');
+            $table->string('device_type', 20)->nullable()->comment('Loại thiết bị.');
+            $table->unique(['device_id', 'user_id']);
             $table->softDeletes();
             $table->timestamps();
-            $table->unique(['code', 'created_by']);
         });
-
         /**
          * Các bảng của Laravel
          */
@@ -374,6 +390,7 @@ return new class extends Migration
 
 
 
+            'user_devices',
             'configs',
             'reviews',
             'affiliate_earnings',
@@ -381,6 +398,7 @@ return new class extends Migration
             'affiliate_registrations',
             'wallet_transactions',
             'wallets',
+            'coupons',
             'service_bookings',
             'services',
             'categories',
