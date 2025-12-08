@@ -27,4 +27,9 @@ return [
         'language_invalid' => 'Ngôn ngữ không hợp lệ.',
         'unauthorized' => 'Bạn không có quyền thực hiện hành động này.',
     ],
+
+    'admin' => [
+        'phone' => 'Số điện thoại.',
+        'password' => 'Mật khẩu.',
+    ],
 ];

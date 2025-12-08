@@ -30,4 +30,29 @@ enum UserRole: int
      * Admin: Quản lý toàn bộ hệ thống
      */
     case ADMIN = 4;
+
+
+    public function label(): string
+    {
+        return match ($this) {
+            self::CUSTOMER => __('admin.user_role.customer'),
+            self::KTV => __('admin.user_role.ktv'),
+            self::AGENCY => __('admin.user_role.agency'),
+            self::ADMIN => __('admin.user_role.admin'),
+        };
+    }
+
+    public static function toOptions(): array
+    {
+        $options = [];
+        foreach (self::cases() as $case) {
+            $options[$case->value] = $case->label();
+        }
+        return $options;
+    }
+
+    public static function getLabel(int $value): string
+    {
+        return self::tryFrom($value)?->label() ?? '';
+    }
 }

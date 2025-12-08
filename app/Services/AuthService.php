@@ -35,8 +35,7 @@ class AuthService extends BaseService
         protected UserRepository        $userRepository,
         protected UserProfileRepository $userProfileRepository,
         protected WalletRepository      $walletRepository,
-    )
-    {
+    ) {
         parent::__construct();
     }
 
@@ -178,8 +177,7 @@ class AuthService extends BaseService
         ?string   $referralCode,
         ?Gender   $gender,
         ?Language $language
-    ): ServiceReturn
-    {
+    ): ServiceReturn {
         DB::beginTransaction();
         try {
             // Kiểm tra token
@@ -238,7 +236,6 @@ class AuthService extends BaseService
                 'token' => $token,
                 'user' => $user,
             ]);
-
         } catch (ServiceException $exception) {
             DB::rollBack();
             return ServiceReturn::error(message: $exception->getMessage());
@@ -261,8 +258,7 @@ class AuthService extends BaseService
     public function login(
         string $phone,
         string $password,
-    ): ServiceReturn
-    {
+    ): ServiceReturn {
         try {
             // Kiểm tra user có tồn tại không
             $user = $this->userRepository->findByPhone($phone);
@@ -289,6 +285,51 @@ class AuthService extends BaseService
         } catch (Exception $exception) {
             LogHelper::error(
                 message: "Lỗi AuthService@login",
+                ex: $exception
+            );
+            return ServiceReturn::error(message: __('common_error.server_error'));
+        }
+    }
+
+    /**
+     * Đăng nhập cho admin
+     * @param string $phone
+     * @param string $password
+     * @return ServiceReturn
+     */
+    public function loginAdmin(
+        string $phone,
+        string $password,
+    ): ServiceReturn {
+        try {
+            // Kiểm tra user có tồn tại không
+            $user = $this->userRepository->findByPhone($phone);
+            if (!$user) {
+                return ServiceReturn::error(message: __('auth.error.invalid_login'));
+            }
+            if ($user->role != UserRole::ADMIN->value) {
+                return ServiceReturn::error(message: __('auth.error.invalid_login'));
+            }
+            // Kiểm tra password
+            if (!Hash::check($password, $user->password)) {
+                return ServiceReturn::error(message: __('auth.error.invalid_login'));
+            }
+            // // Kiểm tra user có bị khóa không
+            // if ($user->is_active == false) {
+            //     return ServiceReturn::error(message: __('auth.error.disabled'));
+            // }
+            // // Cập nhật last login time
+            // $user->last_login_at = now();
+            // $user->save();
+
+            Auth::login($user);
+
+            return ServiceReturn::success(data: [
+                'user' => $user,
+            ]);
+        } catch (Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi AuthService@loginAdmin",
                 ex: $exception
             );
             return ServiceReturn::error(message: __('common_error.server_error'));
@@ -324,8 +365,7 @@ class AuthService extends BaseService
      */
     public function setLanguage(
         Language $language,
-    ): ServiceReturn
-    {
+    ): ServiceReturn {
         try {
             $user = Auth::user();
             $user->update([
@@ -366,7 +406,7 @@ class AuthService extends BaseService
      */
     protected function createCacheRegisterOtp(string $phone): void
     {
-//        $otp = rand(100000, 999999);
+        //        $otp = rand(100000, 999999);
         $otp = 123456; // Test
         // Set OTP limit số lần gửi lại
         if (!Caching::hasCache(key: CacheKey::CACHE_KEY_RESEND_REGISTER_OTP, uniqueKey: $phone)) {

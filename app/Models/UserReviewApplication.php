@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Core\GenerateId\HasBigIntId;
+use App\Enums\ReviewApplicationStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -22,6 +23,7 @@ class UserReviewApplication extends Model
         'bio',
         'experience',
         'skills',
+        'note',
     ];
 
     protected $casts = [
@@ -30,6 +32,8 @@ class UserReviewApplication extends Model
         'skills' => 'array',
         'latitude' => 'float',
         'longitude' => 'float',
+        'status' => ReviewApplicationStatus::class,
+        'note' => 'string',
     ];
 
     public function user()
