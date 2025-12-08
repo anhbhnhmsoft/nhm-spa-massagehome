@@ -2,7 +2,7 @@
 return
     [
         "nav" => [
-            "ktv" => "Quản lý kỹ thuật viên"
+            "ktv" => "Quản lý kỹ thuật viên",
         ],
         "user" => [
             "label" => "Kỹ thuật viên"
@@ -68,7 +68,55 @@ return
                 'active' => 'Kích hoạt',
                 'inactive' => 'Tắt',
             ],
+            'empty' => 'Không có dữ liệu',
 
+        ],
+        "ktv_apply" => [
+            "nav" => "Quản lý đăng ký",
+            "label" => "KTV đăng ký",
+            "status" => [
+                "pending" => "Chờ duyệt",
+                "approved" => "Đã duyệt",
+                "rejected" => "Từ chối",
+            ],
+            "file_type" => [
+                "identity_card_front" => "CMND/CCCD mặt trước",
+                "identity_card_back" => "CMND/CCCD mặt sau",
+                "license" => "Bằng cấp/Chứng chỉ",
+                "health_insurance" => "Bảo hiểm y tế",
+            ],
+            "fields" => [
+                "experience" => "Kinh nghiệm",
+                "skills" => "Kỹ năng",
+                "bio" => "Giới thiệu bản thân",
+                "experience_desc" => "Mô tả kinh nghiệm",
+                "province" => "Tỉnh/Thành phố",
+                "address" => "Địa chỉ chi tiết",
+                "files" => "Hồ sơ đính kèm",
+                "file_type" => "Loại file",
+                "file_name" => "Tên file",
+                "years" => "năm",
+                "system_info" => "Thông tin hệ thống",
+                "registration_info" => "Thông tin đăng ký",
+                "personal_info" => "Thông tin cá nhân",
+            ],
+            "actions" => [
+                "approve" => [
+                    "label" => "Duyệt hồ sơ",
+                    "heading" => "Duyệt hồ sơ KTV",
+                    "description" => "Bạn có chắc chắn muốn duyệt hồ sơ này?",
+                    "success_title" => "Duyệt hồ sơ thành công",
+                    "success_body" => "Hồ sơ KTV đã được duyệt.",
+                ],
+                "reject" => [
+                    "label" => "Từ chối hồ sơ",
+                    "heading" => "Từ chối hồ sơ KTV",
+                    "description" => "Bạn có chắc chắn muốn từ chối hồ sơ này?",
+                    "reason_label" => "Lý do từ chối",
+                    "success_title" => "Từ chối hồ sơ thành công",
+                    "success_body" => "Hồ sơ KTV đã bị từ chối.",
+                ],
+            ],
         ],
         "ktv" => [
             "label" => "Kỹ thuật viên"

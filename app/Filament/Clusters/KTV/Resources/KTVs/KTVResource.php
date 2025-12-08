@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\KTV\Resources\KTVs;
 
+use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserRole;
 use App\Filament\Clusters\KTV\KTVCluster;
 use App\Filament\Clusters\KTV\Resources\KTVs\Tables\KTVsTable;
@@ -44,7 +45,8 @@ class KTVResource extends Resource
         $query = parent::getEloquentQuery();
 
         return $query->where('role', UserRole::KTV->value)
-            ->with('profile')
+            ->with('profile', 'reviewApplication')
+            ->whereRelation('reviewApplication', 'status', ReviewApplicationStatus::APPROVED->value)
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

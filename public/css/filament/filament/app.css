@@ -21466,7 +21466,7 @@
         width: 100%;
     }
     .fi-page-sub-navigation-sidebar-ctn {
-        width: calc(var(--spacing) * 72);
+        width: calc(var(--spacing) * 42);
         flex-direction: column;
         display: none;
     }

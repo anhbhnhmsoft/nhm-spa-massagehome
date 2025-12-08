@@ -40,7 +40,7 @@ class AdminPanelProvider extends PanelProvider
             ->globalSearch(false)
             ->pages([
                 Dashboard::class,
-            ])
+            ])->sidebarCollapsibleOnDesktop(true)
             ->sidebarWidth('14rem')
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
