@@ -39,6 +39,22 @@
     - softDeletes
     - timestamps
 
+# user_devices
+    # note
+    - Bảng user_devices lưu trữ thông tin các thiết bị của người dùng.
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - user_id (bigint, foreign key to users.id) -- id người dùng
+    - token (varchar) -- token của thiết bị
+    - device_id (varchar) -- id thiết bị
+    - device_type (varchar, nullable) -- loại thiết bị
+    - unique(device_id, user_id) -- token và device_id phải là duy nhất
+    - softDeletes
+    - timestamps
+
+
+
 # user_review_application
     # note
     - Bảng user_review_application lưu trữ thông tin duyệt hồ sơ để thành KTV hoặc Agency.
@@ -241,17 +257,19 @@
     - id (bigint, primary key, auto-increment)
     - user_id (bigint, foreign key to users.id) -- id người dùng đặt lịch
     - service_id (bigint, foreign key to services.id) -- id dịch vụ
+    - coupon_id (bigint, foreign key to coupons.id, nullable) -- id mã giảm giá
     - duration (smallint) -- thời gian thực hiện dịch vụ (dạng enum ServiceDuration - minutes)
     - booking_time (timestamp) -- thời gian đặt lịch
-    - start_time (timestamp) -- thời gian bắt đầu
-    - end_time (timestamp) -- thời gian kết thúc
+    - start_time (timestamp, nullable) -- thời gian bắt đầu
+    - end_time (timestamp, nullable) -- thời gian kết thúc
     - status (smallint) -- trạng thái đặt lịch (trong enum BookingStatus)
     - price (decimal(15,2)) -- giá dịch vụ (lưu trữ giá trị thực tế khi đặt lịch)
+    - price_before_discount (decimal(15,2)) -- giá dịch vụ trước khi áp dụng mã giảm giá
     - note (text, nullable) -- ghi chú
     - address (varchar, nullable) -- địa chỉ hẹn
-    - payment_type (smallint) -- hình thức thanh toán (trong enum PaymentType)
     - latitude (decimal(10,8), nullable) -- vĩ độ
     - longitude (decimal(11,8), nullable) -- kinh độ
+    - payment_type (smallint, nullable) -- hình thức thanh toán (trong enum PaymentType), null là khi dịch vụ chưa được xác nhận
     - softDeletes
     - timestamps
 
@@ -271,7 +289,6 @@
     - for_service_id (bigint, foreign key to services.id, nullable) -- id dịch vụ áp dụng mã giảm giá (nếu null thì áp dụng cho tất cả dịch vụ)
     - is_percentage (boolean, default false) -- có phải là phần trăm giảm giá hay không (nếu là false thì là giảm giá cố định)
     - discount_value (decimal(15,2)) -- giá trị giảm giá 
-    - min_order_value (decimal(15,2), nullable) -- giá trị đơn hàng tối thiểu để áp dụng mã giảm giá
     - max_discount (decimal(15,2), nullable) -- giá trị giảm giá tối đa
     - start_at (timestamp) -- ngày bắt đầu áp dụng
     - end_at (timestamp) -- ngày kết thúc áp dụng

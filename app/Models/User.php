@@ -100,6 +100,26 @@ class User extends Authenticatable
     }
 
     /**
+     * Lấy danh sách Coupon mà User này TẠO RA.
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function createdCoupons()
+    {
+        return $this->hasMany(Coupon::class, 'created_by');
+    }
+
+    public function devices()
+    {
+        return $this->hasMany(UserDevice::class);
+    }
+
+    // Hàm này giúp lấy mảng token để bắn thông báo
+    public function routeNotificationForExpo()
+    {
+        return $this->devices->pluck('token')->toArray();
+    }
+
+    /**
      * Lấy danh sách Booking mà User này NHẬN ĐƯỢC (với tư cách là KTV).
      * Logic: User (Provider) -> Service -> ServiceBooking
      */

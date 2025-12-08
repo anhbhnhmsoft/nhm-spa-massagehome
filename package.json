@@ -9,11 +9,14 @@
         "format": "prettier --write resources/",
         "format:check": "prettier --check resources/",
         "lint": "eslint . --fix",
-        "types": "tsc --noEmit"
+        "types": "tsc --noEmit",
+        "start": "tsx --tsconfig ./node_server/tsconfig.json ./node_server/index.ts"
     },
     "devDependencies": {
         "@eslint/js": "^9.19.0",
         "@laravel/vite-plugin-wayfinder": "^0.1.3",
+        "@types/cors": "^2.8.19",
+        "@types/express": "^5.0.6",
         "@types/node": "^22.13.5",
         "babel-plugin-react-compiler": "^1.0.0",
         "eslint": "^9.17.0",
@@ -23,6 +26,7 @@
         "prettier": "^3.4.2",
         "prettier-plugin-organize-imports": "^4.1.0",
         "prettier-plugin-tailwindcss": "^0.6.11",
+        "tsx": "^4.21.0",
         "typescript-eslint": "^8.23.0"
     },
     "dependencies": {
@@ -48,8 +52,13 @@
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "concurrently": "^9.0.1",
+        "cors": "^2.8.5",
+        "dotenv": "^17.2.3",
+        "expo-server-sdk": "^4.0.0",
+        "express": "^5.2.1",
         "globals": "^15.14.0",
         "input-otp": "^1.4.2",
+        "ioredis": "^5.8.2",
         "laravel-vite-plugin": "^2.0",
         "lucide-react": "^0.475.0",
         "react": "^19.2.0",

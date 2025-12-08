@@ -12,6 +12,7 @@ use App\Enums\ServiceDuration;
 use App\Enums\UserRole;
 use App\Models\Category;
 use App\Models\Config;
+use App\Models\Coupon;
 use App\Models\Province;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -32,6 +33,8 @@ class DatabaseSeeder extends Seeder
 //        $this->seedKTV();
 
 //        $this->seedConfig();
+
+        $this->seedCoupon();
     }
 
     protected function seedAdmin(): void
@@ -266,6 +269,79 @@ class DatabaseSeeder extends Seeder
                 ]
             );
 
+        } catch (\Exception $e) {
+            DB::rollBack();
+            dump($e);
+            return false;
+        }
+        DB::commit();
+        return true;
+    }
+
+    protected function seedCoupon()
+    {
+        DB::beginTransaction();
+        try {
+            Coupon::query()->updateOrCreate(
+                [
+                    'code' => 'NEW20',
+                    'created_by' => User::query()->where('phone', '012345678910')->first()->id,
+                ],
+                [
+                    'label' => 'Ưu đãi đặc biệt 20%',
+                    'description' => 'Ưu đãi đặc biệt 20% cho khách hàng',
+                    'created_by' => User::query()->where('phone', '012345678910')->first()->id,
+                    'for_service_id' => null,
+                    'is_percentage' => true,
+                    'discount_value' => 20,
+                    'max_discount' => 100000,
+                    'start_at' => now(),
+                    'end_at' => now()->addMonth(),
+                    'usage_limit' => 100,
+                    'used_count' => 0,
+                    'is_active' => true,
+                ]
+            );
+            Coupon::query()->updateOrCreate(
+                [
+                    'code' => 'NEW40',
+                    'created_by' => User::query()->where('phone', '012345678910')->first()->id,
+                ],
+                [
+                    'label' => 'Ưu đãi đặc biệt 40%',
+                    'description' => 'Ưu đãi đặc biệt 40% cho khách hàng',
+                    'created_by' => User::query()->where('phone', '012345678910')->first()->id,
+                    'for_service_id' => null,
+                    'is_percentage' => true,
+                    'discount_value' => 40,
+                    'max_discount' => 100000,
+                    'start_at' => now(),
+                    'end_at' => now()->addMonth(),
+                    'usage_limit' => 100,
+                    'used_count' => 0,
+                    'is_active' => true,
+                ]
+            );
+            Coupon::query()->updateOrCreate(
+                [
+                    'code' => 'NEW50',
+                    'created_by' => User::query()->where('phone', '012345678910')->first()->id,
+                ],
+                [
+                    'label' => 'Ưu đãi đặc biệt 50%',
+                    'description' => 'Ưu đãi đặc biệt 50% cho khách hàng',
+                    'created_by' => User::query()->where('phone', '012345678910')->first()->id,
+                    'for_service_id' => null,
+                    'is_percentage' => true,
+                    'discount_value' => 40,
+                    'max_discount' => 100000,
+                    'start_at' => now(),
+                    'end_at' => now()->addMonth(),
+                    'usage_limit' => 100,
+                    'used_count' => 0,
+                    'is_active' => true,
+                ]
+            );
         } catch (\Exception $e) {
             DB::rollBack();
             dump($e);

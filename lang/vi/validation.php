@@ -22,4 +22,30 @@ return [
         'required' => 'Ngôn ngữ không hợp lệ.',
         'in' => 'Ngôn ngữ không hợp lệ.',
     ],
+    'service_id' => [
+        'required' => 'Vui lòng chọn dịch vụ.',
+        'numeric' => 'Dịch vụ không hợp lệ.',
+        'exists' => 'Dịch vụ không tồn tại.',
+    ],
+    'book_time' => [
+        'required' => 'Vui lòng chọn thời gian.',
+        'date' => 'Thời gian không hợp lệ.',
+        'after' => 'Thời gian phải sau thời điểm hiện tại 1 tiếng.',
+    ],
+    'coupon_id' => [
+        'exists' => 'Mã giảm giá không tồn tại.',
+    ],
+    'address' => [
+        'required' => 'Vui lòng nhập địa chỉ.',
+    ],
+    'lat' => [
+        'required' => 'Vui lòng nhập tọa độ latitude.',
+    ],
+    'lng' => [
+        'required' => 'Vui lòng nhập tọa độ longitude.',
+    ],
+    'duration' => [
+        'required' => 'Vui lòng chọn thời gian.',
+        'in' => 'Thời gian không hợp lệ.',
+    ],
 ];

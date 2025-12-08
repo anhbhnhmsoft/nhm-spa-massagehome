@@ -34,33 +34,52 @@ Route::middleware('set-locale')->group(function () {
             Route::post('set-language', [AuthController::class, 'setLanguage']);
             // Cập nhật heartbeat cho user.
             Route::post('heartbeat', [AuthController::class, 'heartbeat']);
+            // Đăng xuất khỏi hệ thống.
+            Route::post('set-device', [AuthController::class, 'setDevice']);
         });
     });
 
     Route::prefix('user')->group(function () {
-        // router không cần auth
-
+        /**
+         * router không cần auth
+         */
         // Lấy danh sách KTV
         Route::get('list-ktv', [UserController::class, 'listKtv']);
 
-
+        // Lấy thông tin chi tiết KTV
         Route::get('ktv/{id}', [UserController::class, 'detailKtv'])->where('id', '[0-9]+');
 
     });
 
-    // Service routes
     Route::prefix('service')->group(function () {
-        // router không cần auth
-
+        /**
+         * router không cần auth
+         */
         // Lấy danh sách dịch vụ
         Route::get('list-category', [ServiceController::class, 'listCategory']);
 
         // Lấy danh sách dịch vụ
         Route::get('list', [ServiceController::class, 'listServices']);
 
+        // Lấy thông tin chi tiết dịch vụ
         Route::get('detail/{id}', [ServiceController::class, 'detailService'])->where('id', '[0-9]+');
+
+        // Lấy danh sách mã giảm giá
+        Route::get('list-coupon', [ServiceController::class, 'listCoupon']);
+
+        /**
+         * router cần auth
+         */
+        Route::middleware(['auth:sanctum'])->group(function () {
+            Route::post('booking', [ServiceController::class, 'booking']);
+        });
     });
 
+    Route::prefix('booking')->group(function () {
+        Route::middleware(['auth:sanctum'])->group(function () {
+            Route::get('list', [ServiceController::class, 'listBooking']);
+        });
+    });
 
     Route::prefix('payment')->group(function () {
         // router không cần auth

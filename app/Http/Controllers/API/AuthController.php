@@ -265,4 +265,33 @@ class AuthController extends BaseController
         }
         return $this->sendSuccess();
     }
+
+    /**
+     * Cập nhật device cho user.
+     * @return JsonResponse
+     */
+    public function setDevice(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'token'       => 'required|string',
+            'device_id'   => 'required|string',
+            'platform'    => 'nullable|in:ios,android',
+            'device_name' => 'nullable|string',
+        ]);
+
+        $resService = $this->authService->setDevice(
+            token: $data['token'],
+            deviceId: $data['device_id'],
+            platform: $data['platform'] ?? null,
+            deviceName: $data['device_name'] ?? null,
+        );
+        if ($resService->isError()) {
+            return $this->sendError(
+                message: $resService->getMessage(),
+            );
+        }
+        return $this->sendSuccess(
+            message: __('auth.success.logout'),
+        );
+    }
 }
