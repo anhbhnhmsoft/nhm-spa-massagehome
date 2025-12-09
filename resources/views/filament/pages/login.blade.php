@@ -19,7 +19,7 @@
                 class="w-6 h-4 rounded-sm object-cover" />
             <span class="font-medium text-sm">EN</span>
         </button>
-        <button wire:click="switchLanguage('ch')" type="button" @class([ 'flex items-center gap-2 text-gray-700  px-3 py-2 rounded-lg transition-all duration-200 border' ,
+        <button wire:click="switchLanguage('cn')" type="button" @class([ 'flex items-center gap-2 text-gray-700  px-3 py-2 rounded-lg transition-all duration-200 border' ,
             app()->getLocale() === 'ch'
             ? 'bg-primary-600 shadow-lg scale-105 border-blue-500'
             : 'bg-primary-100 border-gray-200 hover:bg-gray-50 hover:border-primary-300',
