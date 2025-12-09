@@ -60,6 +60,7 @@ return new class extends Migration
             $table->text('bio')->nullable()->comment('Thông tin cá nhân');
             $table->integer('experience')->nullable()->comment('Kinh nghiệm - theo năm');
             $table->json('skills')->nullable()->comment('Kỹ năng (dạng mảng string mô tả kỹ năng)');
+            $table->text('note')->nullable()->comment('Ghi chú thêm');
 
             $table->softDeletes();
             $table->timestamps();
@@ -389,7 +390,7 @@ return new class extends Migration
             'sessions',
 
 
-
+            'service_options',
             'user_devices',
             'configs',
             'reviews',
