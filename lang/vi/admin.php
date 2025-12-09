@@ -3,6 +3,7 @@ return
     [
         "nav" => [
             "ktv" => "Quản lý kỹ thuật viên",
+            "category" => "Quản lý danh mục",
         ],
         "user" => [
             "label" => "Kỹ thuật viên"
@@ -28,6 +29,11 @@ return
                 'password' => 'Mật khẩu',
                 'bio' => 'Giới thiệu',
                 'is_online' => 'Trạng thái online',
+                'description' => 'Miêu tả',
+                'image' => 'Hình ảnh',
+                'position' => 'Vị trí',
+                'is_featured' => 'Nổi bật',
+                'usage_count' => 'Số lần sử dụng',
             ],
             'action' => [
                 'view' => 'Xem',
@@ -64,12 +70,21 @@ return
             'filter' => [
                 'gender' => 'Giới tính',
                 'status' => 'Trạng thái',
+                'is_featured' => 'Nổi bật',
             ],
             'status' => [
                 'active' => 'Kích hoạt',
                 'inactive' => 'Tắt',
             ],
             'empty' => 'Không có dữ liệu',
+            'form' => [
+                'name' => 'Tên',
+                'position' => 'Vị trí',
+                'description' => 'Miêu tả',
+                'image' => 'Hình ảnh',
+                'is_featured' => 'Nổi bật',
+                'is_active' => 'Kích hoạt',
+            ],
 
         ],
         "ktv_apply" => [
@@ -127,6 +142,9 @@ return
             "ktv" => "Kỹ thuật viên",
             "agency" => "Đối tác",
             "admin" => "Quản trị viên",
+        ],
+        'category' => [
+            'label' => 'Danh mục'
         ],
         'notification' => [
             'success' => [
