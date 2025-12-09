@@ -53,6 +53,22 @@
     - softDeletes
     - timestamps
 
+# agency_ktv
+    # note
+    - Bảng agency_ktv lưu trữ thông tin về các KTV có thuộc quản lý bởi một Agency.
+
+    # relations
+    - Quan hệ 1-n với bảng users - là role KTV thông qua ktv_id.
+    - Quan hệ 1-n với bảng users - là role Agency thông qua agency_id.
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - ktv_id (bigint, foreign key to users.id) -- id KTV
+    - agency_id (bigint, foreign key to agencies.id) -- id Agency
+    - join_at (timestamp, nullable) -- thời gian gia nhập Agency
+    - softDeletes
+    - timestamps
+
 
 
 # user_review_application
@@ -75,6 +91,7 @@
     - bio (text, nullable) -- thông tin cá nhân
     - experience (integer, nullable) -- kinh nghiệm (năm)
     - skills (json, nullable) -- kỹ năng (dạng mảng string mô tả kỹ năng)
+    - note (text, nullable) -- ghi chú thêm
 
     - softDeletes
     - timestamps
