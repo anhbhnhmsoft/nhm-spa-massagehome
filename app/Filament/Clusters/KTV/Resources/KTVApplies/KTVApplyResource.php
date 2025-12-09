@@ -70,7 +70,7 @@ class KTVApplyResource extends Resource
 
         return $query->where('role', UserRole::KTV->value)
             ->where('is_active', false)
-            ->with('profile', 'reviewApplication')
+            ->with('profile', 'reviewApplication', 'files')
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

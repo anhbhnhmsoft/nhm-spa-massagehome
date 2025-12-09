@@ -2,9 +2,11 @@
 
 namespace App\Filament\Clusters\KTV\Resources\KTVApplies\Schemas;
 
+use App\Enums\DirectFile;
 use App\Enums\Gender;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserFileType;
+use App\Models\Province;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Placeholder;
@@ -30,9 +32,15 @@ class KTVApplyForm
                             ->label(__('admin.common.table.avatar'))
                             ->image()
                             ->disk('public')
+                            ->directory(DirectFile::KTVA->value)
+                            ->required()
                             ->image()
                             ->disabled(fn($livewire) => $livewire instanceof ViewRecord)
-                            ->downloadable(),
+                            ->downloadable()
+                            ->maxSize(102400)
+                            ->validationMessages([
+                                'required' => __('common.error.required'),
+                            ]),
 
                         TextInput::make('name')
                             ->label(__('admin.common.table.name'))
@@ -97,8 +105,10 @@ class KTVApplyForm
                             ->hidden(fn($livewire) => $livewire instanceof CreateRecord)
                             ->disabled(fn($livewire) => $livewire instanceof ViewRecord),
 
-                        TextInput::make('reviewApplication.province.name')
+                        Select::make('reviewApplication.province.name')
                             ->label(__('admin.ktv_apply.fields.province'))
+                            ->searchable()
+                            ->options(fn() => Province::all()->pluck('name', 'code'))
                             ->disabled(fn($livewire) => $livewire instanceof ViewRecord),
 
                         Textarea::make('reviewApplication.address')
@@ -127,7 +137,6 @@ class KTVApplyForm
                     ->schema([
                         Repeater::make('files')
                             ->label(__('admin.ktv_apply.fields.files'))
-                            ->relationship('files')
                             ->schema([
                                 Select::make('type')
                                     ->label(__('admin.ktv_apply.fields.file_type'))
@@ -137,7 +146,8 @@ class KTVApplyForm
 
                                 FileUpload::make('file_path')
                                     ->label('File')
-                                    ->disk('public')
+                                    ->directory(DirectFile::KTVA->value)
+                                    ->disk('private')
                                     ->required()
                                     ->disabled(fn($livewire) => $livewire instanceof ViewRecord)
                                     ->downloadable(),

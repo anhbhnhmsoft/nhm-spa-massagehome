@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\API\FileController;
 use App\Http\Controllers\API\BookingController;
 use App\Http\Controllers\API\PaymentController;
 use App\Http\Controllers\API\ServiceController;
@@ -48,7 +49,6 @@ Route::middleware('set-locale')->group(function () {
 
         // Lấy thông tin chi tiết KTV
         Route::get('ktv/{id}', [UserController::class, 'detailKtv'])->where('id', '[0-9]+');
-
     });
 
     Route::prefix('service')->group(function () {
@@ -93,7 +93,8 @@ Route::middleware('set-locale')->group(function () {
             Route::post('create-payment-service', [PaymentController::class, 'createPaymentService']);
         });
     });
+
+    Route::prefix('/file')->group(function () {
+        Route::get('user/{path}', [FileController::class, 'getUserFile'])->where('path', '.*');
+    });
 });
-
-
-

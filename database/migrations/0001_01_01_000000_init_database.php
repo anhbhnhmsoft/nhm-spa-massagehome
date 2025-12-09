@@ -92,6 +92,7 @@ return new class extends Migration
             $table->string('file_name')->nullable();
             $table->string('file_size')->nullable();
             $table->string('file_type')->nullable();
+            $table->boolean('is_public')->default(false);
             $table->softDeletes();
             $table->timestamps();
 

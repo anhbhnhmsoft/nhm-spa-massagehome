@@ -115,6 +115,7 @@
     - file_name (varchar, nullable) -- tên tệp tin
     - file_size (varchar, nullable) -- kích thước tệp tin (byte)
     - file_type (varchar) -- Loại tệp đính kèm, ví dụ: pdf, docx, jpg, v.v.
+    - is_public (boolean) -- tệp tin có thể truy cập từ bên ngoài không
     - softDeletes
     - timestamps
 
