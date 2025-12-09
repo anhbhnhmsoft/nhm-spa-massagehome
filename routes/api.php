@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\API\BookingController;
 use App\Http\Controllers\API\PaymentController;
 use App\Http\Controllers\API\ServiceController;
 use App\Http\Controllers\API\UserController;
@@ -9,7 +10,6 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::middleware('set-locale')->group(function () {
-
     // Authenticate routes
     Route::prefix('auth')->group(function () {
         // Guest middleware
@@ -77,7 +77,7 @@ Route::middleware('set-locale')->group(function () {
 
     Route::prefix('booking')->group(function () {
         Route::middleware(['auth:sanctum'])->group(function () {
-            Route::get('list', [ServiceController::class, 'listBooking']);
+            Route::get('list', [BookingController::class, 'listBooking']);
         });
     });
 

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 class UserProfileRepository extends BaseRepository
 {
-    public function getModel(): string
+    protected function getModel(): string
     {
         return UserProfile::class;
     }

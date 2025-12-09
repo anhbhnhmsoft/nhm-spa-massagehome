@@ -8,6 +8,7 @@ use App\Enums\ServiceDuration;
 use App\Http\Resources\Service\CategoryResource;
 use App\Http\Resources\Service\CouponResource;
 use App\Http\Resources\Service\ServiceResource;
+use App\Services\BookingService;
 use App\Services\ServiceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,6 +20,7 @@ class ServiceController extends BaseController
 {
     public function __construct(
         protected ServiceService $serviceService,
+        protected BookingService $bookingService,
     )
     {
     }
@@ -150,7 +152,7 @@ class ServiceController extends BaseController
             'duration.required' => __('validation.duration.required'),
             'duration.in' => __('validation.duration.in'),
         ]);
-        $resultService = $this->serviceService->bookService(
+        $resultService = $this->bookingService->bookService(
             serviceId: $validate['service_id'],
             duration: ServiceDuration::from($validate['duration']),
             address: $validate['address'],

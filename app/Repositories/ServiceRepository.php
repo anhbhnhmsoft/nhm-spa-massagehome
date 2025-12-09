@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 class ServiceRepository extends BaseRepository
 {
-    public function getModel(): string
+    protected function getModel(): string
     {
         return Service::class;
     }

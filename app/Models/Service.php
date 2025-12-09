@@ -5,10 +5,16 @@ namespace App\Models;
 use App\Core\GenerateId\HasBigIntId;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Translatable\HasTranslations;
 
 class Service extends Model
 {
-    use SoftDeletes, HasBigIntId;
+    use SoftDeletes, HasBigIntId, HasTranslations;
+
+    protected $translatable = [
+        'name',
+        'description',
+    ];
 
     protected $fillable = [
         'user_id',

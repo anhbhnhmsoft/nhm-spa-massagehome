@@ -7,10 +7,16 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use Spatie\Translatable\HasTranslations;
 
 class Coupon extends Model
 {
-    use HasFactory, SoftDeletes , HasBigIntId;
+    use HasFactory, SoftDeletes , HasBigIntId, HasTranslations;
+
+    protected $translatable = [
+        'label',
+        'description',
+    ];
 
     protected $table = 'coupons';
 

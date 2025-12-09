@@ -27,13 +27,13 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-//        $this->seedProvince();
-//        $this->seedCategory();
-//        $this->seedAdmin();
-//        $this->seedKTV();
-
-//        $this->seedConfig();
-
+        $this->seedProvince();
+        $this->seedCategory();
+        $this->seedAdmin();
+        $this->seedKTV();
+//
+        $this->seedConfig();
+//
         $this->seedCoupon();
     }
 
@@ -104,20 +104,27 @@ class DatabaseSeeder extends Seeder
                     'address' => $address,
                     'latitude' => $latitude,
                     'longitude' => $longitude,
-                    'bio' => $bio,
-                    'experience' => fake()->numberBetween(0, 10),
-                    'skills' => [
-                        $fake->randomElement(['Massage toàn thân', 'Massage tay', 'Massage Thụy Điển', 'Massage đầu']),
-                        $fake->randomElement(['Massage toàn thân', 'Massage tay', 'Massage Thụy Điển', 'Massage đầu']),
-                        $fake->randomElement(['Massage toàn thân', 'Massage tay', 'Massage Thụy Điển', 'Massage đầu']),
-                        $fake->randomElement(['Massage toàn thân', 'Massage tay', 'Massage Thụy Điển', 'Massage đầu']),
+                    'bio' => [
+                        Language::VIETNAMESE->value => fake('vi_VN')->paragraph(),
+                        Language::ENGLISH->value => fake('en_US')->paragraph(),
+                        Language::CHINESE->value => fake('zh_CN')->paragraph(),
                     ],
+                    'experience' => fake()->numberBetween(0, 10),
+
                 ]);
                 foreach (range(1, 5) as $index) {
                     $service = $user->services()->create([
-                        'name' => $fake->paragraph(1),
+                        'name' => [
+                            Language::VIETNAMESE->value => fake('vi_VN')->paragraph(1),
+                            Language::ENGLISH->value => fake('en_US')->paragraph(1),
+                            Language::CHINESE->value => fake('zh_CN')->paragraph(1),
+                        ],
                         'category_id' => $fake->randomElement($categories),
-                        'description' => $fake->paragraph(),
+                        'description' => [
+                            Language::VIETNAMESE->value => fake('vi_VN')->paragraph(),
+                            Language::ENGLISH->value => fake('en_US')->paragraph(),
+                            Language::CHINESE->value => fake('zh_CN')->paragraph(),
+                        ],
                         'is_active' => true,
                         'image_url' => $fake->imageUrl(),
                     ]);
@@ -152,8 +159,16 @@ class DatabaseSeeder extends Seeder
         DB::beginTransaction();
         try {
             Category::query()->create([
-                'name' => 'Massage toàn thân',
-                'description' => fake('vi')->paragraph(),
+                'name' => [
+                    Language::VIETNAMESE->value => 'Massage toàn thân',
+                    Language::ENGLISH->value => 'Full Body Massage',
+                    Language::CHINESE->value => '全身按摩',
+                ],
+                'description' => [
+                    Language::VIETNAMESE->value => fake('vi_VN')->paragraph(),
+                    Language::ENGLISH->value => fake('en_US')->paragraph(),
+                    Language::CHINESE->value => fake('zh_CN')->paragraph(),
+                ],
                 'image_url' => fake()->imageUrl(),
                 'position' => 1,
                 'is_featured' => true,
@@ -161,8 +176,16 @@ class DatabaseSeeder extends Seeder
                 'is_active' => true,
             ]);
             Category::query()->create([
-                'name' => 'Massage tay',
-                'description' => fake('vi')->paragraph(),
+                'name' => [
+                    Language::VIETNAMESE->value => 'Massage tay',
+                    Language::ENGLISH->value => 'Hand Massage',
+                    Language::CHINESE->value => '手 massage',
+                ],
+                'description' => [
+                    Language::VIETNAMESE->value => fake('vi_VN')->paragraph(),
+                    Language::ENGLISH->value => fake('en_US')->paragraph(),
+                    Language::CHINESE->value => fake('zh_CN')->paragraph(),
+                ],
                 'image_url' => fake()->imageUrl(),
                 'position' => 2,
                 'is_featured' => true,
@@ -170,8 +193,16 @@ class DatabaseSeeder extends Seeder
                 'is_active' => true,
             ]);
             Category::query()->create([
-                'name' => 'Massage Thụy Điển',
-                'description' => fake('vi')->paragraph(),
+                'name' => [
+                    Language::VIETNAMESE->value => 'Massage Thụy Điển',
+                    Language::ENGLISH->value => 'Foot Massage',
+                    Language::CHINESE->value => '脚 massage',
+                ],
+                'description' => [
+                    Language::VIETNAMESE->value => fake('vi_VN')->paragraph(),
+                    Language::ENGLISH->value => fake('en_US')->paragraph(),
+                    Language::CHINESE->value => fake('zh_CN')->paragraph(),
+                ],
                 'image_url' => fake()->imageUrl(),
                 'position' => 3,
                 'is_featured' => true,
@@ -179,8 +210,16 @@ class DatabaseSeeder extends Seeder
                 'is_active' => true,
             ]);
             Category::query()->create([
-                'name' => 'Massage đầu',
-                'description' => fake('vi')->paragraph(),
+                'name' => [
+                    Language::VIETNAMESE->value => 'Massage đầu',
+                    Language::ENGLISH->value => 'Head Massage',
+                    Language::CHINESE->value => '头 massage',
+                ],
+                'description' => [
+                    Language::VIETNAMESE->value => fake('vi_VN')->paragraph(),
+                    Language::ENGLISH->value => fake('en_US')->paragraph(),
+                    Language::CHINESE->value => fake('zh_CN')->paragraph(),
+                ],
                 'image_url' => fake()->imageUrl(),
                 'position' => 4,
                 'is_featured' => false,
@@ -188,8 +227,16 @@ class DatabaseSeeder extends Seeder
                 'is_active' => true,
             ]);
             Category::query()->create([
-                'name' => 'Massage chân',
-                'description' => fake('vi')->paragraph(),
+                'name' => [
+                    Language::VIETNAMESE->value => 'Massage chân',
+                    Language::ENGLISH->value => 'Leg Massage',
+                    Language::CHINESE->value => '脚 massage',
+                ],
+                'description' => [
+                    Language::VIETNAMESE->value => fake('vi_VN')->paragraph(),
+                    Language::ENGLISH->value => fake('en_US')->paragraph(),
+                    Language::CHINESE->value => fake('zh_CN')->paragraph(),
+                ],
                 'image_url' => fake()->imageUrl(),
                 'position' => 5,
                 'is_featured' => false,
@@ -288,8 +335,16 @@ class DatabaseSeeder extends Seeder
                     'created_by' => User::query()->where('phone', '012345678910')->first()->id,
                 ],
                 [
-                    'label' => 'Ưu đãi đặc biệt 20%',
-                    'description' => 'Ưu đãi đặc biệt 20% cho khách hàng',
+                    'label' => [
+                        Language::VIETNAMESE->value => 'Ưu đãi đặc biệt 20%',
+                        Language::ENGLISH->value => 'Special discount 20%',
+                        Language::CHINESE->value => '特殊折扣 20%',
+                    ],
+                    'description' => [
+                        Language::VIETNAMESE->value => 'Ưu đãi đặc biệt 20% cho khách hàng',
+                        Language::ENGLISH->value => 'Special discount 20% for customers',
+                        Language::CHINESE->value => '特殊折扣 20% 对客户',
+                    ],
                     'created_by' => User::query()->where('phone', '012345678910')->first()->id,
                     'for_service_id' => null,
                     'is_percentage' => true,
@@ -308,8 +363,16 @@ class DatabaseSeeder extends Seeder
                     'created_by' => User::query()->where('phone', '012345678910')->first()->id,
                 ],
                 [
-                    'label' => 'Ưu đãi đặc biệt 40%',
-                    'description' => 'Ưu đãi đặc biệt 40% cho khách hàng',
+                    'label' => [
+                        Language::VIETNAMESE->value => 'Ưu đãi đặc biệt 40%',
+                        Language::ENGLISH->value => 'Special discount 40%',
+                        Language::CHINESE->value => '特殊折扣 40%',
+                    ],
+                    'description' => [
+                        Language::VIETNAMESE->value => 'Ưu đãi đặc biệt 40% cho khách hàng',
+                        Language::ENGLISH->value => 'Special discount 40% for customers',
+                        Language::CHINESE->value => '特殊折扣 40% 对客户',
+                    ],
                     'created_by' => User::query()->where('phone', '012345678910')->first()->id,
                     'for_service_id' => null,
                     'is_percentage' => true,
@@ -328,8 +391,16 @@ class DatabaseSeeder extends Seeder
                     'created_by' => User::query()->where('phone', '012345678910')->first()->id,
                 ],
                 [
-                    'label' => 'Ưu đãi đặc biệt 50%',
-                    'description' => 'Ưu đãi đặc biệt 50% cho khách hàng',
+                    'label' => [
+                        Language::VIETNAMESE->value => 'Ưu đãi đặc biệt 50%',
+                        Language::ENGLISH->value => 'Special discount 50%',
+                        Language::CHINESE->value => '特殊折扣 50%',
+                    ],
+                    'description' => [
+                        Language::VIETNAMESE->value => 'Ưu đãi đặc biệt 50% cho khách hàng',
+                        Language::ENGLISH->value => 'Special discount 50% for customers',
+                        Language::CHINESE->value => '特殊折扣 50% 对客户',
+                    ],
                     'created_by' => User::query()->where('phone', '012345678910')->first()->id,
                     'for_service_id' => null,
                     'is_percentage' => true,

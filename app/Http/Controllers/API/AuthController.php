@@ -17,7 +17,6 @@ use App\Core\Controller\BaseController;
 
 class AuthController extends BaseController
 {
-
     public function __construct(
         protected AuthService $authService,
     )

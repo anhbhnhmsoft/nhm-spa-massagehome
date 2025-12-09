@@ -10,12 +10,8 @@ use Illuminate\Database\Eloquent\Builder;
 
 class UserRepository extends BaseRepository
 {
-    /**
-     * @var User
-     */
-    protected $model;
 
-    public function getModel(): string
+    protected function getModel(): string
     {
         return User::class;
     }

@@ -8,11 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 class WalletRepository extends BaseRepository
 {
-    /**
-     * @var Wallet
-     */
-    protected $model;
-     public function getModel(): string
+    protected function getModel(): string
     {
         return Wallet::class;
     }

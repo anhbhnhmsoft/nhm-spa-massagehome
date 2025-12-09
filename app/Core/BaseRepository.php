@@ -36,7 +36,7 @@ abstract class BaseRepository
      * CÁC REPOSITORY CON BẮT BUỘC PHẢI TRIỂN KHAI (implement) PHƯƠNG THỨC NÀY.
      * @return string
      */
-    abstract public function getModel(): string;
+    abstract protected function getModel(): string;
 
     /**
      * BẮT BUỘC: Áp dụng filter vào query.

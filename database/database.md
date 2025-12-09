@@ -53,23 +53,6 @@
     - softDeletes
     - timestamps
 
-# agency_ktv
-    # note
-    - Bảng agency_ktv lưu trữ thông tin về các KTV có thuộc quản lý bởi một Agency.
-
-    # relations
-    - Quan hệ 1-n với bảng users - là role KTV thông qua ktv_id.
-    - Quan hệ 1-n với bảng users - là role Agency thông qua agency_id.
-
-    # cấu trúc
-    - id (bigint, primary key, auto-increment)
-    - ktv_id (bigint, foreign key to users.id) -- id KTV
-    - agency_id (bigint, foreign key to agencies.id) -- id Agency
-    - join_at (timestamp, nullable) -- thời gian gia nhập Agency
-    - softDeletes
-    - timestamps
-
-
 
 # user_review_application
     # note
@@ -81,6 +64,7 @@
     # cấu trúc
     - id (bigint, primary key, auto-increment)
     - user_id (bigint, foreign key to users.id) -- id người dùng
+    - agency_id (bigint, nullable, foreign key to agencies.id) -- id Agency
     - status (smallint) -- trạng thái ứng dụng (trong enum ReviewApplicationStatus)
 
     - province_code (varchar, nullable, foreign key to provinces.code) -- mã tỉnh thành
@@ -88,10 +72,12 @@
     - latitude (decimal(10,8), nullable) -- vĩ độ
     - longitude (decimal(11,8), nullable) -- kinh độ
 
-    - bio (text, nullable) -- thông tin cá nhân
+    - bio (json, nullable) -- thông tin cá nhân (dạng json mô tả thông tin cá nhân - đa ngôn ngữ)
     - experience (integer, nullable) -- kinh nghiệm (năm)
-    - skills (json, nullable) -- kỹ năng (dạng mảng string mô tả kỹ năng)
     - note (text, nullable) -- ghi chú thêm
+
+    - effective_date (timestamp, nullable) -- ngày hiệu lực
+    - application_date (timestamp, nullable) -- ngày nộp hồ sơ
 
     - softDeletes
     - timestamps
@@ -220,8 +206,8 @@
     - Bảng categories lưu trữ thông tin danh mục dịch vụ.
      # cấu trúc
     - id (bigint, primary key, auto-increment)
-    - name (varchar) -- tên danh mục
-    - description (text, nullable) -- mô tả danh mục
+    - name (json) -- tên danh mục (đa ngôn ngữ, lưu trữ dưới dạng JSON)
+    - description (json, nullable) -- mô tả danh mục (đa ngôn ngữ, lưu trữ dưới dạng JSON)
     - image_url (varchar, nullable) -- URL hình ảnh danh mục
     - position (smallint, default 0) -- vị trí hiển thị (số càng nhỏ thì hiển thị càng lên trên)
     - is_featured (boolean, default false) -- có hiển thị nổi bật hay không
@@ -241,8 +227,8 @@
     - id (bigint, primary key, auto-increment)
     - user_id (bigint, foreign key to users.id) -- id người dùng cung cấp dịch vụ
     - category_id (bigint, foreign key to categories.id) -- id danh mục dịch vụ
-    - name (varchar) -- tên dịch vụ
-    - description (text, nullable) -- mô tả dịch vụ (có html tag)
+    - name (json) -- tên dịch vụ
+    - description (json, nullable) -- mô tả dịch vụ (đa ngôn ngữ, lưu trữ dưới dạng JSON)
     - is_active (boolean) -- trạng thái kích hoạt
     - image_url (varchar, nullable) -- URL hình ảnh dịch vụ
     - softDeletes
@@ -300,8 +286,8 @@
     # cấu trúc
     - id (bigint, primary key, auto-increment)
     - code (varchar) -- mã giảm giá
-    - label (varchar) -- tên mã giảm giá
-    - description (text, nullable) -- mô tả mã giảm giá
+    - label (json) -- tên mã giảm giá (đa ngôn ngữ, lưu trữ dưới dạng JSON)
+    - description (json, nullable) -- mô tả mã giảm giá (đa ngôn ngữ, lưu trữ dưới dạng JSON)
     - created_by (bigint, foreign key to users.id) -- id người dùng tạo mã giảm giá
     - for_service_id (bigint, foreign key to services.id, nullable) -- id dịch vụ áp dụng mã giảm giá (nếu null thì áp dụng cho tất cả dịch vụ)
     - is_percentage (boolean, default false) -- có phải là phần trăm giảm giá hay không (nếu là false thì là giảm giá cố định)

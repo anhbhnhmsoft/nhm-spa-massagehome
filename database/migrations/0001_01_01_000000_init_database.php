@@ -51,16 +51,20 @@ return new class extends Migration
             $table->id();
             $table->bigInteger('user_id')->unique()->comment('ID người dùng');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->bigInteger('agency_id')->nullable()->comment('ID đại lý');
+            $table->foreign('agency_id')->references('id')->on('users')->onDelete('cascade');
             $table->smallInteger('status')->comment('Trạng thái ứng dụng (trong enum ReviewApplicationStatus)');
             $table->string('province_code')->nullable()->comment('Mã tỉnh thành');
             $table->foreign('province_code')->references('code')->on('provinces')->cascadeOnDelete();
             $table->string('address')->nullable()->comment('Địa chỉ chi tiết');
             $table->decimal('latitude', 10, 8)->nullable()->comment('Vĩ độ');
             $table->decimal('longitude', 11, 8)->nullable()->comment('Kinh độ');
-            $table->text('bio')->nullable()->comment('Thông tin cá nhân');
+            $table->json('bio')->nullable()->comment('Thông tin cá nhân');
             $table->integer('experience')->nullable()->comment('Kinh nghiệm - theo năm');
             $table->json('skills')->nullable()->comment('Kỹ năng (dạng mảng string mô tả kỹ năng)');
             $table->text('note')->nullable()->comment('Ghi chú thêm');
+            $table->timestamp('effective_date')->nullable()->comment('Ngày hiệu lực');
+            $table->timestamp('application_date')->nullable()->comment('Ngày nộp hồ sơ');
 
             $table->softDeletes();
             $table->timestamps();
@@ -97,8 +101,8 @@ return new class extends Migration
         Schema::create('categories', function (Blueprint $table) {
             $table->comment('Bảng categories lưu trữ thông tin danh mục dịch vụ');
             $table->id();
-            $table->string('name');
-            $table->text('description')->nullable();
+            $table->json('name')->comment('Tên danh mục (đa ngôn ngữ, lưu trữ dưới dạng JSON)');
+            $table->json('description')->nullable()->comment('Mô tả danh mục (đa ngôn ngữ, lưu trữ dưới dạng JSON)');
             $table->string('image_url')->nullable()->comment('URL hình ảnh danh mục');
             $table->smallInteger('position')->default(0)->comment('Vị trí hiển thị (số càng nhỏ thì hiển thị càng lên trên)');
             $table->boolean('is_featured')->default(false)->comment('Có hiển thị nổi bật hay không');
@@ -114,8 +118,8 @@ return new class extends Migration
             $table->bigInteger('user_id');
             $table->unsignedBigInteger('category_id');
             $table->foreign('category_id')->references('id')->on('categories')->onDelete('cascade');
-            $table->string('name')->comment('Tên dịch vụ');
-            $table->text('description')->nullable()->comment('Mô tả dịch vụ (có html tag)');
+            $table->json('name')->comment('Tên dịch vụ (đa ngôn ngữ, lưu trữ dưới dạng JSON)');
+            $table->json('description')->nullable()->comment('Mô tả dịch vụ (đa ngôn ngữ, lưu trữ dưới dạng JSON)');
             $table->boolean('is_active')->default(true)->comment('Trạng thái kích hoạt');
             $table->string('image_url')->nullable()->comment('URL hình ảnh dịch vụ');
             $table->softDeletes();
@@ -139,8 +143,8 @@ return new class extends Migration
             $table->comment('Bảng coupons lưu trữ thông tin mã giảm giá.');
             $table->id();
             $table->string('code')->unique()->comment('Mã giảm giá');
-            $table->string('label')->comment('Tên mã giảm giá');
-            $table->text('description')->nullable()->comment('Mô tả mã giảm giá');
+            $table->json('label')->comment('Tên mã giảm giá (đa ngôn ngữ, lưu trữ dưới dạng JSON)');
+            $table->json('description')->nullable()->comment('Mô tả mã giảm giá (đa ngôn ngữ, lưu trữ dưới dạng JSON)');
             $table->foreignId('created_by')
                 ->constrained('users')
                 ->onDelete('cascade');
@@ -399,8 +403,8 @@ return new class extends Migration
             'affiliate_registrations',
             'wallet_transactions',
             'wallets',
-            'coupons',
             'service_bookings',
+            'coupons',
             'services',
             'categories',
             'user_files',

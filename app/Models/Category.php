@@ -5,10 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Core\GenerateId\HasBigIntId;
+use Spatie\Translatable\HasTranslations;
 
 class Category extends Model
 {
-    use SoftDeletes, HasBigIntId;
+    use SoftDeletes, HasBigIntId, HasTranslations;
+
+    protected $translatable = [
+        'name',
+        'description',
+    ];
+
+    protected $table = 'categories';
 
     protected $fillable = [
         'name',

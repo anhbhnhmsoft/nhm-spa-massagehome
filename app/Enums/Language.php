@@ -10,5 +10,5 @@ enum Language: string
 {
     case ENGLISH = 'en';
     case VIETNAMESE = 'vi';
-    case CHINESE = 'ch';
+    case CHINESE = 'cn';
 }

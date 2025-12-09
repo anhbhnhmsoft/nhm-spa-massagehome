@@ -8,12 +8,10 @@ use Illuminate\Database\Eloquent\Builder;
 
 class ConfigRepository extends BaseRepository
 {
-    public function getModel(): string
+    protected function getModel(): string
     {
         return Config::class;
     }
-
-
 
 
 

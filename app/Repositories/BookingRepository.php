@@ -9,13 +9,31 @@ use Illuminate\Database\Eloquent\Builder;
 class BookingRepository extends BaseRepository
 {
 
-    public function getModel(): string
+    protected function getModel(): string
     {
         return ServiceBooking::class;
     }
 
+    /**
+     * Lấy danh sách đặt lịch
+     * @return Builder
+     */
+    public function queryBooking(): Builder
+    {
+        return $this->model->query()
+            ->with([
+                'user',
+                'service'
+            ]);
+    }
+
     public function filterQuery(Builder $query, array $filters): Builder
     {
+        // Lọc theo trạng thái
+        if (isset($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
         return $query;
     }
 

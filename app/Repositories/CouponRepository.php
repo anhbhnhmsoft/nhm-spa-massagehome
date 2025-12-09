@@ -9,7 +9,7 @@ use Illuminate\Support\Carbon;
 
 class CouponRepository extends BaseRepository
 {
-    public function getModel(): string
+    protected function getModel(): string
     {
         return Coupon::class;
     }
