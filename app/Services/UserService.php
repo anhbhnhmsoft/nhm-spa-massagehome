@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Core\Cache\CacheKey;
+use App\Core\Cache\Caching;
 use App\Core\Controller\FilterDTO;
 use App\Core\Helper;
 use App\Core\LogHelper;
@@ -100,7 +102,7 @@ class UserService extends BaseService
 
     public function makeNewApplyKTV(array $data)
     {
-        DB::beginTransaction(); 
+        DB::beginTransaction();
         try {
             $userCheck = $this->userRepository->query()->where('phone', $data['phone'])->first();
             if ($userCheck) {
@@ -137,7 +139,7 @@ class UserService extends BaseService
                 'bio' => $data['profile']['bio']
             ]);
 
-            foreach($data['files'] as $file){
+            foreach ($data['files'] as $file) {
                 $this->userFileRepository->create([
                     'user_id' => $user->id,
                     'type' => $file['type'],
@@ -154,12 +156,58 @@ class UserService extends BaseService
                 message: "Lỗi UserService@makeNewApplyKTV",
                 ex: $exception
             );
-            foreach($data['files'] as $file){
+            foreach ($data['files'] as $file) {
                 Storage::delete($file['file_path']);
             }
             Storage::delete($data['profile']['avatar_url']);
             return ServiceReturn::error(
                 message: "Lỗi khi tạo yêu cầu"
+            );
+        }
+    }
+
+    /**
+     * Lấy file theo path, sử dụng cơ chế cache.
+     * @param string $path
+     * @return ServiceReturn
+     */
+    public function getUserFile(string $path): ServiceReturn
+    {
+        $uniqueKey = hash('sha256', $path);
+
+        try {
+            $file = Caching::getCache(
+                key: CacheKey::CACHE_USER_FILE,
+                uniqueKey: $uniqueKey
+            );
+            if ($file) {
+                return ServiceReturn::success(
+                    data: $file
+                );
+            }
+            $file = $this->userFileRepository->query()->where('file_path', $path)->first();
+            if (!$file) {
+                throw new ServiceException(
+                    message: __("common_error.data_not_found")
+                );
+            }
+            Caching::setCache(
+                key: CacheKey::CACHE_USER_FILE,
+                uniqueKey: $uniqueKey,
+                value: $file,
+                expire: 60
+            );
+
+            return ServiceReturn::success(
+                data: $file
+            );
+        } catch (ServiceException $exception) {
+            LogHelper::error(
+                message: "Lỗi UserService@getUserFile",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: __("common_error.data_not_found")
             );
         }
     }

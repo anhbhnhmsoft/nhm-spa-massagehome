@@ -34,5 +34,9 @@ enum CacheKey: string
      */
     case CACHE_USER_HEARTBEAT = 'CACHE_USER_HEARTBEAT';
 
+    /**
+     * Lưu thông tin file của người dùng.
+     */
+    case CACHE_USER_FILE = 'CACHE_USER_FILE';
 
 }
