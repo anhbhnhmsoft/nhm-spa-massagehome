@@ -9,7 +9,7 @@ use App\Enums\UserFileType;
 use App\Models\Province;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Placeholder;  
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TagsInput;
@@ -146,8 +146,8 @@ class KTVApplyForm
 
                                 FileUpload::make('file_path')
                                     ->label('File')
-                                    ->disk('public')
                                     ->directory(DirectFile::KTVA->value)
+                                    ->disk('private')
                                     ->required()
                                     ->disabled(fn($livewire) => $livewire instanceof ViewRecord)
                                     ->downloadable(),
