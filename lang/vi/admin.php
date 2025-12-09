@@ -155,6 +155,5 @@ return
                 'update_error' => 'Cập nhật thất bại',
                 'create_error' => 'Tạo thất bại',
             ],
-
         ]
     ];

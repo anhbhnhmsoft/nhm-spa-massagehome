@@ -49,6 +49,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(WalletRepository::class);
         $this->app->singleton(ServiceRepository::class);
         $this->app->singleton(CategoryRepository::class);
+        $this->app->singleton(UserFileRepository::class);
+        $this->app->singleton(UserReviewApplicationRepository::class);
         $this->app->singleton(BookingRepository::class);
         $this->app->singleton(CouponRepository::class);
         $this->app->singleton(UserFileRepository::class);
