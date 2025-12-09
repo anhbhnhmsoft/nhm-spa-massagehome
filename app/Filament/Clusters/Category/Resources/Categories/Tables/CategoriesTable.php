@@ -1,9 +1,7 @@
 <?php
 
-namespace App\Filament\Clusters\KTV\Resources\KTVs\Tables;
+namespace App\Filament\Clusters\Category\Resources\Categories\Tables;
 
-use App\Enums\Gender;
-use App\Filament\Clusters\KTV\Resources\KTVs\KTVResource;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -21,7 +19,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 
-class KTVsTable
+class CategoriesTable
 {
     public static function configure(Table $table): Table
     {
@@ -30,32 +28,22 @@ class KTVsTable
                 TextColumn::make('name')
                     ->searchable()
                     ->label(__('admin.common.table.name')),
-                // TextColumn::make('email')
-                //     ->searchable()
-                //     ->label(__('admin.common.table.email')),
-                ImageColumn::make('profile.avatar_url')
-                    ->label(__('admin.common.table.avatar'))
-                    ->defaultImageUrl(url('/images/avatar-default.svg')),
-                TextColumn::make('phone')
-                    ->searchable()
-                    ->label(__('admin.common.table.phone')),
-                TextColumn::make('address')
-                    ->searchable()
+                ImageColumn::make('image_url')
+                    ->label(__('admin.common.table.image'))
+                    ->default('images/product_default.jpg'),
+                TextColumn::make('description')
                     ->limit(100)
-                    ->label(__('admin.common.table.address')),
-                TextColumn::make('profile.date_of_birth')
+                    ->wrap(true)
                     ->searchable()
-                    ->label(__('admin.common.table.date_of_birth'))
-                    ->date(),
-                TextColumn::make('profile.gender')
-                    ->label(__('admin.common.table.gender'))
-                    ->formatStateUsing(fn($state) => Gender::getLabel($state)),
-                IconColumn::make('is_online')
-                    ->boolean()
-                    ->label(__('admin.common.table.is_online')),
+                    ->label(__('admin.common.table.description')),
+                TextColumn::make('position')
+                    ->label(__('admin.common.table.position')),
                 TextColumn::make('created_at')
                     ->label(__('admin.common.table.created_at'))
                     ->dateTime(),
+                IconColumn::make('is_featured')
+                    ->boolean()
+                    ->label(__('admin.common.table.is_featured')),
                 TextColumn::make('updated_at')
                     ->label(__('admin.common.table.updated_at'))
                     ->dateTime(),
@@ -66,6 +54,8 @@ class KTVsTable
                 ToggleColumn::make('is_active')
                     ->label(__('admin.common.table.status'))
                     ->toggleable(),
+                TextColumn::make('usage_count')
+                    ->label(__('admin.common.table.usage_count')),
             ])
             ->defaultSort('created_at', 'desc')
             ->recordActions([
@@ -73,7 +63,6 @@ class KTVsTable
                     ViewAction::make()
                         ->label(__('admin.common.action.view'))
                         ->tooltip(__('admin.common.tooltip.view'))
-                        ->action(fn(KTVResource $resource, $record) => $resource->getRecordViewForm($record))
                         ->icon('heroicon-o-eye'),
 
                     EditAction::make()
@@ -100,15 +89,18 @@ class KTVsTable
             ])
             ->filters([
                 TrashedFilter::make(),
-                SelectFilter::make('profile.gender')
-                    ->options(Gender::toOptions())
-                    ->label(__('admin.common.filter.gender')),
                 SelectFilter::make('is_active')
                     ->options([
                         true => __('admin.common.status.active'),
                         false => __('admin.common.status.inactive'),
                     ])
                     ->label(__('admin.common.filter.status')),
+                SelectFilter::make('is_featured')
+                    ->options([
+                        true => __('admin.common.status.active'),
+                        false => __('admin.common.status.inactive'),
+                    ])
+                    ->label(__('admin.common.filter.is_featured')),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
