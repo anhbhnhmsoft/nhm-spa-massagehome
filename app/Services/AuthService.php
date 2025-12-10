@@ -371,6 +371,7 @@ class AuthService extends BaseService
             $user->update([
                 'language' => $language->value,
             ]);
+            $user->save();
             return ServiceReturn::success(message: __('auth.success.set_language'));
         } catch (Exception $exception) {
             LogHelper::error(

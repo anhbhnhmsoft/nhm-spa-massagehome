@@ -232,13 +232,13 @@ class AuthController extends BaseController
     public function setLanguage(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'language' => ['required', Rule::in(Language::cases())],
+            'lang' => ['required', Rule::in(Language::cases())],
         ], [
-            'language.required' => __('auth.error.language_invalid'),
-            'language.in' => __('auth.error.language_invalid'),
+            'lang.required' => __('auth.error.language_invalid'),
+            'lang.in' => __('auth.error.language_invalid'),
         ]);
         $resService = $this->authService->setLanguage(
-            language: Language::from($data['language']),
+            language: Language::from($data['lang']),
         );
         if ($resService->isError()) {
             return $this->sendError(

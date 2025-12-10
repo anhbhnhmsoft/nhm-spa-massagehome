@@ -3,10 +3,10 @@
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\FileController;
 use App\Http\Controllers\API\BookingController;
+use App\Http\Controllers\API\LocationController;
 use App\Http\Controllers\API\PaymentController;
 use App\Http\Controllers\API\ServiceController;
 use App\Http\Controllers\API\UserController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 
@@ -35,9 +35,14 @@ Route::middleware('set-locale')->group(function () {
             Route::post('set-language', [AuthController::class, 'setLanguage']);
             // Cập nhật heartbeat cho user.
             Route::post('heartbeat', [AuthController::class, 'heartbeat']);
-            // Đăng xuất khỏi hệ thống.
+            // Cập nhật thông tin thiết bị.
             Route::post('set-device', [AuthController::class, 'setDevice']);
         });
+    });
+
+    Route::prefix('/location')->group(function () {
+        // search map
+        Route::get('search', [LocationController::class, 'search']);
     });
 
     Route::prefix('user')->group(function () {
@@ -90,6 +95,8 @@ Route::middleware('set-locale')->group(function () {
 
         // Lấy danh sách dịch vụ
         Route::middleware(['auth:sanctum'])->group(function () {
+            Route::get('wallet', [PaymentController::class, 'userWallet']);
+
             Route::post('create-payment-service', [PaymentController::class, 'createPaymentService']);
         });
     });
