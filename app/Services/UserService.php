@@ -111,7 +111,7 @@ class UserService extends BaseService
                 );
             }
 
-            $user = $this->userRepository->create([
+            $userInitial = $this->userRepository->create([
                 'name' => $data['name'],
                 'phone' => $data['phone'],
                 'password' => $data['password'],
@@ -122,33 +122,47 @@ class UserService extends BaseService
             ]);
 
             $userReviewApplication = $this->userReviewApplicationRepository->create([
-                'user_id' => $user->id,
+                'user_id' => $userInitial->id,
+                'agency_id' => optional($data['reviewApplication'])['agency_id'] ?? null,
                 'status' => ReviewApplicationStatus::PENDING->value,
-                'province_code' => $data['reviewApplication']['province']['name'],
-                'address' => $data['reviewApplication']['address'],
-                'experience' => $data['reviewApplication']['experience'],
-                'skills' => $data['reviewApplication']['skills'],
-                'bio' => $data['reviewApplication']['bio']
+                'province_code' => optional($data['reviewApplication'])['province']['name'] ?? null,
+                'address' => optional($data['reviewApplication'])['address'] ?? null,
+                'experience' => optional($data['reviewApplication'])['experience'] ?? null,
+                'application_date' => now(),
+                'bio' => optional($data['reviewApplication'])['bio'] ?? null
             ]);
 
             $userProfile = $this->userProfileRepository->create([
-                'avatar_url' => $data['profile']['avatar_url'],
-                'user_id' => $user->id,
-                'gender' => $data['profile']['gender'],
-                'date_of_birth' => $data['profile']['date_of_birth'],
-                'bio' => $data['profile']['bio']
+                'avatar_url' => optional($data['profile'])['avatar_url'] ?? null,
+                'user_id' => $userInitial->id,
+                'gender' => optional($data['profile'])['gender'] ?? null,
+                'date_of_birth' => optional($data['profile'])['date_of_birth'] ?? null,
+                'bio' => optional($data['profile'])['bio'] ?? null
             ]);
 
             foreach ($data['files'] as $file) {
                 $this->userFileRepository->create([
-                    'user_id' => $user->id,
-                    'type' => $file['type'],
-                    'file_path' => $file['file_path']
+                    'user_id' => $userInitial->id,
+                    'type' => optional($file)['type'] ?? null,
+                    'file_path' => optional($file)['file_path'] ?? null
                 ]);
             }
             DB::commit();
             return ServiceReturn::success(
-                data: $user->with('reviewApplication', 'profile', 'files')->first()
+                data: $userInitial->load('reviewApplication', 'profile', 'files')
+            );
+        } catch (ServiceException $exception) {
+            DB::rollBack();
+            LogHelper::error(
+                message: "Lỗi UserService@makeNewApplyKTV",
+                ex: $exception
+            );
+            foreach ($data['files'] as $file) {
+                Storage::delete($file['file_path']);
+            }
+            Storage::delete($data['profile']['avatar_url']);
+            return ServiceReturn::error(
+                message: $exception->getMessage()
             );
         } catch (\Exception $exception) {
             DB::rollBack();
@@ -161,7 +175,7 @@ class UserService extends BaseService
             }
             Storage::delete($data['profile']['avatar_url']);
             return ServiceReturn::error(
-                message: "Lỗi khi tạo yêu cầu"
+                message: $exception->getMessage()
             );
         }
     }

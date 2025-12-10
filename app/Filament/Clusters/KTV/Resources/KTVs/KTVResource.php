@@ -44,12 +44,14 @@ class KTVResource extends Resource
     {
         $query = parent::getEloquentQuery();
 
-        return $query->where('role', UserRole::KTV->value)
+        $query = $query->where('role', UserRole::KTV->value)
             ->with('profile', 'reviewApplication')
             ->whereRelation('reviewApplication', 'status', ReviewApplicationStatus::APPROVED->value)
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
+            // dd($query->first());
+        return $query;
     }
 
     // public static function getNavigationGroup(): \UnitEnum|string|null

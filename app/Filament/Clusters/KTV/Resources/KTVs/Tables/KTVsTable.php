@@ -35,6 +35,7 @@ class KTVsTable
                 //     ->label(__('admin.common.table.email')),
                 ImageColumn::make('profile.avatar_url')
                     ->label(__('admin.common.table.avatar'))
+                    ->disk('public')
                     ->defaultImageUrl(url('/images/avatar-default.svg')),
                 TextColumn::make('phone')
                     ->searchable()

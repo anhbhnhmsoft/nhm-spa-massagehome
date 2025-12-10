@@ -34,6 +34,8 @@ return
                 'position' => 'Vị trí',
                 'is_featured' => 'Nổi bật',
                 'usage_count' => 'Số lần sử dụng',
+                'effective_date' => 'Ngày hiệu lực',
+                'application_date' => 'Ngày đăng ký',
             ],
             'action' => [
                 'view' => 'Xem',
@@ -115,6 +117,7 @@ return
                 "system_info" => "Thông tin hệ thống",
                 "registration_info" => "Thông tin đăng ký",
                 "personal_info" => "Thông tin cá nhân",
+                'agency' => 'Đối tác',
             ],
             "actions" => [
                 "approve" => [

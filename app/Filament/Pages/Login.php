@@ -23,7 +23,10 @@ class Login extends PagesLogin
     public function mount(): void
     {
         parent::mount();
-        $locale = session('locale', Language::VIETNAMESE->value);
+        if (! session()->has('locale')) {
+            session(['locale' => Language::VIETNAMESE->value]);
+        }
+        $locale = session('locale');
         App::setLocale($locale);
     }
 
