@@ -31,9 +31,9 @@ class DatabaseSeeder extends Seeder
         $this->seedCategory();
         $this->seedAdmin();
         $this->seedKTV();
-//
+        //
         $this->seedConfig();
-//
+        //
         $this->seedCoupon();
     }
 
@@ -128,20 +128,21 @@ class DatabaseSeeder extends Seeder
                         'is_active' => true,
                         'image_url' => $fake->imageUrl(),
                     ]);
-                    foreach ([
-                                 ServiceDuration::FIFTEEN_MINUTE->value,
-                                 ServiceDuration::HALF_HOUR->value,
-                                 ServiceDuration::ONE_HOUR->value,
-                                 ServiceDuration::ONE_AND_HALF_HOUR->value,
-                                 ServiceDuration::TWO_HOUR->value,
-                             ] as $duration) {
+                    foreach (
+                        [
+                            ServiceDuration::FIFTEEN_MINUTE->value,
+                            ServiceDuration::HALF_HOUR->value,
+                            ServiceDuration::ONE_HOUR->value,
+                            ServiceDuration::ONE_AND_HALF_HOUR->value,
+                            ServiceDuration::TWO_HOUR->value,
+                        ] as $duration
+                    ) {
                         $service->options()->create([
                             'duration' => $duration,
                             'price' => $fake->numberBetween(100000, 500000),
                         ]);
                     }
                 }
-
             }
         } catch (\Exception $exception) {
             dump($exception);
@@ -243,7 +244,6 @@ class DatabaseSeeder extends Seeder
                 'usage_count' => fake()->numberBetween(0, 100),
                 'is_active' => true,
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
             dump($e);
@@ -315,7 +315,6 @@ class DatabaseSeeder extends Seeder
                     'description' => 'Mã checksum key PayOS dùng để tích hợp thanh toán PayOS.',
                 ]
             );
-
         } catch (\Exception $e) {
             DB::rollBack();
             dump($e);

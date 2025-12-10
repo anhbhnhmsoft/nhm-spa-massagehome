@@ -30,6 +30,7 @@ class ViewKTVApply extends ViewRecord
 
                     if ($this->record->reviewApplication) {
                         $this->record->reviewApplication->status = ReviewApplicationStatus::APPROVED;
+                        $this->record->reviewApplication->effective_date = now();
                         $this->record->reviewApplication->save();
                     }
 
@@ -95,7 +96,8 @@ class ViewKTVApply extends ViewRecord
                 'address' => $this->record->reviewApplication->address,
                 'bio' => $this->record->reviewApplication->bio,
                 'experience' => $this->record->reviewApplication->experience,
-                'skills' => $this->record->reviewApplication->skills,
+                'agency_id' => $this->record->reviewApplication->agency_id,
+                ''
             ];
         }
 

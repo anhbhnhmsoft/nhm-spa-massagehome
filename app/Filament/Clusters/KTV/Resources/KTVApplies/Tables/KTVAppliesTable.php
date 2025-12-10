@@ -28,7 +28,7 @@ class KTVAppliesTable
                     ->sortable(),
                 ImageColumn::make('profile.avatar_url')
                     ->label(__('admin.common.table.avatar'))
-                    ->circular()
+                    ->disk('public')
                     ->defaultImageUrl(url('/images/avatar-default.svg')),
 
                 TextColumn::make('phone')

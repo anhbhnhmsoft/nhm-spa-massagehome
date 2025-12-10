@@ -34,11 +34,10 @@ class CreateKTVApply extends CreateRecord
         $result = $userService->makeNewApplyKTV($data);
 
         if ($result->isSuccess()) {
-            Notification::make()
-                ->title(__('admin.notification.success.create_success'))
-                ->success()
-                ->send();
-
+            // Notification::make()
+            //     ->title(__('admin.notification.success.create_success'))
+            //     ->success()
+            //     ->send();
             return $result->getData();
         }
 

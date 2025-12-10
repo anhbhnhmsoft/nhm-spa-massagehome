@@ -4,14 +4,21 @@ namespace App\Filament\Clusters\KTV\Resources\KTVs\Schemas;
 
 use App\Enums\DirectFile;
 use App\Enums\Gender;
+use App\Enums\ReviewApplicationStatus;
+use App\Enums\UserFileType;
 use App\Enums\UserRole;
+use App\Models\Province;
+use App\Models\User;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Pages\CreateRecord;
+use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
@@ -19,6 +26,7 @@ class KTVForm
 {
     public static function configure(Schema $schema): Schema
     {
+        $lang = app()->getLocale();
         return $schema
             ->components([
                 Section::make(__('admin.common.table.basic_info'))
@@ -91,6 +99,97 @@ class KTVForm
                     ])
                     ->columns(2),
 
+                Section::make(__('admin.ktv_apply.fields.registration_info'))
+                    ->schema([
+                        Select::make('reviewApplication.status')
+                            ->label(__('admin.common.table.status'))
+                            ->options(ReviewApplicationStatus::toOptions())
+                            ->default(ReviewApplicationStatus::PENDING),
+                        Select::make('reviewApplication.agency_id')
+                            ->label(__('admin.ktv_apply.fields.agency'))
+                            ->searchable()
+                            ->options(fn() => User::where('role', UserRole::AGENCY->value)->where('is_active', true)->pluck('name', 'id'))
+                            ->disabled(fn($livewire) => $livewire instanceof ViewRecord)
+                            ->columnSpan(1),
+                        Select::make('reviewApplication.province.name')
+                            ->label(__('admin.ktv_apply.fields.province'))
+                            ->searchable()
+                            ->options(fn() => Province::all()->pluck('name', 'code'))
+                            ->disabled(fn($livewire) => $livewire instanceof ViewRecord)
+                            ->columnSpan(1),
+
+                        Textarea::make('reviewApplication.address')
+                            ->label(__('admin.ktv_apply.fields.address'))
+                            ->disabled(fn($livewire) => $livewire instanceof ViewRecord)
+                            ->rows(2),
+
+                        TextInput::make('reviewApplication.experience')
+                            ->label(__('admin.ktv_apply.fields.experience'))
+                            ->disabled(fn($livewire) => $livewire instanceof ViewRecord)
+                            ->suffix(__('admin.ktv_apply.fields.years')),
+
+                        Textarea::make('reviewApplication.bio.' . $lang)
+                            ->label(__('admin.ktv_apply.fields.experience_desc'))
+                            ->rows(3)
+                            ->columnSpanFull(),
+
+                    ])
+                    ->columns(2),
+
+                Section::make(__('admin.ktv_apply.fields.files'))
+                    ->schema([
+                        Repeater::make('files')
+                            ->label(__('admin.ktv_apply.fields.files'))
+                            ->relationship('files')
+                            ->columns(3)
+                            ->schema([
+                                Select::make('type')
+                                    ->label(__('admin.ktv_apply.fields.file_type'))
+                                    ->options(UserFileType::toOptions())
+                                    ->required()
+                                    ->columnSpan(1),
+
+                                FileUpload::make('file_path')
+                                    ->label('File')
+                                    ->directory(DirectFile::KTVA->value)
+                                    ->disk('private')
+                                    ->required()
+                                    ->downloadable()
+                                    ->columnSpan(2),
+                            ])
+                            ->columns(3)
+                            ->addable(true)
+                            ->deletable(true)
+                            ->reorderable(true)
+                            ->minItems(1)
+                            ->defaultItems(1)
+                            ->validationMessages([
+                                'min' => __('common.error.min_items', ['min' => 1]),
+                                'required' => __('common.error.required'),
+                            ]),
+                    ]),
+
+                Section::make(__('admin.ktv_apply.fields.system_info'))
+                    ->schema([
+                        Placeholder::make('created_at')
+                            ->label(__('admin.common.table.created_at'))
+                            ->content(fn($record) => $record?->created_at?->format('d/m/Y H:i:s')),
+
+                        Placeholder::make('updated_at')
+                            ->label(__('admin.common.table.updated_at'))
+                            ->content(fn($record) => $record?->updated_at?->format('d/m/Y H:i:s')),
+                        Placeholder::make('reviewApplication.effective_date')
+                            ->label(__('admin.common.table.effective_date'))
+                            ->content(fn($record) => $record?->reviewApplication?->effective_date?->format('d/m/Y H:i:s')),
+
+                        Placeholder::make('reviewApplication.application_date')
+                            ->label(__('admin.common.table.application_date'))
+                            ->content(fn($record) => $record?->reviewApplication?->application_date?->format('d/m/Y H:i:s')),
+
+                    ])
+                    ->columns(2)
+                    ->collapsed(),
+
                 Section::make(__('admin.common.table.account_info'))
                     ->schema([
 
@@ -102,12 +201,10 @@ class KTVForm
 
                         Toggle::make('is_active')
                             ->label(__('admin.common.table.status'))
-                            ->default(true)
-                            ->hidden(fn($livewire) => $livewire instanceof CreateRecord),
+                            ->default(true),
                         DateTimePicker::make('last_login_at')
                             ->label(__('admin.common.table.last_login'))
-                            ->disabled()
-                            ->hidden(fn($livewire) => $livewire instanceof CreateRecord),
+                            ->disabled(),
                     ])
                     ->columns(2),
 
