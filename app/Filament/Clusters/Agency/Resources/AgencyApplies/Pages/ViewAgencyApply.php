@@ -1,17 +1,18 @@
 <?php
 
-namespace App\Filament\Clusters\KTV\Resources\KTVApplies\Pages;
+namespace App\Filament\Clusters\Agency\Resources\AgencyApplies\Pages;
 
 use App\Enums\ReviewApplicationStatus;
-use App\Filament\Clusters\KTV\Resources\KTVApplies\KTVApplyResource;
+use App\Filament\Clusters\Agency\Resources\AgencyApplies\AgencyApplyResource;
+use App\Services\UserService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 
-class ViewKTVApply extends ViewRecord
+class ViewAgencyApply extends ViewRecord
 {
-    protected static string $resource = KTVApplyResource::class;
+    protected static string $resource = AgencyApplyResource::class;
 
     protected function getHeaderActions(): array
     {
@@ -25,22 +26,24 @@ class ViewKTVApply extends ViewRecord
                 ->modalDescription(__('admin.ktv_apply.actions.approve.description'))
                 ->visible(fn() => $this->record->reviewApplication?->status === ReviewApplicationStatus::PENDING || $this->record->reviewApplication?->status === ReviewApplicationStatus::REJECTED)
                 ->action(function () {
-                    $this->record->is_active = true;
-                    $this->record->save();
 
-                    if ($this->record->reviewApplication) {
-                        $this->record->reviewApplication->status = ReviewApplicationStatus::APPROVED;
-                        $this->record->reviewApplication->effective_date = now();
-                        $this->record->reviewApplication->save();
+                    $userService = app(UserService::class);
+                    $result = $userService->activeKTVapply($this->record->id);
+                    if ($result->isSuccess()) {
+                        Notification::make()
+                            ->success()
+                            ->title(__('admin.ktv_apply.actions.approve.success_title'))
+                            ->body(__('admin.ktv_apply.actions.approve.success_body'))
+                            ->send();
+                    } else {
+                        Notification::make()
+                            ->error()
+                            ->title(__('admin.ktv_apply.actions.approve.error_title'))
+                            ->body($result->getMessage())
+                            ->send();
                     }
 
-                    Notification::make()
-                        ->success()
-                        ->title(__('admin.ktv_apply.actions.approve.success_title'))
-                        ->body(__('admin.ktv_apply.actions.approve.success_body'))
-                        ->send();
-
-                    return redirect()->to(KTVApplyResource::getUrl('index'));
+                    return redirect()->to(AgencyApplyResource::getUrl('index'));
                 }),
 
             Action::make('reject')
@@ -59,10 +62,11 @@ class ViewKTVApply extends ViewRecord
                 ])
                 ->visible(fn() => $this->record->reviewApplication?->status === ReviewApplicationStatus::PENDING)
                 ->action(function (array $data) {
+
                     if ($this->record->reviewApplication) {
                         $this->record->reviewApplication->status = ReviewApplicationStatus::REJECTED;
                         $this->record->reviewApplication->note = $data['note'] ?? null;
-                        $this->record->reviewApplication->save();
+                        $this->record->reviewApplication->save();;
                     }
 
                     Notification::make()
@@ -71,7 +75,7 @@ class ViewKTVApply extends ViewRecord
                         ->body(__('admin.ktv_apply.actions.reject.success_body'))
                         ->send();
 
-                    return redirect()->to(KTVApplyResource::getUrl('index'));
+                    return redirect()->to(AgencyApplyResource::getUrl('index'));
                 }),
         ];
     }

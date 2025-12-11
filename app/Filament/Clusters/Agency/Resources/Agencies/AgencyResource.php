@@ -1,16 +1,15 @@
 <?php
 
-namespace App\Filament\Clusters\KTV\Resources\KTVs;
+namespace App\Filament\Clusters\Agency\Resources\Agencies;
 
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserRole;
-use App\Filament\Clusters\KTV\KTVCluster;
-use App\Filament\Clusters\KTV\Resources\KTVs\Tables\KTVsTable;
-use App\Filament\Clusters\KTV\Resources\KTVs\Pages\CreateKTV;
-use App\Filament\Clusters\KTV\Resources\KTVs\Pages\ListKTVs;
-use App\Filament\Clusters\KTV\Resources\KTVs\Schemas\KTVForm;
-use App\Filament\Clusters\KTV\Resources\KTVs\Pages\EditKTV;
-use App\Filament\Clusters\KTV\Resources\KTVs\Pages\ViewKTV;
+use App\Filament\Clusters\Agency\AgencyCluster;
+use App\Filament\Clusters\Agency\Resources\Agencies\Pages\CreateAgency;
+use App\Filament\Clusters\Agency\Resources\Agencies\Pages\EditAgency;
+use App\Filament\Clusters\Agency\Resources\Agencies\Pages\ListAgencies;
+use App\Filament\Clusters\Agency\Resources\Agencies\Schemas\AgencyForm;
+use App\Filament\Clusters\Agency\Resources\Agencies\Tables\AgenciesTable;
 use App\Models\User;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -20,52 +19,24 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class KTVResource extends Resource
+class AgencyResource extends Resource
 {
     protected static ?string $model = User::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    protected static ?string $cluster = KTVCluster::class;
+    protected static ?string $cluster = AgencyCluster::class;
 
     protected static ?string $recordTitleAttribute = 'User';
 
     public static function form(Schema $schema): Schema
     {
-        return KTVForm::configure($schema);
+        return AgencyForm::configure($schema);
     }
 
     public static function table(Table $table): Table
     {
-        return KTVsTable::configure($table);
-    }
-
-    public static function getEloquentQuery(): Builder
-    {
-        $query = parent::getEloquentQuery();
-
-        $query = $query->where('role', UserRole::KTV->value)
-            ->with('profile', 'reviewApplication')
-            ->whereRelation('reviewApplication', 'status', ReviewApplicationStatus::APPROVED->value)
-            ->withoutGlobalScopes([
-                SoftDeletingScope::class,
-            ]);
-        return $query;
-    }
-
-    // public static function getNavigationGroup(): \UnitEnum|string|null
-    // {
-    //     return __('admin.nav.ktv');
-    // }
-
-    public static function getNavigationLabel(): string
-    {
-        return __('admin.ktv.label');
-    }
-
-    public static function getModelLabel(): string
-    {
-        return __('admin.ktv.label');
+        return AgenciesTable::configure($table);
     }
 
     public static function getRelations(): array
@@ -74,19 +45,40 @@ class KTVResource extends Resource
             //
         ];
     }
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        $query = $query->where('role', UserRole::AGENCY->value)
+            ->with('reviewApplication', 'files')
+            ->whereRelation('reviewApplication', 'status', ReviewApplicationStatus::APPROVED->value)
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
+        return $query;
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('admin.agency.label');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('admin.agency.label');
+    }
 
     public static function getPages(): array
     {
         return [
-            'index' => ListKTVs::route('/'),
-            'create' => CreateKTV::route('/create'),
-            'edit' => EditKTV::route('/{record}/edit'),
+            'index' => ListAgencies::route('/'),
+            'create' => CreateAgency::route('/create'),
+            'edit' => EditAgency::route('/{record}/edit'),
         ];
     }
 
     public static function getRecordRouteBindingEloquentQuery(): Builder
     {
-
         return parent::getRecordRouteBindingEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
