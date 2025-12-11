@@ -4,9 +4,10 @@ namespace App\Enums;
 
 enum WalletTransactionType: int
 {
-    case DEPOSIT = 1; // Nạp tiền
-    case WITHDRAWAL = 2; // Rút tiền (Yêu cầu)
-    case PAYMENT = 3; // Thanh toán (Booking)
-    case AFFILIATE = 4; // Nhận hoa hồng
-    case REFUND = 5; // Hoàn tiền
+    case DEPOSIT_QR_CODE = 1; // Nạp tiền qua mã QR
+    case DEPOSIT_ZALO_PAY = 2; // Nạp tiền qua Zalo Pay
+    case DEPOSIT_MOMO_PAY = 3; // Nạp tiền qua Momo Pay
+    case WITHDRAWAL = 4; // Rút tiền (Yêu cầu)
+    case PAYMENT = 5; // Thanh toán (Booking)
+    case AFFILIATE = 6; // Nhận hoa hồng
 }

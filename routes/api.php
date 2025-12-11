@@ -10,7 +10,7 @@ use App\Http\Controllers\API\UserController;
 use Illuminate\Support\Facades\Route;
 
 
-Route::middleware('set-locale')->group(function () {
+Route::middleware('set-api-locale')->group(function () {
     // Authenticate routes
     Route::prefix('auth')->group(function () {
         // Guest middleware
@@ -96,7 +96,7 @@ Route::middleware('set-locale')->group(function () {
         // Lấy danh sách dịch vụ
         Route::middleware(['auth:sanctum'])->group(function () {
             Route::get('wallet', [PaymentController::class, 'userWallet']);
-
+            Route::get('config-payment', [PaymentController::class, 'configPayment']);
             Route::post('create-payment-service', [PaymentController::class, 'createPaymentService']);
         });
     });

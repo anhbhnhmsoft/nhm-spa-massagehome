@@ -33,7 +33,6 @@ final class Helper
     public static function createDescPayment(PaymentType $paymentType): string
     {
         return match ($paymentType) {
-            PaymentType::CASH => 'Pay cash',
             PaymentType::QR_BANKING => "QRBK".self::getTimestampAsId(),
             PaymentType::ZALO_PAY => "ZLPY".self::getTimestampAsId(),
             PaymentType::MOMO_PAY => "MMPY".self::getTimestampAsId(),

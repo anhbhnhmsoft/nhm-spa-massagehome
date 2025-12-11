@@ -127,9 +127,10 @@
     - Quan hệ 1-1 với bảng users.
 
     # cấu trúc
+    - id (bigint, primary key, auto-increment)
     - user_id (bigint, foreign key to users.id) -- id người dùng
-    - balance (decimal(15,2), default 0.00) -- số dư ví tiền
-    - password (varchar, nullable) -- mật khẩu ví tiền (nếu có)
+    - balance (decimal(15,2), default 0.00) -- số dư ví tiền -> là point riêng của hệ thống
+    - is_active (boolean, default true) -- trạng thái hoạt động của ví tiền
     - softDeletes
     - timestamps
 
@@ -142,12 +143,20 @@
 
     # cấu trúc
     - id (bigint, primary key, auto-increment)
-    - wallet_id (bigint, foreign key to wallets.id) -- id ví tiền
+    - user_id (bigint, foreign key to users.id) -- id người dùng
+    - foreign_key (unsigned bigint, nullable) -- khóa ngoại liên kết với bảng khác (ví dụ: order_id, payment_id)
+    - transaction_code (varchar) -- mã giao dịch
+    - transaction_id (varchar, nullable) -- id giao dịch bên thứ 3
+    - metadata (text, nullable) -- Dữ liệu bổ sung liên quan đến giao dịch, có thể là thông tin bổ sung từ hệ thống thanh toán
     - type (smallint) -- loại giao dịch (trong enum TransactionType)
-    - amount (decimal(15,2)) -- số tiền
-    - balance_after (decimal(15,2)) -- số dư ví sau giao dịch
+
+    - money_amount (decimal(15,2), nullable) -- số tiền thực tế (số tiền người dùng nạp, rút)
+    - exchange_rate_point (decimal(15,2), nullable, default 0.00) -- tỷ giá đổi tiền (số tiền point đổi thành 1 unit tiền)
+    - point_amount (decimal(15,2), nullable) -- số tiền point (số tiền point sau khi đổi tiền)
+    - balance_after (decimal(15,2), nullable) -- số dư ví sau giao dịch (số tiền point sau khi giao dịch)
     - status (smallint) -- trạng thái giao dịch (trong enum TransactionStatus)
     - description (varchar, nullable) -- mô tả giao dịch
+    - expired_at (timestamp, nullable) -- thời gian hết hạn (nếu có)
     - softDeletes
     - timestamps
 

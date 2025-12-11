@@ -13,6 +13,12 @@ class WalletRepository extends BaseRepository
         return Wallet::class;
     }
 
+    public function queryWallet()
+    {
+        return $this->query()
+            ->where('is_active', true);
+    }
+
     public function filterQuery(Builder $query, array $filters): Builder
     {
         return $query;

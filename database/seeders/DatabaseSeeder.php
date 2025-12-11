@@ -31,10 +31,8 @@ class DatabaseSeeder extends Seeder
         $this->seedCategory();
         $this->seedAdmin();
         $this->seedKTV();
-        //
-        $this->seedConfig();
-        //
         $this->seedCoupon();
+        $this->seedConfig();
     }
 
     protected function seedAdmin(): void
@@ -313,6 +311,22 @@ class DatabaseSeeder extends Seeder
                     'config_value' => 'bcdaecc9ad73edff55c076519e5ab5e127fd9681c13cfd19de1dfa29d9d8fce9',
                     'config_type' => ConfigType::STRING->value,
                     'description' => 'Mã checksum key PayOS dùng để tích hợp thanh toán PayOS.',
+                ]
+            );
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::PAYOS_CHECKSUM_KEY->value],
+                [
+                    'config_value' => 'bcdaecc9ad73edff55c076519e5ab5e127fd9681c13cfd19de1dfa29d9d8fce9',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'Mã checksum key PayOS dùng để tích hợp thanh toán PayOS.',
+                ]
+            );
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::CURRENCY_EXCHANGE_RATE->value],
+                [
+                    'config_value' => '1000',
+                    'config_type' => ConfigType::NUMBER->value,
+                    'description' => 'Tỷ giá đổi tiền VNĐ -> Point VD: 1000 VNĐ = 1 Point',
                 ]
             );
         } catch (\Exception $e) {

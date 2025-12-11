@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Core\GenerateId\HasBigIntId;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Wallet extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes, HasBigIntId;
 
     /**
      * The table associated with the model.
@@ -17,20 +19,6 @@ class Wallet extends Model
     protected $table = 'wallets';
 
     /**
-     * The primary key associated with the table.
-     *
-     * @var string
-     */
-    protected $primaryKey = 'user_id';
-
-    /**
-     * Indicates if the model's ID is auto-incrementing.
-     *
-     * @var bool
-     */
-    public $incrementing = false;
-
-    /**
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
@@ -38,7 +26,7 @@ class Wallet extends Model
     protected $fillable = [
         'user_id',
         'balance',
-        'password',
+        'is_active',
     ];
 
     /**
@@ -47,12 +35,10 @@ class Wallet extends Model
      * @var array<string, string>
      */
     protected $casts = [
+        'id' => 'string',
         'user_id' => 'string',
+        'is_active' => 'boolean',
         'balance' => 'decimal:2',
-    ];
-
-    protected $hidden = [
-        'password',
     ];
 
     /**
@@ -68,6 +54,6 @@ class Wallet extends Model
      */
     public function transactions()
     {
-        return $this->hasMany(WalletTransaction::class, 'wallet_id', 'user_id');
+        return $this->hasMany(WalletTransaction::class, 'wallet_id', 'id');
     }
 }

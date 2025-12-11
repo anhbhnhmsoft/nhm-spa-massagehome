@@ -209,30 +209,35 @@ return new class extends Migration
 
         Schema::create('wallets', function (Blueprint $table) {
             $table->comment('Bảng wallets lưu trữ thông tin ví tiền của người dùng');
-            // Dùng user_id làm Khóa chính & Khóa ngoại (Quan hệ 1-1)
-            $table->bigInteger('user_id')->primary();
+            $table->id();
+            $table->unsignedBigInteger('user_id')->comment('ID người dùng');
             // Dùng decimal cho tiền tệ
-            $table->decimal('balance', 15, 2)->default(0.00);
-            $table->string('password')->nullable();
+            $table->decimal('balance', 15, 2)->default(0.00)->comment('Số dư ví tiền -> là point riêng của hệ thống');
+            $table->boolean('is_active')->default(true)->comment('Trạng thái kích hoạt');
             // Không cần softDeletes, vì nó theo user
             $table->timestamps();
-
             // Khai báo khóa ngoại
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->softDeletes();
         });
 
         Schema::create('wallet_transactions', function (Blueprint $table) {
+            $table->comment('Bảng wallet_transactions lưu trữ thông tin giao dịch ví tiền');
             $table->id();
-            $table->bigInteger('wallet_id');
-            $table->smallInteger('type');
-            $table->decimal('amount', 15, 2);
-            $table->decimal('balance_after', 15, 2);
-            $table->smallInteger('status');
-            $table->string('description')->nullable();
-            $table->softDeletes();
-            $table->timestamps();
-
-            $table->foreign('wallet_id')->references('user_id')->on('wallets');
+            $table->unsignedBigInteger('wallet_id')->comment('ID ví tiền');
+            $table->foreign('wallet_id')->references('id')->on('wallets')->onDelete('cascade');
+            $table->unsignedBigInteger('foreign_key')->nullable()->comment('Khóa ngoại liên kết với bảng khác');
+            $table->string('transaction_code')->comment('Mã giao dịch');
+            $table->string('transaction_id')->nullable()->comment('ID giao dịch bên thứ 3');
+            $table->text('metadata')->nullable()->comment('Dữ liệu bổ sung liên quan đến giao dịch');
+            $table->smallInteger('type')->comment('Loại giao dịch (trong enum TransactionType)');
+            $table->decimal('money_amount', 15, 2)->nullable()->comment('Số tiền thực tế (số tiền người dùng nạp, rút)');
+            $table->decimal('exchange_rate_point', 15, 2)->nullable()->default(0.00)->comment('Tỷ giá đổi tiền (số tiền point đổi thành 1 unit tiền)');
+            $table->decimal('point_amount', 15, 2)->nullable()->comment('Số tiền point (số tiền point sau khi đổi tiền)');
+            $table->decimal('balance_after', 15, 2)->nullable()->comment('Số dư ví sau giao dịch (số tiền point sau khi giao dịch)');
+            $table->smallInteger('status')->comment('Trạng thái giao dịch (trong enum TransactionStatus)');
+            $table->string('description')->nullable()->comment('Mô tả giao dịch');
+            $table->timestamp('expired_at')->nullable()->comment('Thời gian hết hạn (nếu có)');
         });
 
         Schema::create('affiliate_registrations', function (Blueprint $table) {

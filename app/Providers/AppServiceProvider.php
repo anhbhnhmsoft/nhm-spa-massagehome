@@ -12,9 +12,11 @@ use App\Repositories\UserProfileRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\UserReviewApplicationRepository;
 use App\Repositories\WalletRepository;
+use App\Repositories\WalletTransactionRepository;
 use App\Services\AuthService;
 use App\Services\BookingService;
 use App\Services\ConfigService;
+use App\Services\PaymentService;
 use App\Services\PayOsService;
 use App\Services\ServiceService;
 use App\Services\UserService;
@@ -56,6 +58,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(CouponRepository::class);
         $this->app->singleton(UserFileRepository::class);
         $this->app->singleton(UserReviewApplicationRepository::class);
+        $this->app->singleton(WalletTransactionRepository::class);
     }
 
     /**
@@ -71,5 +74,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(ServiceService::class);
         $this->app->singleton(UserService::class);
         $this->app->singleton(BookingService::class);
+        $this->app->singleton(PaymentService::class);
     }
 }
