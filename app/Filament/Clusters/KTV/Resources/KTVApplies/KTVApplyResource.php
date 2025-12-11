@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\KTV\Resources\KTVApplies;
 
+use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserRole;
 use App\Filament\Clusters\KTV\KTVCluster;
 use App\Filament\Clusters\KTV\Resources\KTVApplies\Pages\CreateKTVApply;
@@ -69,8 +70,8 @@ class KTVApplyResource extends Resource
         $query = parent::getEloquentQuery();
 
         return $query->where('role', UserRole::KTV->value)
-            ->where('is_active', false)
             ->with('profile', 'reviewApplication', 'files')
+            ->whereRelation('reviewApplication', 'status', '!=', ReviewApplicationStatus::APPROVED->value)
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

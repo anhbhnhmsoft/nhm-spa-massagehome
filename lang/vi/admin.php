@@ -4,6 +4,7 @@ return
         "nav" => [
             "ktv" => "Quản lý kỹ thuật viên",
             "category" => "Quản lý danh mục",
+            'agency' => 'Quản lý đối tác',
         ],
         "user" => [
             "label" => "Kỹ thuật viên"
@@ -36,6 +37,7 @@ return
                 'usage_count' => 'Số lần sử dụng',
                 'effective_date' => 'Ngày hiệu lực',
                 'application_date' => 'Ngày đăng ký',
+                'referral_code' => 'Mã giới thiệu',
             ],
             'action' => [
                 'view' => 'Xem',
@@ -102,6 +104,7 @@ return
                 "identity_card_back" => "CMND/CCCD mặt sau",
                 "license" => "Bằng cấp/Chứng chỉ",
                 "health_insurance" => "Bảo hiểm y tế",
+                "business_image" => "Hình ảnh doanh nghiệp",
             ],
             "fields" => [
                 "experience" => "Kinh nghiệm",
@@ -117,7 +120,7 @@ return
                 "system_info" => "Thông tin hệ thống",
                 "registration_info" => "Thông tin đăng ký",
                 "personal_info" => "Thông tin cá nhân",
-                'agency' => 'Đối tác',
+                'agency' => 'Cơ sở làm việc',
             ],
             "actions" => [
                 "approve" => [
@@ -126,6 +129,7 @@ return
                     "description" => "Bạn có chắc chắn muốn duyệt hồ sơ này?",
                     "success_title" => "Duyệt hồ sơ thành công",
                     "success_body" => "Hồ sơ KTV đã được duyệt.",
+                    "error_title" => "Duyệt hồ sơ thất bại",
                 ],
                 "reject" => [
                     "label" => "Từ chối hồ sơ",
@@ -158,5 +162,44 @@ return
                 'update_error' => 'Cập nhật thất bại',
                 'create_error' => 'Tạo thất bại',
             ],
-        ]
+        ],
+        'agency' => [
+            'label' => 'Đối tác'
+        ],
+        'agency_apply' => [
+            'label' => 'Đối tác đăng ký',
+            'fields' => [
+                'name' => 'Tên',
+                'email' => 'Email',
+                'phone' => 'Số điện thoại',
+                'address' => 'Địa chỉ',
+                'province' => 'Tỉnh/Thành phố',
+                'files' => 'Hồ sơ',
+                'personal_info' => 'Thông tin cá nhân',
+                'registration_info' => 'Thông tin đăng ký',
+                'system_info' => 'Thông tin hệ thống',
+                'file_type' => 'Loại file',
+                'bio' => 'Giới thiệu doanh nghiệp',
+                'status' => 'Trạng thái',
+                'note' => 'Ghi chú',
+            ],
+            'actions' => [
+                'approve' => [
+                    'label' => 'Duyệt hồ sơ',
+                    'heading' => 'Duyệt hồ sơ Đối tác',
+                    'description' => 'Bạn có chắc chắn muốn duyệt hồ sơ này?',
+                    'reason_label' => 'Lý do từ chối',
+                    'success_title' => 'Duyệt hồ sơ thành công',
+                    'success_body' => 'Hồ sơ Đối tác đã được duyệt.',
+                ],
+                'reject' => [
+                    'label' => 'Từ chối hồ sơ',
+                    'heading' => 'Từ chối hồ sơ Đối tác',
+                    'description' => 'Bạn có chắc chắn muốn từ chối hồ sơ này?',
+                    'reason_label' => 'Lý do từ chối',
+                    'success_title' => 'Từ chối hồ sơ thành công',
+                    'success_body' => 'Hồ sơ Đối tác đã bị từ chối.',
+                ],
+            ],
+        ],
     ];

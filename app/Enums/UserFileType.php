@@ -8,6 +8,7 @@ enum UserFileType: int
     case IDENTITY_CARD_BACK = 2;
     case LICENSE = 3;
     case HEALTH_INSURANCE = 4;
+    case BUSINESS_IMAGE = 5;
 
     public function label(): string
     {
@@ -16,6 +17,7 @@ enum UserFileType: int
             self::IDENTITY_CARD_BACK => __('admin.ktv_apply.file_type.identity_card_back'),
             self::LICENSE => __('admin.ktv_apply.file_type.license'),
             self::HEALTH_INSURANCE => __('admin.ktv_apply.file_type.health_insurance'),
+            self::BUSINESS_IMAGE => __('admin.ktv_apply.file_type.business_image'),
         };
     }
 

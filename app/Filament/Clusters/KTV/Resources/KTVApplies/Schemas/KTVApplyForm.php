@@ -30,111 +30,121 @@ class KTVApplyForm
             ->components([
                 Section::make(__('admin.ktv_apply.fields.personal_info'))
                     ->schema([
-                        FileUpload::make('profile.avatar_url')
-                            ->label(__('admin.common.table.avatar'))
-                            ->image()
-                            ->disk('public')
-                            ->directory(DirectFile::KTVA->value)
-                            ->required()
-                            ->image()
-                            ->disabled(fn($livewire) => $livewire instanceof ViewRecord)
-                            ->downloadable()
-                            ->maxSize(102400)
-                            ->validationMessages([
-                                'required' => __('common.error.required'),
-                            ]),
+                        Section::make([
+                            TextInput::make('name')
+                                ->label(__('admin.common.table.name'))
+                                ->required()
+                                ->maxLength(255)
+                                
+                                ->validationMessages([
+                                    'required' => __('common.error.required'),
+                                    'max'      => __('common.error.max_length', ['max' => 255])
+                                ]),
 
-                        TextInput::make('name')
-                            ->label(__('admin.common.table.name'))
-                            ->required()
-                            ->maxLength(255)
-                            ->disabled(fn($livewire) => $livewire instanceof ViewRecord)
-                            ->validationMessages([
-                                'required' => __('common.error.required'),
-                                'max'      => __('common.error.max_length', ['max' => 255])
-                            ]),
+                            TextInput::make('phone')
+                                ->label(__('admin.common.table.phone'))
+                                ->tel()
+                                ->maxLength(20)
+                                ->numeric()
+                                ->required()
+                                ->unique()
+                                ->validationMessages([
+                                    'max'      => __('common.error.max_length', ['max' => 20]),
+                                    'numeric'  => __('common.error.numeric'),
+                                    'max_digits' => __('common.error.max_digits', ['max' => 20]),
+                                    'required' => __('common.error.required'),
+                                    'unique'   => __('common.error.unique'),
+                                ])
+                                ,
+                            TextInput::make('password')
+                                ->label(__('admin.common.table.password'))
+                                ->password()
+                                ->required(fn($livewire) => $livewire instanceof CreateRecord)
+                                ->dehydrateStateUsing(fn($state) => filled($state) ? bcrypt($state) : null)
+                                ->dehydrated(fn($state) => filled($state))
+                                ->revealable()
+                                ->maxLength(255)
+                                ->validationMessages([
+                                    'required' => __('common.error.required'),
+                                    'max'      => __('common.error.max_length', ['max' => 255])
+                                ])
+                                ->hidden(fn($livewire) => $livewire instanceof ViewRecord),
+                        ]),
+                        Section::make()
+                            ->relationship('profile')
+                            ->schema([
+                                FileUpload::make('avatar_url')
+                                    ->label(__('admin.common.table.avatar'))
+                                    ->image()
+                                    ->disk('public')
+                                    ->directory(DirectFile::KTVA->value)
+                                    ->required()
+                                    ->image()
+                                    
+                                    ->downloadable()
+                                    ->maxSize(102400)
+                                    ->validationMessages([
+                                        'required' => __('common.error.required'),
+                                    ]),
+                                Select::make('gender')
+                                    ->label(__('admin.common.table.gender'))
+                                    ->options(Gender::toOptions())
+                                    ,
 
-                        TextInput::make('phone')
-                            ->label(__('admin.common.table.phone'))
-                            ->tel()
-                            ->maxLength(20)
-                            ->numeric()
-                            ->required()
-                            ->unique(ignoreRecord: true)
-                            ->validationMessages([
-                                'max'      => __('common.error.max_length', ['max' => 20]),
-                                'numeric'  => __('common.error.numeric'),
-                                'max_digits' => __('common.error.max_digits', ['max' => 20]),
-                                'required' => __('common.error.required'),
-                                'unique'   => __('common.error.unique'),
+                                DatePicker::make('date_of_birth')
+                                    ->label(__('admin.common.table.date_of_birth'))
+                                    ,
+
+                                Textarea::make('bio')
+                                    ->label(__('admin.ktv_apply.fields.bio'))
+                                    
+                                    ->rows(3),
                             ])
-                            ->disabled(fn($livewire) => $livewire instanceof ViewRecord),
-                        TextInput::make('password')
-                            ->label(__('admin.common.table.password'))
-                            ->password()
-                            ->required(fn($livewire) => $livewire instanceof CreateRecord)
-                            ->dehydrateStateUsing(fn($state) => filled($state) ? bcrypt($state) : null)
-                            ->dehydrated(fn($state) => filled($state))
-                            ->revealable()
-                            ->maxLength(255)
-                            ->validationMessages([
-                                'required' => __('common.error.required'),
-                                'max'      => __('common.error.max_length', ['max' => 255])
-                            ])
-                            ->hidden(fn($livewire) => $livewire instanceof ViewRecord),
-                        Select::make('profile.gender')
-                            ->label(__('admin.common.table.gender'))
-                            ->options(Gender::toOptions())
-                            ->disabled(fn($livewire) => $livewire instanceof ViewRecord),
-
-                        DatePicker::make('profile.date_of_birth')
-                            ->label(__('admin.common.table.date_of_birth'))
-                            ->disabled(fn($livewire) => $livewire instanceof ViewRecord),
-
-                        Textarea::make('profile.bio')
-                            ->label(__('admin.ktv_apply.fields.bio'))
-                            ->disabled(fn($livewire) => $livewire instanceof ViewRecord)
-                            ->rows(3),
                     ])
                     ->columns(2),
-                                //136658687070560809
                 Section::make(__('admin.ktv_apply.fields.registration_info'))
+                    ->relationship('reviewApplication')
                     ->schema([
-                        Select::make('reviewApplication.status')
+                        Select::make('status')
                             ->label(__('admin.common.table.status'))
                             ->options(ReviewApplicationStatus::toOptions())
                             ->default(ReviewApplicationStatus::PENDING)
-                            ->hidden(fn($livewire) => $livewire instanceof CreateRecord)
-                            ->disabled(fn($livewire) => $livewire instanceof ViewRecord),
-                        Select::make('reviewApplication.agency_id')
+                            ,
+                        Select::make('agency_id')
                             ->label(__('admin.ktv_apply.fields.agency'))
                             ->searchable()
                             ->options(fn() => User::where('role', UserRole::AGENCY->value)->where('is_active', true)->pluck('name', 'id'))
-                            ->disabled(fn($livewire) => $livewire instanceof ViewRecord)
+                            
                             ->columnSpan(1),
-                        Select::make('reviewApplication.province.name')
+                        Select::make('province_code')
                             ->label(__('admin.ktv_apply.fields.province'))
                             ->searchable()
                             ->options(fn() => Province::all()->pluck('name', 'code'))
-                            ->disabled(fn($livewire) => $livewire instanceof ViewRecord)
+                            
                             ->columnSpan(1),
 
-                        Textarea::make('reviewApplication.address')
+                        Textarea::make('address')
                             ->label(__('admin.ktv_apply.fields.address'))
-                            ->disabled(fn($livewire) => $livewire instanceof ViewRecord)
                             ->rows(2),
 
-                        TextInput::make('reviewApplication.experience')
+                        TextInput::make('experience')
                             ->label(__('admin.ktv_apply.fields.experience'))
-                            ->disabled(fn($livewire) => $livewire instanceof ViewRecord)
+                            ->numeric()
                             ->suffix(__('admin.ktv_apply.fields.years')),
 
-                        Textarea::make('reviewApplication.bio.' . $lang)
+                        Textarea::make('bio.' . $lang)
                             ->label(__('admin.ktv_apply.fields.experience_desc'))
-                            ->disabled(fn($livewire) => $livewire instanceof ViewRecord)
+                            
                             ->rows(3)
                             ->columnSpanFull(),
-                        
+                        Placeholder::make('reviewApplication.effective_date')
+                            ->label(__('admin.common.table.effective_date'))
+                            ->content(fn($record) => $record?->reviewApplication?->effective_date?->format('d/m/Y H:i:s')),
+
+                        Placeholder::make('reviewApplication.application_date')
+                            ->label(__('admin.common.table.application_date'))
+                            ->content(fn($record) => $record?->reviewApplication?->application_date?->format('d/m/Y H:i:s')),
+
                     ])
                     ->columns(2),
 
@@ -142,13 +152,14 @@ class KTVApplyForm
                     ->schema([
                         Repeater::make('files')
                             ->label(__('admin.ktv_apply.fields.files'))
+                            ->relationship('files')
                             ->columns(3)
                             ->schema([
                                 Select::make('type')
                                     ->label(__('admin.ktv_apply.fields.file_type'))
                                     ->options(UserFileType::toOptions())
                                     ->required()
-                                    ->disabled(fn($livewire) => $livewire instanceof ViewRecord)
+                                    
                                     ->columnSpan(1),
 
                                 FileUpload::make('file_path')
@@ -156,12 +167,12 @@ class KTVApplyForm
                                     ->directory(DirectFile::KTVA->value)
                                     ->disk('private')
                                     ->required()
-                                    ->disabled(fn($livewire) => $livewire instanceof ViewRecord)
+                                    
                                     ->downloadable()
                                     ->columnSpan(2),
                             ])
                             ->columns(3)
-                            ->disabled(fn($livewire) => $livewire instanceof ViewRecord)
+                            
                             ->addable(fn($livewire) => $livewire instanceof CreateRecord)
                             ->deletable(fn($livewire) => $livewire instanceof CreateRecord)
                             ->reorderable(fn($livewire) => $livewire instanceof CreateRecord)
@@ -182,13 +193,7 @@ class KTVApplyForm
                         Placeholder::make('updated_at')
                             ->label(__('admin.common.table.updated_at'))
                             ->content(fn($record) => $record?->updated_at?->format('d/m/Y H:i:s')),
-                        Placeholder::make('reviewApplication.effective_date')
-                            ->label(__('admin.common.table.effective_date'))
-                            ->content(fn($record) => $record?->reviewApplication?->effective_date?->format('d/m/Y H:i:s')),
 
-                        Placeholder::make('reviewApplication.application_date')
-                            ->label(__('admin.common.table.application_date'))
-                            ->content(fn($record) => $record?->reviewApplication?->application_date?->format('d/m/Y H:i:s')),
 
                     ])
                     ->columns(2)

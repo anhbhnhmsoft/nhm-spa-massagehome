@@ -1,16 +1,16 @@
 <?php
 
-namespace App\Filament\Clusters\KTV\Resources\KTVs\Pages;
+namespace App\Filament\Clusters\Agency\Resources\Agencies\Pages;
 
-use App\Filament\Clusters\KTV\Resources\KTVs\KTVResource;
+use App\Filament\Clusters\Agency\Resources\Agencies\AgencyResource;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\RestoreAction;
 use Filament\Resources\Pages\EditRecord;
 
-class EditKTV extends EditRecord
+class EditAgency extends EditRecord
 {
-    protected static string $resource = KTVResource::class;
+    protected static string $resource = AgencyResource::class;
 
     protected function getHeaderActions(): array
     {
