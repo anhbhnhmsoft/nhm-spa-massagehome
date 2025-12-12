@@ -84,5 +84,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(BookingService::class);
         $this->app->singleton(PaymentService::class);
         $this->app->singleton(Dashboard::class);
+        $this->app->singleton(PayOsService::class);
     }
 }

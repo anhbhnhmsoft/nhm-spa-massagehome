@@ -8,4 +8,5 @@ enum ConfigName: string
     case PAYOS_API_KEY = 'PAYOS_API_KEY';
     case PAYOS_CHECKSUM_KEY = 'PAYOS_CHECKSUM_KEY';
     case CURRENCY_EXCHANGE_RATE = 'CURRENCY_EXCHANGE_RATE'; // Tỷ giá đổi tiền VNĐ -> Point
+    case GOONG_API_KEY = 'GOONG_API_KEY';
 }
