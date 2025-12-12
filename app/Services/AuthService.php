@@ -11,6 +11,7 @@ use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
 use App\Enums\Gender;
 use App\Enums\Language;
+use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserRole;
 use App\Models\Service;
 use App\Models\User;
@@ -528,16 +529,20 @@ class AuthService extends BaseService
 
             $userUpdateData = [];
 
+            if (isset($data['old_password']) && isset($data['new_password'])) {
+                if (!Hash::check($data['old_password'], $user->password)) {
+                    return ServiceReturn::error(message: __('auth.error.wrong_password'));
+                }
+                $userUpdateData['password'] = Hash::make($data['new_password']);
+            }
+
             if (isset($data['name'])) {
                 $userUpdateData['name'] = $data['name'];
             }
 
-            if (isset($data['address'])) {
-                $userUpdateData['address'] = $data['address'];
-            }
 
-            if (!empty($data['password'])) {
-                $userUpdateData['password'] = Hash::make($data['password']);
+            if (isset($data['language'])) {
+                $userUpdateData['language'] = $data['language'];
             }
 
             if (!empty($userUpdateData)) {
@@ -552,6 +557,7 @@ class AuthService extends BaseService
             if (isset($data['gender'])) {
                 $profileUpdateData['gender'] = $data['gender'];
             }
+
             if (isset($data['date_of_birth'])) {
                 $profileUpdateData['date_of_birth'] = $data['date_of_birth'];
             }
@@ -560,6 +566,17 @@ class AuthService extends BaseService
                 $user->profile()->updateOrCreate(
                     ['user_id' => $user->id],
                     $profileUpdateData
+                );
+            }
+            $reviewApplyUpdateData = [];
+            if (isset($data['language'])) {
+                $reviewApplyUpdateData['language'] = $data['language'];
+            }
+            if (!empty($reviewApplyUpdateData)) {
+                $user->reviewApplication()->updateOrCreate(
+                    ['user_id' => $user->id],
+                    ['status' => ReviewApplicationStatus::APPROVED->value],
+                    $reviewApplyUpdateData
                 );
             }
             DB::commit();

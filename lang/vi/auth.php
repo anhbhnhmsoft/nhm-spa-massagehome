@@ -9,6 +9,7 @@ return [
         'login' => 'Bạn đã đăng nhập thành công.',
         'user' => 'Thông tin người dùng.',
         'set_language' => 'Ngôn ngữ đã được cập nhật.',
+        'update_success' => 'Cập nhật thông tin thành công.',
     ],
     'error' => [
         'phone_verified' => 'Số điện thoại này đã được đăng ký.',
@@ -28,6 +29,7 @@ return [
         'unauthorized' => 'Bạn không có quyền thực hiện hành động này.',
         'validation_failed' => 'Lỗi xác thực.',
         'unauthenticated' => 'Bạn chưa đăng nhập.',
+        'wrong_password' => 'Mật khẩu cũ không đúng.',
     ],
 
     'admin' => [
