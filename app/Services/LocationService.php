@@ -154,8 +154,8 @@ class LocationService  extends BaseService
             ];
 
             /** 3. Cache job */
-            // ProcessCachingPlaceJob::dispatch([$dataToCache])->onQueue('locations');
-            $this->processCachingPlace([$dataToCache]);
+            ProcessCachingPlaceJob::dispatch([$dataToCache])->onQueue('locations');
+            // $this->processCachingPlace([$dataToCache]);
 
             /** 4. Trả output chuẩn hoá */
             return ServiceReturn::success([
