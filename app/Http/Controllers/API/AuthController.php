@@ -304,18 +304,20 @@ class AuthController extends BaseController
             'name'    => ['nullable', 'string', 'min:4', 'max:255'],
             'address' => ['nullable', 'string', 'max:255'],
             'bio'     => ['nullable', 'string'],
-            'gender'  => ['nullable', 'in:male,female,other'],
+            'gender' => ['nullable', Rule::in(Gender::cases())],
+            'language' => ['nullable', Rule::in(Language::cases())],
             'date_of_birth' => ['nullable', 'date', 'before:today'],
             'old_password' => ['nullable', 'string', 'min:8'],
             'new_password' => ['nullable', 'string', 'min:8'],
-            'confirm_password' => ['nullable', 'same:new_password'],
         ], [
             'name.string'   => __('auth.validation.name_required'),
             'name.min'      => __('auth.validation.name_min'),
             'name.max'      => __('auth.validation.name_max'),
 
-            'address.string' => __('auth.validation.address_invalid'),
-            'address.max'    => __('auth.validation.address_max'),
+            'gender.required' => __('validation.gender.required'),
+            'gender.in' => __('validation.gender.in'),
+            'language.required' => __('validation.language.required'),
+            'language.in' => __('validation.language.in'),
 
             'bio.string' => __('auth.validation.introduce_invalid'),
 
@@ -323,7 +325,6 @@ class AuthController extends BaseController
             'old_password.min'    => __('auth.validation.password_min'),
             'new_password.string' => __('auth.validation.password_required'),
             'new_password.min'    => __('auth.validation.password_min'),
-            'confirm_password.same' => __('auth.validation.confirm_password_same'),
 
             'date_of_birth.date'  => __('auth.validation.date_invalid'),
             'date_of_birth.before' => __('auth.validation.date_before'),
@@ -331,7 +332,8 @@ class AuthController extends BaseController
 
         if ($validator->fails()) {
             return $this->sendError(
-                message: __('auth.error.validation_failed'),
+                message: __('common_error.validation_failed'),
+                code: 422
             );
         }
 
@@ -340,11 +342,13 @@ class AuthController extends BaseController
         $result = $this->authService->editInfoUser($data);
 
         if ($result->isError()) {
-            return $this->sendError($result->getMessage());
+            return $this->sendError(
+                message: $result->getMessage(),
+            );
         }
 
         return $this->sendSuccess(
-            message: __('common.common_success.update_success'),
+            message: __('auth.success.update_success'),
             data: UserResource::make($result->getData())
         );
     }
