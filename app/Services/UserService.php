@@ -16,6 +16,7 @@ use App\Repositories\UserFileRepository;
 use App\Repositories\UserProfileRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\UserReviewApplicationRepository;
+use App\Repositories\WalletRepository;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -26,7 +27,8 @@ class UserService extends BaseService
         protected UserRepository $userRepository,
         protected UserFileRepository $userFileRepository,
         protected UserReviewApplicationRepository $userReviewApplicationRepository,
-        protected UserProfileRepository $userProfileRepository
+        protected UserProfileRepository $userProfileRepository,
+        protected WalletRepository $walletRepository
     ) {
         parent::__construct();
     }
@@ -140,6 +142,12 @@ class UserService extends BaseService
                 'bio' => optional($data['profile'])['bio'] ?? null
             ]);
 
+            $wallet = $this->walletRepository->create([
+                'user_id' => $userInitial->id,
+                'balance' => 0,
+                'is_active' => false
+            ]);
+
             foreach ($data['files'] as $file) {
                 $this->userFileRepository->create([
                     'user_id' => $userInitial->id,
@@ -224,5 +232,190 @@ class UserService extends BaseService
                 message: __("common_error.data_not_found")
             );
         }
+    }
+
+    public function activeKTVapply (int $id)
+    {
+        DB::beginTransaction();
+        try {
+            $user = $this->userRepository->query()->where('id', $id)->first();
+            if (!$user) {
+                throw new ServiceException(
+                    message: __("common_error.data_not_found")
+                );
+            }
+            $user->is_active = true;
+            $user->save();
+
+            if ($user->reviewApplication) {
+                $user->reviewApplication->status = ReviewApplicationStatus::APPROVED;
+                $user->reviewApplication->effective_date = now();
+                $user->reviewApplication->save();
+            }
+
+            if($user->wallet) {
+                $user->wallet->is_active = true;
+                $user->wallet->save();
+            }else {
+                $this->walletRepository->create([
+                    'user_id' => $user->id,
+                    'balance' => 0,
+                    'is_active' => true
+                ]);
+            }
+            DB::commit();
+            return ServiceReturn::success(
+                message: __("common_success.data_updated")
+            );
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            LogHelper::error(
+                message: "Lỗi UserService@activeKTVapply",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        }
+    }
+
+    public function makeNewApplyAgency(array $data)
+    {
+        DB::beginTransaction();
+        try {
+            $userCheck = $this->userRepository->query()->where('phone', $data['phone'])->first();
+            if ($userCheck) {
+                throw new ServiceException(
+                    message: __("common_error.data_exists")
+                );
+            }
+
+            $userInitial = $this->userRepository->create([
+                'name' => $data['name'],
+                'phone' => $data['phone'],
+                'password' => $data['password'],
+                'role' => UserRole::AGENCY->value,
+                'phone_verified_at' => now(),
+                'is_active' => false,
+                'referral_code' => Helper::generateReferCodeUser(UserRole::AGENCY)
+            ]);
+
+            $userReviewApplication = $this->userReviewApplicationRepository->create([
+                'user_id' => $userInitial->id,
+                'status' => ReviewApplicationStatus::PENDING->value,
+                'province_code' => optional($data['reviewApplication'])['province']['name'] ?? null,
+                'address' => optional($data['reviewApplication'])['address'] ?? null,
+                'application_date' => now(),
+                'bio' => optional($data['reviewApplication'])['bio'] ?? null
+            ]);
+
+            // $userProfile = $this->userProfileRepository->create([
+            //     'avatar_url' => optional($data['profile'])['avatar_url'] ?? null,
+            //     'user_id' => $userInitial->id,
+            //     'gender' => optional($data['profile'])['gender'] ?? null,
+            //     'date_of_birth' => optional($data['profile'])['date_of_birth'] ?? null,
+            //     'bio' => optional($data['profile'])['bio'] ?? null
+            // ]);
+
+            // $wallet = $this->walletRepository->create([
+            //     'user_id' => $userInitial->id,
+            //     'balance' => 0,
+            //     'is_active' => false
+            // ]);
+
+            foreach ($data['files'] as $file) {
+                $this->userFileRepository->create([
+                    'user_id' => $userInitial->id,
+                    'type' => optional($file)['type'] ?? null,
+                    'file_path' => optional($file)['file_path'] ?? null
+                ]);
+            }
+
+            DB::commit();
+            return ServiceReturn::success(
+                data: $userInitial->load('reviewApplication', 'files'),
+                message: __("common_success.data_created")
+            );
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            LogHelper::error(
+                message: "Lỗi UserService@makeNewApplyAgency",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        }
+    }
+
+    public function updateUser (array $data)
+    {
+        DB::beginTransaction();
+        try {
+            $user = $this->userRepository->query()->where('id', $data['id'])->first();
+            if (!$user) {
+                throw new ServiceException(
+                    message: __("common_error.data_not_found")
+                );
+            }
+            $dataUpdate = [];
+            if(isset($data['name']) && $data['name']){
+                $dataUpdate['name'] = $data['name'];
+            }
+            if(isset($data['phone']) && $data['phone']){
+                $dataUpdate['phone'] = $data['phone'];
+            }
+            if(isset($data['password']) && $data['password']){
+                $dataUpdate['password'] = $data['password'];
+            }
+            if(isset($data['role']) && $data['role']){
+                $dataUpdate['role'] = $data['role'];
+            }
+            if(isset($data['is_active']) && $data['is_active']){
+                $dataUpdate['is_active'] = $data['is_active'];
+            }
+            if(isset($data['referral_code']) && $data['referral_code']){
+                $dataUpdate['referral_code'] = $data['referral_code'];
+            }
+
+            $user->update($dataUpdate);
+
+            if (isset($data['profile'])) {
+                $user->profile()->updateOrCreate(
+                    ['user_id' => $user->id],
+                    $data['profile']
+                );
+            }
+
+            if (isset($data['files'])) {
+                foreach ($data['files'] as $file) {
+                    $this->userFileRepository->create([
+                        'user_id' => $user->id,
+                        'type' => optional($file)['type'] ?? null,
+                        'file_path' => optional($file)['file_path'] ?? null
+                    ]);
+                }
+            }   
+
+            $user->reviewApplication()->updateOrCreate(
+                ['user_id' => $user->id],
+                $data['reviewApplication']
+            );
+            DB::commit();
+            return ServiceReturn::success(
+                data: $user->load('reviewApplication', 'files', 'profile'),
+                message: __("common_success.data_updated")
+            );
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            LogHelper::error(
+                message: "Lỗi UserService@updateUser",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        }
+        
     }
 }

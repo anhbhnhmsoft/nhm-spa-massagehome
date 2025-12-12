@@ -16,23 +16,9 @@ class CreateKTV extends CreateRecord
         // Set role to KTV
         $data['role'] = UserRole::KTV->value;
         $data['phone_verified_at'] = now();
-        $data['language'] = 'vi';
+        $data['language'] = app()->getLocale();
         $data['is_active'] = true;
-        $data['last_login_at'] = now();
         $data['referral_code'] = Helper::generateReferCodeUser(UserRole::KTV);
         return $data;
-    }
-
-    protected function afterCreate(): void
-    {
-        $data = $this->form->getState();
-
-        // Handle profile data separately
-        if (isset($data['profile'])) {
-            $this->record->profile()->updateOrCreate(
-                ['user_id' => $this->record->id],
-                $data['profile']
-            );
-        }
     }
 }

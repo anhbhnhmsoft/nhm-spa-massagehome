@@ -4,6 +4,10 @@ return
         "nav" => [
             "ktv" => "Quản lý kỹ thuật viên",
             "category" => "Quản lý danh mục",
+            'agency' => 'Quản lý đối tác',
+            "service" => 'Quản lý dịch vụ',
+            'user' => 'Quản lý khách hàng',
+            'transaction' => 'Quản lý giao dịch',
         ],
         "user" => [
             "label" => "Kỹ thuật viên"
@@ -36,6 +40,7 @@ return
                 'usage_count' => 'Số lần sử dụng',
                 'effective_date' => 'Ngày hiệu lực',
                 'application_date' => 'Ngày đăng ký',
+                'referral_code' => 'Mã giới thiệu',
             ],
             'action' => [
                 'view' => 'Xem',
@@ -51,8 +56,8 @@ return
                 'download_template' => 'Tải mẫu xuống',
                 'save' => 'Lưu',
                 'cancel' => 'Hủy',
-                'add' => 'Thêm'
-
+                'add' => 'Thêm',
+                'book' => 'Lên lịch'
             ],
             'tooltip' => [
                 'view' => 'Xem chi tiết ',
@@ -87,6 +92,7 @@ return
                 'is_featured' => 'Nổi bật',
                 'is_active' => 'Kích hoạt',
             ],
+            'currency' => 'Điểm',
 
         ],
         "ktv_apply" => [
@@ -102,6 +108,7 @@ return
                 "identity_card_back" => "CMND/CCCD mặt sau",
                 "license" => "Bằng cấp/Chứng chỉ",
                 "health_insurance" => "Bảo hiểm y tế",
+                "business_image" => "Hình ảnh doanh nghiệp",
             ],
             "fields" => [
                 "experience" => "Kinh nghiệm",
@@ -117,7 +124,7 @@ return
                 "system_info" => "Thông tin hệ thống",
                 "registration_info" => "Thông tin đăng ký",
                 "personal_info" => "Thông tin cá nhân",
-                'agency' => 'Đối tác',
+                'agency' => 'Cơ sở làm việc',
             ],
             "actions" => [
                 "approve" => [
@@ -126,6 +133,7 @@ return
                     "description" => "Bạn có chắc chắn muốn duyệt hồ sơ này?",
                     "success_title" => "Duyệt hồ sơ thành công",
                     "success_body" => "Hồ sơ KTV đã được duyệt.",
+                    "error_title" => "Duyệt hồ sơ thất bại",
                 ],
                 "reject" => [
                     "label" => "Từ chối hồ sơ",
@@ -158,5 +166,243 @@ return
                 'update_error' => 'Cập nhật thất bại',
                 'create_error' => 'Tạo thất bại',
             ],
-        ]
+        ],
+        'agency' => [
+            'label' => 'Đối tác'
+        ],
+        'agency_apply' => [
+            'label' => 'Đối tác đăng ký',
+            'fields' => [
+                'name' => 'Tên',
+                'email' => 'Email',
+                'phone' => 'Số điện thoại',
+                'address' => 'Địa chỉ',
+                'province' => 'Tỉnh/Thành phố',
+                'files' => 'Hồ sơ',
+                'personal_info' => 'Thông tin cá nhân',
+                'registration_info' => 'Thông tin đăng ký',
+                'system_info' => 'Thông tin hệ thống',
+                'file_type' => 'Loại file',
+                'bio' => 'Giới thiệu doanh nghiệp',
+                'status' => 'Trạng thái',
+                'note' => 'Ghi chú',
+            ],
+            'actions' => [
+                'approve' => [
+                    'label' => 'Duyệt hồ sơ',
+                    'heading' => 'Duyệt hồ sơ Đối tác',
+                    'description' => 'Bạn có chắc chắn muốn duyệt hồ sơ này?',
+                    'reason_label' => 'Lý do từ chối',
+                    'success_title' => 'Duyệt hồ sơ thành công',
+                    'success_body' => 'Hồ sơ Đối tác đã được duyệt.',
+                ],
+                'reject' => [
+                    'label' => 'Từ chối hồ sơ',
+                    'heading' => 'Từ chối hồ sơ Đối tác',
+                    'description' => 'Bạn có chắc chắn muốn từ chối hồ sơ này?',
+                    'reason_label' => 'Lý do từ chối',
+                    'success_title' => 'Từ chối hồ sơ thành công',
+                    'success_body' => 'Hồ sơ Đối tác đã bị từ chối.',
+                ],
+            ],
+        ],
+        'service' => [
+            'label' => 'Dịch vụ',
+            'fields' => [
+                'name' => 'Tên',
+                'category' => 'Danh mục',
+                'provider' => 'KTV',
+                'image' => 'Hình ảnh',
+                'status' => 'Trạng thái',
+                'description' => 'Miêu tả',
+                'options' => 'Tùy chọn',
+                'duration' => 'Thời gian',
+                'price' => 'Giá',
+                'options_avg_price' => 'Giá trung bình',
+                'created_at' => 'Ngày tạo',
+                'updated_at' => 'Ngày cập nhật',
+            ],
+        ],
+        'booking' => [
+            'label' => 'Dịch vụ trực tuyến',
+            'fields' => [
+                'user' => 'Khách hàng',
+                'service' => 'Dịch vụ',
+                'coupon' => 'Mã giảm giá',
+                'duration' => 'Thời gian',
+                'booking_time' => 'Thời gian đặt',
+                'start_time' => 'Thời gian bắt đầu',
+                'end_time' => 'Thời gian kết thúc',
+                'price' => 'Giá',
+                'price_before_discount' => 'Giá trước khi giảm',
+                'payment_type' => 'Phương thức thanh toán',
+                'note' => 'Ghi chú',
+                'address' => 'Địa chỉ',
+                'latitude' => 'Vĩ độ',
+                'longitude' => 'Kinh độ',
+                'rating' => 'Đánh giá',
+                'comment' => 'Bình luận',
+                'status' => 'Trạng thái',
+            ],
+            'status' => [
+                'pending' => 'Chờ xác nhận',
+                'confirmed' => 'Đã xác nhận',
+                'ongoing' => 'Đang diễn ra',
+                'completed' => 'Đã hoàn thành',
+                'canceled' => 'Đã hủy',
+            ],
+            'payment_type' => [
+                'qr_banking' => 'Thanh toán qua mã QR',
+                'zalo_pay' => 'Thanh toán qua Zalo Pay',
+                'momo_pay' => 'Thanh toán qua Momo Pay',
+            ],
+            'actions' => [
+                'view' => [
+                    'label' => 'Xem',
+                    'heading' => 'Xem thông tin',
+                    'description' => 'Xem thông tin chi tiết',
+                ],
+                'view_location' => 'Xem vị trí',
+            ],
+        ],
+        'setting' => [
+            'label' => 'Cài đặt hệ thống',
+            'section' => [
+                'system_config' => 'Cấu hình hệ thống',
+                'affiliate_config' => 'Cấu hình Affiliate',
+            ],
+            'fields' => [
+                'payos_client_id' => 'PayOS Client ID',
+                'payos_api_key' => 'PayOS API Key',
+                'payos_checksum_key' => 'PayOS Checksum Key',
+                'currency_exchange_rate' => 'Tỷ giá (VNĐ -> Điểm)',
+                'commission_rate' => 'Tỷ lệ hoa hồng',
+                'min_commission' => 'Hoa hồng tối thiểu',
+                'max_commission' => 'Hoa hồng tối đa',
+                'target_role' => 'Vai trò áp dụng',
+                'is_active' => 'Kích hoạt',
+            ],
+            'actions' => [
+                'save' => 'Lưu thay đổi',
+            ],
+        ],
+        'transaction' => [
+            'label' => 'Giao dịch',
+            'fields' => [
+                'user' => 'Người dùng',
+                'code' => 'Mã giao dịch',
+                'type' => 'Loại giao dịch',
+                'amount' => 'Số tiền',
+                'status' => 'Trạng thái',
+                'created_at' => 'Ngày tạo',
+            ],
+            'type' => [
+                'DEPOSIT_QR_CODE' => 'Nạp tiền (QR)',
+                'DEPOSIT_ZALO_PAY' => 'Nạp tiền (ZaloPay)',
+                'DEPOSIT_MOMO_PAY' => 'Nạp tiền (Momo)',
+                'WITHDRAWAL' => 'Rút tiền',
+                'PAYMENT' => 'Thanh toán',
+                'AFFILIATE' => 'Hoa hồng',
+            ],
+            'status' => [
+                'PENDING' => 'Chờ xử lý',
+                'COMPLETED' => 'Thành công',
+                'FAILED' => 'Thất bại',
+            ],
+            'actions' => [
+                'approve' => 'Duyệt',
+                'cancel' => 'Hủy bỏ',
+            ],
+        ],
+        'customer' => [
+            'label' => 'Khách hàng',
+            'section' => [
+                'info' => 'Thông tin cơ bản',
+                'booking_history' => 'Lịch sử đặt dịch vụ',
+                'wallet' => 'Ví tiền',
+                'reviews' => 'Đánh giá',
+            ],
+            'fields' => [
+                'name' => 'Tên',
+                'email' => 'Email',
+                'phone' => 'Số điện thoại',
+                'password' => 'Mật khẩu',
+                'dob' => 'Ngày sinh',
+                'role' => 'Vai trò',
+                'balance' => 'Số dư ví',
+                'address' => 'Địa chỉ',
+                'created_at' => 'Ngày tạo',
+                'updated_at' => 'Ngày cập nhật',
+            ],
+        ],
+        'review' => [
+            'label' => 'Đánh giá',
+            'fields' => [
+                'reviewer' => 'Người đánh giá',
+                'provider' => 'KTV được đánh giá',
+                'service' => 'Dịch vụ',
+                'rating' => 'Đánh giá',
+                'comment' => 'Bình luận',
+                'hidden' => 'Ẩn',
+                'created_at' => 'Ngày tạo',
+                'updated_at' => 'Ngày cập nhật',
+                'user' => 'Nhân viên',
+            ],
+        ],
+        'wallet_transaction' => [
+            'label' => 'Giao dịch ví',
+            'fields' => [
+                'user' => 'Người dùng',
+                'code' => 'Mã giao dịch',
+                'type' => 'Loại giao dịch',
+                'amount' => 'Số tiền',
+                'status' => 'Trạng thái',
+                'created_at' => 'Ngày tạo',
+            ],
+            'type' => [
+                'DEPOSIT_QR_CODE' => 'Nạp tiền (QR)',
+                'DEPOSIT_ZALO_PAY' => 'Nạp tiền (ZaloPay)',
+                'DEPOSIT_MOMO_PAY' => 'Nạp tiền (Momo)',
+                'WITHDRAWAL' => 'Rút tiền',
+                'PAYMENT' => 'Thanh toán',
+                'AFFILIATE' => 'Hoa hồng',
+            ],
+            'status' => [
+                'PENDING' => 'Chờ xử lý',
+                'COMPLETED' => 'Thành công',
+                'FAILED' => 'Thất bại',
+            ],
+            'actions' => [
+                'approve' => 'Duyệt',
+                'cancel' => 'Hủy bỏ',
+            ],
+        ],
+        'dashboard' => [
+            'stats' => [
+                'revenue' => 'Tổng doanh thu (Điểm)',
+                'booking_value' => 'Giá trị đặt lịch',
+                'new_bookings' => 'Lượt đặt lịch mới',
+                'new_users' => 'Người dùng mới',
+                'pending_profiles' => 'Hồ sơ chờ duyệt',
+                'affiliate_commission' => 'Hoa hồng phát sinh',
+            ],
+            'charts' => [
+                'revenue_trend' => 'Xu hướng doanh thu',
+                'user_activity' => 'Hoạt động người dùng',
+                'booking_status' => 'Tình trạng đặt lịch',
+                'top_services' => 'Top dịch vụ',
+                'user_roles' => 'Phân bổ vai trò',
+                'review_ratings' => 'Phân tích đánh giá',
+                'revenue_deposit' => 'Nạp tiền',
+                'revenue_booking' => 'Đặt lịch',
+                'new_users' => 'Người dùng mới',
+                'active_users' => 'Đăng nhập',
+            ],
+            'time' => [
+                'today' => 'Hôm nay',
+                'week' => '7 ngày qua',
+                'month' => 'Tháng này',
+                'year' => 'Năm nay',
+            ],
+        ],
     ];

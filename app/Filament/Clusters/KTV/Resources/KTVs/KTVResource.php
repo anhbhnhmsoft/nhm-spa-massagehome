@@ -50,7 +50,6 @@ class KTVResource extends Resource
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
-            // dd($query->first());
         return $query;
     }
 

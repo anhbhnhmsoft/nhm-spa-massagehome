@@ -136,4 +136,15 @@ class User extends Authenticatable
     }
 
 
+    /**
+     * Lấy danh sách Booking mà User này ĐẶT (với tư cách là Customer)
+     */
+    public function bookings()
+    {
+        return $this->hasMany(ServiceBooking::class, 'user_id');
+    }
+
+    public function reviewWrited() {
+        return $this->hasMany(Review::class, 'review_by');
+    }
 }

@@ -75,38 +75,4 @@ class ViewKTVApply extends ViewRecord
                 }),
         ];
     }
-
-    protected function mutateFormDataBeforeFill(array $data): array
-    {
-        // Load profile data
-        if ($this->record->profile) {
-            $data['profile'] = [
-                'avatar_url' => $this->record->profile->avatar_url,
-                'bio' => $this->record->profile->bio,
-                'gender' => $this->record->profile->gender,
-                'date_of_birth' => $this->record->profile->date_of_birth,
-            ];
-        }
-
-        // Load review application data
-        if ($this->record->reviewApplication) {
-            $data['reviewApplication'] = [
-                'status' => $this->record->reviewApplication->status,
-                'province_code' => $this->record->reviewApplication->province_code,
-                'address' => $this->record->reviewApplication->address,
-                'bio' => $this->record->reviewApplication->bio,
-                'experience' => $this->record->reviewApplication->experience,
-                'agency_id' => $this->record->reviewApplication->agency_id,
-                ''
-            ];
-        }
-
-        // Load files data
-        if ($this->record->files) {
-            $data['files'] = $this->record->files->toArray();
-        }
-
-
-        return $data;
-    }
 }
