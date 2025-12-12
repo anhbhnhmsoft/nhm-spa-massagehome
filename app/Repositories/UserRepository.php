@@ -16,6 +16,15 @@ class UserRepository extends BaseRepository
         return User::class;
     }
 
+    /**
+     * Lấy query dành cho user chung
+     * @return Builder
+     */
+    public function queryUser()
+    {
+        return $this->query()
+            ->where('is_active', true);
+    }
 
     /**
      * Lấy query dành riêng cho KTV

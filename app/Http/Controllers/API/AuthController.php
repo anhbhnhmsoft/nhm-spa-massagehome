@@ -293,4 +293,52 @@ class AuthController extends BaseController
             message: __('auth.success.logout'),
         );
     }
+
+    /**
+     * Chỉnh sửa avatar người dùng.
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function editAvatar(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'file' => 'required|image|mimes:jpeg,png,jpg|max:10240'
+        ],[
+            'file.required' => __('auth.validation.avatar_invalid'),
+            'file.image' => __('auth.validation.avatar_invalid'),
+            'file.mimes' => __('auth.validation.avatar_invalid'),
+        ]);
+        $result = $this->authService->editInfoAvatar(
+            file: $data['file'],
+        );
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage(),
+            );
+        }
+        return $this->sendSuccess(
+            data: [
+                'user' => new UserResource($result->getData()),
+            ],
+        );
+    }
+
+     /**
+     * Xóa avatar người dùng.
+     * @return JsonResponse
+     */
+    public function deleteAvatar(): JsonResponse
+    {
+        $result = $this->authService->deleteAvatar();
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage(),
+            );
+        }
+        return $this->sendSuccess(
+            data: [
+                'user' => new UserResource($result->getData()),
+            ],
+        );
+    }
 }

@@ -37,6 +37,10 @@ Route::middleware('set-api-locale')->group(function () {
             Route::post('heartbeat', [AuthController::class, 'heartbeat']);
             // Cập nhật thông tin thiết bị.
             Route::post('set-device', [AuthController::class, 'setDevice']);
+            // edit avatar
+            Route::post('edit-avatar', [AuthController::class, 'editAvatar']);
+            // delete avatar
+            Route::delete('delete-avatar', [AuthController::class, 'deleteAvatar']);
         });
     });
 

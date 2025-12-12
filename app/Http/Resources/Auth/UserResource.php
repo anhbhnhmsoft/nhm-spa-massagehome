@@ -25,7 +25,7 @@ class UserResource extends JsonResource
             'language' => $this->language,
             'referred_by_user_id' => $this->referred_by_user_id,
             'profile' => [
-                'avatar_url' => $profile->avatar_url,
+                'avatar_url' => $profile->avatar_url_full,
                 'date_of_birth' => $profile->date_of_birth,
                 'gender' => $profile->gender,
                 'address' => $profile->address,
