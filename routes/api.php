@@ -38,6 +38,8 @@ Route::middleware('set-api-locale')->group(function () {
             Route::post('heartbeat', [AuthController::class, 'heartbeat']);
             // Cập nhật thông tin thiết bị.
             Route::post('set-device', [AuthController::class, 'setDevice']);
+            // Cập nhật thông tin hồ sơ người dùng.
+            Route::post('edit-profile', [AuthController::class, 'editProfile']);
         });
     });
 
@@ -47,13 +49,13 @@ Route::middleware('set-api-locale')->group(function () {
          * router cần auth
          * autocomplete search location
          */
-        Route::get('search', [LocationController::class, 'search']);
+        Route::get('search', [LocationController::class, 'search'])->middleware(['throttle:5,0.3']);
 
         /**
          * router cần auth
          * detail location
          */
-        Route::get('detail', [LocationController::class, 'detail']);
+        Route::get('detail', [LocationController::class, 'detail'])->middleware(['throttle:5,0.2']);
     });
 
     Route::prefix('user')->group(function () {

@@ -26,10 +26,25 @@ return [
         'invalid_login' => 'Số điện thoại hoặc mật khẩu không đúng.',
         'language_invalid' => 'Ngôn ngữ không hợp lệ.',
         'unauthorized' => 'Bạn không có quyền thực hiện hành động này.',
+        'validation_failed' => 'Lỗi xác thực.',
+        'unauthenticated' => 'Bạn chưa đăng nhập.',
     ],
 
     'admin' => [
         'phone' => 'Số điện thoại.',
         'password' => 'Mật khẩu.',
+    ],
+    'validation' => [
+        'name_required' => 'Tên không được để trống.',
+        'name_min' => 'Tên phải có ít nhất 4 ký tự.',
+        'name_max' => 'Tên không được vượt quá 255 ký tự.',
+        'address_invalid' => 'Địa chỉ không hợp lệ.',
+        'address_max' => 'Địa chỉ không được vượt quá 255 ký tự.',
+        'introduce_invalid' => 'Giới thiệu không hợp lệ.',
+        'password_required' => 'Mật khẩu không được để trống.',
+        'password_min' => 'Mật khẩu phải có ít nhất 8 ký tự.',
+        'confirm_password_same' => 'Mật khẩu xác nhận không khớp.',
+        'date_invalid' => 'Ngày không hợp lệ.',
+        'date_before' => 'Ngày không được vượt quá ngày hiện tại.',
     ],
 ];

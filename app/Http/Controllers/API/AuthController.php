@@ -14,14 +14,13 @@ use App\Services\AuthService;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\JsonResponse;
 use App\Core\Controller\BaseController;
+use Illuminate\Support\Facades\Validator;
 
 class AuthController extends BaseController
 {
     public function __construct(
         protected AuthService $authService,
-    )
-    {
-    }
+    ) {}
 
     /**
      * Xác thực đăng nhập bằng số điện thoại.
@@ -291,6 +290,59 @@ class AuthController extends BaseController
         }
         return $this->sendSuccess(
             message: __('auth.success.logout'),
+        );
+    }
+
+    /**
+     * Cập nhật thông tin người dùng.
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function editProfile(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [ 
+            'name'    => ['nullable', 'string', 'min:4', 'max:255'],
+            'address' => ['nullable', 'string', 'max:255'],
+            'bio'     => ['nullable', 'string'],
+            'gender'  => ['nullable', 'in:male,female,other'],
+            'date_of_birth' => ['nullable', 'date', 'before:today'],
+            'password'        => ['nullable', 'string', 'min:8'],
+            'confirm_password' => ['nullable', 'same:password'],
+        ], [
+            'name.string'   => __('auth.validation.name_required'),
+            'name.min'      => __('auth.validation.name_min'),
+            'name.max'      => __('auth.validation.name_max'),
+
+            'address.string' => __('auth.validation.address_invalid'),
+            'address.max'    => __('auth.validation.address_max'),
+
+            'bio.string' => __('auth.validation.introduce_invalid'),
+
+            'password.string' => __('auth.validation.password_required'),
+            'password.min'    => __('auth.validation.password_min'),
+            'confirm_password.same' => __('auth.validation.confirm_password_same'),
+
+            'date_of_birth.date'  => __('auth.validation.date_invalid'),
+            'date_of_birth.before' => __('auth.validation.date_before'),    
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError(
+                message: __('auth.error.validation_failed'),
+            );
+        }
+
+        $data = $validator->validated();
+
+        $result = $this->authService->editInfoUser($data);
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage());
+        }
+
+        return $this->sendSuccess(
+            message: __('common.common_success.update_success'),
+            data: UserResource::make($result->getData())
         );
     }
 }
