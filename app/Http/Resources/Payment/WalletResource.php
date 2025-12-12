@@ -4,7 +4,7 @@ namespace App\Http\Resources\Payment;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class WalletResourcePayment extends JsonResource
+class WalletResource extends JsonResource
 {
 
     public function toArray($request)

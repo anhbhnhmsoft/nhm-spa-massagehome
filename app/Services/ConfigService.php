@@ -24,6 +24,11 @@ class ConfigService extends BaseService
         parent::__construct();
     }
 
+    /**
+     * Lấy cấu hình theo key
+     * @param ConfigName $key
+     * @return ServiceReturn
+     */
     public function getConfig(ConfigName $key): ServiceReturn
     {
         $config = Caching::getCache(
@@ -33,7 +38,6 @@ class ConfigService extends BaseService
         if ($config) {
             return ServiceReturn::success(data: $config);
         }
-
         try {
             $config = $this->configRepository->query()
                 ->where('config_key', $key->value)
@@ -52,6 +56,10 @@ class ConfigService extends BaseService
                 return ServiceReturn::success();
             }
         } catch (\Exception $e) {
+            LogHelper::error(
+                message: "Lỗi ConfigService@getConfig",
+                ex:  $e,
+            );
             return ServiceReturn::error(message: $e->getMessage());
         }
     }

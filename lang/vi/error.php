@@ -20,4 +20,8 @@ return [
             'place_id_string' => 'ID địa điểm phải là chuỗi',
         ]
     ]
+    "config_wallet_error" => "Có lỗi xảy ra trong quá trình cấu hình thanh toán, vui lòng liên hệ với bộ phận hỗ trợ",
+    "payment_type_not_supported" => "Hình thức thanh toán này hiện tại không được hỗ trợ",
+    "transaction_not_found" => "Lịch sử giao dịch không tồn tại",
+    "bank_not_found" => "Ngân hàng không tồn tại",
 ];
