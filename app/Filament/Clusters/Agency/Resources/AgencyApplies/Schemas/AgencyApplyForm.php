@@ -64,6 +64,43 @@ class AgencyApplyForm
                                 'max'      => __('common.error.max_length', ['max' => 255])
                             ])
                             ->hidden(fn($livewire) => $livewire instanceof ViewRecord),
+                        Placeholder::make('created_at')
+                            ->label(__('admin.common.table.created_at'))
+                            ->content(fn($record) => $record?->created_at?->format('d/m/Y H:i:s')),
+
+                        Placeholder::make('updated_at')
+                            ->label(__('admin.common.table.updated_at'))
+                            ->content(fn($record) => $record?->updated_at?->format('d/m/Y H:i:s')),
+                        Repeater::make('files')
+                            ->label(__('admin.agency_apply.fields.files'))
+                            ->relationship(name: 'files')
+                            ->columns(3)
+                            ->schema([
+                                Select::make('type')
+                                    ->label(__('admin.agency_apply.fields.file_type'))
+                                    ->options(UserFileType::toOptions())
+                                    ->required()
+                                    ->columnSpan(1),
+
+                                FileUpload::make('file_path')
+                                    ->label('File')
+                                    ->directory(DirectFile::AGENCY->value)
+                                    ->disk('private')
+                                    ->required()
+                                    ->downloadable()
+                                    ->columnSpan(2),
+                            ])
+                            ->columns(3)
+                            ->addable(true)
+                            ->deletable(true)
+                            ->reorderable(true)
+                            ->minItems(1)
+                            ->defaultItems(1)
+                            ->validationMessages([
+                                'min' => __('common.error.min_items', ['min' => 1]),
+                                'required' => __('common.error.required'),
+                            ])
+                            ->columnSpan('full'),
                     ])
                     ->columns(2),
                 Section::make(__('admin.agency_apply.fields.registration_info'))
@@ -106,54 +143,6 @@ class AgencyApplyForm
 
                     ])
                     ->columns(2),
-
-                Section::make(__('admin.agency_apply.fields.files'))
-                    ->schema([
-                        Repeater::make('files')
-                            ->label(__('admin.agency_apply.fields.files'))
-                            ->relationship(name: 'files')
-                            ->columns(3)
-                            ->schema([
-                                Select::make('type')
-                                    ->label(__('admin.agency_apply.fields.file_type'))
-                                    ->options(UserFileType::toOptions())
-                                    ->required()
-                                    ->columnSpan(1),
-
-                                FileUpload::make('file_path')
-                                    ->label('File')
-                                    ->directory(DirectFile::AGENCY->value)
-                                    ->disk('private')
-                                    ->required()
-                                    ->downloadable()
-                                    ->columnSpan(2),
-                            ])
-                            ->columns(3)
-                            ->addable(true)
-                            ->deletable(true)
-                            ->reorderable(true)
-                            ->minItems(1)
-                            ->defaultItems(1)
-                            ->validationMessages([
-                                'min' => __('common.error.min_items', ['min' => 1]),
-                                'required' => __('common.error.required'),
-                            ]),
-                    ]),
-
-                Section::make(__('admin.agency_apply.fields.system_info'))
-                    ->schema([
-                        Placeholder::make('created_at')
-                            ->label(__('admin.common.table.created_at'))
-                            ->content(fn($record) => $record?->created_at?->format('d/m/Y H:i:s')),
-
-                        Placeholder::make('updated_at')
-                            ->label(__('admin.common.table.updated_at'))
-                            ->content(fn($record) => $record?->updated_at?->format('d/m/Y H:i:s')),
-
-
-                    ])
-                    ->columns(2)
-                    ->collapsed(),
             ]);
     }
 }

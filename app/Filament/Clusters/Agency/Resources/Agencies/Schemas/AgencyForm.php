@@ -64,37 +64,14 @@ class AgencyForm
                                 'max'      => __('common.error.max_length', ['max' => 255])
                             ])
                             ->hidden(fn($livewire) => $livewire instanceof ViewRecord),
-                    ])
-                    ->columns(2),
-                Section::make(__('admin.agency_apply.fields.registration_info'))
-                    ->relationship(name: 'reviewApplication')
-                    ->schema([
+                        Placeholder::make('created_at')
+                            ->label(__('admin.common.table.created_at'))
+                            ->content(fn($record) => $record?->created_at?->format('d/m/Y H:i:s')),
 
-                        Select::make('province_code')
-                            ->label(__('admin.agency_apply.fields.province'))
-                            ->searchable()
-                            ->options(fn() => Province::all()->pluck('name', 'code'))
-                            ->columnSpan(1),
+                        Placeholder::make('updated_at')
+                            ->label(__('admin.common.table.updated_at'))
+                            ->content(fn($record) => $record?->updated_at?->format('d/m/Y H:i:s')),
 
-                        Textarea::make('address')
-                            ->label(__('admin.agency_apply.fields.address'))
-                            ->rows(2),
-                        Textarea::make('bio.' . $lang)
-                            ->label(__('admin.agency_apply.fields.bio'))
-                            ->rows(3)
-                            ->columnSpanFull(),
-                        Select::make('status')
-                            ->label(__('admin.agency_apply.fields.status'))
-                            ->options(ReviewApplicationStatus::toOptions())
-                            ->default(ReviewApplicationStatus::PENDING),
-                        TextInput::make('note')
-                            ->label(__('admin.agency_apply.fields.note')),
-
-                    ])
-                    ->columns(2),
-
-                Section::make(__('admin.agency_apply.fields.files'))
-                    ->schema([
                         Repeater::make('files')
                             ->label(__('admin.agency_apply.fields.files'))
                             ->relationship(name: 'files')
@@ -123,23 +100,36 @@ class AgencyForm
                             ->validationMessages([
                                 'min' => __('common.error.min_items', ['min' => 1]),
                                 'required' => __('common.error.required'),
-                            ]),
-                    ]),
-
-                Section::make(__('admin.agency_apply.fields.system_info'))
+                            ])
+                            ->columnSpan('full'),
+                    ])
+                    ->columns(2),
+                Section::make(__('admin.agency_apply.fields.registration_info'))
+                    ->relationship(name: 'reviewApplication')
                     ->schema([
-                        Placeholder::make('created_at')
-                            ->label(__('admin.common.table.created_at'))
-                            ->content(fn($record) => $record?->created_at?->format('d/m/Y H:i:s')),
 
-                        Placeholder::make('updated_at')
-                            ->label(__('admin.common.table.updated_at'))
-                            ->content(fn($record) => $record?->updated_at?->format('d/m/Y H:i:s')),
+                        Select::make('province_code')
+                            ->label(__('admin.agency_apply.fields.province'))
+                            ->searchable()
+                            ->options(fn() => Province::all()->pluck('name', 'code'))
+                            ->columnSpan(1),
 
+                        Textarea::make('address')
+                            ->label(__('admin.agency_apply.fields.address'))
+                            ->rows(2),
+                        Textarea::make('bio.' . $lang)
+                            ->label(__('admin.agency_apply.fields.bio'))
+                            ->rows(3)
+                            ->columnSpanFull(),
+                        Select::make('status')
+                            ->label(__('admin.agency_apply.fields.status'))
+                            ->options(ReviewApplicationStatus::toOptions())
+                            ->default(ReviewApplicationStatus::PENDING),
+                        TextInput::make('note')
+                            ->label(__('admin.agency_apply.fields.note')),
 
                     ])
-                    ->columns(2)
-                    ->collapsed(),
+                    ->columns(2),
             ]);
     }
 }

@@ -45,7 +45,7 @@ class WalletTransaction extends Model
         'transaction_id',
         'metadata',
         'type',
-        'amount',
+        'money_amount',
         'balance_after',
         'status',
         'description',
