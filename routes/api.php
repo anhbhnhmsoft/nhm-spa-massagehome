@@ -10,6 +10,7 @@ use App\Http\Controllers\API\UserController;
 use Illuminate\Support\Facades\Route;
 
 
+
 Route::middleware('set-api-locale')->group(function () {
     // Authenticate routes
     Route::prefix('auth')->group(function () {
@@ -41,8 +42,18 @@ Route::middleware('set-api-locale')->group(function () {
     });
 
     Route::prefix('/location')->group(function () {
-        // search map
+
+        /**
+         * router cần auth
+         * autocomplete search location
+         */
         Route::get('search', [LocationController::class, 'search']);
+
+        /**
+         * router cần auth
+         * detail location
+         */
+        Route::get('detail', [LocationController::class, 'detail']);
     });
 
     Route::prefix('user')->group(function () {

@@ -63,4 +63,14 @@ return [
         'numeric' => 'Mã giao dịch phải là số.',
         'exists' => 'Mã giao dịch không tồn tại trong hệ thống.',
     ],
+    'location' => [
+        'keyword_required' => 'Từ khóa không được để trống',
+        'keyword_string' => 'Từ khóa phải là chuỗi',
+        'latitude_numeric' => 'Vĩ độ phải là số',
+        'longitude_numeric' => 'Kinh độ phải là số',
+        'radius_numeric' => 'Khoảng cách phải là số',
+        'limit_numeric' => 'Giới hạn phải là số',
+        'place_id_required' => 'ID địa điểm không được để trống',
+        'place_id_string' => 'ID địa điểm phải là chuỗi',
+    ],
 ];
