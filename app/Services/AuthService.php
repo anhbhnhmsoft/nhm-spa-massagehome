@@ -12,6 +12,7 @@ use App\Core\Service\ServiceReturn;
 use App\Enums\Gender;
 use App\Enums\Language;
 use App\Enums\UserRole;
+use App\Models\Service;
 use App\Models\User;
 use App\Repositories\UserProfileRepository;
 use App\Repositories\UserRepository;
@@ -486,8 +487,7 @@ class AuthService extends BaseService
         string  $deviceId,
         ?string $platform = null,
         ?string $deviceName = null,
-    ): ServiceReturn
-    {
+    ): ServiceReturn {
         try {
             $user = Auth::user();
             if (!$user) {
@@ -511,6 +511,67 @@ class AuthService extends BaseService
                 ex: $exception
             );
             return ServiceReturn::error(message: __('common_error.server_error'));
+        }
+    }
+
+    /**
+     * Cập nhật thông tin user.
+     * @param array $data
+     * @return ServiceReturn
+     */
+    public function editInfoUser(array $data): ServiceReturn
+    {
+        DB::beginTransaction();
+        try {
+            /** @var User $user */
+            $user = Auth::user();
+
+            $userUpdateData = [];
+
+            if (isset($data['name'])) {
+                $userUpdateData['name'] = $data['name'];
+            }
+
+            if (isset($data['address'])) {
+                $userUpdateData['address'] = $data['address'];
+            }
+
+            if (!empty($data['password'])) {
+                $userUpdateData['password'] = Hash::make($data['password']);
+            }
+
+            if (!empty($userUpdateData)) {
+                $user->fill($userUpdateData)->save();
+            }
+
+            $profileUpdateData = [];
+
+            if (isset($data['bio'])) {
+                $profileUpdateData['bio'] = $data['bio'];
+            }
+            if (isset($data['gender'])) {
+                $profileUpdateData['gender'] = $data['gender'];
+            }
+            if (isset($data['date_of_birth'])) {
+                $profileUpdateData['date_of_birth'] = $data['date_of_birth'];
+            }
+
+            if (!empty($profileUpdateData)) {
+                $user->profile()->updateOrCreate(
+                    ['user_id' => $user->id],
+                    $profileUpdateData
+                );
+            }
+            DB::commit();
+            return ServiceReturn::success($user);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            LogHelper::error(
+                message: "Lỗi AuthService@editInfoUser",
+                ex: $e
+            );
+
+            return ServiceReturn::error(__('common_error.server_error'));
         }
     }
 }
