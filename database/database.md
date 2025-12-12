@@ -143,7 +143,7 @@
 
     # cấu trúc
     - id (bigint, primary key, auto-increment)
-    - user_id (bigint, foreign key to users.id) -- id người dùng
+    - wallet_id (bigint, foreign key to wallets.id) -- id ví tiền
     - foreign_key (unsigned bigint, nullable) -- khóa ngoại liên kết với bảng khác (ví dụ: order_id, payment_id)
     - transaction_code (varchar) -- mã giao dịch
     - transaction_id (varchar, nullable) -- id giao dịch bên thứ 3
