@@ -28,11 +28,11 @@ class LocationController extends BaseController
             'radius' => ['nullable', 'numeric'],
  
         ], [
-            'keyword.required' => __('error.location.validate.keyword_required'),
-            'keyword.string' => __('error.location.validate.keyword_string'),
-            'latitude.numeric' => __('error.location.validate.latitude_numeric'),
-            'longitude.numeric' => __('error.location.validate.longitude_numeric'),
-            'radius.numeric' => __('error.location.validate.radius_numeric'),
+            'keyword.required' => __('validation.location.keyword_required'),
+            'keyword.string' => __('validation.location.keyword_string'),
+            'latitude.numeric' => __('validation.location.latitude_numeric'),
+            'longitude.numeric' => __('validation.location.longitude_numeric'),
+            'radius.numeric' => __('validation.location.radius_numeric'),
         ]);
 
         $result = $this->locationService->autoComplete(
@@ -57,8 +57,8 @@ class LocationController extends BaseController
         $data = $request->validate([
             'place_id' => ['required', 'string'],
         ], [
-            'place_id.required' => __('error.location.validate.place_id_required'),
-            'place_id.string' => __('error.location.validate.place_id_string'),
+            'place_id.required' => __('validation.location.place_id_required'),
+            'place_id.string' => __('validation.location.place_id_string'),
         ]);
         $result = $this->locationService->getDetail($data['place_id']);
         if ($result->isError()) {

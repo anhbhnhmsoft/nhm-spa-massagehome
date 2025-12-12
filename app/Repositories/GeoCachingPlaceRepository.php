@@ -23,7 +23,7 @@ class GeoCachingPlaceRepository extends BaseRepository
     public function filterQuery(Builder $query, array $filters): Builder
     {
         if (isset($filters['keyword'])) {
-            $query->where('keyword', 'like', "%{$filters['keyword']}%");
+            $query->where('keyword', 'like', "%{$filters['keyword']}%")->orWhere('formatted_address', 'like', "%{$filters['keyword']}%");
         }
         return $query;
     }
