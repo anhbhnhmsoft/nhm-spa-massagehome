@@ -41,7 +41,7 @@ Route::middleware('set-api-locale')->group(function () {
         });
     });
 
-    Route::prefix('/location')->group(function () {
+    Route::prefix('/location')->middleware(['auth:sanctum'])->group(function () {
 
         /**
          * router cần auth
