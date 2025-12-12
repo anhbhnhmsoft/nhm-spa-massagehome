@@ -2,10 +2,14 @@
 
 namespace App\Providers;
 
+use App\Filament\Pages\Dashboard;
+use App\Repositories\AffiliateConfigRepository;
+use App\Repositories\AffiliateEarningRepository;
 use App\Repositories\BookingRepository;
 use App\Repositories\CategoryRepository;
 use App\Repositories\ConfigRepository;
 use App\Repositories\CouponRepository;
+use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
 use App\Repositories\UserFileRepository;
 use App\Repositories\UserProfileRepository;
@@ -59,6 +63,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(UserFileRepository::class);
         $this->app->singleton(UserReviewApplicationRepository::class);
         $this->app->singleton(WalletTransactionRepository::class);
+        $this->app->singleton(AffiliateConfigRepository::class);
+        $this->app->singleton(AffiliateEarningRepository::class);
+        $this->app->singleton(ReviewRepository::class);
+
     }
 
     /**
@@ -75,5 +83,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(UserService::class);
         $this->app->singleton(BookingService::class);
         $this->app->singleton(PaymentService::class);
+        $this->app->singleton(Dashboard::class);
     }
 }

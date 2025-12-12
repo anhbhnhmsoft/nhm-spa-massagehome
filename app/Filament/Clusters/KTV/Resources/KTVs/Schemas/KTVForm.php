@@ -197,15 +197,6 @@ class KTVForm
                         Placeholder::make('updated_at')
                             ->label(__('admin.common.table.updated_at'))
                             ->content(fn($record) => $record?->updated_at?->format('d/m/Y H:i:s')),
-
-
-                    ])
-                    ->columns(2)
-                    ->collapsed(),
-
-                Section::make(__('admin.common.table.account_info'))
-                    ->schema([
-
                         Select::make('role')
                             ->label(__('admin.common.table.role'))
                             ->options(UserRole::toOptions())
@@ -218,6 +209,7 @@ class KTVForm
                         DateTimePicker::make('last_login_at')
                             ->label(__('admin.common.table.last_login'))
                             ->disabled(),
+
                     ])
                     ->columns(2),
 

@@ -1,0 +1,23 @@
+<?php
+
+namespace App\Filament\Clusters\User;
+
+use BackedEnum;
+use Filament\Clusters\Cluster;
+use Filament\Support\Icons\Heroicon;
+
+class UserCluster extends Cluster
+{
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedSquares2x2;
+
+    public static function getNavigationLabel(): string
+    {
+        return __('admin.nav.user');
+    }
+
+
+    public static function getClusterBreadcrumb(): ?string
+    {
+        return __('admin.nav.user');
+    }
+}
