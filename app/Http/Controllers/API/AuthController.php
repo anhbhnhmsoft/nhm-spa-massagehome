@@ -300,14 +300,15 @@ class AuthController extends BaseController
      */
     public function editProfile(Request $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [ 
+        $validator = Validator::make($request->all(), [
             'name'    => ['nullable', 'string', 'min:4', 'max:255'],
             'address' => ['nullable', 'string', 'max:255'],
             'bio'     => ['nullable', 'string'],
             'gender'  => ['nullable', 'in:male,female,other'],
             'date_of_birth' => ['nullable', 'date', 'before:today'],
-            'password'        => ['nullable', 'string', 'min:8'],
-            'confirm_password' => ['nullable', 'same:password'],
+            'old_password' => ['nullable', 'string', 'min:8'],
+            'new_password' => ['nullable', 'string', 'min:8'],
+            'confirm_password' => ['nullable', 'same:new_password'],
         ], [
             'name.string'   => __('auth.validation.name_required'),
             'name.min'      => __('auth.validation.name_min'),
@@ -318,12 +319,14 @@ class AuthController extends BaseController
 
             'bio.string' => __('auth.validation.introduce_invalid'),
 
-            'password.string' => __('auth.validation.password_required'),
-            'password.min'    => __('auth.validation.password_min'),
+            'old_password.string' => __('auth.validation.password_required'),
+            'old_password.min'    => __('auth.validation.password_min'),
+            'new_password.string' => __('auth.validation.password_required'),
+            'new_password.min'    => __('auth.validation.password_min'),
             'confirm_password.same' => __('auth.validation.confirm_password_same'),
 
             'date_of_birth.date'  => __('auth.validation.date_invalid'),
-            'date_of_birth.before' => __('auth.validation.date_before'),    
+            'date_of_birth.before' => __('auth.validation.date_before'),
         ]);
 
         if ($validator->fails()) {

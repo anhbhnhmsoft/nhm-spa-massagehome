@@ -528,16 +528,19 @@ class AuthService extends BaseService
 
             $userUpdateData = [];
 
+            if (isset($data['old_password']) && isset($data['new_password'])) {
+                if (!Hash::check($data['old_password'], $user->password)) {
+                    return ServiceReturn::error(message: __('auth.error.wrong_password'));
+                }
+                $userUpdateData['password'] = Hash::make($data['new_password']);
+            }
+
             if (isset($data['name'])) {
                 $userUpdateData['name'] = $data['name'];
             }
 
             if (isset($data['address'])) {
                 $userUpdateData['address'] = $data['address'];
-            }
-
-            if (!empty($data['password'])) {
-                $userUpdateData['password'] = Hash::make($data['password']);
             }
 
             if (!empty($userUpdateData)) {

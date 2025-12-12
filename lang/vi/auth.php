@@ -28,6 +28,7 @@ return [
         'unauthorized' => 'Bạn không có quyền thực hiện hành động này.',
         'validation_failed' => 'Lỗi xác thực.',
         'unauthenticated' => 'Bạn chưa đăng nhập.',
+        'wrong_password' => 'Mật khẩu cũ không đúng.',
     ],
 
     'admin' => [
