@@ -39,4 +39,10 @@ enum CacheKey: string
      */
     case CACHE_USER_FILE = 'CACHE_USER_FILE';
 
+
+    /**
+     * Lưu thông tin vị trí của người dùng.
+     */
+    case CACHE_USER_LOCATION = 'CACHE_USER_LOCATION';
+
 }

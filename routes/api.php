@@ -10,6 +10,7 @@ use App\Http\Controllers\API\UserController;
 use Illuminate\Support\Facades\Route;
 
 
+
 Route::middleware('set-api-locale')->group(function () {
     // Authenticate routes
     Route::prefix('auth')->group(function () {
@@ -41,12 +42,24 @@ Route::middleware('set-api-locale')->group(function () {
             Route::post('edit-avatar', [AuthController::class, 'editAvatar']);
             // delete avatar
             Route::delete('delete-avatar', [AuthController::class, 'deleteAvatar']);
+            // Cập nhật thông tin hồ sơ người dùng.
+            Route::post('edit-profile', [AuthController::class, 'editProfile']);
         });
     });
 
-    Route::prefix('/location')->group(function () {
-        // search map
-        Route::get('search', [LocationController::class, 'search']);
+    Route::prefix('/location')->middleware(['auth:sanctum'])->group(function () {
+
+        /**
+         * router cần auth
+         * autocomplete search location
+         */
+        Route::get('search', [LocationController::class, 'search'])->middleware(['throttle:5,0.3']);
+
+        /**
+         * router cần auth
+         * detail location
+         */
+        Route::get('detail', [LocationController::class, 'detail'])->middleware(['throttle:5,0.2']);
     });
 
     Route::prefix('user')->group(function () {

@@ -1,0 +1,24 @@
+<?php
+
+namespace App\Http\Resources\Location;
+
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class PlaceDetailResource extends JsonResource
+{
+    /**
+     * Transform the resource into an array.
+     *
+     * @return array<string, mixed>
+     */
+    public function toArray(Request $request): array
+    {
+        return [
+            'place_id'       => $this->resource['place_id'],
+            'formatted_address'  => $this->resource['formatted_address'],
+            'latitude'       => $this->resource['latitude'],
+            'longitude'      => $this->resource['longitude'],
+        ];
+    }
+}

@@ -329,6 +329,15 @@ class DatabaseSeeder extends Seeder
                     'description' => 'Tỷ giá đổi tiền VNĐ -> Point VD: 1000 VNĐ = 1 Point',
                 ]
             );
+
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::GOONG_API_KEY->value],
+                [
+                    'config_value' => '',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'Mã API key Goong dùng để tích hợp tìm kiếm địa chỉ.',
+                ]
+            );
         } catch (\Exception $e) {
             DB::rollBack();
             dump($e);

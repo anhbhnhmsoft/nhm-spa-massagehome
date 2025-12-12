@@ -14,14 +14,13 @@ use App\Services\AuthService;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\JsonResponse;
 use App\Core\Controller\BaseController;
+use Illuminate\Support\Facades\Validator;
 
 class AuthController extends BaseController
 {
     public function __construct(
         protected AuthService $authService,
-    )
-    {
-    }
+    ) {}
 
     /**
      * Xác thực đăng nhập bằng số điện thoại.
@@ -339,6 +338,66 @@ class AuthController extends BaseController
             data: [
                 'user' => new UserResource($result->getData()),
             ],
+        );
+    }
+
+    /**
+     * Cập nhật thông tin người dùng.
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function editProfile(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'name'    => ['nullable', 'string', 'min:4', 'max:255'],
+            'address' => ['nullable', 'string', 'max:255'],
+            'bio'     => ['nullable', 'string'],
+            'gender' => ['nullable', Rule::in(Gender::cases())],
+            'language' => ['nullable', Rule::in(Language::cases())],
+            'date_of_birth' => ['nullable', 'date', 'before:today'],
+            'old_password' => ['nullable', 'string', 'min:8'],
+            'new_password' => ['nullable', 'string', 'min:8'],
+        ], [
+            'name.string'   => __('auth.validation.name_required'),
+            'name.min'      => __('auth.validation.name_min'),
+            'name.max'      => __('auth.validation.name_max'),
+
+            'gender.required' => __('validation.gender.required'),
+            'gender.in' => __('validation.gender.in'),
+            'language.required' => __('validation.language.required'),
+            'language.in' => __('validation.language.in'),
+
+            'bio.string' => __('auth.validation.introduce_invalid'),
+
+            'old_password.string' => __('auth.validation.password_required'),
+            'old_password.min'    => __('auth.validation.password_min'),
+            'new_password.string' => __('auth.validation.password_required'),
+            'new_password.min'    => __('auth.validation.password_min'),
+
+            'date_of_birth.date'  => __('auth.validation.date_invalid'),
+            'date_of_birth.before' => __('auth.validation.date_before'),
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError(
+                message: __('common_error.validation_failed'),
+                code: 422
+            );
+        }
+
+        $data = $validator->validated();
+
+        $result = $this->authService->editInfoUser($data);
+
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage(),
+            );
+        }
+
+        return $this->sendSuccess(
+            message: __('auth.success.update_success'),
+            data: UserResource::make($result->getData())
         );
     }
 }
