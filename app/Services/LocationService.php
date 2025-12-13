@@ -73,9 +73,9 @@ class LocationService  extends BaseService
     }
 
     /**
-     * 
+     *
      * --------- public methods ---------
-     * 
+     *
      */
     public function getDetail(string $placeId): ServiceReturn
     {
@@ -227,7 +227,7 @@ class LocationService  extends BaseService
 
             $data = $response->json();
 
-            /** 4. Prepare caching (CHỈ cache nếu API trả nhiều kết quả) */
+            /** 4. Prepare caching (CHỈ cache nếu API trả ra kết quả) */
             if (!empty($data['predictions'])) {
                 $placesToCache = [];
                 $dataReturn = [];

@@ -12,14 +12,12 @@ use App\Core\Service\ServiceReturn;
 use App\Enums\DirectFile;
 use App\Enums\Gender;
 use App\Enums\Language;
-use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserRole;
 use App\Models\Service;
 use App\Models\User;
 use App\Repositories\UserProfileRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\WalletRepository;
-use App\Utils\Constants\StoragePath;
 use Exception;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -626,11 +624,6 @@ class AuthService extends BaseService
                 $userUpdateData['name'] = $data['name'];
             }
 
-
-            if (isset($data['language'])) {
-                $userUpdateData['language'] = $data['language'];
-            }
-
             if (!empty($userUpdateData)) {
                 $user->fill($userUpdateData)->save();
             }
@@ -654,19 +647,23 @@ class AuthService extends BaseService
                     $profileUpdateData
                 );
             }
-            $reviewApplyUpdateData = [];
-            if (isset($data['language'])) {
-                $reviewApplyUpdateData['language'] = $data['language'];
-            }
-            if (!empty($reviewApplyUpdateData)) {
-                $user->reviewApplication()->updateOrCreate(
-                    ['user_id' => $user->id],
-                    ['status' => ReviewApplicationStatus::APPROVED->value],
-                    $reviewApplyUpdateData
-                );
-            }
+//            $reviewApplyUpdateData = [];
+//            if (isset($data['language'])) {
+//                $reviewApplyUpdateData['language'] = $data['language'];
+//            }
+//            if (!empty($reviewApplyUpdateData)) {
+//                $user->reviewApplication()->updateOrCreate(
+//                    ['user_id' => $user->id],
+//                    ['status' => ReviewApplicationStatus::APPROVED->value],
+//                    $reviewApplyUpdateData
+//                );
+//            }
+            // Load lại quan hệ profile để trả về dữ liệu mới
+            $user->load('profile');
             DB::commit();
-            return ServiceReturn::success($user);
+            return ServiceReturn::success(
+                data: $user
+            );
         } catch (\Throwable $e) {
             DB::rollBack();
             LogHelper::error(
