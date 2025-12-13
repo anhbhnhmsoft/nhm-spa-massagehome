@@ -147,4 +147,14 @@ class User extends Authenticatable
     public function reviewWrited() {
         return $this->hasMany(Review::class, 'review_by');
     }
+
+    public function addresses()
+    {
+        return $this->hasMany(UserAddress::class);
+    }
+
+    public function primaryAddress()
+    {
+        return $this->hasOne(UserAddress::class)->where('is_primary', true);
+    }
 }

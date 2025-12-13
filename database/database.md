@@ -134,6 +134,23 @@
     - softDeletes
     - timestamps
 
+# user_address
+    # note
+    - Bảng user_address lưu trữ thông tin địa chỉ của người dùng.
+
+    # relations
+    - Quan hệ 1-n với bảng users.
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - user_id (bigint, foreign key to users.id) -- id người dùng
+    - address (varchar, nullable) -- địa chỉ chi tiết
+    - latitude (decimal(10,8), nullable) -- vĩ độ
+    - longitude (decimal(11,8), nullable) -- kinh độ
+    - desc (text, nullable) -- ghi chú thêm
+    - softDeletes
+    - timestamps
+
 # wallets
     # note
     - Bảng wallets lưu trữ thông tin ví tiền của người dùng.

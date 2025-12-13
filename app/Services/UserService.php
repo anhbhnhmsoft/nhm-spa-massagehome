@@ -12,6 +12,7 @@ use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserRole;
+use App\Repositories\UserAddressRepository;
 use App\Repositories\UserFileRepository;
 use App\Repositories\UserProfileRepository;
 use App\Repositories\UserRepository;
@@ -28,7 +29,8 @@ class UserService extends BaseService
         protected UserFileRepository $userFileRepository,
         protected UserReviewApplicationRepository $userReviewApplicationRepository,
         protected UserProfileRepository $userProfileRepository,
-        protected WalletRepository $walletRepository
+        protected WalletRepository $walletRepository,
+        protected UserAddressRepository $userAddressRepository
     ) {
         parent::__construct();
     }
@@ -234,7 +236,7 @@ class UserService extends BaseService
         }
     }
 
-    public function activeKTVapply (int $id)
+    public function activeKTVapply(int $id)
     {
         DB::beginTransaction();
         try {
@@ -253,10 +255,10 @@ class UserService extends BaseService
                 $user->reviewApplication->save();
             }
 
-            if($user->wallet) {
+            if ($user->wallet) {
                 $user->wallet->is_active = true;
                 $user->wallet->save();
-            }else {
+            } else {
                 $this->walletRepository->create([
                     'user_id' => $user->id,
                     'balance' => 0,
@@ -348,7 +350,7 @@ class UserService extends BaseService
         }
     }
 
-    public function updateUser (array $data)
+    public function updateUser(array $data)
     {
         DB::beginTransaction();
         try {
@@ -359,22 +361,22 @@ class UserService extends BaseService
                 );
             }
             $dataUpdate = [];
-            if(isset($data['name']) && $data['name']){
+            if (isset($data['name']) && $data['name']) {
                 $dataUpdate['name'] = $data['name'];
             }
-            if(isset($data['phone']) && $data['phone']){
+            if (isset($data['phone']) && $data['phone']) {
                 $dataUpdate['phone'] = $data['phone'];
             }
-            if(isset($data['password']) && $data['password']){
+            if (isset($data['password']) && $data['password']) {
                 $dataUpdate['password'] = $data['password'];
             }
-            if(isset($data['role']) && $data['role']){
+            if (isset($data['role']) && $data['role']) {
                 $dataUpdate['role'] = $data['role'];
             }
-            if(isset($data['is_active']) && $data['is_active']){
+            if (isset($data['is_active']) && $data['is_active']) {
                 $dataUpdate['is_active'] = $data['is_active'];
             }
-            if(isset($data['referral_code']) && $data['referral_code']){
+            if (isset($data['referral_code']) && $data['referral_code']) {
                 $dataUpdate['referral_code'] = $data['referral_code'];
             }
 
@@ -395,7 +397,7 @@ class UserService extends BaseService
                         'file_path' => optional($file)['file_path'] ?? null
                     ]);
                 }
-            }   
+            }
 
             $user->reviewApplication()->updateOrCreate(
                 ['user_id' => $user->id],
@@ -416,6 +418,92 @@ class UserService extends BaseService
                 message: $exception->getMessage()
             );
         }
-        
+    }
+
+    /**
+     * @param array $data
+     * @return ServiceReturn
+     */
+    public function saveAddress(array $data): ServiceReturn
+    {
+
+        try {
+            DB::beginTransaction();
+
+            $checkAdress = $this->userAddressRepository->query()
+                ->where('user_id', $data['user_id'])
+                ->where('latitude', $data['latitude'])
+                ->where('longitude', $data['longitude'])
+                ->first();
+            if ($checkAdress) {
+                return ServiceReturn::error(
+                    message: __("common_error.address_exists")
+                );
+            }
+
+            $preparedData = [
+                'user_id' => $data['user_id'],
+                'address' => $data['address'],
+                'latitude' => $data['latitude'],
+                'longitude' => $data['longitude'],
+                'desc' => $data['desc'] ?? '',
+                'is_primary' => $data['is_primary'] ?? false
+            ];
+            $userAddress = $this->userAddressRepository->create($preparedData);
+            DB::commit();
+            return ServiceReturn::success(
+                data: $userAddress,
+                message: __("common_success.data_created")
+            );
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            LogHelper::error(
+                message: "Lỗi UserService@saveAddress",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        }
+    }
+    /**
+     * @param FilterDTO $dto
+     * @return ServiceReturn
+     */
+
+    public function getPaginateAddress(FilterDTO $dto): ServiceReturn
+    {
+        try {
+            $query = $this->userAddressRepository->query();
+            $query = $this->userAddressRepository->filterQuery(
+                query: $query,
+                filters: $dto->filters
+            );
+            $query = $this->userAddressRepository->sortQuery(
+                query: $query,
+                sortBy: $dto->sortBy,
+                direction: $dto->direction
+            );
+            $paginate = $query->paginate(
+                perPage: $dto->perPage,
+                page: $dto->page
+            );
+            return ServiceReturn::success(
+                data: $paginate
+            );
+        } catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi UserService@getPaginateAddress",
+                ex: $exception
+            );
+            return ServiceReturn::success(
+                data: new LengthAwarePaginator(
+                    items: [],
+                    total: 0,
+                    perPage: $dto->perPage,
+                    currentPage: $dto->page
+                )
+            );
+        }
     }
 }

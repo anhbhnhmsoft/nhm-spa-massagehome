@@ -15,7 +15,8 @@ class UserResource extends JsonResource
     public function toArray(Request $request): array
     {
         $profile = $this->profile;
-        return [
+        $primary_location = $this->primaryAddress;
+        $dataReturn = [
             'id' => $this->id,
             'name' => $this->name,
             'phone' => $this->phone,
@@ -33,7 +34,18 @@ class UserResource extends JsonResource
                 'district_code' => $profile->district_code?->name ?? null,
                 'ward_code' => $profile->ward_code?->name ?? null,
                 'bio' => $profile->bio,
-            ]
+            ],
         ];
+        if ($primary_location) {
+            $dataReturn['primary_location'] = [
+                'address' => $primary_location->address,
+                'desc' => $primary_location->desc,
+                'latitude' => $primary_location->latitude,
+                'longitude' => $primary_location->longitude,
+                'desc' => $primary_location->desc,
+            ];
+        }
+
+        return $dataReturn;
     }
 }

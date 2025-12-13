@@ -110,6 +110,18 @@ return new class extends Migration
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
 
+        Schema::create('user_address', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->string('address', 255);
+            $table->decimal('latitude', 10, 8)->default(0);
+            $table->decimal('longitude', 11, 8)->default(0);
+            $table->text('desc')->nullable();
+            $table->boolean('is_primary')->default(false);
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
         Schema::create('categories', function (Blueprint $table) {
             $table->comment('Bảng categories lưu trữ thông tin danh mục dịch vụ');
             $table->id();
@@ -427,6 +439,7 @@ return new class extends Migration
             'coupons',
             'services',
             'categories',
+            'user_address',
             'user_files',
             'user_profiles',
             'user_review_application',

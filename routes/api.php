@@ -60,6 +60,18 @@ Route::middleware('set-api-locale')->group(function () {
          * detail location
          */
         Route::get('detail', [LocationController::class, 'detail'])->middleware(['throttle:5,0.2']);
+
+        /**
+         * router cần auth
+         * list address
+         */
+        Route::get('address', [UserController::class, 'listAddress'])->middleware(['throttle:5,0.2']);
+
+        /**
+         * router cần auth
+         * save address
+         */
+        Route::post('save', [UserController::class, 'saveAddress'])->middleware(['throttle:5,0.2']);
     });
 
     Route::prefix('user')->group(function () {
