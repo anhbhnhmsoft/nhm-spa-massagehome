@@ -190,11 +190,31 @@ return new class extends Migration
             $table->unique(['code', 'created_by']);
         });
 
+        Schema::create('coupon_used', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('coupon_id')->comment('ID mã giảm giá');
+            $table->unsignedBigInteger('user_id')->comment('ID người dùng sử dụng');
+            $table->unsignedBigInteger('service_id')->comment('ID dịch vụ');
+            $table->unsignedBigInteger('booking_id')->unique()->comment('ID đơn đặt lịch/giao dịch');
+
+            $table->foreign('coupon_id')->references('id')->on('coupons')->onDelete('cascade');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('service_id')->references('id')->on('services')->onDelete('cascade');
+            $table->foreign('booking_id')->references('id')->on('service_bookings')->onDelete('cascade');
+
+            $table->timestamps();
+            $table->softDeletes();
+
+            $table->unique(['booking_id', 'coupon_id']);
+        });
+
+
         Schema::create('service_bookings', function (Blueprint $table) {
             $table->comment('Bảng service_bookings lưu trữ thông tin đặt lịch hẹn');
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->unsignedBigInteger('service_id');
+            $table->unsignedBigInteger('service_option_id')->nullable()->comment('Tùy chọn dịch vụ áp dụng');
             $table->unsignedBigInteger('coupon_id')->nullable()->comment('Mã giảm giá áp dụng');
             $table->smallInteger('duration')->comment('Thời gian thực hiện dịch vụ (dạng enum ServiceDuration - minutes)');
             $table->timestamp('booking_time')->comment('Thời gian đặt lịch');
@@ -216,6 +236,7 @@ return new class extends Migration
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreign('service_id')->references('id')->on('services')->onDelete('cascade');
+            $table->foreign('service_option_id')->references('id')->on('service_options')->onDelete('set null');
             $table->foreign('coupon_id')->references('id')->on('coupons')->onDelete('set null');
         });
 
@@ -433,6 +454,7 @@ return new class extends Migration
             'user_profiles',
             'user_review_application',
             'users',
+            'coupon_used',
             'provinces',
         ];
 

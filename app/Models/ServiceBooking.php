@@ -25,7 +25,8 @@ class ServiceBooking extends Model
         'note',
         'address',
         'latitude',
-        'longitude'
+        'longitude',
+        'service_option_id'
     ];
 
     protected $casts = [
@@ -42,6 +43,7 @@ class ServiceBooking extends Model
         'payment_type' => 'integer',
         'latitude' => 'decimal:10,8',
         'longitude' => 'decimal:11,8',
+        'service_option_id' => 'string',
     ];
 
     // Lấy thông tin khách hàng đặt
@@ -60,5 +62,10 @@ class ServiceBooking extends Model
     public function coupon()
     {
         return $this->belongsTo(Coupon::class);
+    }
+
+    public function option() // Option dịch vụ
+    {
+        return $this->belongsTo(ServiceOption::class);
     }
 }

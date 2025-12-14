@@ -12,12 +12,14 @@ use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserRole;
+use App\Repositories\BookingRepository;
 use App\Repositories\UserAddressRepository;
 use App\Repositories\UserFileRepository;
 use App\Repositories\UserProfileRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\UserReviewApplicationRepository;
 use App\Repositories\WalletRepository;
+use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -30,7 +32,8 @@ class UserService extends BaseService
         protected UserReviewApplicationRepository $userReviewApplicationRepository,
         protected UserProfileRepository $userProfileRepository,
         protected WalletRepository $walletRepository,
-        protected UserAddressRepository $userAddressRepository
+        protected UserAddressRepository $userAddressRepository,
+        protected BookingRepository $bookingRepository
     ) {
         parent::__construct();
     }
@@ -503,6 +506,45 @@ class UserService extends BaseService
                     perPage: $dto->perPage,
                     currentPage: $dto->page
                 )
+            );
+        }
+    }
+
+    /**
+     * Lấy danh sách khách hàng đã đặt lịch trong ngày hôm nay
+     * với status COMPLETED hoặc ONGOING
+     * @return ServiceReturn
+     */
+    public function getTodayBookedCustomers(): ServiceReturn
+    {
+        try {
+            $now = Carbon::now();
+            $startOfDay = $now->copy()->startOfDay();
+            $endOfDay   = $now->copy()->endOfDay();
+
+            $customers = $this->bookingRepository->query()
+                ->with([
+                    'user.profile',
+                ])
+                ->whereIn('status', [
+                    \App\Enums\BookingStatus::CONFIRMED->value,
+                    \App\Enums\BookingStatus::ONGOING->value,
+                    \App\Enums\BookingStatus::COMPLETED->value,
+                ])
+                ->whereBetween('booking_time', [$startOfDay, $endOfDay])
+                ->orderBy('booking_time', 'asc')
+                ->get();
+
+            return ServiceReturn::success(
+                data: $customers
+            );
+        } catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi UserService@getTodayBookedCustomers",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: __("common_error.server_error")
             );
         }
     }
