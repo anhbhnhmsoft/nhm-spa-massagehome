@@ -338,6 +338,22 @@ class DatabaseSeeder extends Seeder
                     'description' => 'Mã API key Goong dùng để tích hợp tìm kiếm địa chỉ.',
                 ]
             );
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::BREAK_TIME_GAP->value],
+                [
+                    'config_value' => '15',
+                    'config_type' => ConfigType::NUMBER->value,
+                    'description' => 'Khoảng cách giữa 2 lần phục vụ của kỹ thuật viên tính bằng phút',
+                ]
+            );
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::DISCOUNT_RATE->value],
+                [
+                    'config_value' => '20',
+                    'config_type' => ConfigType::NUMBER->value,
+                    'description' => 'Tỷ lệ chiết khấu',
+                ]
+            );
         } catch (\Exception $e) {
             DB::rollBack();
             dump($e);

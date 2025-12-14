@@ -301,6 +301,7 @@
     # cấu trúc
     - id (bigint, primary key, auto-increment)
     - user_id (bigint, foreign key to users.id) -- id người dùng đặt lịch
+    - service_option_id (bigint, foreign key to service_options.id) -- id tùy chọn dịch vụ
     - service_id (bigint, foreign key to services.id) -- id dịch vụ
     - coupon_id (bigint, foreign key to coupons.id, nullable) -- id mã giảm giá
     - duration (smallint) -- thời gian thực hiện dịch vụ (dạng enum ServiceDuration - minutes)
@@ -343,7 +344,25 @@
     - softDeletes
     - timestamps
     - unique (code, created_by) -- mã giảm giá phải là duy nhất cho từng người dùng
+# coupon_used
+    #note
+    - Bảng coupon_used lưu trữ thông tin mã giảm giá đã được sử dụng.
 
+    # relations
+    - Quan hệ 1-n với bảng coupons.
+    - Quan hệ 1-n với bảng users.
+    - Quan hệ 1-n với bảng services.
+    - Quan hệ 1-n với bảng service_bookings.
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - coupon_id (bigint, foreign key to coupons.id) -- id mã giảm giá
+    - user_id (bigint, foreign key to users.id) -- id người dùng
+    - service_id (bigint, foreign key to services.id) -- id dịch vụ
+    - booking_id (bigint, foreign key to service_bookings.id) -- id đơn đặt lịch
+    - softDeletes
+    - timestamps
+    - unique (booking_id, coupon_id) -- mã giảm giá phải là duy nhất cho từng đơn đặt lịch
 
 # reviews 
     # note
