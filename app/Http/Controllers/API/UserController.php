@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Core\Controller\BaseController;
 use App\Core\Controller\ListRequest;
 use App\Http\Resources\User\AddressResource;
+use App\Http\Resources\User\CustomerBookedTodayResource;
 use App\Http\Resources\User\ListAddressResource;
 use App\Http\Resources\User\ListKTVResource;
 use App\Services\UserService;
@@ -15,9 +16,7 @@ class UserController extends BaseController
 {
     public function __construct(
         protected UserService $userService
-    )
-    {
-    }
+    ) {}
 
     /**
      * Lấy danh sách KTV
@@ -78,6 +77,8 @@ class UserController extends BaseController
             'desc.string' => __('validation.location.desc_string'),
             'is_primary.boolean' => __('validation.location.is_primary_boolean'),
         ]);
+        $validate['user_id'] = $request->user()->id;
+
 
         $result = $this->userService->saveAddress(data: $validate);
         if ($result->isError()) {
@@ -167,6 +168,27 @@ class UserController extends BaseController
         $data = $result->getData();
         return $this->sendSuccess(
             data: ListAddressResource::collection($data)->response()->getData()
+        );
+    }
+
+    /**
+     * Lấy danh sách khách hàng đã đặt lịch trong ngày hôm nay
+     * với status COMPLETED hoặc ONGOING
+     * @return JsonResponse
+     */
+    public function getTodayBookedCustomers(): JsonResponse
+    {
+        $result = $this->userService->getTodayBookedCustomers();
+
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage()
+            );
+        }
+
+        $data = $result->getData();
+        return $this->sendSuccess(
+            data: CustomerBookedTodayResource::collection($data)
         );
     }
 }

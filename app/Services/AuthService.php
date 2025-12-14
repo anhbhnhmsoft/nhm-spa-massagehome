@@ -199,7 +199,7 @@ class AuthService extends BaseService
             $user = $this->userRepository->create([
                 'phone' => $dataCache['phone'],
                 'phone_verified_at' => now(),
-                'password' => $password,
+                'password' => Hash::make($password),
                 'name' => $name,
                 'language' => $language?->value ?? Language::VIETNAMESE->value,
                 // Ban đầu user là customer

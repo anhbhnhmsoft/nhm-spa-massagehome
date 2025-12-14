@@ -36,6 +36,8 @@ final class Helper
             PaymentType::QR_BANKING => "QRBK".self::getTimestampAsId(),
             PaymentType::ZALO_PAY => "ZLPY".self::getTimestampAsId(),
             PaymentType::MOMO_PAY => "MMPY".self::getTimestampAsId(),
+            PaymentType::BY_POINTS => "BYP".self::getTimestampAsId(),
+            default => "UNKNOWN".self::getTimestampAsId(),
         };
     }
 

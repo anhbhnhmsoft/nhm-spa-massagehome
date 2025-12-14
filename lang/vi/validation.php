@@ -32,6 +32,11 @@ return [
         'date' => 'Thời gian không hợp lệ.',
         'after' => 'Thời gian phải sau thời điểm hiện tại 1 tiếng.',
     ],
+    'option_id' => [
+        'required' => 'Vui lòng chọn gói dịch vụ.',
+        'numeric' => 'Gói dịch vụ không hợp lệ.',
+        'exists' => 'Gói dịch vụ không tồn tại.',
+    ],
     'coupon_id' => [
         'exists' => 'Mã giảm giá không tồn tại.',
     ],

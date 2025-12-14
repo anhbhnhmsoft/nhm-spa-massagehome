@@ -83,6 +83,14 @@ Route::middleware('set-api-locale')->group(function () {
 
         // Lấy thông tin chi tiết KTV
         Route::get('ktv/{id}', [UserController::class, 'detailKtv'])->where('id', '[0-9]+');
+
+        /**
+         * router cần auth
+         */
+        Route::middleware(['auth:sanctum'])->group(function () {
+            // Lấy danh sách khách hàng đã đặt lịch trong ngày hôm nay
+            Route::get('today-booked-customers', [UserController::class, 'getTodayBookedCustomers']);
+        });
     });
 
     Route::prefix('service')->group(function () {

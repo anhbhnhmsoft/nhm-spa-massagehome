@@ -45,4 +45,13 @@ enum CacheKey: string
      */
     case CACHE_USER_LOCATION = 'CACHE_USER_LOCATION';
 
+    /**
+     * Cache lưu thông tin Coupon.
+     */
+    case CACHE_COUPON = 'CACHE_COUPON';
+
+    /**
+     * Cache lưu số lần sử dụng của Coupon.
+     */
+    case CACHE_COUPON_USED = 'CACHE_COUPON_USED';
 }

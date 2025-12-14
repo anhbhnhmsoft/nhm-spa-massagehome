@@ -164,7 +164,6 @@ class DashboardService extends BaseService
 
             $colors = [
                 BookingStatus::PENDING->value => 'rgb(234, 179, 8)',
-                BookingStatus::CONFIRMED->value => 'rgb(59, 130, 246)',
                 BookingStatus::ONGOING->value => 'rgb(168, 85, 247)',
                 BookingStatus::COMPLETED->value => 'rgb(34, 197, 94)',
                 BookingStatus::CANCELED->value => 'rgb(239, 68, 68)',
