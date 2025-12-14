@@ -508,7 +508,7 @@ class AuthService extends BaseService
                 [
                     'token' => $token,
                     'device_type' => $platform ?? 'unknown',
-                    'device_name' => $deviceName ?? 'Unknown Device',
+                    // 'device_name' => $deviceName ?? 'Unknown Device',
                     'updated_at' => now(),
                 ]
             );
