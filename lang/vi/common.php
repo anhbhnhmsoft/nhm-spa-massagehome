@@ -9,4 +9,7 @@ return [
         'max_digits' => 'Giá trị này không được vượt quá :max số',
         'min_items' => 'Giá trị này phải có ít nhất :min mục',
     ],
+    'unit' => [
+        'minute' => 'phút',
+    ],
 ];

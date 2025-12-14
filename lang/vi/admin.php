@@ -8,6 +8,7 @@ return
             "service" => 'Quản lý dịch vụ',
             'user' => 'Quản lý khách hàng',
             'transaction' => 'Quản lý giao dịch',
+            'marketing' => 'Quản lý marketing',
         ],
         "user" => [
             "label" => "Kỹ thuật viên"
@@ -41,6 +42,7 @@ return
                 'effective_date' => 'Ngày hiệu lực',
                 'application_date' => 'Ngày đăng ký',
                 'referral_code' => 'Mã giới thiệu',
+                'creator' => 'Tạo bởi',
             ],
             'action' => [
                 'view' => 'Xem',
@@ -78,6 +80,7 @@ return
                 'gender' => 'Giới tính',
                 'status' => 'Trạng thái',
                 'is_featured' => 'Nổi bật',
+                'type' => 'Loại'
             ],
             'status' => [
                 'active' => 'Kích hoạt',
@@ -276,12 +279,15 @@ return
                 'payos_client_id' => 'PayOS Client ID',
                 'payos_api_key' => 'PayOS API Key',
                 'payos_checksum_key' => 'PayOS Checksum Key',
+                'goong_api_key' => 'Goong API Key',
                 'currency_exchange_rate' => 'Tỷ giá (VNĐ -> Điểm)',
                 'commission_rate' => 'Tỷ lệ hoa hồng',
                 'min_commission' => 'Hoa hồng tối thiểu',
                 'max_commission' => 'Hoa hồng tối đa',
                 'target_role' => 'Vai trò áp dụng',
                 'is_active' => 'Kích hoạt',
+                'break_time_gap' => 'Khoảng cách giữa các ca',
+                'discount_rate' => 'Tỷ lệ chiết khấu',
             ],
             'actions' => [
                 'save' => 'Lưu thay đổi',
@@ -406,4 +412,32 @@ return
                 'year' => 'Năm nay',
             ],
         ],
+        'coupon' => [
+            'label' => 'Mã giảm giá',
+            'navigation_label' => 'Quản lý mã giảm giá',
+            'fields' => [
+                'code' => 'Mã',
+                'discount' => 'Giảm giá',
+                'label' => 'Tên',
+                'type' => 'Loại',
+                'start_date' => 'Ngày bắt đầu',
+                'end_date' => 'Ngày kết thúc',
+                'max_uses' => 'Số lần sử dụng',
+                'is_percentage' => 'Loại giảm giá',
+                'description' => 'Mô tả',
+                'discount_value' => 'Giá trị giảm ( điểm/ %)',
+                'max_discount' => 'Số điểm tối đa',
+                'usage_limit' => 'Số lần áp dụng tối đa',
+                'used_count' => 'Số lần đã áp dụng',
+                'is_active' => 'Trạng thái',
+            ],
+            'is_percentage' => [
+                'fixed' => 'Số tiền',
+                'percent' => 'Phần trăm',
+            ],
+            'status' => [
+                'active' => 'Kích hoạt',
+                'inactive' => 'Tắt',
+            ],
+        ]
     ];

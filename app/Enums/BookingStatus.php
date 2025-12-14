@@ -9,6 +9,7 @@ enum BookingStatus: int
     case ONGOING = 3; // Đang diễn ra
     case COMPLETED = 4; // Đã hoàn thành
     case CANCELED = 5; // Đã hủy
+    case PAYMENT_FAILED = 6; // Thanh toán thất bại
 
     public function label(): string
     {
@@ -18,6 +19,7 @@ enum BookingStatus: int
             self::ONGOING => __('admin.booking.status.ongoing'),
             self::COMPLETED => __('admin.booking.status.completed'),
             self::CANCELED => __('admin.booking.status.canceled'),
+            self::PAYMENT_FAILED => __('admin.booking.status.payment_failed'),
         };
     }
 
