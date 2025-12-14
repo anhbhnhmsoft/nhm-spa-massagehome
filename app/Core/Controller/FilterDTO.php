@@ -7,8 +7,8 @@ class FilterDTO
     public function __construct(
         public readonly int $page,
         public readonly int $perPage,
-        public readonly ?string $sortBy,
-        public readonly string $direction,
+        public ?string $sortBy,
+        public string $direction,
 
         // Bỏ readonly ở đây để có thể sửa được
         public array $filters
@@ -25,5 +25,17 @@ class FilterDTO
     public function addFilter(string $key, mixed $value): void
     {
         $this->filters[$key] = $value;
+    }
+
+    // Setter cho sortByvà direction
+    public function setSortBy(string $sortBy): void
+    {
+        $this->sortBy = $sortBy;
+    }
+
+    // Setter cho direction
+    public function setDirection(string $direction): void
+    {
+        $this->direction = $direction;
     }
 }

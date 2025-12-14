@@ -15,10 +15,11 @@ class ListAddressResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
+            'id' => $this->id,
             'address' => $this->address,
             'latitude' => $this->latitude,
             'longitude' => $this->longitude,
-            'desc' => $this->desc,
+            'desc' => (string) $this->desc,
             'is_primary' => $this->is_primary,
         ];
     }

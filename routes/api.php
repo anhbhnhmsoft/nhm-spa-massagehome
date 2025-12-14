@@ -48,30 +48,30 @@ Route::middleware('set-api-locale')->group(function () {
     });
 
     Route::prefix('/location')->middleware(['auth:sanctum'])->group(function () {
-
         /**
-         * router cần auth
          * autocomplete search location
          */
         Route::get('search', [LocationController::class, 'search'])->middleware(['throttle:5,0.3']);
-
         /**
-         * router cần auth
          * detail location
          */
         Route::get('detail', [LocationController::class, 'detail'])->middleware(['throttle:5,0.2']);
-
         /**
-         * router cần auth
          * list address
          */
-        Route::get('address', [UserController::class, 'listAddress'])->middleware(['throttle:5,0.2']);
-
+        Route::get('address', [UserController::class, 'listAddress']);
         /**
-         * router cần auth
          * save address
          */
-        Route::post('save', [UserController::class, 'saveAddress'])->middleware(['throttle:5,0.2']);
+        Route::post('save', [UserController::class, 'saveAddress']);
+        /**
+         * edit address
+         */
+        Route::put('edit/{id}', [UserController::class, 'editAddress'])->where('id', '[0-9]+');
+        /**
+         * delete address
+         */
+        Route::delete('delete/{id}', [UserController::class, 'deleteAddress'])->where('id', '[0-9]+');
     });
 
     Route::prefix('user')->group(function () {

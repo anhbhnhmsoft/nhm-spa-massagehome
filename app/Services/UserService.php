@@ -19,19 +19,21 @@ use App\Repositories\UserRepository;
 use App\Repositories\UserReviewApplicationRepository;
 use App\Repositories\WalletRepository;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class UserService extends BaseService
 {
     public function __construct(
-        protected UserRepository $userRepository,
-        protected UserFileRepository $userFileRepository,
+        protected UserRepository                  $userRepository,
+        protected UserFileRepository              $userFileRepository,
         protected UserReviewApplicationRepository $userReviewApplicationRepository,
-        protected UserProfileRepository $userProfileRepository,
-        protected WalletRepository $walletRepository,
-        protected UserAddressRepository $userAddressRepository
-    ) {
+        protected UserProfileRepository           $userProfileRepository,
+        protected WalletRepository                $walletRepository,
+        protected UserAddressRepository           $userAddressRepository
+    )
+    {
         parent::__construct();
     }
 
@@ -421,41 +423,49 @@ class UserService extends BaseService
     }
 
     /**
+     * Save user address
      * @param array $data
      * @return ServiceReturn
      */
     public function saveAddress(array $data): ServiceReturn
     {
-
         try {
             DB::beginTransaction();
-
-            $checkAdress = $this->userAddressRepository->query()
-                ->where('user_id', $data['user_id'])
+            $user = Auth::user();
+            $checkAddress = $this->userAddressRepository->query()
+                ->where('user_id', $user->id)
                 ->where('latitude', $data['latitude'])
                 ->where('longitude', $data['longitude'])
                 ->first();
-            if ($checkAdress) {
+            if ($checkAddress) {
                 return ServiceReturn::error(
                     message: __("common_error.address_exists")
                 );
             }
-
+            $isPrimary = $data['is_primary'] ?? false;
             $preparedData = [
-                'user_id' => $data['user_id'],
+                'user_id' => $user->id,
                 'address' => $data['address'],
                 'latitude' => $data['latitude'],
                 'longitude' => $data['longitude'],
                 'desc' => $data['desc'] ?? '',
-                'is_primary' => $data['is_primary'] ?? false
+                'is_primary' => $isPrimary
             ];
             $userAddress = $this->userAddressRepository->create($preparedData);
+            // Nếu là địa chỉ chính thì cập nhật các địa chỉ khác thành không phải chính
+            if ($isPrimary) {
+                $this->userAddressRepository->query()
+                    ->where('user_id', $user->id)
+                    ->where('id', '<>', $userAddress->id)
+                    ->update(['is_primary' => false]);
+            }
             DB::commit();
             return ServiceReturn::success(
                 data: $userAddress,
                 message: __("common_success.data_created")
             );
-        } catch (\Exception $exception) {
+        }
+        catch (\Exception $exception) {
             DB::rollBack();
             LogHelper::error(
                 message: "Lỗi UserService@saveAddress",
@@ -466,11 +476,120 @@ class UserService extends BaseService
             );
         }
     }
+
     /**
+     * Edit user address
+     * @param  $id
+     * @param array $data
+     * @return ServiceReturn
+     */
+    public function editAddress($id, array $data): ServiceReturn
+    {
+        try {
+            $user = Auth::user();
+            $userAddress = $this->userAddressRepository->query()
+                ->where('id', $id)
+                ->where('user_id', $user->id)
+                ->first();
+
+            if (!$userAddress) {
+                throw new ServiceException(__("error.address_not_found"));
+            }
+            $isPrimary = $data['is_primary'] ?? $userAddress->is_primary;
+            $preparedData = [
+                'address' => $data['address'] ?? $userAddress->address,
+                'latitude' => $data['latitude'] ?? $userAddress->latitude,
+                'longitude' => $data['longitude'] ?? $userAddress->longitude,
+                'desc' => $data['desc'] ?? $userAddress->desc,
+                'is_primary' => $isPrimary
+            ];
+            $userAddress->update($preparedData);
+            // Nếu là địa chỉ chính thì cập nhật các địa chỉ khác thành không phải chính
+            if ($isPrimary) {
+                $this->userAddressRepository->query()
+                    ->where('user_id', $user->id)
+                    ->where('id', '<>', $userAddress->id)
+                    ->update(['is_primary' => false]);
+            }
+            return ServiceReturn::success(
+                data: $userAddress,
+                message: __("common_success.data_updated")
+            );
+        } catch (ServiceException $exception) {
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        }
+        catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi UserService@editAddress",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        }
+    }
+
+    /**
+     * Delete user address
+     * @param $id
+     * @return ServiceReturn
+     */
+    public function deleteAddress($id): ServiceReturn
+    {
+        DB::beginTransaction();
+        try {
+            $user = Auth::user();
+            $userAddress = $this->userAddressRepository->query()
+                ->where('id', $id)
+                ->where('user_id', $user->id)
+                ->first();
+            if (!$userAddress) {
+                throw new ServiceException(__("error.address_not_found"));
+            }
+            // kiểm tra nếu địa chỉ xóa là chính thì set 1 địa chỉ khác thành chính
+            if ($userAddress->is_primary) {
+                $anotherAddress = $this->userAddressRepository->query()
+                    ->where('user_id', $user->id)
+                    ->orderBy('created_at', 'desc')
+                    ->where('id', '<>', $userAddress->id)
+                    ->first();
+                if ($anotherAddress) {
+                    $anotherAddress->is_primary = true;
+                    $anotherAddress->save();
+                }
+            }
+            // Sau đó mới xóa địa chỉ
+            $userAddress->delete();
+            DB::commit();
+            return ServiceReturn::success(
+                message: __("common_success.data_deleted")
+            );
+        } catch (ServiceException $exception) {
+            DB::rollBack();
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        }
+        catch (\Exception $exception) {
+            DB::rollBack();
+            LogHelper::error(
+                message: "Lỗi UserService@deleteAddress",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        }
+    }
+
+
+    /**
+     * Get paginate user address
      * @param FilterDTO $dto
      * @return ServiceReturn
      */
-
     public function getPaginateAddress(FilterDTO $dto): ServiceReturn
     {
         try {

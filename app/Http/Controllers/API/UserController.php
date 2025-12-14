@@ -78,8 +78,6 @@ class UserController extends BaseController
             'desc.string' => __('validation.location.desc_string'),
             'is_primary.boolean' => __('validation.location.is_primary_boolean'),
         ]);
-        $validate['user_id'] = $request->user()->id;
-        
 
         $result = $this->userService->saveAddress(data: $validate);
         if ($result->isError()) {
@@ -92,8 +90,62 @@ class UserController extends BaseController
             data: new AddressResource($data)
         );
     }
-    
+
     /**
+     * Cập nhật thông tin địa chỉ
+     * @param Request $request
+     * @param string $id
+     * @return JsonResponse
+     */
+    public function editAddress(Request $request, string $id): \Illuminate\Http\JsonResponse
+    {
+        $validate = $request->validate([
+            'address' => ['required', 'string', 'max:255'],
+            'latitude' => ['required', 'numeric', 'between:-90,90'],
+            'longitude' => ['required', 'numeric', 'between:-180,180'],
+            'desc' => ['nullable', 'string'],
+            'is_primary' => ['nullable', 'boolean'],
+        ], [
+            'address.required' => __('validation.location.address_required'),
+            'address.string' => __('validation.location.address_string'),
+            'latitude.required' => __('validation.location.latitude_required'),
+            'latitude.numeric' => __('validation.location.latitude_numeric'),
+            'latitude.between' => __('validation.location.latitude_between'),
+            'longitude.required' => __('validation.location.longitude_required'),
+            'longitude.numeric' => __('validation.location.longitude_numeric'),
+            'longitude.between' => __('validation.location.longitude_between'),
+            'desc.string' => __('validation.location.desc_string'),
+            'is_primary.boolean' => __('validation.location.is_primary_boolean'),
+        ]);
+        $result = $this->userService->editAddress(id: $id, data: $validate);
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage(),
+            );
+        }
+        $data = $result->getData();
+        return $this->sendSuccess(
+            data: new AddressResource($data)
+        );
+    }
+    /**
+     * Xóa địa chỉ
+     * @param string $id
+     * @return JsonResponse
+     */
+    public function deleteAddress(string $id): \Illuminate\Http\JsonResponse
+    {
+        $result = $this->userService->deleteAddress(id: $id);
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage(),
+            );
+        }
+        return $this->sendSuccess();
+    }
+
+    /**
+     * Lấy danh sách địa chỉ
      * @param ListRequest $request
      * @return JsonResponse
      */
@@ -103,6 +155,9 @@ class UserController extends BaseController
         $dto->setFilters([
             'user_id' => $request->user()->id,
         ]);
+        $dto->setSortBy('is_primary');
+        $dto->setDirection('asc');
+
         $result = $this->userService->getPaginateAddress(dto: $dto);
         if ($result->isError()) {
             return $this->sendError(

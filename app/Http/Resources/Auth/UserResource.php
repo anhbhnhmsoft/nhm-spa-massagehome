@@ -16,7 +16,7 @@ class UserResource extends JsonResource
     {
         $profile = $this->profile;
         $primary_location = $this->primaryAddress;
-        $dataReturn = [
+        return [
             'id' => $this->id,
             'name' => $this->name,
             'phone' => $this->phone,
@@ -35,17 +35,12 @@ class UserResource extends JsonResource
                 'ward_code' => $profile->ward_code?->name ?? null,
                 'bio' => $profile->bio,
             ],
-        ];
-        if ($primary_location) {
-            $dataReturn['primary_location'] = [
+            'primary_location' => $primary_location ? [
                 'address' => $primary_location->address,
                 'desc' => $primary_location->desc,
                 'latitude' => $primary_location->latitude,
                 'longitude' => $primary_location->longitude,
-                'desc' => $primary_location->desc,
-            ];
-        }
-
-        return $dataReturn;
+            ] : null,
+        ];
     }
 }
