@@ -20,6 +20,21 @@
     - division_type (varchar, nullable) -- cấp hành chính
     - timestamps
 
+
+# geo_caching_places
+    # note
+    - Bảng geo_caching_places lưu trữ các địa điểm được tìm kiếm từ API để tối ưu truy vấn.
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - place_id (varchar, unique) -- mã định danh địa điểm từ API
+    - keyword (varchar, nullable, index) -- từ khóa tìm kiếm
+    - formatted_address (varchar) -- địa chỉ định dạng đầy đủ
+    - latitude (decimal(12,8), nullable) -- vĩ độ
+    - longitude (decimal(12,8), nullable) -- kinh độ
+    - raw_data (json, nullable) -- dữ liệu thô trả về từ  API
+    - timestamps
+
 # users
     # note
     - Bảng users lưu trữ thông tin người dùng của hệ thống.

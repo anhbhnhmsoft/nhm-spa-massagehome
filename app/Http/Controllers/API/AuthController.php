@@ -348,12 +348,10 @@ class AuthController extends BaseController
      */
     public function editProfile(Request $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
+        $data = $request->validate([
             'name'    => ['nullable', 'string', 'min:4', 'max:255'],
-            'address' => ['nullable', 'string', 'max:255'],
             'bio'     => ['nullable', 'string'],
             'gender' => ['nullable', Rule::in(Gender::cases())],
-            'language' => ['nullable', Rule::in(Language::cases())],
             'date_of_birth' => ['nullable', 'date', 'before:today'],
             'old_password' => ['nullable', 'string', 'min:8'],
             'new_password' => ['nullable', 'string', 'min:8'],
@@ -364,8 +362,6 @@ class AuthController extends BaseController
 
             'gender.required' => __('validation.gender.required'),
             'gender.in' => __('validation.gender.in'),
-            'language.required' => __('validation.language.required'),
-            'language.in' => __('validation.language.in'),
 
             'bio.string' => __('auth.validation.introduce_invalid'),
 
@@ -378,14 +374,6 @@ class AuthController extends BaseController
             'date_of_birth.before' => __('auth.validation.date_before'),
         ]);
 
-        if ($validator->fails()) {
-            return $this->sendError(
-                message: __('common_error.validation_failed'),
-                code: 422
-            );
-        }
-
-        $data = $validator->validated();
 
         $result = $this->authService->editInfoUser($data);
 
@@ -396,8 +384,9 @@ class AuthController extends BaseController
         }
 
         return $this->sendSuccess(
-            message: __('auth.success.update_success'),
-            data: UserResource::make($result->getData())
+            data: [
+                'user' => new UserResource($result->getData()),
+            ],
         );
     }
 }

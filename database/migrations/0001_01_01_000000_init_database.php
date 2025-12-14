@@ -20,6 +20,17 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        Schema::create('geo_caching_places', function (Blueprint $table) {
+            $table->id();
+            $table->string('place_id')->unique();
+            $table->string('keyword')->nullable()->index();
+            $table->string('formatted_address');
+            $table->decimal('latitude', 12, 8)->nullable();
+            $table->decimal('longitude', 12, 8)->nullable();
+            $table->json('raw_data')->nullable();
+            $table->timestamps();
+        });
+
         Schema::create('users', function (Blueprint $table) {
             $table->comment('Bảng users lưu trữ thông tin người dùng');
             // Dùng BIGINT ID (Snowflake), không auto-increment
@@ -456,6 +467,7 @@ return new class extends Migration
             'users',
             'coupon_used',
             'provinces',
+            'geo_caching_places',
         ];
 
         foreach ($tables as $table) {

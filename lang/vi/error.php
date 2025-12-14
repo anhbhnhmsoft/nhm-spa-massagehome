@@ -14,4 +14,5 @@ return [
     "transaction_not_found" => "Lịch sử giao dịch không tồn tại",
     "bank_not_found" => "Ngân hàng không tồn tại",
     "file_invalid" => "File không hợp lệ",
+    "address_not_found" => "Địa chỉ không tồn tại",
 ];

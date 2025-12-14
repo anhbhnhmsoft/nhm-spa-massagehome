@@ -2,14 +2,18 @@
 
 namespace App\Models;
 
+use App\Core\GenerateId\HasBigIntId;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class UserAddress extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, HasBigIntId;
+
     protected $table = 'user_address';
+
     protected $fillable = [
+        'id',
         'user_id',
         'address',
         'latitude',
@@ -17,8 +21,12 @@ class UserAddress extends Model
         'desc',
         'is_primary',
     ];
- 
+
     protected $casts = [
+        'id' => 'string',
+        'user_id' => 'string',
+        'latitude' => 'string',
+        'longitude' => 'string',
         'is_primary' => 'boolean',
     ];
 
