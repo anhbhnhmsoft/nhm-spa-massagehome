@@ -33,7 +33,6 @@ class ServiceController extends BaseController
     public function listCategory(ListRequest $request): JsonResponse
     {
         $dto = $request->getFilterOptions();
-
         $result = $this->serviceService->categoryPaginate($dto);
         $data = $result->getData();
         return $this->sendSuccess(

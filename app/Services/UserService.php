@@ -101,7 +101,7 @@ class UserService extends BaseService
                 ex: $exception
             );
             return ServiceReturn::error(
-                message: "Không tìm thấy KTV"
+                message: __("common_error.server_error")
             );
         }
     }
@@ -583,7 +583,6 @@ class UserService extends BaseService
             );
         }
     }
-
 
     /**
      * Get paginate user address
