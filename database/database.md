@@ -398,3 +398,21 @@
     - description (text, nullable) -- mô tả cấu hình
     - softDeletes
     - timestamps
+
+# notifications
+    # note
+    - Bảng notifications lưu trữ thông tin các thông báo gửi đến người dùng.
+
+    # relations
+    - Quan hệ 1-n với bảng users.
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - user_id (bigint, foreign key to users.id) -- ID người dùng nhận thông báo
+    - title (varchar) -- Tiêu đề thông báo
+    - description (text) -- Nội dung thông báo
+    - data (text, nullable) -- Dữ liệu bổ sung (json format)
+    - type (smallint) -- Loại thông báo (trong enum NotificationType)
+    - status (smallint, default 0) -- Trạng thái thông báo (trong enum NotificationStatus)
+    - softDeletes
+    - timestamps
