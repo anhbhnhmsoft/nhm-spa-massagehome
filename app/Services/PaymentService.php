@@ -11,8 +11,10 @@ use App\Core\Service\ServiceReturn;
 use App\Enums\BankBin;
 use App\Enums\ConfigName;
 use App\Enums\PaymentType;
+use App\Enums\NotificationType;
 use App\Enums\WalletTransactionStatus;
 use App\Enums\WalletTransactionType;
+use App\Jobs\SendNotificationJob;
 use App\Repositories\WalletRepository;
 use App\Repositories\WalletTransactionRepository;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -218,8 +220,17 @@ class PaymentService extends BaseService
                     $transaction->update([
                         'metadata' => json_encode($payosResponse),
                     ]);
-                    // Bắn notif cho người dùng (để sau)
-                    // TODO:  Bắn notif cho người dùng
+                    
+                    // Bắn notif cho người dùng khi tạo transaction
+                    SendNotificationJob::dispatch(
+                        userId: $user->id,
+                        type: NotificationType::WALLET_DEPOSIT,
+                        data: [
+                            'transaction_id' => $transaction->id,
+                            'amount' => $amount,
+                            'point_amount' => $pointAmount,
+                        ]
+                    );
 
                     // Lấy dữ liệu QR Banking từ PayOS
                     $payosData = $payosResponse['data'];
@@ -393,8 +404,17 @@ class PaymentService extends BaseService
                 'balance' => $wallet->balance + $pointEarned,
             ]);
 
-            // Bắn notif cho người dùng (để sau)
-            // TODO:  Bắn notif cho người dùng
+            // Bắn notif cho người dùng khi thanh toán thành công
+            SendNotificationJob::dispatch(
+                userId: $wallet->user_id,
+                type: NotificationType::PAYMENT_COMPLETE,
+                data: [
+                    'transaction_id' => $transaction->id,
+                    'amount' => $dataPayOs['amount'],
+                    'point_amount' => $pointEarned,
+                    'balance_after' => $wallet->balance,
+                ]
+            );
 
             DB::commit();
             return ServiceReturn::success();
