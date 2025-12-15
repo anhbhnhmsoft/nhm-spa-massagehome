@@ -9,6 +9,7 @@ use App\Repositories\BookingRepository;
 use App\Repositories\CategoryRepository;
 use App\Repositories\ConfigRepository;
 use App\Repositories\CouponRepository;
+use App\Repositories\CouponUsedRepository;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
 use App\Repositories\UserFileRepository;
@@ -20,10 +21,12 @@ use App\Repositories\WalletTransactionRepository;
 use App\Services\AuthService;
 use App\Services\BookingService;
 use App\Services\ConfigService;
+use App\Services\CouponService;
 use App\Services\PaymentService;
 use App\Services\PayOsService;
 use App\Services\ServiceService;
 use App\Services\UserService;
+use App\Services\WalletService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -66,7 +69,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(AffiliateConfigRepository::class);
         $this->app->singleton(AffiliateEarningRepository::class);
         $this->app->singleton(ReviewRepository::class);
-
+        $this->app->singleton(CouponUsedRepository::class);
     }
 
     /**
@@ -85,5 +88,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(PaymentService::class);
         $this->app->singleton(Dashboard::class);
         $this->app->singleton(PayOsService::class);
+        $this->app->singleton(WalletService::class);
+        $this->app->singleton(CouponService::class);
     }
 }

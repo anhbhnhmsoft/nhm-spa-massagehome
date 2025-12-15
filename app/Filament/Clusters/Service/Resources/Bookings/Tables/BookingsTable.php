@@ -54,10 +54,10 @@ class BookingsTable
                 TextColumn::make('address')
                     ->label(__('admin.booking.fields.address'))
                     ->searchable(),
-                TextColumn::make('latitude')
-                    ->label(__('admin.booking.fields.latitude')),
-                TextColumn::make('longitude')
-                    ->label(__('admin.booking.fields.longitude')),
+                // TextColumn::make('latitude')
+                //     ->label(__('admin.booking.fields.latitude')),
+                // TextColumn::make('longitude')
+                //     ->label(__('admin.booking.fields.longitude')),
                 TextColumn::make('status')
                     ->label(__('admin.booking.fields.status'))
                     ->formatStateUsing(fn($state) => BookingStatus::getLabel($state)),
@@ -121,12 +121,12 @@ class BookingsTable
                             ->modalSubmitAction(false)
                             ->modalCancelActionLabel(__('admin.common.action.close')),
 
-                        Action::make('view_location')
-                            ->label(__('admin.booking.actions.view_location'))
-                            ->icon('heroicon-o-map-pin')
-                            ->url(fn($record) => "https://www.google.com/maps/search/?api=1&query={$record->latitude},{$record->longitude}")
-                            ->openUrlInNewTab()
-                            ->visible(fn($record) => $record->latitude && $record->longitude),
+                        // Action::make('view_location')
+                        //     ->label(__('admin.booking.actions.view_location'))
+                        //     ->icon('heroicon-o-map-pin')
+                        //     ->url(fn($record) => "https://www.google.com/maps/search/?api=1&query={$record->latitude},{$record->longitude}")
+                        //     ->openUrlInNewTab()
+                        //     ->visible(fn($record) => $record->latitude && $record->longitude),
                     ]),
                 ],
                 position: RecordActionsPosition::BeforeCells
