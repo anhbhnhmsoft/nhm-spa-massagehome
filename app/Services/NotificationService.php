@@ -220,7 +220,7 @@ class NotificationService extends BaseService
 
             // Gửi thông báo qua Redis pub/sub để Node server xử lý
             $redis = RedisFacade::connection('pubsub');
-            $channel = 'expo_notifications';
+            $channel = env('REDIS_CHANNEL_NOTIFICATION', 'expo_notifications');
             $redis->publish($channel, json_encode($payload));
 
             // Đánh dấu đã gửi
