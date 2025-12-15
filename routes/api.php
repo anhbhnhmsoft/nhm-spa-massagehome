@@ -47,7 +47,7 @@ Route::middleware('set-api-locale')->group(function () {
         });
     });
 
-    Route::prefix('/location')->middleware(['auth:sanctum'])->group(function () {
+    Route::prefix('location')->middleware(['auth:sanctum'])->group(function () {
         /**
          * autocomplete search location
          */
@@ -140,7 +140,7 @@ Route::middleware('set-api-locale')->group(function () {
         });
     });
 
-    Route::prefix('/file')->group(function () {
+    Route::prefix('file')->group(function () {
         Route::get('user/{path}', [FileController::class, 'getUserFile'])->where('path', '.*');
     });
 });

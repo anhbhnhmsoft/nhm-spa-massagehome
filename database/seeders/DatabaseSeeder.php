@@ -18,6 +18,7 @@ use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 
 class DatabaseSeeder extends Seeder
@@ -43,7 +44,7 @@ class DatabaseSeeder extends Seeder
             $admin = User::query()->create([
                 'phone' => '012345678910',
                 'phone_verified_at' => now(),
-                'password' => bcrypt('Test1234568@'),
+                'password' => Hash::make('Test12345678@'),
                 'name' => 'Admin System',
                 'role' => UserRole::ADMIN->value,
                 'language' => Language::VIETNAMESE->value,
