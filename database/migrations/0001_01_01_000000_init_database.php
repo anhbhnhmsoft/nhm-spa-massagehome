@@ -43,8 +43,6 @@ return new class extends Migration
             $table->string('language', 5)->nullable()->default('vn')->comment('Ngôn ngữ (trong enum Language)');
             // false: hoạt động, true: bị vô hiệu hóa
             $table->boolean('is_active')->default(true)->comment('Trạng thái hoạt động');
-            // Mã giới thiệu CỦA TÔI
-            $table->string('referral_code', 20)->unique()->nullable()->comment('Mã giới thiệu');
             // ID của người giới thiệu TÔI
             $table->bigInteger('referred_by_user_id')->nullable()->comment('ID người giới thiệu');
             $table->timestamp('last_login_at')->nullable()->comment('Thời gian đăng nhập cuối cùng');
@@ -54,7 +52,6 @@ return new class extends Migration
 
             // Indexes
             $table->index('role');
-            $table->index('referral_code');
         });
 
         Schema::create('user_review_application', function (Blueprint $table) {
@@ -331,6 +328,17 @@ return new class extends Migration
             $table->foreign('transaction_id')->references('id')->on('wallet_transactions');
         });
 
+        Schema::create('affiliate_links', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('user_id')->index()->comment('ID người giới thiệu');
+            $table->string('client_ip')->comment('Địa chỉ IP của người nhấp chuột');
+            $table->text('user_agent')->comment('Thông tin thiết bị/trình duyệt');
+            $table->boolean('is_matched')->default(false)->comment('Đã so khớp thành công chưa');
+            $table->timestamp('expired_at')->comment('Thời gian hết hạn đối sánh');
+            $table->softDeletes();
+            $table->timestamps();
+        });
+
         Schema::create('reviews', function (Blueprint $table) {
             $table->comment('Bảng reviews lưu trữ thông tin đánh giá dịch vụ.');
             $table->id();
@@ -468,6 +476,7 @@ return new class extends Migration
             'coupon_used',
             'provinces',
             'geo_caching_places',
+            'banners'
         ];
 
         foreach ($tables as $table) {

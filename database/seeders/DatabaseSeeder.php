@@ -49,7 +49,6 @@ class DatabaseSeeder extends Seeder
                 'role' => UserRole::ADMIN->value,
                 'language' => Language::VIETNAMESE->value,
                 'is_active' => true,
-                'referral_code' => 'ADMIN001',
             ]);
         } catch (\Exception $exception) {
             dump($exception);
@@ -81,7 +80,6 @@ class DatabaseSeeder extends Seeder
                     'role' => UserRole::KTV->value,
                     'language' => Language::VIETNAMESE->value,
                     'is_active' => true,
-                    'referral_code' => Helper::generateReferCodeUser(UserRole::KTV),
                 ]);
 
                 $wallet = $user->wallet()->create([

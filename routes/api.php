@@ -8,6 +8,7 @@ use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\API\PaymentController;
 use App\Http\Controllers\API\ServiceController;
 use App\Http\Controllers\API\UserController;
+use App\Http\Controllers\API\AffiliateController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -154,5 +155,9 @@ Route::middleware('set-api-locale')->group(function () {
         Route::put('read/{id}', [NotificationController::class, 'markAsRead'])->where('id', '[0-9]+');
         // Lấy số lượng chưa đọc
         Route::get('unread-count', [NotificationController::class, 'unreadCount']);
+    });
+
+    Route::prefix('affiliate')->group(function () {
+        Route::post('match', [AffiliateController::class, 'matchAffiliate']);
     });
 });

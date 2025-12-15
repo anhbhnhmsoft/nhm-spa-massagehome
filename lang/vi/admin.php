@@ -41,7 +41,6 @@ return
                 'usage_count' => 'Số lần sử dụng',
                 'effective_date' => 'Ngày hiệu lực',
                 'application_date' => 'Ngày đăng ký',
-                'referral_code' => 'Mã giới thiệu',
                 'creator' => 'Tạo bởi',
             ],
             'action' => [

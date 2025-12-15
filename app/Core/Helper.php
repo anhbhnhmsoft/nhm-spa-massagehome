@@ -59,11 +59,12 @@ final class Helper
 
     /**
      * Tạo mã tham gia ngẫu nhiên 8 ký tự in hoa.
+     * @param int|null $length
      * @return string
      */
-    public static function generateReferCode(): string
+    public static function generateReferCode(?int $length = 8): string
     {
-        return strtoupper(substr(Str::uuid()->toString(), 0, 8));
+        return strtoupper(substr(Str::uuid()->toString(), 0, $length));
     }
     /**
      * Tạo token ngẫu nhiên 60 ký tự.

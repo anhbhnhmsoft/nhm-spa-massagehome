@@ -18,7 +18,6 @@ class CreateKTV extends CreateRecord
         $data['phone_verified_at'] = now();
         $data['language'] = app()->getLocale();
         $data['is_active'] = true;
-        $data['referral_code'] = Helper::generateReferCodeUser(UserRole::KTV);
         return $data;
     }
 }

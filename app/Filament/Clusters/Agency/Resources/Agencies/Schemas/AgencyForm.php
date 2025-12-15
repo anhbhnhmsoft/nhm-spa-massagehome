@@ -121,10 +121,10 @@ class AgencyForm
                             ->label(__('admin.agency_apply.fields.bio'))
                             ->rows(3)
                             ->columnSpanFull(),
-                        Select::make('status')
-                            ->label(__('admin.agency_apply.fields.status'))
-                            ->options(ReviewApplicationStatus::toOptions())
-                            ->default(ReviewApplicationStatus::PENDING),
+                        // Select::make('status')
+                        //     ->label(__('admin.agency_apply.fields.status'))
+                        //     ->options(ReviewApplicationStatus::toOptions())
+                        //     ->default(ReviewApplicationStatus::PENDING),
                         TextInput::make('note')
                             ->label(__('admin.agency_apply.fields.note')),
 

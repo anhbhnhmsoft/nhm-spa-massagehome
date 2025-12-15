@@ -48,7 +48,6 @@
     - role (smallint) -- vai trò người dùng (trong enum UserRole)
     - language (varchar, nullable) -- ngôn ngữ (trong enum Language)
     - is_active (boolean) -- trạng thái bị khóa
-    - referral_code (varchar, unique, nullable) -- mã giới thiệu
     - referred_by_user_id (bigint, nullable) -- id người giới thiệu
     - last_login_at (timestamp, nullable) -- thời gian đăng nhập cuối cùng
     - softDeletes

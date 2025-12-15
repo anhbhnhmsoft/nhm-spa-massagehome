@@ -24,7 +24,6 @@ class User extends Authenticatable
         'role', // Cast enum UserRole
         'language',
         'is_active',
-        'referral_code',
         'referred_by_user_id',
         'last_login_at',
     ];

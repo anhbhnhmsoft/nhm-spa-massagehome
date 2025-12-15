@@ -22,7 +22,6 @@ return [
         'not_sent' => 'Mã OTP không tồn tại.',
         'phone_invalid' => 'Số điện thoại không hợp lệ.',
         'invalid_token_register' => 'Token đăng ký không hợp lệ.',
-        'invalid_referral_code' => 'Mã giới thiệu không hợp lệ.',
         'disabled' => 'Tài khoản này đã bị khóa, vui lòng liên hệ với quản trị viên để được hỗ trợ.',
         'invalid_login' => 'Số điện thoại hoặc mật khẩu không đúng.',
         'language_invalid' => 'Ngôn ngữ không hợp lệ.',

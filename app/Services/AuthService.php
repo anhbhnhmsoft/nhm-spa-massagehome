@@ -170,7 +170,6 @@ class AuthService extends BaseService
      * @param $token -- Token dùng để đăng ký tài khoản.
      * @param string $password -- Mật khẩu tài khoản.
      * @param string $name -- Tên người dùng.
-     * @param ?string $referralCode -- Mã giới thiệu.
      * @param ?Gender $gender -- Giới tính.
      * @param ?Language $language -- Ngôn ngữ.
      * @return ServiceReturn
@@ -179,7 +178,6 @@ class AuthService extends BaseService
         string    $token,
         string    $password,
         string    $name,
-        ?string   $referralCode,
         ?Gender   $gender,
         ?Language $language
     ): ServiceReturn
@@ -204,7 +202,6 @@ class AuthService extends BaseService
                 'language' => $language?->value ?? Language::VIETNAMESE->value,
                 // Ban đầu user là customer
                 'role' => UserRole::CUSTOMER->value,
-                'referral_code' => Helper::generateReferCodeUser(UserRole::CUSTOMER),
                 'last_login_at' => now(),
             ]);
 
@@ -213,19 +210,6 @@ class AuthService extends BaseService
                 'user_id' => $user->id,
                 'gender' => $gender?->value ?? Gender::MALE->value,
             ]);
-
-            // Kiểm tra referral code
-            if (!empty($referralCode)) {
-                $userReferral = $this->userRepository->findByReferralCode($referralCode);
-                if (!$userReferral) {
-                    throw new ServiceException(message: __('auth.error.invalid_referral_code'));
-                }
-                // Cập nhật user referral
-                $user->update([
-                    'referred_by_user_id' => $userReferral->id,
-                ]);
-                // Xử lý affiliate sau ở đoạn này
-            }
 
             // Tạo wallet cho user
             $this->walletRepository->create([

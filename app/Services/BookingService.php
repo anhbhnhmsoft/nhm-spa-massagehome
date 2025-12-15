@@ -295,7 +295,7 @@ class BookingService extends BaseService
 
             // cần bổ sung action thông báo từ số dư của khách hàng 
             // xử lý giao dịch, ghi lại lịch sử dùng coupon, tính phí affiliate, chiết khấu cho nhà cung cấp
-            WalletTransactionBookingJob::dispatch($booking->id, $couponId, $user->id, $serviceId)->onQueue('transactions-payment');
+            WalletTransactionBookingJob::dispatch($booking->id, $couponId, $user->id, $serviceId);
 
             // $this->walletService->paymentInitBooking($booking->id);
             // $this->couponService->useCouponAndSyncCache($couponId, $user->id, $serviceId, $booking->id);

@@ -29,6 +29,8 @@ use App\Services\PayOsService;
 use App\Services\ServiceService;
 use App\Services\UserService;
 use App\Services\WalletService;
+use App\Services\AffiliateService;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -50,7 +52,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+
+
+        // // Nếu bạn muốn chi tiết hơn, bạn có thể kiểm tra biến môi trường
+        // if (str_contains(env('APP_URL'), 'trycloudflare.com')) {
+        //     URL::forceScheme('https');
+        // }
     }
 
     protected function registerRepository(): void
@@ -73,7 +80,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(ReviewRepository::class);
         $this->app->singleton(CouponUsedRepository::class);
         $this->app->singleton(NotificationRepository::class);
-
     }
 
     /**
@@ -95,5 +101,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(PayOsService::class);
         $this->app->singleton(WalletService::class);
         $this->app->singleton(CouponService::class);
+        $this->app->singleton(AffiliateService::class);
     }
 }
