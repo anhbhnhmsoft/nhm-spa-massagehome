@@ -8,6 +8,9 @@ use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
 use App\Enums\BookingStatus;
+use App\Enums\NotificationType;
+use App\Enums\ServiceDuration;
+use App\Jobs\SendNotificationJob;
 use App\Models\Coupon;
 use App\Repositories\BookingRepository;
 use App\Repositories\CouponRepository;
@@ -275,7 +278,19 @@ class BookingService extends BaseService
                 'longitude' => $longitude ?? 0,
                 'service_option_id' => $optionId,
             ]);
-
+            
+            // Bắn notif cho người dùng khi đặt lịch thành công
+            SendNotificationJob::dispatch(
+                userId: $user->id,
+                type: NotificationType::BOOKING_CONFIRMED,
+                data: [
+                    'booking_id' => $booking->id,
+                    'service_id' => $service->id,
+                    'booking_time' => $currentBookingStartTime->format('Y-m-d H:i:s'),
+                    'price' => $finalPrice,
+                ]
+            );
+            
             DB::commit();
 
             // cần bổ sung action thông báo từ số dư của khách hàng 

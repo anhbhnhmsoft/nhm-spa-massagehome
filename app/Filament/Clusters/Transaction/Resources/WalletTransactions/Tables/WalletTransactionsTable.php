@@ -66,7 +66,7 @@ class WalletTransactionsTable
                                 $record->type === WalletTransactionType::DEPOSIT_ZALO_PAY->value ||
                                 $record->type === WalletTransactionType::DEPOSIT_MOMO_PAY->value
                             ) {
-                                $record->wallet()->increment('balance', $record->amount);
+                                $record->wallet()->increment('balance', (int) $record->amount);
                             }
                         })
                         ->requiresConfirmation(),

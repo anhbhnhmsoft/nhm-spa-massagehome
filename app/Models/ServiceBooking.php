@@ -41,8 +41,8 @@ class ServiceBooking extends Model
         'price' => 'decimal:2',
         'price_before_discount' => 'decimal:2',
         'payment_type' => 'integer',
-        'latitude' => 'decimal:10,8',
-        'longitude' => 'decimal:11,8',
+        'latitude' => 'decimal:8',
+        'longitude' => 'decimal:8',
         'service_option_id' => 'string',
     ];
 

@@ -4,6 +4,7 @@ use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\FileController;
 use App\Http\Controllers\API\BookingController;
 use App\Http\Controllers\API\LocationController;
+use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\API\PaymentController;
 use App\Http\Controllers\API\ServiceController;
 use App\Http\Controllers\API\UserController;
@@ -142,5 +143,16 @@ Route::middleware('set-api-locale')->group(function () {
 
     Route::prefix('file')->group(function () {
         Route::get('user/{path}', [FileController::class, 'getUserFile'])->where('path', '.*');
+    });
+
+    Route::prefix('notification')->middleware(['auth:sanctum'])->group(function () {
+        // Lấy danh sách notifications
+        Route::get('list', [NotificationController::class, 'list']);
+        // Lấy chi tiết notification
+        Route::get('detail/{id}', [NotificationController::class, 'detail'])->where('id', '[0-9]+');
+        // Đánh dấu đã đọc
+        Route::put('read/{id}', [NotificationController::class, 'markAsRead'])->where('id', '[0-9]+');
+        // Lấy số lượng chưa đọc
+        Route::get('unread-count', [NotificationController::class, 'unreadCount']);
     });
 });
