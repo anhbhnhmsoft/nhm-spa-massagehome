@@ -58,6 +58,10 @@ Route::middleware('set-api-locale')->group(function () {
          */
         Route::get('detail', [LocationController::class, 'detail'])->middleware(['throttle:5,0.2']);
         /**
+         * list provinces
+         */
+        Route::get('provinces', [LocationController::class, 'listProvinces']);
+        /**
          * list address
          */
         Route::get('address', [UserController::class, 'listAddress']);
@@ -84,6 +88,9 @@ Route::middleware('set-api-locale')->group(function () {
 
         // Lấy thông tin chi tiết KTV
         Route::get('ktv/{id}', [UserController::class, 'detailKtv'])->where('id', '[0-9]+');
+
+        // Đăng ký cộng tác viên/đối tác
+        Route::post('register-agency', [UserController::class, 'registerAgency'])->middleware(['throttle:5,1']);
 
         /**
          * router cần auth
@@ -143,6 +150,7 @@ Route::middleware('set-api-locale')->group(function () {
 
     Route::prefix('file')->group(function () {
         Route::get('user/{path}', [FileController::class, 'getUserFile'])->where('path', '.*');
+        Route::post('upload', [FileController::class, 'upload']);
     });
 
     Route::prefix('notification')->middleware(['auth:sanctum'])->group(function () {

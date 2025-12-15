@@ -6,6 +6,7 @@ use App\Core\Controller\BaseController;
 use App\Http\Resources\Location\PlaceDetailResource;
 use App\Http\Resources\Location\PlacePredictionResource;
 use App\Services\LocationService;
+use App\Services\ProvinceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -14,7 +15,8 @@ class LocationController extends BaseController
 {
 
     public function __construct(
-        protected LocationService $locationService
+        protected LocationService $locationService,
+        protected ProvinceService $provinceService,
     ) {}
     /**
      * search map
@@ -68,6 +70,28 @@ class LocationController extends BaseController
         }
         return $this->sendSuccess(
             data: PlaceDetailResource::make($result->getData())
+        );
+    }
+
+    /**
+     * Lấy danh sách tỉnh/thành
+     */
+    public function listProvinces(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'keyword' => ['nullable', 'string'],
+        ]);
+
+        $result = $this->provinceService->getProvinces($data['keyword'] ?? null);
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage(),
+            );
+        }
+
+        return $this->sendSuccess(
+            data: $result->getData(),
+            message: __('common.success.data_list')
         );
     }
 }

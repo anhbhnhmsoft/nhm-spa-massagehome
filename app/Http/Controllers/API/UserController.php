@@ -9,6 +9,7 @@ use App\Http\Resources\User\CustomerBookedTodayResource;
 use App\Http\Resources\User\ListAddressResource;
 use App\Http\Resources\User\ListKTVResource;
 use App\Services\UserService;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -17,6 +18,51 @@ class UserController extends BaseController
     public function __construct(
         protected UserService $userService
     ) {}
+
+    /**
+     * Đăng ký cộng tác viên/đối tác
+     */
+    public function registerAgency(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => ['required', 'string', 'max:255'],
+            'phone' => ['required', 'string', 'max:20'],
+            'password' => ['required', 'string', 'min:6'],
+            'reviewApplication.province_code' => ['nullable', 'string', 'max:50', 'exists:provinces,code'],
+            'reviewApplication.address' => ['nullable', 'string', 'max:255'],
+            'reviewApplication.bio' => ['nullable', 'string'],
+            'files' => ['nullable', 'array'],
+            'files.*.type' => ['nullable', 'integer'],
+            'files.*.file_path' => ['required_with:files.*', 'string'],
+        ], [
+            'name.required' => __('validation.required', ['attribute' => 'name']),
+            'phone.required' => __('validation.required', ['attribute' => 'phone']),
+            'password.required' => __('validation.required', ['attribute' => 'password']),
+            'password.min' => __('validation.min.string', ['attribute' => 'password', 'min' => 6]),
+            'files.*.file_path.required_with' => __('validation.required', ['attribute' => 'file_path']),
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendValidation(
+                message: __('validation.error'),
+                errors: $validator->errors()->toArray()
+            );
+        }
+
+        $data = $validator->validated();
+        $result = $this->userService->makeNewApplyAgency($data);
+
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage(),
+            );
+        }
+
+        return $this->sendSuccess(
+            data: $result->getData(),
+            message: $result->getMessage() ?? __('common.success.data_created')
+        );
+    }
 
     /**
      * Lấy danh sách KTV

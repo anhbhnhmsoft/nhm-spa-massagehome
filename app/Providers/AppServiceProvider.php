@@ -11,6 +11,7 @@ use App\Repositories\ConfigRepository;
 use App\Repositories\CouponRepository;
 use App\Repositories\CouponUsedRepository;
 use App\Repositories\NotificationRepository;
+use App\Repositories\ProvinceRepository;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
 use App\Repositories\UserFileRepository;
@@ -26,6 +27,7 @@ use App\Services\CouponService;
 use App\Services\NotificationService;
 use App\Services\PaymentService;
 use App\Services\PayOsService;
+use App\Services\ProvinceService;
 use App\Services\ServiceService;
 use App\Services\UserService;
 use App\Services\WalletService;
@@ -73,6 +75,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(ReviewRepository::class);
         $this->app->singleton(CouponUsedRepository::class);
         $this->app->singleton(NotificationRepository::class);
+        $this->app->singleton(ProvinceRepository::class);
 
     }
 
@@ -95,5 +98,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(PayOsService::class);
         $this->app->singleton(WalletService::class);
         $this->app->singleton(CouponService::class);
+        $this->app->singleton(ProvinceService::class);
     }
 }
