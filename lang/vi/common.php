@@ -1,6 +1,12 @@
 <?php
 
 return [
+    'success' => [
+        'data_list' => 'Danh sách dữ liệu',
+        'data_created' => 'Dữ liệu đã được tạo',
+        'data_updated' => 'Dữ liệu đã được cập nhật',
+        'data_deleted' => 'Dữ liệu đã được xóa',
+    ],
     'error' => [
         'required' => 'Giá trị này là không được để trống',
         'max'      => 'Giá trị này không được vượt quá :max ký tự',

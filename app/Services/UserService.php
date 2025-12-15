@@ -21,6 +21,7 @@ use App\Repositories\UserReviewApplicationRepository;
 use App\Repositories\WalletRepository;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -102,6 +103,33 @@ class UserService extends BaseService
                 message: "Lỗi UserService@getKtvById",
                 ex: $exception
             );
+            return ServiceReturn::error(
+                message: __("common_error.server_error")
+            );
+        }
+    }
+
+    /**
+     * Upload file và trả về đường dẫn lưu trên storage.
+     */
+    public function uploadTempFile(UploadedFile $file, ?int $type = null, bool $isPublic = false): ServiceReturn
+    {
+        try {
+            $disk = $isPublic ? 'public' : 'private';
+            $path = Storage::disk($disk)->put('uploads', $file);
+
+            return ServiceReturn::success(data: [
+                'file_path' => $path,
+                'disk' => $disk,
+                'is_public' => $isPublic,
+                'type' => $type,
+            ]);
+        } catch (\Throwable $exception) {
+            LogHelper::error(
+                message: "Lỗi UserService@uploadTempFile",
+                ex: $exception
+            );
+
             return ServiceReturn::error(
                 message: __("common_error.server_error")
             );
@@ -270,7 +298,7 @@ class UserService extends BaseService
             }
             DB::commit();
             return ServiceReturn::success(
-                message: __("common_success.data_updated")
+                message: __("common.success.data_updated")
             );
         } catch (\Exception $exception) {
             DB::rollBack();
@@ -307,7 +335,7 @@ class UserService extends BaseService
             $userReviewApplication = $this->userReviewApplicationRepository->create([
                 'user_id' => $userInitial->id,
                 'status' => ReviewApplicationStatus::PENDING->value,
-                'province_code' => optional($data['reviewApplication'])['province']['name'] ?? null,
+                'province_code' => optional($data['reviewApplication'])['province_code'] ?? null,
                 'address' => optional($data['reviewApplication'])['address'] ?? null,
                 'application_date' => now(),
                 'bio' => optional($data['reviewApplication'])['bio'] ?? null
@@ -338,7 +366,7 @@ class UserService extends BaseService
             DB::commit();
             return ServiceReturn::success(
                 data: $userInitial->load('reviewApplication', 'files'),
-                message: __("common_success.data_created")
+                message: __("common.success.data_created")
             );
         } catch (\Exception $exception) {
             DB::rollBack();
@@ -404,7 +432,7 @@ class UserService extends BaseService
             DB::commit();
             return ServiceReturn::success(
                 data: $user->load('reviewApplication', 'files', 'profile'),
-                message: __("common_success.data_updated")
+                message: __("common.success.data_updated")
             );
         } catch (\Exception $exception) {
             DB::rollBack();
@@ -458,7 +486,7 @@ class UserService extends BaseService
             DB::commit();
             return ServiceReturn::success(
                 data: $userAddress,
-                message: __("common_success.data_created")
+                message: __("common.success.data_created")
             );
         }
         catch (\Exception $exception) {
@@ -509,7 +537,7 @@ class UserService extends BaseService
             }
             return ServiceReturn::success(
                 data: $userAddress,
-                message: __("common_success.data_updated")
+                message: __("common.success.data_updated")
             );
         } catch (ServiceException $exception) {
             return ServiceReturn::error(
@@ -560,7 +588,7 @@ class UserService extends BaseService
             $userAddress->delete();
             DB::commit();
             return ServiceReturn::success(
-                message: __("common_success.data_deleted")
+                message: __("common.success.data_deleted")
             );
         } catch (ServiceException $exception) {
             DB::rollBack();
