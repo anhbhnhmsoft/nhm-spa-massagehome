@@ -5,8 +5,10 @@ namespace App\Services;
 use App\Core\LogHelper;
 use App\Core\Service\BaseService;
 use App\Core\Service\ServiceReturn;
+use App\Enums\Language;
 use App\Repositories\BannerRepository;
 use App\Repositories\CouponRepository;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 
 class CommercialService extends BaseService
@@ -47,11 +49,13 @@ class CommercialService extends BaseService
     public function getCouponAds(): ServiceReturn
     {
         try {
-            $coupons = $this->couponRepository
+            $language = App::getLocale();
+            $query = $this->couponRepository
                 ->queryCoupon()
                 ->where('display_ads', true)
-                ->whereJsonLength('banners', 3)
-                ->get();
+                ->whereNotNull('banners->' . $language);
+
+            $coupons = $this->couponRepository->filterQuery($query, ['is_valid' => true])->get();
             return ServiceReturn::success(
                 data: $coupons
             );
@@ -65,25 +69,48 @@ class CommercialService extends BaseService
             );
         }
     }
-
     /**
-     * Lấy danh sách coupon ads cho homepage
-     * @param array $coupons
+     * Thu thập mã giảm giá
+     * @param array $couponIds
      * @return ServiceReturn
      */
-    public function collectCouponAds(array $coupons): ServiceReturn
+    public function collectCouponAds(array $couponIds): ServiceReturn
     {
         try {
+            /**
+             * @var User $user
+             */
             $user = Auth::user();
 
+            // 1. Lấy danh sách Coupon
+            $coupons = $this->couponRepository
+                ->filterQuery($this->couponRepository->queryCoupon(), ['is_valid' => true])
+                ->whereIn('id', $couponIds)
+                ->get();
 
-            $coupons = $this->couponRepository->queryCoupon()->whereIn('id', $coupons)->get();
-            /**
-             * @var \App\Models\User $user
-             */
-            $user->collectionCoupons()->syncWithoutDetaching(
-                $coupons->pluck('id')->mapWithKeys(fn($id) => [$id => ['quantity' => 1]])
-            );
+            $collectedIds = [];
+
+            foreach ($coupons as $coupon) {
+                // 2. Kiểm tra xem User đã có Coupon này chưa
+                $alreadyHas = $user->collectionCoupons()->where('coupon_id', $coupon->id)->exists();
+
+                if (!$alreadyHas) {
+                    // 3. Tăng used_count ở bảng chính
+                    $isIncremented = $this->couponRepository->incrementUsedCountAtomic($coupon->id);
+
+                    if ($isIncremented) {
+                        $collectedIds[] = $coupon->id;
+                    }
+                    // Nếu không increment được hết coupon, chúng ta bỏ qua coupon này
+                }
+            }
+
+            // 4. Ghi vào "ví" người dùng
+            if (!empty($collectedIds)) {
+                $syncData = collect($collectedIds)->mapWithKeys(fn($id) => [$id => ['quantity' => 1]]);
+                $user->collectionCoupons()->syncWithoutDetaching($syncData->toArray());
+            }
+
             return ServiceReturn::success(
                 data: $user->collectionCoupons()->get()
             );
