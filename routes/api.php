@@ -166,6 +166,6 @@ Route::middleware('set-api-locale')->group(function () {
     });
 
     Route::prefix('affiliate')->group(function () {
-        Route::post('match', [AffiliateController::class, 'matchAffiliate']);
+        Route::get('match', [AffiliateController::class, 'matchAffiliate']);
     });
 });

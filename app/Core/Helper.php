@@ -84,4 +84,14 @@ final class Helper
     {
         return in_array($language, [Language::VIETNAMESE->value, Language::ENGLISH->value, Language::CHINESE], true);
     }
+
+    /**
+     * Kiểm tra thiết bị có phải là thiết bị di động không.
+     * @param string $userAgent
+     * @return bool
+     */
+    public static function isMobileDevice($userAgent)
+    {
+        return preg_match('/(android|iphone|ipad|mobile)/i', $userAgent);
+    }
 }

@@ -46,6 +46,7 @@ return new class extends Migration
             // ID của người giới thiệu TÔI
             $table->bigInteger('referred_by_user_id')->nullable()->comment('ID người giới thiệu');
             $table->timestamp('last_login_at')->nullable()->comment('Thời gian đăng nhập cuối cùng');
+            $table->string('affiliate_link',255)->nullable()->comment(' Affiliate link');
 
             $table->softDeletes();
             $table->timestamps();
@@ -476,7 +477,6 @@ return new class extends Migration
             'coupon_used',
             'provinces',
             'geo_caching_places',
-            'banners'
         ];
 
         foreach ($tables as $table) {

@@ -18,7 +18,6 @@ class CreateAgency extends CreateRecord
         $data['phone_verified_at'] = now();
         $data['language'] = app()->getLocale();
         $data['is_active'] = true;
-        $data['status'] = ReviewApplicationStatus::APPROVED->value;
         return $data;
     }
 }
