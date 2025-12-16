@@ -50,7 +50,6 @@
     - is_active (boolean) -- trạng thái bị khóa
     - referred_by_user_id (bigint, nullable) -- id người giới thiệu
     - last_login_at (timestamp, nullable) -- thời gian đăng nhập cuối cùng
-    - affiliate_link (varchar, nullable) -- liên kết giới thiệu
     - softDeletes
     - timestamps
 

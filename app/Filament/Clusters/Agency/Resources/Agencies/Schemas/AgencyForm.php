@@ -6,6 +6,7 @@ use App\Enums\DirectFile;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserFileType;
 use App\Models\Province;
+use App\Services\LocationService;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Placeholder;
@@ -89,6 +90,8 @@ class AgencyForm
                                     ->directory(DirectFile::AGENCY->value)
                                     ->disk('private')
                                     ->required()
+                                    ->image()
+                                    ->maxSize(102400)
                                     ->downloadable()
                                     ->columnSpan(2),
                             ])
@@ -96,10 +99,40 @@ class AgencyForm
                             ->addable(true)
                             ->deletable(true)
                             ->reorderable(true)
-                            ->minItems(1)
-                            ->defaultItems(1)
+                            ->rules([
+                                fn() => function (string $attribute, $value, \Closure $fail) {
+                                    if (! is_array($value)) {
+                                        return;
+                                    }
+                                    $selectedTypes = collect($value)->pluck('type')->map(fn($t) => (int) $t);
+                                    $counts = $selectedTypes->countBy();
+                                    $frontCount = $counts->get(UserFileType::IDENTITY_CARD_FRONT->value, 0);
+                                    $backCount = $counts->get(UserFileType::IDENTITY_CARD_BACK->value, 0);
+                                    $displayCount = $counts->get(UserFileType::KTV_IMAGE_DISPLAY->value, 0);
+
+                                    $errors = [];
+
+                                    if ($frontCount < 1) {
+                                        $errors[] = __('error.need_identify_image');
+                                    }
+
+                                    if ($backCount < 1) {
+                                        $errors[] = __('error.need_identify_image');
+                                    }
+
+                                    if ($displayCount < 3) {
+                                        $errors[] = __('error.need_identify_image_display');
+                                    }
+
+                                    if (!empty($errors)) {
+                                        $fail(implode(' ', $errors));
+                                    }
+                                },
+                            ])
+                            ->minItems(5)
+                            ->defaultItems(5)
                             ->validationMessages([
-                                'min' => __('common.error.min_items', ['min' => 1]),
+                                'min' => __('common.error.min_items', ['min' => 5]),
                                 'required' => __('common.error.required'),
                             ])
                             ->columnSpan('full'),
@@ -115,8 +148,49 @@ class AgencyForm
                             ->options(fn() => Province::all()->pluck('name', 'code'))
                             ->columnSpan(1),
 
+                        Select::make('search_location')
+                            ->label(__('admin.agency_apply.fields.address_search'))
+                            ->searchable()
+                            ->live(debounce: 500)
+                            ->getSearchResultsUsing(function (string $search) {
+                                if (!$search) return [];
+                                $service = app(LocationService::class);
+                                $res = $service->autoComplete($search);
+                                if (!$res->isSuccess()) return [];
+                                return collect($res->getData())->pluck('formatted_address', 'place_id')->toArray();
+                            })
+                            ->getOptionLabelUsing(function ($value): ?string {
+                                if (!$value) return null;
+
+                                $service = app(LocationService::class);
+                                $res = $service->getDetail($value);
+
+                                return $res->isSuccess()
+                                    ? $res->getData()['formatted_address']
+                                    : null;
+                            })
+                            ->afterStateUpdated(function ($set, ?string $state) {
+                                if (!$state) return;
+                                $service = app(LocationService::class);
+                                $res = $service->getDetail($state);
+                                if ($res->isSuccess()) {
+                                    $data = $res->getData();
+                                    $set('address', $data['formatted_address']);
+                                    $set('latitude', $data['latitude']);
+                                    $set('longitude', $data['longitude']);
+                                }
+                            })
+                            ->dehydrated(false)
+                            ->columnSpanFull()
+                            ->disabled(fn($livewire) => $livewire instanceof ViewRecord),
+
+                        Hidden::make('latitude'),
+                        Hidden::make('longitude'),
+
                         Textarea::make('address')
                             ->label(__('admin.agency_apply.fields.address'))
+                            ->columnSpanFull()
+                            ->disabled(fn($livewire) => $livewire instanceof ViewRecord)
                             ->rows(2),
                         Textarea::make('bio.' . $lang)
                             ->label(__('admin.agency_apply.fields.bio'))
