@@ -3,8 +3,6 @@
 namespace App\Providers;
 
 use App\Filament\Pages\Dashboard;
-use App\Models\User;
-use App\Observers\UserObserver;
 use App\Repositories\AffiliateConfigRepository;
 use App\Repositories\AffiliateEarningRepository;
 use App\Repositories\BookingRepository;
@@ -56,8 +54,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Register observers
-        $this->registerPermissions();
     }
 
     protected function registerRepository(): void
@@ -105,13 +101,5 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(CouponService::class);
         $this->app->singleton(AffiliateService::class);
         $this->app->singleton(ProvinceService::class);
-    }
-
-    /**
-     * Boot permission or observer
-     */
-    public function registerPermissions(): void
-    {
-        User::observe(UserObserver::class);
     }
 }
