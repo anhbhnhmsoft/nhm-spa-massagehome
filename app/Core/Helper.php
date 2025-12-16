@@ -33,11 +33,11 @@ final class Helper
     public static function createDescPayment(PaymentType $paymentType): string
     {
         return match ($paymentType) {
-            PaymentType::QR_BANKING => "QRBK".self::getTimestampAsId(),
-            PaymentType::ZALO_PAY => "ZLPY".self::getTimestampAsId(),
-            PaymentType::MOMO_PAY => "MMPY".self::getTimestampAsId(),
-            PaymentType::BY_POINTS => "BYP".self::getTimestampAsId(),
-            default => "UNKNOWN".self::getTimestampAsId(),
+            PaymentType::QR_BANKING => "QRBK" . self::getTimestampAsId(),
+            PaymentType::ZALO_PAY => "ZLPY" . self::getTimestampAsId(),
+            PaymentType::MOMO_PAY => "MMPY" . self::getTimestampAsId(),
+            PaymentType::BY_POINTS => "BYP" . self::getTimestampAsId(),
+            default => "UNKNOWN" . self::getTimestampAsId(),
         };
     }
 
@@ -65,6 +65,7 @@ final class Helper
     {
         return strtoupper(substr(Str::uuid()->toString(), 0, 8));
     }
+
     /**
      * Tạo token ngẫu nhiên 60 ký tự.
      * @return string
@@ -82,5 +83,10 @@ final class Helper
     public static function checkLanguage(?string $language = null): bool
     {
         return in_array($language, [Language::VIETNAMESE->value, Language::ENGLISH->value, Language::CHINESE], true);
+    }
+
+    public static function FileUrl(string $path): string
+    {
+        return route('file_url_render', ['path' => $path]);
     }
 }

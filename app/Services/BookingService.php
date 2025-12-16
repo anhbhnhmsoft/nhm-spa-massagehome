@@ -180,7 +180,7 @@ class BookingService extends BaseService
                     message: __("booking.wallet.not_enough")
                 );
             }
-            
+
             // lấy mức chiết khấu của nhà cung cấp
             /**
              * @var ServiceReturn $rateDiscount
@@ -278,7 +278,7 @@ class BookingService extends BaseService
                 'longitude' => $longitude ?? 0,
                 'service_option_id' => $optionId,
             ]);
-            
+
             // Bắn notif cho người dùng khi đặt lịch thành công
             SendNotificationJob::dispatch(
                 userId: $user->id,
@@ -290,10 +290,10 @@ class BookingService extends BaseService
                     'price' => $finalPrice,
                 ]
             );
-            
+
             DB::commit();
 
-            // cần bổ sung action thông báo từ số dư của khách hàng 
+            // cần bổ sung action thông báo từ số dư của khách hàng
             // xử lý giao dịch, ghi lại lịch sử dùng coupon, tính phí affiliate, chiết khấu cho nhà cung cấp
             WalletTransactionBookingJob::dispatch($booking->id, $couponId, $user->id, $serviceId)->onQueue('transactions-payment');
 

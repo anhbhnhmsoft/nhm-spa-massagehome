@@ -43,14 +43,6 @@ class KTVForm
                                         'max'      => __('common.error.max_length', ['max' => 255])
                                     ]),
 
-                                // TextInput::make('email')
-                                //     ->label(__('admin.common.table.email'))
-                                //     ->unique(ignoreRecord: true)
-                                //     ->required()
-                                //     ->validationMessages([
-                                //         'email'     => __('common.error.email'),
-                                //         'unique'    => __('common.error.unique')
-                                //     ]),
                                 TextInput::make('password')
                                     ->label(__('admin.common.table.password'))
                                     ->password()

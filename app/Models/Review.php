@@ -17,7 +17,6 @@ class Review extends Model
 
     protected $fillable = [
         'user_id',    // ID người nhận review (Provider)
-        'service_id', // ID dịch vụ
         'review_by',  // ID người viết review (Customer)
         'rating',
         'comment',
@@ -29,7 +28,6 @@ class Review extends Model
         'id' => 'string',
         'user_id' => 'string',
         'review_by' => 'string',
-        'service_id' => 'string',
         'rating' => 'integer',
         'review_at' => 'datetime',
         'hidden' => 'boolean',
