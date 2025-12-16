@@ -11,6 +11,7 @@ use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
 use App\Enums\ReviewApplicationStatus;
+use App\Enums\UserFileType;
 use App\Enums\UserRole;
 use App\Repositories\BookingRepository;
 use App\Repositories\UserAddressRepository;
@@ -20,6 +21,7 @@ use App\Repositories\UserRepository;
 use App\Repositories\UserReviewApplicationRepository;
 use App\Repositories\WalletRepository;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
@@ -89,7 +91,19 @@ class UserService extends BaseService
     public function getKtvById(int $id): ServiceReturn
     {
         try {
-            $ktv = $this->userRepository->queryKTV()->find($id);
+            $ktv = $this->userRepository->queryKTV()
+                ->with([
+                    'files' => function ($query) {
+                        $query->whereIn('type', [UserFileType::KTV_IMAGE_DISPLAY->value]);
+                    },
+                    // Chỉ lấy 1 review
+                    'reviewsReceived' => function ($query) {
+                        $query->where('hidden', false)
+                            ->latest('created_at')
+                            ->limit(1);
+                    }
+                ])
+                ->find($id);
             if (!$ktv) {
                 throw new ServiceException(
                     message: __("common_error.data_not_found")

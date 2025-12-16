@@ -150,7 +150,7 @@ Route::middleware('set-api-locale')->group(function () {
     });
 
     Route::prefix('file')->group(function () {
-        Route::get('user/{path}', [FileController::class, 'getUserFile'])->where('path', '.*');
+        Route::get('user/{path}', [FileController::class, 'getUserFile'])->name('file_url_render')->where('path', '.*');
         Route::post('upload', [FileController::class, 'upload']);
     });
 

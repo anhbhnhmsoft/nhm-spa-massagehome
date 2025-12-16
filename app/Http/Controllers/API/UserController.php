@@ -6,6 +6,7 @@ use App\Core\Controller\BaseController;
 use App\Core\Controller\ListRequest;
 use App\Http\Resources\User\AddressResource;
 use App\Http\Resources\User\CustomerBookedTodayResource;
+use App\Http\Resources\User\ItemKTVResource;
 use App\Http\Resources\User\ListAddressResource;
 use App\Http\Resources\User\ListKTVResource;
 use App\Services\UserService;
@@ -95,7 +96,7 @@ class UserController extends BaseController
         }
         $data = $result->getData();
         return $this->sendSuccess(
-            data: new ListKTVResource($data)
+            data: new ItemKTVResource($data)
         );
     }
 
@@ -203,7 +204,7 @@ class UserController extends BaseController
             'user_id' => $request->user()->id,
         ]);
         $dto->setSortBy('is_primary');
-        $dto->setDirection('asc');
+        $dto->setDirection('desc');
 
         $result = $this->userService->getPaginateAddress(dto: $dto);
         if ($result->isError()) {

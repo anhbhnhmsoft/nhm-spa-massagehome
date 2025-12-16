@@ -57,7 +57,6 @@ return
                 'download_template' => 'Tải mẫu xuống',
                 'save' => 'Lưu',
                 'cancel' => 'Hủy',
-                'add' => 'Thêm',
                 'book' => 'Lên lịch'
             ],
             'tooltip' => [
@@ -111,6 +110,7 @@ return
                 "license" => "Bằng cấp/Chứng chỉ",
                 "health_insurance" => "Bảo hiểm y tế",
                 "business_image" => "Hình ảnh doanh nghiệp",
+                "ktv_image_display" => "Hình ảnh hiển thị cho khách hàng",
             ],
             "fields" => [
                 "experience" => "Kinh nghiệm",
