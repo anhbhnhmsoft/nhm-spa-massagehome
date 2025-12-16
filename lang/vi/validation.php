@@ -48,4 +48,19 @@ return [
         'required' => 'Vui lòng chọn thời gian.',
         'in' => 'Thời gian không hợp lệ.',
     ],
+    'amount' => [
+        'required' => 'Vui lòng nhập số tiền.',
+        'numeric' => 'Số tiền phải là số.',
+        'min' => 'Số tiền phải lớn hơn 0.',
+        'max' => 'Số tiền phải nhỏ hơn 50.000.000.',
+    ],
+    'payment_type' => [
+        'required' => 'Vui lòng chọn hình thức thanh toán.',
+        'in' => 'Hình thức thanh toán không hợp lệ.',
+    ],
+    'transaction_id' => [
+        'required' => 'Vui lòng nhập mã giao dịch.',
+        'numeric' => 'Mã giao dịch phải là số.',
+        'exists' => 'Mã giao dịch không tồn tại trong hệ thống.',
+    ],
 ];

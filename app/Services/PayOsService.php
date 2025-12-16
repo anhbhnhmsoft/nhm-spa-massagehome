@@ -93,6 +93,29 @@ class PayOsService extends BaseService
 
     /**
      * Tạo thanh toán PayOS.
+     * return dạng như sau
+     * [
+     * "code" => "00"
+     * "desc" => "success"
+     * "data" => array:12 [
+         * "bin" => "970422"
+         * "accountNumber" => "VQRQAFVNT0008"
+         * "accountName" => "MAI VAN TRUONG"
+         * "amount" => 100000
+         * "description" => "QRBK251211063113259750"
+         * "orderCode" => 1765434673259
+         * "currency" => "VND"
+         * "paymentLinkId" => "ece8cdfd443741d0a271db075c6afa38"
+         * "status" => "PENDING"
+         * "expiredAt" => 1765435573
+         * "checkoutUrl" => "https://pay.payos.vn/web/ece8cdfd443741d0a271db075c6afa38"
+         * "qrCode" => "00020101021238570010A000000727012700069704220113VQRQAFVNT00080208QRIBFTTA530370454061000005802VN62260822QRBK2512110631132597506304EA16"
+     * ]
+     * "signature" => "2f0054a0b6ab4a23d5697d3d1d466e5f15cc6f4d3499e40f573b84ebdd201849"
+     * ]
+     *
+     *
+     *
      * @param int $amount Số tiền thanh toán (đơn vị: VND).
      * @param string $cancelUrl URL để chuyển hướng khi người dùng hủy thanh toán.
      * @param string $description Mô tả thanh toán.
@@ -120,7 +143,6 @@ class PayOsService extends BaseService
                 'orderCode' => $orderCode,
                 'returnUrl' => $returnUrl,
             ];
-
             $signature = $this->generateSignature($payload, $config['checksum_key']);
 
             $response = Http::withHeaders([
@@ -161,5 +183,36 @@ class PayOsService extends BaseService
             );
             return ServiceReturn::error(__('common_error.payment_error'));
         }
+    }
+
+    /**
+     * Kiểm tra dữ liệu từ PayOS có hợp lệ không.
+     * @param $transaction
+     * @param $transaction_signature
+     * @return bool
+     * @throws ServiceException
+     */
+    public function isValidOsPayData($transaction, $transaction_signature): bool
+    {
+        $config = $this->getConfigPayOs();
+        ksort($transaction);
+        $transaction_str_arr = [];
+        foreach ($transaction as $key => $value) {
+            if (in_array($value, ["undefined", "null"]) || gettype($value) == "NULL") {
+                $value = "";
+            }
+
+            if (is_array($value)) {
+                $valueSortedElementObj = array_map(function ($ele) {
+                    ksort($ele);
+                    return $ele;
+                }, $value);
+                $value = json_encode($valueSortedElementObj, JSON_UNESCAPED_UNICODE);
+            }
+            $transaction_str_arr[] = $key . "=" . $value;
+        }
+        $transaction_str = implode("&", $transaction_str_arr);
+        $signature = hash_hmac("sha256", $transaction_str, $config['checksum_key']);
+        return $signature == $transaction_signature;
     }
 }

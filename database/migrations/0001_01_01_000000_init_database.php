@@ -238,6 +238,7 @@ return new class extends Migration
             $table->smallInteger('status')->comment('Trạng thái giao dịch (trong enum TransactionStatus)');
             $table->string('description')->nullable()->comment('Mô tả giao dịch');
             $table->timestamp('expired_at')->nullable()->comment('Thời gian hết hạn (nếu có)');
+            $table->index(['transaction_id']);
             $table->softDeletes();
             $table->timestamps();
         });

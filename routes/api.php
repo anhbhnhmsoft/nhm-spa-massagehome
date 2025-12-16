@@ -37,6 +37,10 @@ Route::middleware('set-api-locale')->group(function () {
             Route::post('heartbeat', [AuthController::class, 'heartbeat']);
             // Cập nhật thông tin thiết bị.
             Route::post('set-device', [AuthController::class, 'setDevice']);
+            // edit avatar
+            Route::post('edit-avatar', [AuthController::class, 'editAvatar']);
+            // delete avatar
+            Route::delete('delete-avatar', [AuthController::class, 'deleteAvatar']);
         });
     });
 
@@ -88,16 +92,18 @@ Route::middleware('set-api-locale')->group(function () {
 
     Route::prefix('payment')->group(function () {
         // router không cần auth
-        // dịch vụ Sepay
         Route::prefix('webhook')->group(function () {
+            // Xử lý webhook PayOS
             Route::post('payos', [PaymentController::class, 'handleWebhookPayOs']);
         });
 
         // Lấy danh sách dịch vụ
         Route::middleware(['auth:sanctum'])->group(function () {
+            Route::get('transactions', [PaymentController::class, 'listTransaction']);
             Route::get('wallet', [PaymentController::class, 'userWallet']);
-            Route::get('config-payment', [PaymentController::class, 'configPayment']);
-            Route::post('create-payment-service', [PaymentController::class, 'createPaymentService']);
+            Route::get('config', [PaymentController::class, 'configPayment']);
+            Route::post('deposit', [PaymentController::class, 'deposit']);
+            Route::get('check-transaction', [PaymentController::class, 'checkTransaction']);
         });
     });
 

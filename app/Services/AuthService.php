@@ -9,6 +9,7 @@ use App\Core\LogHelper;
 use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
+use App\Enums\DirectFile;
 use App\Enums\Gender;
 use App\Enums\Language;
 use App\Enums\UserRole;
@@ -16,11 +17,14 @@ use App\Models\User;
 use App\Repositories\UserProfileRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\WalletRepository;
+use App\Utils\Constants\StoragePath;
 use Exception;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 
 class AuthService extends BaseService
@@ -35,7 +39,8 @@ class AuthService extends BaseService
         protected UserRepository        $userRepository,
         protected UserProfileRepository $userProfileRepository,
         protected WalletRepository      $walletRepository,
-    ) {
+    )
+    {
         parent::__construct();
     }
 
@@ -177,7 +182,8 @@ class AuthService extends BaseService
         ?string   $referralCode,
         ?Gender   $gender,
         ?Language $language
-    ): ServiceReturn {
+    ): ServiceReturn
+    {
         DB::beginTransaction();
         try {
             // Kiểm tra token
@@ -258,7 +264,8 @@ class AuthService extends BaseService
     public function login(
         string $phone,
         string $password,
-    ): ServiceReturn {
+    ): ServiceReturn
+    {
         try {
             // Kiểm tra user có tồn tại không
             $user = $this->userRepository->findByPhone($phone);
@@ -300,7 +307,8 @@ class AuthService extends BaseService
     public function loginAdmin(
         string $phone,
         string $password,
-    ): ServiceReturn {
+    ): ServiceReturn
+    {
         try {
             // Kiểm tra user có tồn tại không
             $user = $this->userRepository->findByPhone($phone);
@@ -365,7 +373,8 @@ class AuthService extends BaseService
      */
     public function setLanguage(
         Language $language,
-    ): ServiceReturn {
+    ): ServiceReturn
+    {
         try {
             $user = Auth::user();
             $user->update([
@@ -498,16 +507,93 @@ class AuthService extends BaseService
                     'device_id' => $deviceId,
                 ],
                 [
-                    'token'       => $token,
-                    'device_type'  => $platform ?? 'unknown',
+                    'token' => $token,
+                    'device_type' => $platform ?? 'unknown',
                     'device_name' => $deviceName ?? 'Unknown Device',
-                    'updated_at'  => now(),
+                    'updated_at' => now(),
                 ]
             );
             return ServiceReturn::success();
         } catch (Exception $exception) {
             LogHelper::error(
                 message: "Lỗi AuthService@setDevice",
+                ex: $exception
+            );
+            return ServiceReturn::error(message: __('common_error.server_error'));
+        }
+    }
+
+    /**
+     * Chỉnh sửa avatar người dùng.
+     * @param  $file
+     * @return ServiceReturn
+     */
+    public function editInfoAvatar($file): ServiceReturn
+    {
+        try {
+            $user = $this->userRepository->queryUser()->find(Auth::id());
+            if (!$user) {
+                return ServiceReturn::error(message: __('auth.error.unauthorized'));
+            }
+            if (!$file instanceof UploadedFile) {
+                throw new ServiceException(__('error.file_invalid'));
+            }
+            $profile = $user->profile;
+            $avatarPathNew = $file->store(DirectFile::makePathById(
+                type: DirectFile::AVATAR_USER,
+                id: $user->id
+            ), 'public');
+            if (!$avatarPathNew) {
+                throw new ServiceException(__('common_error.server_error'));
+            }
+            // Xóa avatar cũ nếu có
+            if ($profile->avatar_url && Storage::disk('public')->exists($profile->avatar_url)) {
+                Storage::disk('public')->delete($profile->avatar_url);
+            }
+            // Cập nhật avatar_path trong bảng user_profiles
+            $profile->avatar_url = $avatarPathNew;
+            $profile->save();
+            // Load lại quan hệ profile để trả về dữ liệu mới
+            $user->load('profile');
+            return ServiceReturn::success(
+                data: $user
+            );
+        } catch (Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi AuthService@editInfoAvatar",
+                ex: $exception
+            );
+            return ServiceReturn::error(message: __('common_error.server_error'));
+        }
+    }
+
+    /**
+     * Xóa avatar người dùng.
+     * @return ServiceReturn
+     */
+    public function deleteAvatar(): ServiceReturn
+    {
+        try {
+            $user = $this->userRepository->queryUser()->find(Auth::id());
+            if (!$user) {
+                return ServiceReturn::error(message: __('auth.error.unauthorized'));
+            }
+            $profile = $user->profile;
+            // Xóa avatar cũ nếu có
+            if ($profile->avatar_url && Storage::disk('public')->exists($profile->avatar_url)) {
+                Storage::disk('public')->delete($profile->avatar_url);
+            }
+            // Cập nhật avatar_path trong bảng user_profiles
+            $profile->avatar_url = null;
+            $profile->save();
+            // Load lại quan hệ profile để trả về dữ liệu mới
+            $user->load('profile');
+            return ServiceReturn::success(
+                data: $user
+            );
+        } catch (Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi AuthService@deleteAvatar",
                 ex: $exception
             );
             return ServiceReturn::error(message: __('common_error.server_error'));
