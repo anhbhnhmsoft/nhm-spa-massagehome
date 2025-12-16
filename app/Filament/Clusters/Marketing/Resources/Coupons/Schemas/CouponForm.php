@@ -2,7 +2,10 @@
 
 namespace App\Filament\Clusters\Marketing\Resources\Coupons\Schemas;
 
+use App\Enums\DirectFile;
+use App\Enums\Language;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -96,6 +99,42 @@ class CouponForm
                                     ->label(__('admin.coupon.fields.is_active'))
                                     ->default(true)
                                     ->required(),
+                                Toggle::make('display_ads')
+                                    ->label(__('admin.coupon.fields.display_ads'))
+                                    ->default(true)
+                                    ->required(),
+                                Grid::make()
+                                    ->columns(3)
+                                    ->schema([
+                                        FileUpload::make('banners.' . Language::VIETNAMESE->value)
+                                            ->label(__('admin.coupon.fields.banners.' . Language::VIETNAMESE->value))
+                                            ->image()
+                                            ->disk('public')
+                                            ->directory(DirectFile::COUPON->value)
+                                            ->required()
+                                            ->validationMessages([
+                                                'required' => __("common.error.required"),
+                                            ]),
+                                        FileUpload::make('banners.' . Language::ENGLISH->value)
+                                            ->label(__('admin.coupon.fields.banners.' . Language::ENGLISH->value))
+                                            ->image()
+                                            ->disk('public')
+                                            ->directory(DirectFile::COUPON->value)
+                                            ->required()
+                                            ->validationMessages([
+                                                'required' => __("common.error.required"),
+                                            ]),
+                                        FileUpload::make('banners.' . Language::CHINESE->value)
+                                            ->label(__('admin.coupon.fields.banners.' . Language::CHINESE->value))
+                                            ->image()
+                                            ->disk('public')
+                                            ->directory(DirectFile::COUPON->value)
+                                            ->required()
+                                            ->validationMessages([
+                                                'required' => __("common.error.required"),
+                                            ]),
+                                    ])
+                                    ->columnSpanFull(),
                             ])
                             ->columns(2)
                             ->columnSpanFull(),

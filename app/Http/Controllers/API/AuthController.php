@@ -129,14 +129,12 @@ class AuthController extends BaseController
                 }
             }],
             'password' => [new PasswordRule()],
-            'referral_code' => ['nullable', 'string'],
             'name' => ['required', 'string', 'max:255'],
             'gender' => ['required', Rule::in(Gender::cases())],
             'language' => ['required', Rule::in(Language::cases())],
         ], [
             'token.required' => __('auth.error.invalid_token_register'),
             'token.string' => __('auth.error.invalid_token_register'),
-            'referral_code.string' => __('validation.referrer_code'),
             'name.required' => __('validation.name.required'),
             'name.string' => __('validation.name.string'),
             'name.max' => __('validation.name.max', ['max' => 255]),
@@ -151,7 +149,6 @@ class AuthController extends BaseController
             token: $data['token'],
             password: $data['password'],
             name: $data['name'],
-            referralCode: $data['referral_code'] ?? null,
             gender: Gender::from($data['gender']),
             language: Language::from($data['language']),
         );

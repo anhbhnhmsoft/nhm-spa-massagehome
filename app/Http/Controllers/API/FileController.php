@@ -77,4 +77,17 @@ class FileController extends BaseController
             message: __('common.success.data_created')
         );
     }
+
+    public function getCommercialFile(Request $request, $path)
+    {
+        if (Storage::disk('private')->exists($path)) {
+            $absolutePath = Storage::disk('private')->path($path);
+        } elseif (Storage::disk('public')->exists($path)) {
+            $absolutePath = Storage::disk('public')->path($path);
+        } else {
+            return $this->sendError(__('common_error.data_not_found'));
+        }
+
+        return response()->file($absolutePath);
+    }
 }

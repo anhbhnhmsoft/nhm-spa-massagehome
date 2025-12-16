@@ -48,9 +48,9 @@
     - role (smallint) -- vai trò người dùng (trong enum UserRole)
     - language (varchar, nullable) -- ngôn ngữ (trong enum Language)
     - is_active (boolean) -- trạng thái bị khóa
-    - referral_code (varchar, unique, nullable) -- mã giới thiệu
     - referred_by_user_id (bigint, nullable) -- id người giới thiệu
     - last_login_at (timestamp, nullable) -- thời gian đăng nhập cuối cùng
+    - affiliate_link (varchar, nullable) -- liên kết giới thiệu
     - softDeletes
     - timestamps
 
@@ -342,6 +342,8 @@
     - usage_limit (bigint, nullable) -- số lần sử dụng tối đa
     - used_count (bigint, default 0) -- số lần đã sử dụng
     - is_active (boolean) -- trạng thái kích hoạt
+    - banners (json, nullable) -- danh sách banner đa ngôn ngữ
+    - display_ads (boolean, default true) -- có hiển thị quảng cáo ở homepage không
     - softDeletes
     - timestamps
     - unique (code, created_by) -- mã giảm giá phải là duy nhất cho từng người dùng
@@ -364,6 +366,23 @@
     - softDeletes
     - timestamps
     - unique (booking_id, coupon_id) -- mã giảm giá phải là duy nhất cho từng đơn đặt lịch
+
+# coupon_users
+    #note
+    - Bảng coupon_users lưu trữ thông tin người dùng đã sử dụng mã giảm giá.
+
+    # relations
+    - Quan hệ 1-n với bảng coupons.
+    - Quan hệ 1-n với bảng users.
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - coupon_id (bigint, foreign key to coupons.id) -- id mã giảm giá
+    - user_id (bigint, foreign key to users.id) -- id người dùng
+    - quantity (smallint) -- số lượng mã giảm giá
+    - softDeletes
+    - timestamps
+    - unique (user_id, coupon_id) -- mã giảm giá phải là duy nhất cho từng người dùng
 
 # reviews 
     # note

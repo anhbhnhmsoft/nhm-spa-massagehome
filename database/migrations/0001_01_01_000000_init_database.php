@@ -43,18 +43,16 @@ return new class extends Migration
             $table->string('language', 5)->nullable()->default('vn')->comment('Ngôn ngữ (trong enum Language)');
             // false: hoạt động, true: bị vô hiệu hóa
             $table->boolean('is_active')->default(true)->comment('Trạng thái hoạt động');
-            // Mã giới thiệu CỦA TÔI
-            $table->string('referral_code', 20)->unique()->nullable()->comment('Mã giới thiệu');
             // ID của người giới thiệu TÔI
             $table->bigInteger('referred_by_user_id')->nullable()->comment('ID người giới thiệu');
             $table->timestamp('last_login_at')->nullable()->comment('Thời gian đăng nhập cuối cùng');
+            $table->string('affiliate_link',255)->nullable()->comment(' Affiliate link');
 
             $table->softDeletes();
             $table->timestamps();
 
             // Indexes
             $table->index('role');
-            $table->index('referral_code');
         });
 
         Schema::create('user_review_application', function (Blueprint $table) {
@@ -196,6 +194,8 @@ return new class extends Migration
                 ->default(0)->comment('Số lần đã sử dụng');
             $table->boolean('is_active')
                 ->default(true)->comment('Trạng thái kích hoạt');
+            $table->json('banners')->nullable()->comment('Danh sách banner đa ngôn ngữ');
+            $table->boolean('display_ads')->default(true)->comment('Hiển thị quảng cáo ở homepage');
             $table->softDeletes();
             $table->timestamps();
             $table->unique(['code', 'created_by']);
@@ -217,6 +217,18 @@ return new class extends Migration
             $table->softDeletes();
 
             $table->unique(['booking_id', 'coupon_id']);
+        });
+
+        Schema::create('coupon_users', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('coupon_id')->comment('ID mã giảm giá');
+            $table->unsignedBigInteger('user_id')->comment('ID người dùng');
+            $table->foreign('coupon_id')->references('id')->on('coupons')->onDelete('cascade');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->smallInteger('quantity')->default(0)->comment('Số lượng');
+            $table->timestamps();
+            $table->softDeletes();
+            $table->unique(['user_id', 'coupon_id']);
         });
 
         Schema::create('service_bookings', function (Blueprint $table) {
@@ -328,6 +340,17 @@ return new class extends Migration
             $table->foreign('affiliate_user_id')->references('id')->on('users');
             $table->foreign('referred_user_id')->references('id')->on('users');
             $table->foreign('transaction_id')->references('id')->on('wallet_transactions');
+        });
+
+        Schema::create('affiliate_links', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('user_id')->index()->comment('ID người giới thiệu');
+            $table->string('client_ip')->comment('Địa chỉ IP của người nhấp chuột');
+            $table->text('user_agent')->comment('Thông tin thiết bị/trình duyệt');
+            $table->boolean('is_matched')->default(false)->comment('Đã so khớp thành công chưa');
+            $table->timestamp('expired_at')->comment('Thời gian hết hạn đối sánh');
+            $table->softDeletes();
+            $table->timestamps();
         });
 
         Schema::create('reviews', function (Blueprint $table) {

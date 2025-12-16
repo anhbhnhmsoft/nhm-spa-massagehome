@@ -17,7 +17,6 @@ class CreateAgencyApply extends CreateRecord
         $data['phone_verified_at'] = now();
         $data['language'] = app()->getLocale();
         $data['is_active'] = true;
-        $data['referral_code'] = Helper::generateReferCodeUser(UserRole::AGENCY);
         return $data;
     }
 }
