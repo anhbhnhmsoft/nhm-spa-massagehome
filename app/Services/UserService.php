@@ -168,7 +168,6 @@ class UserService extends BaseService
                 'role' => UserRole::KTV->value,
                 'phone_verified_at' => now(),
                 'is_active' => false,
-                'referral_code' => Helper::generateReferCodeUser(UserRole::KTV)
             ]);
 
             $userReviewApplication = $this->userReviewApplicationRepository->create([
@@ -345,7 +344,6 @@ class UserService extends BaseService
                 'role' => UserRole::AGENCY->value,
                 'phone_verified_at' => now(),
                 'is_active' => false,
-                'referral_code' => Helper::generateReferCodeUser(UserRole::AGENCY)
             ]);
 
             $userReviewApplication = $this->userReviewApplicationRepository->create([
@@ -422,10 +420,6 @@ class UserService extends BaseService
             if (isset($data['is_active']) && $data['is_active']) {
                 $dataUpdate['is_active'] = $data['is_active'];
             }
-            if (isset($data['referral_code']) && $data['referral_code']) {
-                $dataUpdate['referral_code'] = $data['referral_code'];
-            }
-
             $user->update($dataUpdate);
 
             if (isset($data['profile'])) {

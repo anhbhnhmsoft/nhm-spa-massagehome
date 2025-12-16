@@ -37,7 +37,7 @@ class CouponRepository extends BaseRepository
         if (isset($filters['is_valid']) && filter_var($filters['is_valid'], FILTER_VALIDATE_BOOLEAN)) {
             $now = Carbon::now();
             $query->where('is_active', true) // Bổ sung check active
-            ->where('start_at', '<=', $now)
+                ->where('start_at', '<=', $now)
                 ->where('end_at', '>=', $now)
                 ->where(function ($q) {
                     $q->whereNull('usage_limit')
@@ -74,5 +74,17 @@ class CouponRepository extends BaseRepository
         $column = $sortBy ?? 'created_at';
         $query->orderBy($column, $direction);
         return $query;
+    }
+
+    public function incrementUsedCountAtomic(string $couponId): bool
+    {
+        return $this->model->query()
+            ->where('id', $couponId)
+            ->where('is_active', true)
+            ->where(function ($q) {
+                $q->whereNull('usage_limit')
+                    ->orWhereColumn('used_count', '<', 'usage_limit');
+            })
+            ->increment('used_count');
     }
 }

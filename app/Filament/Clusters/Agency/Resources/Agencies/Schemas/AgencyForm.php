@@ -7,6 +7,7 @@ use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserFileType;
 use App\Models\Province;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -121,10 +122,9 @@ class AgencyForm
                             ->label(__('admin.agency_apply.fields.bio'))
                             ->rows(3)
                             ->columnSpanFull(),
-                        Select::make('status')
-                            ->label(__('admin.agency_apply.fields.status'))
-                            ->options(ReviewApplicationStatus::toOptions())
-                            ->default(ReviewApplicationStatus::PENDING),
+
+                        Hidden::make('status')
+                            ->default(ReviewApplicationStatus::APPROVED),
                         TextInput::make('note')
                             ->label(__('admin.agency_apply.fields.note')),
 

@@ -41,7 +41,6 @@ return
                 'usage_count' => 'Số lần sử dụng',
                 'effective_date' => 'Ngày hiệu lực',
                 'application_date' => 'Ngày đăng ký',
-                'referral_code' => 'Mã giới thiệu',
                 'creator' => 'Tạo bởi',
             ],
             'action' => [
@@ -430,6 +429,13 @@ return
                 'usage_limit' => 'Số lần áp dụng tối đa',
                 'used_count' => 'Số lần đã áp dụng',
                 'is_active' => 'Trạng thái',
+                'display_ads' => 'Hiển thị quảng cáo',
+                'banners' => [
+                    'label' => 'Banner',
+                    'vi' => 'Banner tiếng Việt',
+                    'en' => 'Banner tiếng Anh',
+                    'cn' => 'Banner tiếng Trung',
+                ],
             ],
             'is_percentage' => [
                 'fixed' => 'Số tiền',

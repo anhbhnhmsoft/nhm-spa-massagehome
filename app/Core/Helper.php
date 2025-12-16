@@ -59,11 +59,12 @@ final class Helper
 
     /**
      * Tạo mã tham gia ngẫu nhiên 8 ký tự in hoa.
+     * @param int|null $length
      * @return string
      */
-    public static function generateReferCode(): string
+    public static function generateReferCode(?int $length = 8): string
     {
-        return strtoupper(substr(Str::uuid()->toString(), 0, 8));
+        return strtoupper(substr(Str::uuid()->toString(), 0, $length));
     }
 
     /**
@@ -88,5 +89,15 @@ final class Helper
     public static function FileUrl(string $path): string
     {
         return route('file_url_render', ['path' => $path]);
+    }
+
+    /**
+     * Kiểm tra thiết bị có phải là thiết bị di động không.
+     * @param string $userAgent
+     * @return bool
+     */
+    public static function isMobileDevice($userAgent)
+    {
+        return preg_match('/(android|iphone|ipad|mobile)/i', $userAgent);
     }
 }

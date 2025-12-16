@@ -11,11 +11,12 @@ use Spatie\Translatable\HasTranslations;
 
 class Coupon extends Model
 {
-    use HasFactory, SoftDeletes , HasBigIntId, HasTranslations;
+    use HasFactory, SoftDeletes, HasBigIntId, HasTranslations;
 
     protected $translatable = [
         'label',
         'description',
+        'banners'
     ];
 
     protected $table = 'coupons';
@@ -34,6 +35,8 @@ class Coupon extends Model
         'usage_limit',
         'used_count',
         'is_active',
+        'banners',
+        'display_ads'
     ];
 
     protected $casts = [
@@ -48,6 +51,7 @@ class Coupon extends Model
         'max_discount' => 'float',
         'usage_limit' => 'integer',
         'used_count' => 'integer',
+        'display_ads' => 'boolean',
     ];
 
     // Người tạo mã (Admin/Staff/User)
@@ -75,5 +79,19 @@ class Coupon extends Model
                     ->orWhereColumn('used_count', '<', 'usage_limit');
             });
     }
-}
 
+    /**
+     * Lấy danh sách những người dùng đang sở hữu mã giảm giá này.
+     */
+    public function users(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(
+            User::class,
+            'coupon_users',
+            'coupon_id',
+            'user_id'
+        )
+            ->withPivot('quantity')
+            ->withTimestamps();
+    }
+}

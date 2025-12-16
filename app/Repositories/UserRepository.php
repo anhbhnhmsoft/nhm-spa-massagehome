@@ -204,12 +204,4 @@ class UserRepository extends BaseRepository
             ->whereNotNull('phone_verified_at')
             ->first();
     }
-
-    /**
-     * Tìm user theo mã giới thiệu
-     */
-    public function findByReferralCode(string $code): ?User
-    {
-        return $this->query()->where('referral_code', $code)->first();
-    }
 }

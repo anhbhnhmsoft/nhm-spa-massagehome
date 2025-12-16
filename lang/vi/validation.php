@@ -11,9 +11,6 @@ return [
         'string' => 'Tên phải là chuỗi ký tự.',
         'max' => 'Tên phải có ít nhất :max ký tự.',
     ],
-    'referral_code' => [
-        'string' => 'Mã giới thiệu phải là chuỗi ký tự.',
-    ],
     'gender' => [
         'required' => 'Giới tính không hợp lệ.',
         'in' => 'Giới tính không hợp lệ.',

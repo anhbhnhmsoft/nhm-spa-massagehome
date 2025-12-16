@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Core\LogHelper;
+use App\Enums\QueueKey;
 use App\Services\CouponService;
 use App\Services\WalletService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -27,7 +28,9 @@ class WalletTransactionBookingJob implements ShouldQueue
         protected int | null  $couponId,
         protected int $userId,
         protected int $serviceId
-    ) {}
+    ) {
+        $this->onQueue(QueueKey::TRANSACTIONS_PAYMENT);
+    }
 
     /**
      * Thực hiện thanh toán booking, áp dụng coupon và cập nhật số lần sử dụng coupon.
