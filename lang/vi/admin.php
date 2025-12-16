@@ -119,6 +119,7 @@ return
                 "experience_desc" => "Mô tả kinh nghiệm",
                 "province" => "Tỉnh/Thành phố",
                 "address" => "Địa chỉ chi tiết",
+                "search_address" => "Tìm kiếm địa chỉ",
                 "files" => "Hồ sơ đính kèm",
                 "file_type" => "Loại file",
                 "file_name" => "Tên file",
@@ -445,5 +446,9 @@ return
                 'active' => 'Kích hoạt',
                 'inactive' => 'Tắt',
             ],
-        ]
+        ],
+        'maps' => [
+            'label' => 'Chọn từ bản đồ',
+            'navigation_label' => 'Xác nhận vị trí',
+        ],
     ];

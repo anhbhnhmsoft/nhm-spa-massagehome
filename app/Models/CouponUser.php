@@ -11,7 +11,11 @@ class CouponUser extends Model
     protected $fillable = [
         'coupon_id',
         'user_id',
-        'quantity',
+        'is_used',
+    ];
+
+    protected $casts = [
+        'is_used' => 'boolean',
     ];
 
     public function coupon()

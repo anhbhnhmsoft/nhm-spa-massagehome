@@ -8,9 +8,12 @@ use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserFileType;
 use App\Enums\UserRole;
 use App\Models\Province;
+use App\Services\LocationService;
 use App\Models\User;
+use Closure;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -130,10 +133,49 @@ class KTVForm
                             ->disabled(fn($livewire) => $livewire instanceof ViewRecord)
                             ->columnSpan(1),
 
+                        Select::make('search_location')
+                            ->label(__('admin.ktv_apply.fields.search_address'))
+                            ->searchable()
+                            ->live(debounce: 500)
+                            ->getSearchResultsUsing(function (string $search) {
+                                if (!$search) return [];
+                                $service = app(LocationService::class);
+                                $res = $service->autoComplete($search);
+                                if (!$res->isSuccess()) return [];
+                                return collect($res->getData())->pluck('formatted_address', 'place_id')->toArray();
+                            })
+                            ->getOptionLabelUsing(function ($value): ?string {
+                                if (!$value) return null;
+
+                                $service = app(LocationService::class);
+                                $res = $service->getDetail($value);
+
+                                return $res->isSuccess()
+                                    ? $res->getData()['formatted_address']
+                                    : null;
+                            })
+                            ->afterStateUpdated(function ($set, ?string $state) {
+                                if (!$state) return;
+                                $service = app(LocationService::class);
+                                $res = $service->getDetail($state);
+                                if ($res->isSuccess()) {
+                                    $data = $res->getData();
+                                    $set('address', $data['formatted_address']);
+                                    $set('latitude', $data['latitude']);
+                                    $set('longitude', $data['longitude']);
+                                }
+                            })
+                            ->dehydrated(false)
+                            ->columnSpanFull(),
+
+                        Hidden::make('latitude'),
+                        Hidden::make('longitude'),
+
                         Textarea::make('address')
                             ->label(__('admin.ktv_apply.fields.address'))
                             ->disabled(fn($livewire) => $livewire instanceof ViewRecord)
-                            ->rows(2),
+                            ->rows(2)
+                            ->columnSpanFull(),
 
                         TextInput::make('experience')
                             ->label(__('admin.ktv_apply.fields.experience'))
@@ -160,7 +202,6 @@ class KTVForm
                         Repeater::make('files')
                             ->label(__('admin.ktv_apply.fields.files'))
                             ->relationship('files')
-                            ->columns(3)
                             ->schema([
                                 Select::make('type')
                                     ->label(__('admin.ktv_apply.fields.file_type'))
@@ -172,22 +213,44 @@ class KTVForm
                                     ->label('File')
                                     ->directory(DirectFile::KTVA->value)
                                     ->disk('private')
+                                    ->image()
                                     ->required()
                                     ->downloadable()
                                     ->columnSpan(2),
                             ])
                             ->columns(3)
-                            ->addable(true)
-                            ->deletable(true)
-                            ->reorderable(true)
-                            ->minItems(1)
-                            ->defaultItems(1)
+                            ->minItems(5)
+                            ->rules([
+                                fn() => function (string $attribute, $value, Closure $fail) {
+                                    $types = collect($value)->pluck('type')->map(fn($t) => (int)$t);
+                                    $counts = $types->countBy()->all();
+
+                                    $frontCount = $counts[UserFileType::IDENTITY_CARD_FRONT->value] ?? 0;
+                                    $backCount = $counts[UserFileType::IDENTITY_CARD_BACK->value] ?? 0;
+                                    $businessCount = $counts[UserFileType::BUSINESS_IMAGE->value] ?? 0;
+                                    $errors = [];
+
+                                    if ($frontCount !== 1) {
+                                        $errors[] = __('error.min_id_card_image');
+                                    }
+
+                                    if ($backCount !== 1) {
+                                        $errors[] = __('error.min_id_card_image');
+                                    }
+
+                                    if ($businessCount < 3) {
+                                        $errors[] = __('error.min_business_image');
+                                    }
+
+                                    if (!empty($errors)) {
+                                        $fail(implode(' ', $errors));
+                                    }
+                                },
+                            ])
                             ->validationMessages([
-                                'min' => __('common.error.min_items', ['min' => 1]),
-                                'required' => __('common.error.required'),
+                                'min' => __('common.error.min_items', ['min' => 5]),
                             ]),
                     ]),
-
                 Section::make(__('admin.ktv_apply.fields.system_info'))
                     ->schema([
                         Placeholder::make('created_at')
