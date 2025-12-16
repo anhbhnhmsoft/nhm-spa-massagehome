@@ -9,8 +9,10 @@ use App\Enums\UserFileType;
 use App\Enums\UserRole;
 use App\Models\Province;
 use App\Models\User;
+use App\Services\LocationService;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -122,15 +124,53 @@ class KTVApplyForm
                             ->options(fn() => Province::all()->pluck('name', 'code'))
                             
                             ->columnSpan(1),
-
-                        Textarea::make('address')
-                            ->label(__('admin.ktv_apply.fields.address'))
-                            ->rows(2),
-
                         TextInput::make('experience')
                             ->label(__('admin.ktv_apply.fields.experience'))
                             ->numeric()
                             ->suffix(__('admin.ktv_apply.fields.years')),
+                        Select::make('search_location')
+                            ->label(__('admin.ktv_apply.fields.search_address'))
+                            ->searchable()
+                            ->live(debounce: 500)
+                            ->getSearchResultsUsing(function (string $search) {
+                                if (!$search) return [];
+                                $service = app(LocationService::class);
+                                $res = $service->autoComplete($search);
+                                if (!$res->isSuccess()) return [];
+                                return collect($res->getData())->pluck('formatted_address', 'place_id')->toArray();
+                            })
+                            ->getOptionLabelUsing(function ($value): ?string {
+                                if (!$value) return null;
+
+                                $service = app(LocationService::class);
+                                $res = $service->getDetail($value);
+
+                                return $res->isSuccess()
+                                    ? $res->getData()['formatted_address']
+                                    : null;
+                            })
+                            ->afterStateUpdated(function ($set, ?string $state) {
+                                if (!$state) return;
+                                $service = app(LocationService::class);
+                                $res = $service->getDetail($state);
+                                if ($res->isSuccess()) {
+                                    $data = $res->getData();
+                                    $set('address', $data['formatted_address']);
+                                    $set('latitude', $data['latitude']);
+                                    $set('longitude', $data['longitude']);
+                                }
+                            })
+                            ->dehydrated(false)
+                            ->columnSpanFull(),
+
+                        Hidden::make('latitude'),
+                        Hidden::make('longitude'),
+
+                        Textarea::make('address')
+                            ->label(__('admin.ktv_apply.fields.address'))
+                            ->disabled(fn($livewire) => $livewire instanceof ViewRecord)
+                            ->rows(2)
+                            ->columnSpanFull(),
 
                         Textarea::make('bio.' . $lang)
                             ->label(__('admin.ktv_apply.fields.experience_desc'))

@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::table('coupon_users', function (Blueprint $table) {
             $table->boolean('is_used')->default(false);
+            $table->dropColumn('quantity');
         });
 
         Schema::table('users', function (Blueprint $table) {
@@ -27,6 +28,7 @@ return new class extends Migration
     {
         Schema::table('coupon_users', function (Blueprint $table) {
             $table->dropColumn('is_used');
+            $table->integer('quantity')->default(1);
         });
 
         Schema::table('users', function (Blueprint $table) {

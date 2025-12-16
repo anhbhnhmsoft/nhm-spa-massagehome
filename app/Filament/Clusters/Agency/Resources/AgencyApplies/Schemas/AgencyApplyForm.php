@@ -6,7 +6,9 @@ use App\Enums\DirectFile;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserFileType;
 use App\Models\Province;
+use App\Services\LocationService;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -117,13 +119,49 @@ class AgencyApplyForm
                                 'required' => __('common.error.required'),
                             ]),
 
+                        Select::make('search_location')
+                            ->label(__('admin.ktv_apply.fields.search_address'))
+                            ->searchable()
+                            ->live(debounce: 500)
+                            ->getSearchResultsUsing(function (string $search) {
+                                if (!$search) return [];
+                                $service = app(LocationService::class);
+                                $res = $service->autoComplete($search);
+                                if (!$res->isSuccess()) return [];
+                                return collect($res->getData())->pluck('formatted_address', 'place_id')->toArray();
+                            })
+                            ->getOptionLabelUsing(function ($value): ?string {
+                                if (!$value) return null;
+
+                                $service = app(LocationService::class);
+                                $res = $service->getDetail($value);
+
+                                return $res->isSuccess()
+                                    ? $res->getData()['formatted_address']
+                                    : null;
+                            })
+                            ->afterStateUpdated(function ($set, ?string $state) {
+                                if (!$state) return;
+                                $service = app(LocationService::class);
+                                $res = $service->getDetail($state);
+                                if ($res->isSuccess()) {
+                                    $data = $res->getData();
+                                    $set('address', $data['formatted_address']);
+                                    $set('latitude', $data['latitude']);
+                                    $set('longitude', $data['longitude']);
+                                }
+                            })
+                            ->dehydrated(false)
+                            ->columnSpanFull(),
+
+                        Hidden::make('latitude'),
+                        Hidden::make('longitude'),
+
                         Textarea::make('address')
-                            ->required()
-                            ->label(__('admin.agency_apply.fields.address'))
+                            ->label(__('admin.ktv_apply.fields.address'))
+                            ->disabled(fn($livewire) => $livewire instanceof ViewRecord)
                             ->rows(2)
-                            ->validationMessages([
-                                'required' => __('common.error.required'),
-                            ]),
+                            ->columnSpanFull(),
                         Textarea::make('bio.' . $lang)
                             ->label(__('admin.agency_apply.fields.bio'))
                             ->required()

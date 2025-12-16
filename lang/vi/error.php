@@ -16,4 +16,6 @@ return [
     "file_invalid" => "File không hợp lệ",
     "address_not_found" => "Địa chỉ không tồn tại",
     "notification_not_found" => "Thông báo không tồn tại",
+    "min_business_image" => "Phải có ít nhất 3 ảnh hình ảnh công việc",
+    "min_id_card_image" => "Phải có đúng 1 ảnh mặt trước và 1 ảnh mặt sau CMND",
 ];

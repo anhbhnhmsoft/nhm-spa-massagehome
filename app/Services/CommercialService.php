@@ -94,20 +94,20 @@ class CommercialService extends BaseService
                 // 2. Kiểm tra xem User đã có Coupon này chưa
                 $alreadyHas = $user->collectionCoupons()->where('coupon_id', $coupon->id)->exists();
 
-                if (!$alreadyHas) {
+                // if (!$alreadyHas) {
                     // 3. Tăng used_count ở bảng chính
-                    $isIncremented = $this->couponRepository->incrementUsedCountAtomic($coupon->id);
+                    // $isIncremented = $this->couponRepository->incrementUsedCountAtomic($coupon->id);
 
-                    if ($isIncremented) {
-                        $collectedIds[] = $coupon->id;
-                    }
+                    // if ($isIncremented) {
+                    //     $collectedIds[] = $coupon->id;
+                    // }
                     // Nếu không increment được hết coupon, chúng ta bỏ qua coupon này
-                }
+                // }
             }
 
             // 4. Ghi vào "ví" người dùng
             if (!empty($collectedIds)) {
-                $syncData = collect($collectedIds)->mapWithKeys(fn($id) => [$id => ['quantity' => 1]]);
+                $syncData = collect($collectedIds)->mapWithKeys(fn($id) => [$id => ['is_used' => false]]);
                 $user->collectionCoupons()->syncWithoutDetaching($syncData->toArray());
             }
 
