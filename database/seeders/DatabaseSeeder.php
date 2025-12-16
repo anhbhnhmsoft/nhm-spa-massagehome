@@ -10,6 +10,7 @@ use App\Enums\Language;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\ServiceDuration;
 use App\Enums\UserRole;
+use App\Models\Banner;
 use App\Models\Category;
 use App\Models\Config;
 use App\Models\Coupon;
@@ -18,6 +19,7 @@ use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 
 class DatabaseSeeder extends Seeder
@@ -27,12 +29,13 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->seedProvince();
-        $this->seedCategory();
-        $this->seedAdmin();
-        $this->seedKTV();
-        $this->seedCoupon();
-        $this->seedConfig();
+//        $this->seedProvince();
+//        $this->seedCategory();
+//        $this->seedAdmin();
+//        $this->seedKTV();
+//        $this->seedCoupon();
+//        $this->seedConfig();
+        $this->seedBanner();
     }
 
     protected function seedAdmin(): void
@@ -43,12 +46,11 @@ class DatabaseSeeder extends Seeder
             $admin = User::query()->create([
                 'phone' => '012345678910',
                 'phone_verified_at' => now(),
-                'password' => bcrypt('Test1234568@'),
+                'password' => Hash::make('Test12345678@'),
                 'name' => 'Admin System',
                 'role' => UserRole::ADMIN->value,
                 'language' => Language::VIETNAMESE->value,
                 'is_active' => true,
-                'referral_code' => 'ADMIN001',
             ]);
         } catch (\Exception $exception) {
             dump($exception);
@@ -80,7 +82,6 @@ class DatabaseSeeder extends Seeder
                     'role' => UserRole::KTV->value,
                     'language' => Language::VIETNAMESE->value,
                     'is_active' => true,
-                    'referral_code' => Helper::generateReferCodeUser(UserRole::KTV),
                 ]);
 
                 $wallet = $user->wallet()->create([
@@ -329,6 +330,31 @@ class DatabaseSeeder extends Seeder
                     'description' => 'Tỷ giá đổi tiền VNĐ -> Point VD: 1000 VNĐ = 1 Point',
                 ]
             );
+
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::GOONG_API_KEY->value],
+                [
+                    'config_value' => '',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'Mã API key Goong dùng để tích hợp tìm kiếm địa chỉ.',
+                ]
+            );
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::BREAK_TIME_GAP->value],
+                [
+                    'config_value' => '15',
+                    'config_type' => ConfigType::NUMBER->value,
+                    'description' => 'Khoảng cách giữa 2 lần phục vụ của kỹ thuật viên tính bằng phút',
+                ]
+            );
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::DISCOUNT_RATE->value],
+                [
+                    'config_value' => '20',
+                    'config_type' => ConfigType::NUMBER->value,
+                    'description' => 'Tỷ lệ chiết khấu',
+                ]
+            );
         } catch (\Exception $e) {
             DB::rollBack();
             dump($e);
@@ -433,5 +459,45 @@ class DatabaseSeeder extends Seeder
         }
         DB::commit();
         return true;
+    }
+
+    protected function seedBanner()
+    {
+        Banner::query()->create([
+            'image_url' => [
+                Language::VIETNAMESE->value => 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
+                Language::ENGLISH->value => 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
+                Language::CHINESE->value => 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
+            ],
+            'order' => 1,
+            'is_active' => true,
+        ]);
+        Banner::query()->create([
+            'image_url' => [
+                Language::VIETNAMESE->value => 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
+                Language::ENGLISH->value    => 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
+                Language::CHINESE->value    => 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
+            ],
+            'order' => 2,
+            'is_active' => true,
+        ]);
+        Banner::query()->create([
+            'image_url' => [
+                Language::VIETNAMESE->value => 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
+                Language::ENGLISH->value    => 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
+                Language::CHINESE->value    => 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
+            ],
+            'order' => 3,
+            'is_active' => true,
+        ]);
+        Banner::query()->create([
+            'image_url' => [
+                Language::VIETNAMESE->value => 'https://images.unsplash.com/photo-1515377905703-c4788e51af15?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
+                Language::ENGLISH->value    => 'https://images.unsplash.com/photo-1515377905703-c4788e51af15?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
+                Language::CHINESE->value    => 'https://images.unsplash.com/photo-1515377905703-c4788e51af15?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
+            ],
+            'order' => 4,
+            'is_active' => true,
+        ]);
     }
 }

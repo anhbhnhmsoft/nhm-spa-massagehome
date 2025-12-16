@@ -7,6 +7,7 @@ enum PaymentType: int
     case QR_BANKING = 1; // Thanh toán qua mã QR
     case ZALO_PAY = 2; // Thanh toán qua Zalo Pay
     case MOMO_PAY = 3; // Thanh toán qua Momo Pay
+    case BY_POINTS = 4; // Thanh toán qua điểm
 
     public function label(): string
     {
@@ -14,6 +15,7 @@ enum PaymentType: int
             self::QR_BANKING => __('admin.booking.payment_type.qr_banking'),
             self::ZALO_PAY => __('admin.booking.payment_type.zalo_pay'),
             self::MOMO_PAY => __('admin.booking.payment_type.momo_pay'),
+            self::BY_POINTS => __('admin.booking.payment_type.by_points'),
         };
     }
 

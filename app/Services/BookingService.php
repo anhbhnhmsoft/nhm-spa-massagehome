@@ -8,11 +8,23 @@ use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
 use App\Enums\BookingStatus;
+use App\Enums\NotificationType;
 use App\Enums\ServiceDuration;
+use App\Jobs\SendNotificationJob;
 use App\Models\Coupon;
 use App\Repositories\BookingRepository;
 use App\Repositories\CouponRepository;
 use App\Repositories\ServiceRepository;
+use App\Enums\ConfigName;
+use App\Enums\PaymentType;
+use App\Jobs\WalletTransactionBookingJob;
+use App\Models\Config;
+use App\Services\ConfigService;
+use App\Repositories\ServiceOptionRepository;
+use App\Repositories\UserRepository;
+use App\Repositories\WalletRepository;
+use App\Repositories\WalletTransactionRepository;
+use App\Services\WalletService;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -25,8 +37,14 @@ class BookingService extends BaseService
         protected BookingRepository $bookingRepository,
         protected ServiceRepository $serviceRepository,
         protected CouponRepository $couponRepository,
-    )
-    {
+        protected ServiceOptionRepository $serviceOptionRepository,
+        protected CouponService $couponService,
+        protected WalletRepository $walletRepository,
+        protected WalletTransactionRepository $walletTransactionRepository,
+        protected UserRepository $userRepository,
+        protected ConfigService $configService,
+        protected WalletService $walletService,
+    ) {
         parent::__construct();
     }
 
@@ -71,104 +89,223 @@ class BookingService extends BaseService
     /**
      * Đặt lịch hẹn dịch vụ
      * @param int $serviceId
-     * @param ServiceDuration $duration
-     * @param string $address
-     * @param string $lat
-     * @param string $bookTime
-     * @param string $lng
-     * @param string|null $note
+     * @param int $optionId
      * @param int|null $couponId
+     * @param string $address
+     * @param string $latitude
+     * @param string $longitude
+     * @param string $bookTime
+     * @param string|null $note
      * @return ServiceReturn
      */
     public function bookService(
         int             $serviceId,
-        ServiceDuration $duration,
-        string          $address,
-        string          $lat,
-        string          $bookTime,
-        string          $lng,
-        ?string         $note = null,
+        int             $optionId,
         ?int            $couponId = null,
-    ): ServiceReturn
-    {
+        string          $address,
+        string          $latitude,
+        string          $longitude,
+        string          $bookTime,
+        ?string         $note = null,
+    ): ServiceReturn {
         DB::beginTransaction();
         try {
-            // Lấy thông tin người đặt dịch vụ - là người đang đăng nhập
-            $bookBy = Auth::user();
-            $bookingTime = Carbon::parse($bookTime); // Start time
-            // kiểm tra xem thời gian có hợp lệ ko
-            // Kiểm tra xem thời gian đặt có hợp lệ không
-            if ($bookingTime->isBefore(now()->addHour())) {
-                throw new ServiceException(
-                    message: __("validation.book_time.after")
+
+            $user = Auth::user();
+            $service = $this->serviceRepository->query()->find($serviceId);
+            // Dịch vụ có đang hoạt động không
+            if (!$service->is_active) {
+                return ServiceReturn::error(
+                    message: __("booking.service.not_active")
+                );
+            }
+            // kiểm tra option dịch vụ
+            $serviceOption = $this->serviceOptionRepository->query()->find($optionId);
+            if ($serviceOption->service_id != $serviceId) {
+                return ServiceReturn::error(
+                    message: __("booking.service_option.not_match")
                 );
             }
 
-            // Lấy thông tin dịch vụ
-            $service = $this->serviceRepository->query()->find($serviceId);
-            if (!$service) {
-                throw new ServiceException(
-                    message: __("error.service_not_found")
+            $priceBeforeDiscount = $serviceOption->price;
+            $discountAmount = 0.0;
+            $finalPrice  = $priceBeforeDiscount;
+
+            if ($couponId) {
+                $couponValidation = $this->couponService->validateCouponWithCache(
+                    couponId: (string) $couponId,
+                    userId: (string) $user->id,
+                    serviceId: (string) $serviceId,
+                    priceBeforeDiscount: $priceBeforeDiscount
                 );
-            }
-            // Kiểm tra xem dịch vụ có sẵn trong khoảng thời gian này không
-            $serviceOption = $service->options()
-                ->where('duration', $duration->value)
-                ->first();
-            if (!$serviceOption) {
-                throw new ServiceException(
-                    message: __("error.service_duration_not_available")
-                );
-            }
-            // Kiểm tra mã giảm giá (nếu có)
-            if (!empty($couponId)) {
-                $coupon = $this->couponRepository->filterQuery(
-                    query: $this->couponRepository->queryCoupon(),
-                    filters: [
-                        'id' => $couponId,
-                        'is_valid' => true,
-                        'for_service_id' => $service->id,
-                        'get_all' => true,
-                    ]
-                )->first();
-                // Kiểm tra xem mã giảm giá có hợp lệ không
-                if (!$coupon) {
-                    throw new ServiceException(
-                        message: __("error.coupon_invalid")
+
+                if ($couponValidation->isError()) {
+                    return ServiceReturn::error(
+                        message: $couponValidation->getMessage()
                     );
                 }
-                // Tính toán số tiền được giảm
-                $discount = $this->calculateDiscount(
-                    basePrice: $serviceOption->price,
-                    coupon: $coupon
-                );
-                $finalPrice = max(0, $serviceOption->price - $discount);
-                // TODO: Tăng biến đếm used_count của coupon lên 1
-                $coupon->increment('used_count');
-                $coupon->save();
-            }
-            else{
-                $finalPrice = $serviceOption->price;
+
+                $validationData = $couponValidation->getData();
+                $discountAmount = $validationData['discount_amount'];
+                $finalPrice = $priceBeforeDiscount - $discountAmount;
             }
 
-            // Đặt lịch hẹn dịch vụ
-            $booking = $this->bookingRepository->create([
-                'service_id' => $service->id,
-                'coupon_id' => $couponId ?? null,
-                'booking_time' => $bookingTime->format('Y-m-d H:i:s'),
-                'user_id' => $bookBy->id,
-                'address' => $address,
-                'latitude' => $lat,
-                'longitude' => $lng,
-                'note' => $note,
+
+            // Kiểm tra wallet người dùng và wallet kỹ thuật viên trước
+            $userWallet = $this->walletRepository->query()->where('user_id', $user->id)->first();
+            $technicianWallet = $this->walletRepository->query()->where('user_id', $service->user_id)->first();
+
+            if (!$userWallet || $userWallet->is_active == false) {
+                return ServiceReturn::error(
+                    message: __("booking.wallet.not_active")
+                );
+            }
+            if (!$technicianWallet || $technicianWallet->is_active == false) {
+                return ServiceReturn::error(
+                    message: __("booking.wallet.tech_not_active")
+                );
+            }
+
+            $balanceCustomer = $userWallet->balance;
+            $balanceTechnician = $technicianWallet->balance;
+
+            // kiểm tra số dư ví của khách hàng
+            if ($balanceCustomer < $finalPrice) {
+                return ServiceReturn::success(
+                    data: [
+                        'not_enough_money' => true,
+                        'final_price' => $finalPrice,
+                        'balance_customer' => $balanceCustomer
+                    ],
+                    message: __("booking.wallet.not_enough")
+                );
+            }
+
+            // lấy mức chiết khấu của nhà cung cấp
+            /**
+             * @var ServiceReturn $rateDiscount
+             */
+            $rateDiscount = $this->configService->getConfig(ConfigName::DISCOUNT_RATE);
+            if ($rateDiscount->isError()) {
+                return ServiceReturn::error(
+                    message: __("booking.discount_rate.not_found")
+                );
+            } else {
+                /**
+                 * @var Config $configModel
+                 */
+                $configModel = $rateDiscount->getData();
+                // config_value phải là số
+                $rate = floatval($configModel['config_value']);
+
+                // Chiết khấu nhà cung cấp chịu dựa trên GIÁ TRƯỚC KHI GIẢM (priceBeforeDiscount)
+                $discountTechnician = ($priceBeforeDiscount * $rate) / 100;
+
+                if ($balanceTechnician < $discountTechnician) {
+                    // Nếu Kỹ thuật viên không đủ tiền chiết khấu (để hệ thống lấy lại)
+                    return ServiceReturn::error(
+                        message: __("booking.wallet.tech_not_enough")
+                    );
+
+                    /**
+                     * Cần bổ sung logic gửi thông báo nạp ví cho kỹ thuật viên
+                     */
+                }
+            }
+            // ...
+            // Lấy thời gian nghỉ giữa 2 lần phục vụ của kỹ thuật viên
+            // Giả định config_value là số phút
+            $breakTimeGap = 0;
+            /**
+             * @var ServiceReturn $breakTimeGapReturn
+             */
+            $breakTimeGapReturn = $this->configService->getConfig(ConfigName::BREAK_TIME_GAP);
+            if ($breakTimeGapReturn->isError()) {
+                return ServiceReturn::error(
+                    message: __("booking.break_time_gap.not_found")
+                );
+            }
+
+            // Lấy giá trị break time (phút)
+            $breakTimeGapMinutes = (int) $breakTimeGapReturn->getData();
+
+            // Kiểm tra logic thời gian đặt có hợp lệ không
+            $durationMinutes = $serviceOption->duration; // duration tính bằng phút
+            $currentBookingStartTime = Carbon::parse($bookTime); // Thời gian đặt lịch (Start A)
+
+            // Tính thời gian kết thúc TOÀN BỘ (Dịch vụ + Thời gian nghỉ) cho booking mới (End A)
+            $currentBookingEndTime = $currentBookingStartTime
+                ->copy()
+                ->addMinutes($durationMinutes)
+                ->addMinutes($breakTimeGapMinutes);
+
+            // --- Kiểm tra trùng lặp theo Kỹ thuật viên (Technician) ---
+            $technicianId = $service->user_id;
+
+            $hasOverlappingBooking = $this->bookingRepository->query()
+                // booking_time của booking cũ (Start B) + duration (phút) + breakTimeGap (phút) > currentBookingStartTime (Start A)
+                ->whereHas('service', function ($q) use ($technicianId) {
+                    $q->where('user_id', $technicianId);
+                })
+                // Start Mới (<) End Cũ
+                ->where('end_time', '>', $currentBookingStartTime)
+
+                // End Mới (>) Start Cũ
+                ->where('start_time', '<', $currentBookingEndTime)
+                ->exists();
+
+            if ($hasOverlappingBooking) {
+                return ServiceReturn::error(
+                    message: __("booking.time_slot_not_available")
+                );
+            }
+            // khởi tạo booking mới
+            $booking =  $this->bookingRepository->create([
+                'user_id' => $user->id,
+                'service_id' => $serviceId,
+                'coupon_id' => $couponId,
+                'duration' => $durationMinutes,
+                'booking_time' => $currentBookingStartTime,
+                'start_time' => $currentBookingStartTime,
+                'end_time' => $currentBookingEndTime,
+                'status' => BookingStatus::CONFIRMED->value,
                 'price' => $finalPrice,
-                'duration' => $duration->value,
-                'price_before_discount' => $serviceOption->price,
-                'status' => BookingStatus::PENDING->value,
+                'price_before_discount' => $priceBeforeDiscount,
+                'payment_type' => PaymentType::BY_POINTS->value,
+                'note' => $note ?? '',
+                'address' => $address ?? '',
+                'latitude' => $latitude ?? 0,
+                'longitude' => $longitude ?? 0,
+                'service_option_id' => $optionId,
             ]);
+
+            // Bắn notif cho người dùng khi đặt lịch thành công
+            SendNotificationJob::dispatch(
+                userId: $user->id,
+                type: NotificationType::BOOKING_CONFIRMED,
+                data: [
+                    'booking_id' => $booking->id,
+                    'service_id' => $service->id,
+                    'booking_time' => $currentBookingStartTime->format('Y-m-d H:i:s'),
+                    'price' => $finalPrice,
+                ]
+            );
+
             DB::commit();
+
+            // cần bổ sung action thông báo từ số dư của khách hàng
+            // xử lý giao dịch, ghi lại lịch sử dùng coupon, tính phí affiliate, chiết khấu cho nhà cung cấp
+            WalletTransactionBookingJob::dispatch($booking->id, $couponId, $user->id, $serviceId);
+
+            // $this->walletService->paymentInitBooking($booking->id);
+            // $this->couponService->useCouponAndSyncCache($couponId, $user->id, $serviceId, $booking->id);
+
             return ServiceReturn::success(
-                data: $booking
+                data: [
+                    'final_price' => $finalPrice,
+                    'discount_amount' => $discountAmount,
+                    'booking_id' => $booking->id
+                ]
             );
         } catch (ServiceException $exception) {
             DB::rollBack();
@@ -185,29 +322,5 @@ class BookingService extends BaseService
                 message: __("common_error.server_error")
             );
         }
-    }
-
-    /**
-     * ------ Protect method ------
-     */
-
-    protected function calculateDiscount(
-        float $basePrice,
-        Coupon $coupon
-    ): float
-    {
-        // Nếu là phần trăm giảm giá
-        if ($coupon->is_percentage) {
-            $discount = $basePrice * ($coupon->discount_value / 100);
-            // Kiểm tra giảm tối đa
-            if ($coupon->max_discount && $discount > $coupon->max_discount) {
-                $discount = $coupon->max_discount;
-            }
-        } else {
-            // Giảm tiền mặt cố định
-            // Không được giảm quá số tiền đơn hàng (tránh âm tiền)
-            $discount = min($coupon->discount_value, $basePrice);
-        }
-        return $discount;
     }
 }

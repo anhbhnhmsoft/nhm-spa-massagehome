@@ -20,6 +20,17 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        Schema::create('geo_caching_places', function (Blueprint $table) {
+            $table->id();
+            $table->string('place_id')->unique();
+            $table->string('keyword')->nullable()->index();
+            $table->string('formatted_address');
+            $table->decimal('latitude', 12, 8)->nullable();
+            $table->decimal('longitude', 12, 8)->nullable();
+            $table->json('raw_data')->nullable();
+            $table->timestamps();
+        });
+
         Schema::create('users', function (Blueprint $table) {
             $table->comment('Bảng users lưu trữ thông tin người dùng');
             // Dùng BIGINT ID (Snowflake), không auto-increment
@@ -32,18 +43,16 @@ return new class extends Migration
             $table->string('language', 5)->nullable()->default('vn')->comment('Ngôn ngữ (trong enum Language)');
             // false: hoạt động, true: bị vô hiệu hóa
             $table->boolean('is_active')->default(true)->comment('Trạng thái hoạt động');
-            // Mã giới thiệu CỦA TÔI
-            $table->string('referral_code', 20)->unique()->nullable()->comment('Mã giới thiệu');
             // ID của người giới thiệu TÔI
             $table->bigInteger('referred_by_user_id')->nullable()->comment('ID người giới thiệu');
             $table->timestamp('last_login_at')->nullable()->comment('Thời gian đăng nhập cuối cùng');
+            $table->string('affiliate_link',255)->nullable()->comment(' Affiliate link');
 
             $table->softDeletes();
             $table->timestamps();
 
             // Indexes
             $table->index('role');
-            $table->index('referral_code');
         });
 
         Schema::create('user_review_application', function (Blueprint $table) {
@@ -97,6 +106,18 @@ return new class extends Migration
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+        });
+
+        Schema::create('user_address', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->string('address', 255);
+            $table->decimal('latitude', 10, 8)->default(0);
+            $table->decimal('longitude', 11, 8)->default(0);
+            $table->text('desc')->nullable();
+            $table->boolean('is_primary')->default(false);
+            $table->timestamps();
+            $table->softDeletes();
         });
 
         Schema::create('categories', function (Blueprint $table) {
@@ -173,9 +194,41 @@ return new class extends Migration
                 ->default(0)->comment('Số lần đã sử dụng');
             $table->boolean('is_active')
                 ->default(true)->comment('Trạng thái kích hoạt');
+            $table->json('banners')->nullable()->comment('Danh sách banner đa ngôn ngữ');
+            $table->boolean('display_ads')->default(true)->comment('Hiển thị quảng cáo ở homepage');
             $table->softDeletes();
             $table->timestamps();
             $table->unique(['code', 'created_by']);
+        });
+
+        Schema::create('coupon_used', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('coupon_id')->comment('ID mã giảm giá');
+            $table->unsignedBigInteger('user_id')->comment('ID người dùng sử dụng');
+            $table->unsignedBigInteger('service_id')->comment('ID dịch vụ');
+            $table->unsignedBigInteger('booking_id')->unique()->comment('ID đơn đặt lịch/giao dịch');
+
+            $table->foreign('coupon_id')->references('id')->on('coupons')->onDelete('cascade');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('service_id')->references('id')->on('services')->onDelete('cascade');
+            $table->foreign('booking_id')->references('id')->on('service_bookings')->onDelete('cascade');
+
+            $table->timestamps();
+            $table->softDeletes();
+
+            $table->unique(['booking_id', 'coupon_id']);
+        });
+
+        Schema::create('coupon_users', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('coupon_id')->comment('ID mã giảm giá');
+            $table->unsignedBigInteger('user_id')->comment('ID người dùng');
+            $table->foreign('coupon_id')->references('id')->on('coupons')->onDelete('cascade');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->smallInteger('quantity')->default(0)->comment('Số lượng');
+            $table->timestamps();
+            $table->softDeletes();
+            $table->unique(['user_id', 'coupon_id']);
         });
 
         Schema::create('service_bookings', function (Blueprint $table) {
@@ -183,6 +236,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->unsignedBigInteger('service_id');
+            $table->unsignedBigInteger('service_option_id')->nullable()->comment('Tùy chọn dịch vụ áp dụng');
             $table->unsignedBigInteger('coupon_id')->nullable()->comment('Mã giảm giá áp dụng');
             $table->smallInteger('duration')->comment('Thời gian thực hiện dịch vụ (dạng enum ServiceDuration - minutes)');
             $table->timestamp('booking_time')->comment('Thời gian đặt lịch');
@@ -204,6 +258,7 @@ return new class extends Migration
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreign('service_id')->references('id')->on('services')->onDelete('cascade');
+            $table->foreign('service_option_id')->references('id')->on('service_options')->onDelete('set null');
             $table->foreign('coupon_id')->references('id')->on('coupons')->onDelete('set null');
         });
 
@@ -287,6 +342,17 @@ return new class extends Migration
             $table->foreign('transaction_id')->references('id')->on('wallet_transactions');
         });
 
+        Schema::create('affiliate_links', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('user_id')->index()->comment('ID người giới thiệu');
+            $table->string('client_ip')->comment('Địa chỉ IP của người nhấp chuột');
+            $table->text('user_agent')->comment('Thông tin thiết bị/trình duyệt');
+            $table->boolean('is_matched')->default(false)->comment('Đã so khớp thành công chưa');
+            $table->timestamp('expired_at')->comment('Thời gian hết hạn đối sánh');
+            $table->softDeletes();
+            $table->timestamps();
+        });
+
         Schema::create('reviews', function (Blueprint $table) {
             $table->comment('Bảng reviews lưu trữ thông tin đánh giá dịch vụ.');
             $table->id();
@@ -322,6 +388,15 @@ return new class extends Migration
             $table->softDeletes();
             $table->timestamps();
         });
+
+        Schema::create('banners', function (Blueprint $table) {
+            $table->id();
+            $table->json('image_url')->nullable();
+            $table->unsignedSmallInteger('order')->default(0);
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+        });
+
         /**
          * Các bảng của Laravel
          */
@@ -394,6 +469,7 @@ return new class extends Migration
         Schema::disableForeignKeyConstraints();
 
         $tables = [
+            'banners',
             'personal_access_tokens',
             'failed_jobs',
             'job_batches',
@@ -416,11 +492,14 @@ return new class extends Migration
             'coupons',
             'services',
             'categories',
+            'user_address',
             'user_files',
             'user_profiles',
             'user_review_application',
             'users',
+            'coupon_used',
             'provinces',
+            'geo_caching_places',
         ];
 
         foreach ($tables as $table) {

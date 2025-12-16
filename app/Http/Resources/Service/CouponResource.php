@@ -22,6 +22,8 @@ class CouponResource extends JsonResource
             'end_at' => $this->end_at,
             'usage_limit' => $this->usage_limit,
             'used_count' => $this->used_count,
+            'display_ads' => $this->display_ads,
+            'banners' => $this->banners ? route('file.commercial', $this->banners) : null,
         ];
     }
 }

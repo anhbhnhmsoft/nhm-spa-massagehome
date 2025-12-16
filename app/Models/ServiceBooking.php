@@ -12,6 +12,7 @@ class ServiceBooking extends Model
 
     protected $fillable = [
         'user_id',
+        'ktv_user_id',
         'service_id',
         'coupon_id',
         'duration',
@@ -25,12 +26,14 @@ class ServiceBooking extends Model
         'note',
         'address',
         'latitude',
-        'longitude'
+        'longitude',
+        'service_option_id'
     ];
 
     protected $casts = [
         'id' => 'string',
         'user_id' => 'string',
+        'ktv_user_id' => 'string',
         'service_id' => 'string',
         'coupon_id' => 'string',
         'duration' => 'integer',
@@ -40,14 +43,21 @@ class ServiceBooking extends Model
         'price' => 'decimal:2',
         'price_before_discount' => 'decimal:2',
         'payment_type' => 'integer',
-        'latitude' => 'decimal:10,8',
-        'longitude' => 'decimal:11,8',
+        'latitude' => 'decimal:8',
+        'longitude' => 'decimal:8',
+        'service_option_id' => 'string',
     ];
 
     // Lấy thông tin khách hàng đặt
     public function user() // Khách hàng đặt
     {
         return $this->belongsTo(User::class);
+    }
+
+    // Lấy thông tin KTV thực hiện dịch vụ
+    public function ktvUser()
+    {
+        return $this->belongsTo(User::class, 'ktv_user_id');
     }
 
     // Lấy thông tin dịch vụ được đặt
@@ -60,5 +70,10 @@ class ServiceBooking extends Model
     public function coupon()
     {
         return $this->belongsTo(Coupon::class);
+    }
+
+    public function option() // Option dịch vụ
+    {
+        return $this->belongsTo(ServiceOption::class);
     }
 }

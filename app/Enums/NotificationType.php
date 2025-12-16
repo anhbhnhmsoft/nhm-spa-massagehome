@@ -1,0 +1,18 @@
+<?php
+
+namespace App\Enums;
+
+/**
+ * Enum cho các loại thông báo.
+ */
+enum NotificationType: int
+{
+    case PAYMENT_COMPLETE = 1;
+    case BOOKING_CONFIRMED = 2;
+    case BOOKING_CANCELLED = 3;
+    case BOOKING_REMINDER = 4;
+    case WALLET_DEPOSIT = 5;
+    case WALLET_WITHDRAW = 6;
+}
+
+

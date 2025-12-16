@@ -1,13 +1,17 @@
 <?php
 
 use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\API\CommercialController;
 use App\Http\Controllers\API\FileController;
 use App\Http\Controllers\API\BookingController;
 use App\Http\Controllers\API\LocationController;
+use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\API\PaymentController;
 use App\Http\Controllers\API\ServiceController;
 use App\Http\Controllers\API\UserController;
+use App\Http\Controllers\API\AffiliateController;
 use Illuminate\Support\Facades\Route;
+
 
 
 Route::middleware('set-api-locale')->group(function () {
@@ -41,12 +45,40 @@ Route::middleware('set-api-locale')->group(function () {
             Route::post('edit-avatar', [AuthController::class, 'editAvatar']);
             // delete avatar
             Route::delete('delete-avatar', [AuthController::class, 'deleteAvatar']);
+            // Cập nhật thông tin hồ sơ người dùng.
+            Route::post('edit-profile', [AuthController::class, 'editProfile']);
         });
     });
 
-    Route::prefix('/location')->group(function () {
-        // search map
-        Route::get('search', [LocationController::class, 'search']);
+    Route::prefix('location')->middleware(['auth:sanctum'])->group(function () {
+        /**
+         * autocomplete search location
+         */
+        Route::get('search', [LocationController::class, 'search'])->middleware(['throttle:5,0.3']);
+        /**
+         * detail location
+         */
+        Route::get('detail', [LocationController::class, 'detail'])->middleware(['throttle:5,0.2']);
+        /**
+         * list provinces
+         */
+        Route::get('provinces', [LocationController::class, 'listProvinces']);
+        /**
+         * list address
+         */
+        Route::get('address', [UserController::class, 'listAddress']);
+        /**
+         * save address
+         */
+        Route::post('save', [UserController::class, 'saveAddress']);
+        /**
+         * edit address
+         */
+        Route::put('edit/{id}', [UserController::class, 'editAddress'])->where('id', '[0-9]+');
+        /**
+         * delete address
+         */
+        Route::delete('delete/{id}', [UserController::class, 'deleteAddress'])->where('id', '[0-9]+');
     });
 
     Route::prefix('user')->group(function () {
@@ -58,6 +90,16 @@ Route::middleware('set-api-locale')->group(function () {
 
         // Lấy thông tin chi tiết KTV
         Route::get('ktv/{id}', [UserController::class, 'detailKtv'])->where('id', '[0-9]+');
+
+        // Đăng ký cộng tác viên/đối tác
+        Route::post('register-agency', [UserController::class, 'registerAgency'])->middleware(['throttle:5,1']);
+
+        /**
+         * router cần auth
+         */
+        Route::middleware(['auth:sanctum'])->group(function () {
+            // Lấy danh sách khách hàng đã đặt lịch trong ngày hôm nay
+        });
     });
 
     Route::prefix('service')->group(function () {
@@ -80,7 +122,11 @@ Route::middleware('set-api-locale')->group(function () {
          * router cần auth
          */
         Route::middleware(['auth:sanctum'])->group(function () {
+            // Đặt lịch dịch vụ
             Route::post('booking', [ServiceController::class, 'booking']);
+            // Lấy danh sách lịch đã đặt hôm nay
+            Route::get('today-booked/{id}', [ServiceController::class, 'getTodayBookedCustomers'])->where('id', '[0-9]+');
+
         });
     });
 
@@ -107,7 +153,34 @@ Route::middleware('set-api-locale')->group(function () {
         });
     });
 
-    Route::prefix('/file')->group(function () {
-        Route::get('user/{path}', [FileController::class, 'getUserFile'])->where('path', '.*');
+    Route::prefix('file')->group(function () {
+        Route::get('user/{path}', [FileController::class, 'getUserFile'])->name('file_url_render')->where('path', '.*');
+        Route::post('upload', [FileController::class, 'upload']);
+        Route::get('commercial/{path}', [FileController::class, 'getCommercialFile'])->where('path', '.*')->name('file.commercial');
+    });
+
+    Route::prefix('notification')->middleware(['auth:sanctum'])->group(function () {
+        // Lấy danh sách notifications
+        Route::get('list', [NotificationController::class, 'list']);
+        // Lấy chi tiết notification
+        Route::get('detail/{id}', [NotificationController::class, 'detail'])->where('id', '[0-9]+');
+        // Đánh dấu đã đọc
+        Route::put('read/{id}', [NotificationController::class, 'markAsRead'])->where('id', '[0-9]+');
+        // Lấy số lượng chưa đọc
+        Route::get('unread-count', [NotificationController::class, 'unreadCount']);
+    });
+
+    Route::prefix('affiliate')->group(function () {
+        Route::get('match', [AffiliateController::class, 'matchAffiliate']);
+    });
+    Route::prefix('commercial')->group(function () {
+        // Lấy danh sách banner cho homepage
+        Route::get('banners', [CommercialController::class, 'getBanner']);
+        // Lấy danh sách coupon ads cho homepage
+        Route::get('coupons', [CommercialController::class, 'getCouponAds']);
+        // Lấy danh sách coupon ads cho homepage
+        Route::middleware(['auth:sanctum'])->group(function () {
+            Route::post('collect-coupons', [CommercialController::class, 'collectCouponAds']);
+        });
     });
 });

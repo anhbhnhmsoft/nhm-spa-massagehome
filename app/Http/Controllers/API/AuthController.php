@@ -14,14 +14,13 @@ use App\Services\AuthService;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\JsonResponse;
 use App\Core\Controller\BaseController;
+use Illuminate\Support\Facades\Validator;
 
 class AuthController extends BaseController
 {
     public function __construct(
         protected AuthService $authService,
-    )
-    {
-    }
+    ) {}
 
     /**
      * Xác thực đăng nhập bằng số điện thoại.
@@ -130,14 +129,12 @@ class AuthController extends BaseController
                 }
             }],
             'password' => [new PasswordRule()],
-            'referral_code' => ['nullable', 'string'],
             'name' => ['required', 'string', 'max:255'],
             'gender' => ['required', Rule::in(Gender::cases())],
             'language' => ['required', Rule::in(Language::cases())],
         ], [
             'token.required' => __('auth.error.invalid_token_register'),
             'token.string' => __('auth.error.invalid_token_register'),
-            'referral_code.string' => __('validation.referrer_code'),
             'name.required' => __('validation.name.required'),
             'name.string' => __('validation.name.string'),
             'name.max' => __('validation.name.max', ['max' => 255]),
@@ -152,7 +149,6 @@ class AuthController extends BaseController
             token: $data['token'],
             password: $data['password'],
             name: $data['name'],
-            referralCode: $data['referral_code'] ?? null,
             gender: Gender::from($data['gender']),
             language: Language::from($data['language']),
         );
@@ -335,6 +331,55 @@ class AuthController extends BaseController
                 message: $result->getMessage(),
             );
         }
+        return $this->sendSuccess(
+            data: [
+                'user' => new UserResource($result->getData()),
+            ],
+        );
+    }
+
+    /**
+     * Cập nhật thông tin người dùng.
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function editProfile(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'name'    => ['nullable', 'string', 'min:4', 'max:255'],
+            'bio'     => ['nullable', 'string'],
+            'gender' => ['nullable', Rule::in(Gender::cases())],
+            'date_of_birth' => ['nullable', 'date', 'before:today'],
+            'old_password' => ['nullable', 'string', 'min:8'],
+            'new_password' => ['nullable', 'string', 'min:8'],
+        ], [
+            'name.string'   => __('auth.validation.name_required'),
+            'name.min'      => __('auth.validation.name_min'),
+            'name.max'      => __('auth.validation.name_max'),
+
+            'gender.required' => __('validation.gender.required'),
+            'gender.in' => __('validation.gender.in'),
+
+            'bio.string' => __('auth.validation.introduce_invalid'),
+
+            'old_password.string' => __('auth.validation.password_required'),
+            'old_password.min'    => __('auth.validation.password_min'),
+            'new_password.string' => __('auth.validation.password_required'),
+            'new_password.min'    => __('auth.validation.password_min'),
+
+            'date_of_birth.date'  => __('auth.validation.date_invalid'),
+            'date_of_birth.before' => __('auth.validation.date_before'),
+        ]);
+
+
+        $result = $this->authService->editInfoUser($data);
+
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage(),
+            );
+        }
+
         return $this->sendSuccess(
             data: [
                 'user' => new UserResource($result->getData()),

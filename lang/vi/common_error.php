@@ -20,4 +20,8 @@ return [
     'inappropriate_language' => 'Nội dung không phù hợp với chính sách của hệ thống.',
     'payment_error' => 'Có lỗi xảy ra trong quá trình thanh toán, vui lòng thử lại sau.',
     'unauthorized' => 'Bạn không có quyền truy cập tài nguyên này.',
+    'goong_error' => 'Có lỗi xảy ra trong quá trình tìm kiếm địa chỉ, vui lòng thử lại sau.',
+    'empty_config' => 'Cấu hình không hợp lệ',
+    'address_exists' => 'Địa chỉ đã tồn tại',
+    
 ];

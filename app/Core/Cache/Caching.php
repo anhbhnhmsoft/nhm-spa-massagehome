@@ -7,6 +7,37 @@ use Psr\SimpleCache\InvalidArgumentException;
 
 class Caching
 {
+
+    /**
+     * Private helper để generate key chuẩn nhất quán.
+     */
+    private static function makeKey(CacheKey $key, ?string $uniqueKey = null): string
+    {
+        return $uniqueKey ? "{$key->value}:{$uniqueKey}" : $key->value;
+    }
+
+    /**
+     * Lấy cache, nếu không có thì thực thi callback và lưu lại.
+     * @param CacheKey $key
+     * @param \Closure $callback Hàm lấy dữ liệu từ DB nếu chưa có cache
+     * @param string|null $uniqueKey
+     * @param int|null $ttlInMinutes Null = Forever, Int = Minutes
+     * @return mixed
+     */
+    public static function remember(CacheKey $key, \Closure $callback, ?string $uniqueKey = null, ?int $ttlInMinutes = 60): mixed
+    {
+        $cacheKey = self::makeKey($key, $uniqueKey);
+
+        if (is_null($ttlInMinutes)) {
+            return Cache::rememberForever($cacheKey, $callback);
+        }
+
+        // Chuyển đổi phút sang giây hoặc dùng now()->addMinutes() tùy ý
+        // Cache::remember nhận tham số thứ 2 là TTL (seconds) hoặc DateTime instance
+        return Cache::remember($cacheKey, now()->addMinutes($ttlInMinutes), $callback);
+    }
+
+
     /**
      * Get cache value by key and unique key
      * @param CacheKey $key
@@ -15,7 +46,7 @@ class Caching
      */
     public static function getCache(CacheKey $key, string $uniqueKey = null): mixed
     {
-        $cacheKey = $key->value . ($uniqueKey ? '_' . $uniqueKey : '');
+        $cacheKey = self::makeKey($key, $uniqueKey);
         return Cache::get($cacheKey);
     }
 
@@ -27,7 +58,7 @@ class Caching
      */
     public static function hasCache(CacheKey $key, string $uniqueKey = null): bool
     {
-        $cacheKey = $key->value . ($uniqueKey ? '_' . $uniqueKey : '');
+        $cacheKey = self::makeKey($key, $uniqueKey);
         return Cache::has($cacheKey);
     }
 
@@ -41,7 +72,7 @@ class Caching
      */
     public static function setCache(CacheKey $key, $value, string $uniqueKey = null, int $expire = 60): bool
     {
-        $cacheKey = $key->value . ($uniqueKey ? '_' . $uniqueKey : '');
+        $cacheKey = self::makeKey($key, $uniqueKey);
         return Cache::put($cacheKey, $value, now()->addMinutes($expire));
     }
 
@@ -53,7 +84,7 @@ class Caching
      */
     public static function deleteCache(CacheKey $key, string $uniqueKey = null): bool
     {
-        $cacheKey = $key->value . ($uniqueKey ? '_' . $uniqueKey : '');
+        $cacheKey = self::makeKey($key, $uniqueKey);
         return Cache::forget($cacheKey);
     }
 
@@ -66,7 +97,7 @@ class Caching
      */
     public static function incrementCache(CacheKey $key, string $uniqueKey = null, int $amount = 1): bool|int
     {
-        $cacheKey = $key->value . ($uniqueKey ? '_' . $uniqueKey : '');
+        $cacheKey = self::makeKey($key, $uniqueKey);
         return Cache::increment($cacheKey, $amount);
     }
 
@@ -79,7 +110,7 @@ class Caching
      */
     public static function decrementCache(CacheKey $key, string $uniqueKey = null, int $amount = 1)
     {
-        $cacheKey = $key->value . ($uniqueKey ? '_' . $uniqueKey : '');
+        $cacheKey = self::makeKey($key, $uniqueKey);
         return Cache::decrement($cacheKey, $amount);
     }
 

@@ -73,7 +73,7 @@ class ConfigService extends BaseService
     public function getAllConfigs(): ServiceReturn
     {
         try {
-            $configs = $this->configRepository->query()->all();
+            $configs = $this->configRepository->query()->get();
             $data = [];
             foreach ($configs as $config) {
                 $data[$config->config_key] = $config->config_value;

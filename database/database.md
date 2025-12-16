@@ -20,6 +20,21 @@
     - division_type (varchar, nullable) -- cấp hành chính
     - timestamps
 
+
+# geo_caching_places
+    # note
+    - Bảng geo_caching_places lưu trữ các địa điểm được tìm kiếm từ API để tối ưu truy vấn.
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - place_id (varchar, unique) -- mã định danh địa điểm từ API
+    - keyword (varchar, nullable, index) -- từ khóa tìm kiếm
+    - formatted_address (varchar) -- địa chỉ định dạng đầy đủ
+    - latitude (decimal(12,8), nullable) -- vĩ độ
+    - longitude (decimal(12,8), nullable) -- kinh độ
+    - raw_data (json, nullable) -- dữ liệu thô trả về từ  API
+    - timestamps
+
 # users
     # note
     - Bảng users lưu trữ thông tin người dùng của hệ thống.
@@ -33,9 +48,9 @@
     - role (smallint) -- vai trò người dùng (trong enum UserRole)
     - language (varchar, nullable) -- ngôn ngữ (trong enum Language)
     - is_active (boolean) -- trạng thái bị khóa
-    - referral_code (varchar, unique, nullable) -- mã giới thiệu
     - referred_by_user_id (bigint, nullable) -- id người giới thiệu
     - last_login_at (timestamp, nullable) -- thời gian đăng nhập cuối cùng
+    - affiliate_link (varchar, nullable) -- liên kết giới thiệu
     - softDeletes
     - timestamps
 
@@ -116,6 +131,23 @@
     - file_size (varchar, nullable) -- kích thước tệp tin (byte)
     - file_type (varchar) -- Loại tệp đính kèm, ví dụ: pdf, docx, jpg, v.v.
     - is_public (boolean) -- tệp tin có thể truy cập từ bên ngoài không
+    - softDeletes
+    - timestamps
+
+# user_address
+    # note
+    - Bảng user_address lưu trữ thông tin địa chỉ của người dùng.
+
+    # relations
+    - Quan hệ 1-n với bảng users.
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - user_id (bigint, foreign key to users.id) -- id người dùng
+    - address (varchar, nullable) -- địa chỉ chi tiết
+    - latitude (decimal(10,8), nullable) -- vĩ độ
+    - longitude (decimal(11,8), nullable) -- kinh độ
+    - desc (text, nullable) -- ghi chú thêm
     - softDeletes
     - timestamps
 
@@ -269,6 +301,8 @@
     # cấu trúc
     - id (bigint, primary key, auto-increment)
     - user_id (bigint, foreign key to users.id) -- id người dùng đặt lịch
+    - ktv_user_id (bigint, foreign key to users.id) -- id người làm dịch vụ (KTV)
+    - service_option_id (bigint, foreign key to service_options.id) -- id tùy chọn dịch vụ
     - service_id (bigint, foreign key to services.id) -- id dịch vụ
     - coupon_id (bigint, foreign key to coupons.id, nullable) -- id mã giảm giá
     - duration (smallint) -- thời gian thực hiện dịch vụ (dạng enum ServiceDuration - minutes)
@@ -308,10 +342,47 @@
     - usage_limit (bigint, nullable) -- số lần sử dụng tối đa
     - used_count (bigint, default 0) -- số lần đã sử dụng
     - is_active (boolean) -- trạng thái kích hoạt
+    - banners (json, nullable) -- danh sách banner đa ngôn ngữ
+    - display_ads (boolean, default true) -- có hiển thị quảng cáo ở homepage không
     - softDeletes
     - timestamps
     - unique (code, created_by) -- mã giảm giá phải là duy nhất cho từng người dùng
+# coupon_used
+    #note
+    - Bảng coupon_used lưu trữ thông tin mã giảm giá đã được sử dụng.
 
+    # relations
+    - Quan hệ 1-n với bảng coupons.
+    - Quan hệ 1-n với bảng users.
+    - Quan hệ 1-n với bảng services.
+    - Quan hệ 1-n với bảng service_bookings.
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - coupon_id (bigint, foreign key to coupons.id) -- id mã giảm giá
+    - user_id (bigint, foreign key to users.id) -- id người dùng
+    - service_id (bigint, foreign key to services.id) -- id dịch vụ
+    - booking_id (bigint, foreign key to service_bookings.id) -- id đơn đặt lịch
+    - softDeletes
+    - timestamps
+    - unique (booking_id, coupon_id) -- mã giảm giá phải là duy nhất cho từng đơn đặt lịch
+
+# coupon_users
+    #note
+    - Bảng coupon_users lưu trữ thông tin người dùng đã sử dụng mã giảm giá.
+
+    # relations
+    - Quan hệ 1-n với bảng coupons.
+    - Quan hệ 1-n với bảng users.
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - coupon_id (bigint, foreign key to coupons.id) -- id mã giảm giá
+    - user_id (bigint, foreign key to users.id) -- id người dùng
+    - quantity (smallint) -- số lượng mã giảm giá
+    - softDeletes
+    - timestamps
+    - unique (user_id, coupon_id) -- mã giảm giá phải là duy nhất cho từng người dùng
 
 # reviews 
     # note
@@ -345,5 +416,35 @@
     - config_type (smallint) -- kiểu cấu hình (trong enum ConfigType)
     - config_value (text) -- giá trị cấu hình
     - description (text, nullable) -- mô tả cấu hình
+    - softDeletes
+    - timestamps
+
+# notifications
+    # note
+    - Bảng notifications lưu trữ thông tin các thông báo gửi đến người dùng.
+
+    # relations
+    - Quan hệ 1-n với bảng users.
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - user_id (bigint, foreign key to users.id) -- ID người dùng nhận thông báo
+    - title (varchar) -- Tiêu đề thông báo
+    - description (text) -- Nội dung thông báo
+    - data (text, nullable) -- Dữ liệu bổ sung (json format)
+    - type (smallint) -- Loại thông báo (trong enum NotificationType)
+    - status (smallint, default 0) -- Trạng thái thông báo (trong enum NotificationStatus)
+    - softDeletes
+    - timestamps
+
+# banners
+    # note
+    - Bảng banners lưu trữ thông tin các banner hiển thị trên home page.
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - image_url (json) -- URL hình ảnh banner (lưu trữ dưới dạng JSON đa ngôn ngữ)
+    - order (smallint, default 0) -- Sắp xếp banner
+    - is_active (boolean, default true) -- Trạng thái kích hoạt
     - softDeletes
     - timestamps

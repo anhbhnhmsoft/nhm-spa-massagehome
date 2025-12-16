@@ -9,4 +9,16 @@ use Filament\Support\Icons\Heroicon;
 class MarketingCluster extends Cluster
 {
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedSquares2x2;
+
+
+    public static function getNavigationLabel(): string
+    {
+        return __('admin.nav.marketing');
+    }
+
+
+    public static function getClusterBreadcrumb(): ?string
+    {
+        return __('admin.nav.marketing');
+    }
 }
