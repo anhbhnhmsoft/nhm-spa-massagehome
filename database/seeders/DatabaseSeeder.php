@@ -10,6 +10,7 @@ use App\Enums\Language;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\ServiceDuration;
 use App\Enums\UserRole;
+use App\Models\Banner;
 use App\Models\Category;
 use App\Models\Config;
 use App\Models\Coupon;
@@ -28,12 +29,13 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->seedProvince();
-        $this->seedCategory();
-        $this->seedAdmin();
-        $this->seedKTV();
-        $this->seedCoupon();
-        $this->seedConfig();
+//        $this->seedProvince();
+//        $this->seedCategory();
+//        $this->seedAdmin();
+//        $this->seedKTV();
+//        $this->seedCoupon();
+//        $this->seedConfig();
+        $this->seedBanner();
     }
 
     protected function seedAdmin(): void
@@ -457,5 +459,45 @@ class DatabaseSeeder extends Seeder
         }
         DB::commit();
         return true;
+    }
+
+    protected function seedBanner()
+    {
+        Banner::query()->create([
+            'image_url' => [
+                Language::VIETNAMESE->value => 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
+                Language::ENGLISH->value => 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
+                Language::CHINESE->value => 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
+            ],
+            'order' => 1,
+            'is_active' => true,
+        ]);
+        Banner::query()->create([
+            'image_url' => [
+                Language::VIETNAMESE->value => 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
+                Language::ENGLISH->value    => 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
+                Language::CHINESE->value    => 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
+            ],
+            'order' => 2,
+            'is_active' => true,
+        ]);
+        Banner::query()->create([
+            'image_url' => [
+                Language::VIETNAMESE->value => 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
+                Language::ENGLISH->value    => 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
+                Language::CHINESE->value    => 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
+            ],
+            'order' => 3,
+            'is_active' => true,
+        ]);
+        Banner::query()->create([
+            'image_url' => [
+                Language::VIETNAMESE->value => 'https://images.unsplash.com/photo-1515377905703-c4788e51af15?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
+                Language::ENGLISH->value    => 'https://images.unsplash.com/photo-1515377905703-c4788e51af15?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
+                Language::CHINESE->value    => 'https://images.unsplash.com/photo-1515377905703-c4788e51af15?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
+            ],
+            'order' => 4,
+            'is_active' => true,
+        ]);
     }
 }

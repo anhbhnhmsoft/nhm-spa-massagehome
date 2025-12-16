@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\API\CommercialController;
 use App\Http\Controllers\API\FileController;
 use App\Http\Controllers\API\BookingController;
 use App\Http\Controllers\API\LocationController;
@@ -98,7 +99,6 @@ Route::middleware('set-api-locale')->group(function () {
          */
         Route::middleware(['auth:sanctum'])->group(function () {
             // Lấy danh sách khách hàng đã đặt lịch trong ngày hôm nay
-            Route::get('today-booked-customers', [UserController::class, 'getTodayBookedCustomers']);
         });
     });
 
@@ -122,7 +122,11 @@ Route::middleware('set-api-locale')->group(function () {
          * router cần auth
          */
         Route::middleware(['auth:sanctum'])->group(function () {
+            // Đặt lịch dịch vụ
             Route::post('booking', [ServiceController::class, 'booking']);
+            // Lấy danh sách lịch đã đặt hôm nay
+            Route::get('today-booked/{id}', [ServiceController::class, 'getTodayBookedCustomers'])->where('id', '[0-9]+');
+
         });
     });
 
@@ -167,5 +171,9 @@ Route::middleware('set-api-locale')->group(function () {
 
     Route::prefix('affiliate')->group(function () {
         Route::get('match', [AffiliateController::class, 'matchAffiliate']);
+    });
+    Route::prefix('commercial')->group(function () {
+        // Lấy danh sách banner cho homepage
+        Route::get('banners', [CommercialController::class, 'getBanner']);
     });
 });

@@ -301,6 +301,7 @@
     # cấu trúc
     - id (bigint, primary key, auto-increment)
     - user_id (bigint, foreign key to users.id) -- id người dùng đặt lịch
+    - ktv_user_id (bigint, foreign key to users.id) -- id người làm dịch vụ (KTV)
     - service_option_id (bigint, foreign key to service_options.id) -- id tùy chọn dịch vụ
     - service_id (bigint, foreign key to services.id) -- id dịch vụ
     - coupon_id (bigint, foreign key to coupons.id, nullable) -- id mã giảm giá
@@ -414,5 +415,17 @@
     - data (text, nullable) -- Dữ liệu bổ sung (json format)
     - type (smallint) -- Loại thông báo (trong enum NotificationType)
     - status (smallint, default 0) -- Trạng thái thông báo (trong enum NotificationStatus)
+    - softDeletes
+    - timestamps
+
+# banners
+    # note
+    - Bảng banners lưu trữ thông tin các banner hiển thị trên home page.
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - image_url (json) -- URL hình ảnh banner (lưu trữ dưới dạng JSON đa ngôn ngữ)
+    - order (smallint, default 0) -- Sắp xếp banner
+    - is_active (boolean, default true) -- Trạng thái kích hoạt
     - softDeletes
     - timestamps

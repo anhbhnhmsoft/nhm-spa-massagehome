@@ -217,7 +217,6 @@ return new class extends Migration
             $table->unique(['booking_id', 'coupon_id']);
         });
 
-
         Schema::create('service_bookings', function (Blueprint $table) {
             $table->comment('Bảng service_bookings lưu trữ thông tin đặt lịch hẹn');
             $table->id();
@@ -375,6 +374,15 @@ return new class extends Migration
             $table->softDeletes();
             $table->timestamps();
         });
+
+        Schema::create('banners', function (Blueprint $table) {
+            $table->id();
+            $table->json('image_url')->nullable();
+            $table->unsignedSmallInteger('order')->default(0);
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+        });
+
         /**
          * Các bảng của Laravel
          */
@@ -447,6 +455,7 @@ return new class extends Migration
         Schema::disableForeignKeyConstraints();
 
         $tables = [
+            'banners',
             'personal_access_tokens',
             'failed_jobs',
             'job_batches',
