@@ -12,6 +12,7 @@ class ServiceBooking extends Model
 
     protected $fillable = [
         'user_id',
+        'ktv_user_id',
         'service_id',
         'coupon_id',
         'duration',
@@ -32,6 +33,7 @@ class ServiceBooking extends Model
     protected $casts = [
         'id' => 'string',
         'user_id' => 'string',
+        'ktv_user_id' => 'string',
         'service_id' => 'string',
         'coupon_id' => 'string',
         'duration' => 'integer',
@@ -50,6 +52,12 @@ class ServiceBooking extends Model
     public function user() // Khách hàng đặt
     {
         return $this->belongsTo(User::class);
+    }
+
+    // Lấy thông tin KTV thực hiện dịch vụ
+    public function ktvUser()
+    {
+        return $this->belongsTo(User::class, 'ktv_user_id');
     }
 
     // Lấy thông tin dịch vụ được đặt

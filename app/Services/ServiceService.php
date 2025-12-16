@@ -175,4 +175,45 @@ class ServiceService extends BaseService
         }
     }
 
+    /**
+     * Lấy danh sách khách hàng đã đặt lịch trong ngày hôm nay
+     * @param string $ktvUserId
+     * @return ServiceReturn
+     */
+    public function getTodayBookedCustomers(
+        string $ktvUserId
+    ): ServiceReturn
+    {
+        try {
+            $now = \Carbon\Carbon::now();
+            $startOfDay = $now->copy()->startOfDay();
+            $endOfDay   = $now->copy()->endOfDay();
+
+            $customers = $this->bookingRepository->query()
+                ->with([
+                    'user.profile',
+                ])
+                ->whereIn('status', [
+                    \App\Enums\BookingStatus::CONFIRMED->value,
+                    \App\Enums\BookingStatus::ONGOING->value,
+                    \App\Enums\BookingStatus::COMPLETED->value,
+                ])
+                ->whereBetween('booking_time', [$startOfDay, $endOfDay])
+                ->orderBy('booking_time', 'asc')
+                ->get();
+
+            return ServiceReturn::success(
+                data: $customers
+            );
+        } catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi UserService@getTodayBookedCustomers",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: __("common_error.server_error")
+            );
+        }
+    }
+
 }

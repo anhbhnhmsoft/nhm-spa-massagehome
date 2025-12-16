@@ -170,25 +170,4 @@ class UserController extends BaseController
             data: ListAddressResource::collection($data)->response()->getData()
         );
     }
-
-    /**
-     * Lấy danh sách khách hàng đã đặt lịch trong ngày hôm nay
-     * với status COMPLETED hoặc ONGOING
-     * @return JsonResponse
-     */
-    public function getTodayBookedCustomers(): JsonResponse
-    {
-        $result = $this->userService->getTodayBookedCustomers();
-
-        if ($result->isError()) {
-            return $this->sendError(
-                message: $result->getMessage()
-            );
-        }
-
-        $data = $result->getData();
-        return $this->sendSuccess(
-            data: CustomerBookedTodayResource::collection($data)
-        );
-    }
 }

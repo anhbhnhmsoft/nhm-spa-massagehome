@@ -8,6 +8,7 @@ use App\Enums\ServiceDuration;
 use App\Http\Resources\Service\CategoryResource;
 use App\Http\Resources\Service\CouponResource;
 use App\Http\Resources\Service\ServiceResource;
+use App\Http\Resources\User\CustomerBookedTodayResource;
 use App\Services\BookingService;
 use App\Services\ServiceService;
 use Illuminate\Http\JsonResponse;
@@ -96,7 +97,7 @@ class ServiceController extends BaseController
         );
     }
 
-    
+
     // cần queue transactions-payment để ghi nhận giao dịch
     /**
      * Đặt lịch hẹn dịch vụ
@@ -166,6 +167,27 @@ class ServiceController extends BaseController
         }
         return $this->sendSuccess(
             data: $resultService->getData()
+        );
+    }
+
+    /**
+     * Lấy danh sách khách hàng đã đặt lịch trong ngày hôm nay
+     * với status COMPLETED hoặc ONGOING
+     * @return JsonResponse
+     */
+    public function getTodayBookedCustomers(string $id): JsonResponse
+    {
+        $result = $this->serviceService->getTodayBookedCustomers($id);
+
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage()
+            );
+        }
+
+        $data = $result->getData();
+        return $this->sendSuccess(
+            data: CustomerBookedTodayResource::collection($data)
         );
     }
 }
