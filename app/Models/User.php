@@ -6,6 +6,7 @@ use App\Core\Cache\CacheKey;
 use App\Core\Cache\Caching;
 use App\Core\GenerateId\HasBigIntId;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -143,7 +144,8 @@ class User extends Authenticatable
         return $this->hasMany(ServiceBooking::class, 'user_id');
     }
 
-    public function reviewWrited() {
+    public function reviewWrited()
+    {
         return $this->hasMany(Review::class, 'review_by');
     }
 
@@ -155,5 +157,17 @@ class User extends Authenticatable
     public function primaryAddress()
     {
         return $this->hasOne(UserAddress::class)->where('is_primary', true);
+    }
+
+    public function collectionCoupons(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Coupon::class,
+            'coupon_users', // Tên bảng trung gian
+            'user_id',      // Khóa ngoại của User trong bảng trung gian
+            'coupon_id'     // Khóa ngoại của Coupon trong bảng trung gian
+        )
+            ->withPivot('quantity') // Lấy thêm cột quantity từ bảng trung gian
+            ->withTimestamps();     // Nếu bảng coupon_users có created_at/updated_at
     }
 }

@@ -194,6 +194,8 @@ return new class extends Migration
                 ->default(0)->comment('Số lần đã sử dụng');
             $table->boolean('is_active')
                 ->default(true)->comment('Trạng thái kích hoạt');
+            $table->json('banners')->nullable()->comment('Danh sách banner đa ngôn ngữ');
+            $table->boolean('display_ads')->default(true)->comment('Hiển thị quảng cáo ở homepage');
             $table->softDeletes();
             $table->timestamps();
             $table->unique(['code', 'created_by']);
@@ -215,6 +217,18 @@ return new class extends Migration
             $table->softDeletes();
 
             $table->unique(['booking_id', 'coupon_id']);
+        });
+
+        Schema::create('coupon_users', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('coupon_id')->comment('ID mã giảm giá');
+            $table->unsignedBigInteger('user_id')->comment('ID người dùng');
+            $table->foreign('coupon_id')->references('id')->on('coupons')->onDelete('cascade');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->smallInteger('quantity')->default(0)->comment('Số lượng');
+            $table->timestamps();
+            $table->softDeletes();
+            $table->unique(['user_id', 'coupon_id']);
         });
 
         Schema::create('service_bookings', function (Blueprint $table) {

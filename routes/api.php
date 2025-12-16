@@ -156,6 +156,7 @@ Route::middleware('set-api-locale')->group(function () {
     Route::prefix('file')->group(function () {
         Route::get('user/{path}', [FileController::class, 'getUserFile'])->where('path', '.*');
         Route::post('upload', [FileController::class, 'upload']);
+        Route::get('commercial/{path}', [FileController::class, 'getCommercialFile'])->where('path', '.*')->name('file.commercial');
     });
 
     Route::prefix('notification')->middleware(['auth:sanctum'])->group(function () {
@@ -175,5 +176,11 @@ Route::middleware('set-api-locale')->group(function () {
     Route::prefix('commercial')->group(function () {
         // Lấy danh sách banner cho homepage
         Route::get('banners', [CommercialController::class, 'getBanner']);
+        // Lấy danh sách coupon ads cho homepage
+        Route::get('coupons', [CommercialController::class, 'getCouponAds']);
+        // Lấy danh sách coupon ads cho homepage
+        Route::middleware(['auth:sanctum'])->group(function () {
+            Route::post('collect-coupons', [CommercialController::class, 'collectCouponAds']);
+        });
     });
 });

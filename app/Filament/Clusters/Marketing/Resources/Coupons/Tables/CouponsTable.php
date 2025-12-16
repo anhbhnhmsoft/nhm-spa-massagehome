@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\Marketing\Resources\Coupons\Tables;
 
+use App\Enums\Language;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -11,6 +12,7 @@ use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
+use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -29,6 +31,9 @@ class CouponsTable
                 TextColumn::make('label')
                     ->label(__('admin.coupon.fields.label'))
                     ->searchable(),
+                ImageColumn::make('banners')
+                    ->label(__('admin.coupon.fields.banners.label'))
+                    ->disk('public'),
                 TextColumn::make('is_percentage')
                     ->label(__('admin.coupon.fields.type'))
                     ->formatStateUsing(fn($state) => $state ? __('admin.coupon.is_percentage.percent') : __('admin.coupon.is_percentage.fixed')),
@@ -41,6 +46,9 @@ class CouponsTable
                     ->toggleable(),
                 TextColumn::make('used_count')
                     ->label(__('admin.coupon.fields.used_count')),
+                ToggleColumn::make('display_ads')
+                    ->label(__('admin.coupon.fields.display_ads'))
+                    ->toggleable(),
                 TextColumn::make('creator.name')
                     ->label(__('admin.common.table.creator')),
             ])
