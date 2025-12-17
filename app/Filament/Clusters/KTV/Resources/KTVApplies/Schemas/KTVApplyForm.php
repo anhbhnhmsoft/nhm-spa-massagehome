@@ -9,8 +9,10 @@ use App\Enums\UserFileType;
 use App\Enums\UserRole;
 use App\Models\Province;
 use App\Models\User;
+use App\Services\LocationService;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -35,7 +37,7 @@ class KTVApplyForm
                                 ->label(__('admin.common.table.name'))
                                 ->required()
                                 ->maxLength(255)
-                                
+
                                 ->validationMessages([
                                     'required' => __('common.error.required'),
                                     'max'      => __('common.error.max_length', ['max' => 255])
@@ -54,8 +56,7 @@ class KTVApplyForm
                                     'max_digits' => __('common.error.max_digits', ['max' => 20]),
                                     'required' => __('common.error.required'),
                                     'unique'   => __('common.error.unique'),
-                                ])
-                                ,
+                                ]),
                             TextInput::make('password')
                                 ->label(__('admin.common.table.password'))
                                 ->password()
@@ -80,7 +81,7 @@ class KTVApplyForm
                                     ->directory(DirectFile::KTVA->value)
                                     ->required()
                                     ->image()
-                                    
+
                                     ->downloadable()
                                     ->maxSize(102400)
                                     ->validationMessages([
@@ -88,16 +89,14 @@ class KTVApplyForm
                                     ]),
                                 Select::make('gender')
                                     ->label(__('admin.common.table.gender'))
-                                    ->options(Gender::toOptions())
-                                    ,
+                                    ->options(Gender::toOptions()),
 
                                 DatePicker::make('date_of_birth')
-                                    ->label(__('admin.common.table.date_of_birth'))
-                                    ,
+                                    ->label(__('admin.common.table.date_of_birth')),
 
                                 Textarea::make('bio')
                                     ->label(__('admin.ktv_apply.fields.bio'))
-                                    
+
                                     ->rows(3),
                             ])
                     ])
@@ -108,23 +107,61 @@ class KTVApplyForm
                         Select::make('status')
                             ->label(__('admin.common.table.status'))
                             ->options(ReviewApplicationStatus::toOptions())
-                            ->default(ReviewApplicationStatus::PENDING)
-                            ,
+                            ->default(ReviewApplicationStatus::PENDING),
                         Select::make('agency_id')
                             ->label(__('admin.ktv_apply.fields.agency'))
                             ->searchable()
                             ->options(fn() => User::where('role', UserRole::AGENCY->value)->where('is_active', true)->pluck('name', 'id'))
-                            
+
                             ->columnSpan(1),
                         Select::make('province_code')
                             ->label(__('admin.ktv_apply.fields.province'))
                             ->searchable()
                             ->options(fn() => Province::all()->pluck('name', 'code'))
-                            
+
                             ->columnSpan(1),
+
+                        Select::make('search_location')
+                            ->label(__('admin.ktv_apply.fields.address_search'))
+                            ->searchable()
+                            ->live(debounce: 500)
+                            ->getSearchResultsUsing(function (string $search) {
+                                if (!$search) return [];
+                                $service = app(LocationService::class);
+                                $res = $service->autoComplete($search);
+                                if (!$res->isSuccess()) return [];
+                                return collect($res->getData())->pluck('formatted_address', 'place_id')->toArray();
+                            })
+                            ->getOptionLabelUsing(function ($value): ?string {
+                                if (!$value) return null;
+
+                                $service = app(LocationService::class);
+                                $res = $service->getDetail($value);
+
+                                return $res->isSuccess()
+                                    ? $res->getData()['formatted_address']
+                                    : null;
+                            })
+                            ->afterStateUpdated(function ($set, ?string $state) {
+                                if (!$state) return;
+                                $service = app(LocationService::class);
+                                $res = $service->getDetail($state);
+                                if ($res->isSuccess()) {
+                                    $data = $res->getData();
+                                    $set('address', $data['formatted_address']);
+                                    $set('latitude', $data['latitude']);
+                                    $set('longitude', $data['longitude']);
+                                }
+                            })
+                            ->dehydrated(false)
+                            ->columnSpanFull(),
+
+                        Hidden::make('latitude'),
+                        Hidden::make('longitude'),
 
                         Textarea::make('address')
                             ->label(__('admin.ktv_apply.fields.address'))
+                            ->columnSpanFull()
                             ->rows(2),
 
                         TextInput::make('experience')
@@ -134,7 +171,7 @@ class KTVApplyForm
 
                         Textarea::make('bio.' . $lang)
                             ->label(__('admin.ktv_apply.fields.experience_desc'))
-                            
+
                             ->rows(3)
                             ->columnSpanFull(),
                         Placeholder::make('reviewApplication.effective_date')
@@ -159,7 +196,6 @@ class KTVApplyForm
                                     ->label(__('admin.ktv_apply.fields.file_type'))
                                     ->options(UserFileType::toOptions())
                                     ->required()
-                                    
                                     ->columnSpan(1),
 
                                 FileUpload::make('file_path')
@@ -167,19 +203,49 @@ class KTVApplyForm
                                     ->directory(DirectFile::KTVA->value)
                                     ->disk('private')
                                     ->required()
-                                    
+                                    ->image()
+                                    ->maxSize(102400)
                                     ->downloadable()
                                     ->columnSpan(2),
                             ])
                             ->columns(3)
-                            
                             ->addable(fn($livewire) => $livewire instanceof CreateRecord)
                             ->deletable(fn($livewire) => $livewire instanceof CreateRecord)
                             ->reorderable(fn($livewire) => $livewire instanceof CreateRecord)
-                            ->minItems(1)
-                            ->defaultItems(1)
+                            ->rules([
+                                fn() => function (string $attribute, $value, \Closure $fail) {
+                                    if (! is_array($value)) {
+                                        return;
+                                    }
+                                    $selectedTypes = collect($value)->pluck('type')->map(fn($t) => (int) $t);
+                                    $counts = $selectedTypes->countBy();
+                                    $frontCount = $counts->get(UserFileType::IDENTITY_CARD_FRONT->value, 0);
+                                    $backCount = $counts->get(UserFileType::IDENTITY_CARD_BACK->value, 0);
+                                    $displayCount = $counts->get(UserFileType::KTV_IMAGE_DISPLAY->value, 0);
+
+                                    $errors = [];
+
+                                    if ($frontCount < 1) {
+                                        $errors[] = __('error.need_identify_image');
+                                    }
+
+                                    if ($backCount < 1) {
+                                        $errors[] = __('error.need_identify_image');
+                                    }
+
+                                    if ($displayCount < 3) {
+                                        $errors[] = __('error.need_identify_image_display');
+                                    }
+
+                                    if (!empty($errors)) {
+                                        $fail(implode(' ', $errors));
+                                    }
+                                },
+                            ])
+                            ->minItems(5)
+                            ->defaultItems(5)
                             ->validationMessages([
-                                'min' => __('common.error.min_items', ['min' => 1]),
+                                'min' => __('common.error.min_items', ['min' => 5]),
                                 'required' => __('common.error.required'),
                             ]),
                     ]),

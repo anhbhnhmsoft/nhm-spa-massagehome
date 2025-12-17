@@ -46,7 +46,6 @@ return new class extends Migration
             // ID của người giới thiệu TÔI
             $table->bigInteger('referred_by_user_id')->nullable()->comment('ID người giới thiệu');
             $table->timestamp('last_login_at')->nullable()->comment('Thời gian đăng nhập cuối cùng');
-            $table->string('affiliate_link',255)->nullable()->comment(' Affiliate link');
 
             $table->softDeletes();
             $table->timestamps();
@@ -225,7 +224,7 @@ return new class extends Migration
             $table->unsignedBigInteger('user_id')->comment('ID người dùng');
             $table->foreign('coupon_id')->references('id')->on('coupons')->onDelete('cascade');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->smallInteger('quantity')->default(0)->comment('Số lượng');
+            $table->smallInteger('is_used')->default(false);
             $table->timestamps();
             $table->softDeletes();
             $table->unique(['user_id', 'coupon_id']);

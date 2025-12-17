@@ -50,7 +50,6 @@
     - is_active (boolean) -- trạng thái bị khóa
     - referred_by_user_id (bigint, nullable) -- id người giới thiệu
     - last_login_at (timestamp, nullable) -- thời gian đăng nhập cuối cùng
-    - affiliate_link (varchar, nullable) -- liên kết giới thiệu
     - softDeletes
     - timestamps
 
@@ -379,7 +378,7 @@
     - id (bigint, primary key, auto-increment)
     - coupon_id (bigint, foreign key to coupons.id) -- id mã giảm giá
     - user_id (bigint, foreign key to users.id) -- id người dùng
-    - quantity (smallint) -- số lượng mã giảm giá
+    - is_used (boolean) -- đã sử dụng hay chưa
     - softDeletes
     - timestamps
     - unique (user_id, coupon_id) -- mã giảm giá phải là duy nhất cho từng người dùng

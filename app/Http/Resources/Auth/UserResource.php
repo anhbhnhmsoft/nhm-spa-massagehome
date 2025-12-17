@@ -24,7 +24,7 @@ class UserResource extends JsonResource
             'role' => $this->role,
             'language' => $this->language,
             'referred_by_user_id' => $this->referred_by_user_id,
-            'affiliate_link' => $this->affiliate_link,
+            'affiliate_link' => route('affiliate.link', $this->id) ?? null,
             'profile' => [
                 'avatar_url' => $profile->avatar_url_full,
                 'date_of_birth' => $profile->date_of_birth,
