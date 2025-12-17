@@ -3,7 +3,9 @@
 namespace App\Jobs;
 
 use App\Core\LogHelper;
+use App\Enums\BookingStatus;
 use App\Enums\QueueKey;
+use App\Services\BookingService;
 use App\Services\CouponService;
 use App\Services\WalletService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -39,7 +41,7 @@ class WalletTransactionBookingJob implements ShouldQueue
     {
         $walletService->paymentInitBooking($this->bookingId);
         if (isset($this->couponId)) {
-            $couponService->useCouponAndSyncCache(
+            $couponService->useCoupon(
                 $this->couponId,
                 $this->userId,
                 $this->serviceId,
@@ -48,7 +50,7 @@ class WalletTransactionBookingJob implements ShouldQueue
         }
     }
 
-    public function failed($exception)
+    public function failed($exception, BookingService $bookingService)
     {
         LogHelper::error('WalletTransactionBookingJob failed', $exception->getMessage(), [
             'booking_id' => $this->bookingId,
@@ -56,5 +58,7 @@ class WalletTransactionBookingJob implements ShouldQueue
             'user_id' => $this->userId,
             'service_id' => $this->serviceId,
         ]);
+
+        $bookingService->cancelBooking($this->bookingId, BookingStatus::PAYMENT_FAILED);
     }
 }

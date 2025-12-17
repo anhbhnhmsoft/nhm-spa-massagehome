@@ -1,6 +1,7 @@
 <?php
 return
     [
+        'point' => 'Điểm',
         "nav" => [
             "ktv" => "Quản lý kỹ thuật viên",
             "category" => "Quản lý danh mục",
@@ -94,6 +95,12 @@ return
                 'is_active' => 'Kích hoạt',
             ],
             'currency' => 'Điểm',
+            'from' => 'Từ',
+            'to' => 'Đến',
+            'error' => [
+                'required' => 'Trường này là bắt buộc',
+                'numeric' => 'Vui lòng chỉ nhập số',
+            ]
 
         ],
         "ktv_apply" => [
@@ -437,6 +444,20 @@ return
                     'vi' => 'Banner tiếng Việt',
                     'en' => 'Banner tiếng Anh',
                     'cn' => 'Banner tiếng Trung',
+                ],
+                'config' => [
+                    'label' => 'Cấu hình mã giảm giá',
+                    'per_day_global' => 'Giới hạn thu thập mã/ngày (Hệ thống)',
+                    'min_order_value' => 'Giá trị đơn hàng tối thiểu',
+                    'used_day' => 'Số mã đã dùng hôm nay',
+                    'ao' => 'Số mã được thu thập hôm nay',
+                    'daily_tracking_helper' => 'Hệ thống tự động reset số lượng này khi sang ngày mới.',
+                    'allowed_time_slots' => 'Khung giờ vàng áp dụng',
+                    'time_slots_helper' => 'Để trống nếu muốn áp dụng toàn thời gian trong ngày.',
+                    'add_time_slot' => 'Thêm khung giờ',
+                    'daily_tracking' => [
+                        'count' => 'Số lượng đã dùng trong ngày',
+                    ],
                 ],
             ],
             'is_percentage' => [

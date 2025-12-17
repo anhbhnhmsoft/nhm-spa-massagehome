@@ -55,12 +55,11 @@ class CommercialController extends BaseController
                 'coupons' => 'required|array',
                 'coupons.*' => 'required|exists:coupons,id',
             ],
-
             [
-                'coupons.required' => 'Danh sách coupon không được để trống',
-                'coupons.array' => 'Danh sách coupon phải là mảng',
-                'coupons.*.required' => 'Mỗi coupon trong danh sách phải có id',
-                'coupons.*.exists' => 'Mỗi coupon trong danh sách phải tồn tại',
+                'coupons.required' => __('validation.coupon.required'),
+                'coupons.array' => __('validation.coupon.array'),
+                'coupons.*.required' => __('validation.coupon.required'),
+                'coupons.*.exists' => __('validation.coupon.exists'),
             ]
         );
         $result = $this->commercialService->collectCouponAds($coupons['coupons']);

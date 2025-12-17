@@ -60,7 +60,7 @@ class ListRequest extends FormRequest
         }
 
         return $rules;
-    }
+}
 
     /**
      * Lấy các tùy chọn filter đã được validate và gán giá trị mặc định.

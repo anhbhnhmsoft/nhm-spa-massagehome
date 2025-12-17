@@ -69,6 +69,7 @@ class CommercialService extends BaseService
             );
         }
     }
+
     /**
      * Thu thập mã giảm giá
      * @param array $couponIds
@@ -81,7 +82,7 @@ class CommercialService extends BaseService
              * @var User $user
              */
             $user = Auth::user();
-
+            $today = now()->format('Y-m-d');
             // 1. Lấy danh sách Coupon
             $coupons = $this->couponRepository
                 ->filterQuery($this->couponRepository->queryCoupon(), ['is_valid' => true])
@@ -93,16 +94,26 @@ class CommercialService extends BaseService
             foreach ($coupons as $coupon) {
                 // 2. Kiểm tra xem User đã có Coupon này chưa
                 $alreadyHas = $user->collectionCoupons()->where('coupon_id', $coupon->id)->exists();
+                if ($alreadyHas) continue;
 
-                // if (!$alreadyHas) {
-                //     // 3. Tăng used_count ở bảng chính
-                //     $isIncremented = $this->couponRepository->incrementUsedCountAtomic($coupon->id);
+                // 2. Kiểm tra giới hạn thu thập trong ngày (Daily Collect Limit)
+                $config = $coupon->config ?? [];
+                $limit = $config['per_day_global'] ?? 0;
+                $currentCollected = $config['daily_collected'][$today] ?? 0;
 
-                //     if ($isIncremented) {
-                //         $collectedIds[] = $coupon->id;
-                //     }
-                //     // Nếu không increment được hết coupon, chúng ta bỏ qua coupon này
-                // }
+                if ($limit > 0 && $currentCollected >= $limit) {
+                    $errors[] = __('validation.coupon.collect_limit_error', ['code' => $coupon->code]);
+                    continue;
+                }
+
+                // 3. Thực hiện tăng số lượng Atomic
+                $isIncremented = $this->couponRepository->incrementDailyCollectCountAtomic($coupon->id);
+
+                if ($isIncremented) {
+                    $collectedIds[] = $coupon->id;
+                } else {
+                    $errors[] = __('validation.coupon.collect_error', ['code' => $coupon->code]);
+                }
             }
 
             // 4. Ghi vào "ví" người dùng
@@ -112,7 +123,10 @@ class CommercialService extends BaseService
             }
 
             return ServiceReturn::success(
-                data: $user->collectionCoupons()->get()
+                data: [
+                    'collectedCoupons' => $user->collectionCoupons()->get(),
+                    'errors' => $errors
+                ]
             );
         } catch (\Exception $exception) {
             LogHelper::error(

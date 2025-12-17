@@ -23,7 +23,6 @@ class AffiliateConfigForm extends Component implements HasForms
     {
         $settingService = app(ConfigService::class);
         $result = $settingService->getAllAffiliateConfigs();
-
         if ($result->isSuccess()) {
             $this->form->fill([
                 'configs' => $result->getData(),
@@ -49,23 +48,24 @@ class AffiliateConfigForm extends Component implements HasForms
                         TextInput::make('min_commission')
                             ->label(__('admin.setting.fields.min_commission'))
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix('point')
                             ->required(),
                         TextInput::make('max_commission')
                             ->label(__('admin.setting.fields.max_commission'))
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix('point')
                             ->required(),
                         Select::make('target_role')
                             ->label(__('admin.setting.fields.target_role'))
                             ->options(\App\Enums\UserRole::class)
-                            ->required(),
-                        Toggle::make('is_active')->label(__('admin.setting.fields.is_active')),
+                            ->required()
+                            ->disabled(),
+                        Toggle::make('is_active')->label(__('admin.setting.fields.is_active'))->disabled(),
                     ])
                     ->addable(false)
-                    ->deletable()
+                    ->deletable(false)
                     ->itemLabel(fn(array $state): ?string => $state['name'] ?? null),
-            ]);
+            ])->statePath('data');
     }
 
     public function create(): void

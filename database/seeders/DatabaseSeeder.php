@@ -10,6 +10,7 @@ use App\Enums\Language;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\ServiceDuration;
 use App\Enums\UserRole;
+use App\Models\AffiliateConfig;
 use App\Models\Banner;
 use App\Models\Category;
 use App\Models\Config;
@@ -17,7 +18,6 @@ use App\Models\Coupon;
 use App\Models\Province;
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
@@ -29,13 +29,14 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-//        $this->seedProvince();
-//        $this->seedCategory();
-//        $this->seedAdmin();
-//        $this->seedKTV();
-//        $this->seedCoupon();
+        //        $this->seedProvince();
+        //        $this->seedCategory();
+        //        $this->seedAdmin();
+        //        $this->seedKTV();
+        //        $this->seedCoupon();
         $this->seedConfig();
-//        $this->seedBanner();
+//        $this->seedConfigAffiliate();
+        // $this->seedBanner();
     }
 
     protected function seedAdmin(): void
@@ -350,9 +351,52 @@ class DatabaseSeeder extends Seeder
             Config::query()->updateOrCreate(
                 ['config_key' => ConfigName::DISCOUNT_RATE->value],
                 [
-                    'config_value' => '20',
+                    'config_value' => '80',
                     'config_type' => ConfigType::NUMBER->value,
-                    'description' => 'Tỷ lệ chiết khấu dịch vụ',
+                    'description' => 'Tỷ lệ chiết khấu ứng dụng nhận được',
+                ]
+            );
+        } catch (\Exception $e) {
+            DB::rollBack();
+            dump($e);
+            return false;
+        }
+        DB::commit();
+        return true;
+    }
+
+    public function seedConfigAffiliate(): bool
+    {
+        DB::beginTransaction();
+        try {
+            AffiliateConfig::query()->updateOrCreate(
+                ['target_role' => UserRole::AGENCY->value],
+                [
+                    'name' => 'Cấu hình dành cho đại lý',
+                    'commission_rate' => '10',
+                    'min_commission' => '10000',
+                    'max_commission' => '100000',
+                    'description' => 'Tỷ lệ hoa hồng đại lý',
+                ]
+            );
+            AffiliateConfig::query()->updateOrCreate(
+                ['target_role' => UserRole::KTV->value],
+                [
+                    'name' => 'Cấu hình dành cho kỹ thuật viên',
+                    'commission_rate' => '10',
+                    'min_commission' => '10000',
+                    'max_commission' => '100000',
+                    'description' => 'Tỷ lệ hoa hồng kỹ thuật viên',
+                ]
+            );
+            AffiliateConfig::query()->updateOrCreate(
+                ['target_role' => UserRole::CUSTOMER->value],
+                [
+                    'name' => 'Cấu hình dành cho khách hàng',
+                    'commission_rate' => '10',
+                    'min_commission' => '10000',
+                    'max_commission' => '100000',
+                    'description' => 'Tỷ lệ hoa hồng khách hàng',
                 ]
             );
         } catch (\Exception $e) {
