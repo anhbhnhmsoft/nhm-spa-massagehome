@@ -224,7 +224,7 @@ return new class extends Migration
             $table->unsignedBigInteger('user_id')->comment('ID người dùng');
             $table->foreign('coupon_id')->references('id')->on('coupons')->onDelete('cascade');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->smallInteger('quantity')->default(0)->comment('Số lượng');
+            $table->smallInteger('is_used')->default(false);
             $table->timestamps();
             $table->softDeletes();
             $table->unique(['user_id', 'coupon_id']);

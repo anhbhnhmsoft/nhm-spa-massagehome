@@ -11,8 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('collect_drop_affiliate', function (Blueprint $table) {
-            //
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('affiliate_link');
+        });
+        Schema::table('user_coupons', function (Blueprint $table) {
+            $table->boolean('is_used')->default(false);
+            $table->dropColumn('quantity');
         });
     }
 
@@ -21,8 +25,12 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('collect_drop_affiliate', function (Blueprint $table) {
-            //
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('affiliate_link');
+        });
+        Schema::table('user_coupons', function (Blueprint $table) {
+            $table->boolean('is_used')->default(false);
+            $table->dropColumn('quantity');
         });
     }
 };
