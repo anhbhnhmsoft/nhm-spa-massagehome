@@ -5,20 +5,20 @@ namespace App\Http\Controllers\API;
 use App\Core\Controller\BaseController;
 use App\Core\Controller\ListRequest;
 use App\Services\BookingService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class BookingController extends BaseController
 {
     public function __construct(
         protected BookingService $bookingService,
-    )
-    {
-    }
+    ) {}
 
 
     /**
      * Lấy danh sách đặt lịch
      */
-    public function listBooking(ListRequest $request)
+    public function listBooking(ListRequest $request): JsonResponse
     {
         $dto = $request->getFilterOptions();
 
@@ -28,7 +28,7 @@ class BookingController extends BaseController
             data: $data
         );
     }
-    
+
     /**
      * Kiểm tra booking
      * @param string $bookingId
@@ -36,7 +36,24 @@ class BookingController extends BaseController
     public function checkBooking(string $bookingId)
     {
         $result = $this->bookingService->checkBooking($bookingId);
-        if($result->isError()) {
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage()
+            );
+        }
+        return $this->sendSuccess(
+            data: $result
+        );
+    }
+
+    /**
+     * Lấy chi tiết thông tin booking
+     * @param string $bookingId
+     */
+    public function detailBooking(string $bookingId): JsonResponse
+    {
+        $result = $this->bookingService->detailBooking($bookingId);
+        if ($result->isError()) {
             return $this->sendError(
                 message: $result->getMessage()
             );

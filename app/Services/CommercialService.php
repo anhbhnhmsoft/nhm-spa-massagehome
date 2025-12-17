@@ -90,7 +90,7 @@ class CommercialService extends BaseService
                 ->get();
 
             $collectedIds = [];
-
+            $errors = [];
             foreach ($coupons as $coupon) {
                 // 2. Kiểm tra xem User đã có Coupon này chưa
                 $alreadyHas = $user->collectionCoupons()->where('coupon_id', $coupon->id)->exists();
@@ -121,7 +121,6 @@ class CommercialService extends BaseService
                 $syncData = collect($collectedIds)->mapWithKeys(fn($id) => [$id => ['is_used' => false]]);
                 $user->collectionCoupons()->syncWithoutDetaching($syncData->toArray());
             }
-
             return ServiceReturn::success(
                 data: [
                     'collectedCoupons' => $user->collectionCoupons()->get(),

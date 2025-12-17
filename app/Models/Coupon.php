@@ -101,7 +101,7 @@ class Coupon extends Model
             'coupon_id',
             'user_id'
         )
-            ->withPivot('quantity')
+            ->withPivot('is_used')
             ->withTimestamps();
     }
 }
