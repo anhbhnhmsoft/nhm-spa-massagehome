@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\QueueKey;
 use App\Enums\NotificationType;
 use App\Services\NotificationService;
 use Illuminate\Bus\Queueable;
@@ -19,7 +20,7 @@ class SendNotificationJob implements ShouldQueue
         protected NotificationType $type,
         protected array $data = [],
     ) {
-        $this->onQueue('notifications');
+        $this->onQueue(QueueKey::NOTIFICATIONS);
     }
 
     /**

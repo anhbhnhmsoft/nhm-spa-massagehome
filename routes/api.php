@@ -8,6 +8,7 @@ use App\Http\Controllers\API\LocationController;
 use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\API\PaymentController;
 use App\Http\Controllers\API\ServiceController;
+use App\Http\Controllers\API\ChatController;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\AffiliateController;
 use Illuminate\Support\Facades\Route;
@@ -187,5 +188,13 @@ Route::middleware('set-api-locale')->group(function () {
         Route::middleware(['auth:sanctum'])->group(function () {
             Route::post('collect-coupons', [CommercialController::class, 'collectCouponAds']);
         });
+    });
+    Route::prefix('chat')->middleware(['auth:sanctum'])->group(function () {
+        // Tạo/lấy phòng chat giữa customer (user hiện tại) và KTV
+        Route::post('room', [ChatController::class, 'createOrGetRoom']);
+        // Lấy danh sách tin nhắn theo room_id (paginate)
+        Route::get('messages', [ChatController::class, 'listMessages']);
+        // Gửi tin nhắn trong room (lưu DB + publish realtime)
+        Route::post('messages', [ChatController::class, 'sendMessage']);
     });
 });

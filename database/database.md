@@ -446,5 +446,34 @@
     - image_url (json) -- URL hình ảnh banner (lưu trữ dưới dạng JSON đa ngôn ngữ)
     - order (smallint, default 0) -- Sắp xếp banner
     - is_active (boolean, default true) -- Trạng thái kích hoạt
+# chat_rooms
+    # note
+    - Bảng chat_rooms lưu trữ thông tin phòng chat giữa Khách hàng và KTV.
+
+    # relations
+    - Quan hệ n-1 với bảng users (customer_id).
+    - Quan hệ n-1 với bảng users (ktv_id).
+    - Quan hệ 1-n với bảng messages.
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - customer_id (bigint, foreign key to users.id) -- ID khách hàng
+    - ktv_id (bigint, foreign key to users.id) -- ID KTV
+    - softDeletes
+    - timestamps
+
+# messages
+    # note
+    - Bảng messages lưu trữ nội dung tin nhắn trong phòng chat.
+
+    # relations
+    - Quan hệ n-1 với bảng chat_rooms.
+    - Quan hệ n-1 với bảng users (sender_by).
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - room_id (bigint, foreign key to chat_rooms.id) -- ID phòng chat
+    - sender_by (bigint, foreign key to users.id) -- ID người gửi tin nhắn
+    - content (text) -- Nội dung tin nhắn
     - softDeletes
     - timestamps

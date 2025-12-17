@@ -13,6 +13,7 @@ enum NotificationType: int
     case BOOKING_REMINDER = 4;
     case WALLET_DEPOSIT = 5;
     case WALLET_WITHDRAW = 6;
+    case CHAT_MESSAGE = 7;
 }
 
 
