@@ -16,6 +16,7 @@ enum NotificationDescription: int
     case BOOKING_REMINDER = 4;
     case WALLET_DEPOSIT = 5;
     case WALLET_WITHDRAW = 6;
+    case CHAT_MESSAGE = 7;
 
     /**
      * Convert từ NotificationType sang NotificationDescription
@@ -60,6 +61,11 @@ enum NotificationDescription: int
                 'vi' => 'Rút tiền từ ví thành công',
                 'en' => 'Wallet withdrawal successful',
                 'cn' => '钱包提现成功',
+            ],
+            self::CHAT_MESSAGE => [
+                'vi' => 'Bạn có tin nhắn mới',
+                'en' => 'You have a new message',
+                'cn' => '您有新消息',
             ],
         };
     }
@@ -108,6 +114,11 @@ enum NotificationDescription: int
                 'vi' => 'Rút tiền thành công',
                 'en' => 'Withdrawal Successful',
                 'cn' => '提现成功',
+            ],
+            self::CHAT_MESSAGE => [
+                'vi' => 'Tin nhắn mới',
+                'en' => 'New message',
+                'cn' => '新消息',
             ],
         };
     }
