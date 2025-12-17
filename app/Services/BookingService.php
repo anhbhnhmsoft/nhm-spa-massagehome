@@ -281,6 +281,7 @@ class BookingService extends BaseService
                 'longitude' => $longitude ?? 0,
                 'service_option_id' => $optionId,
                 'note_address' => $noteAddress ?? '',
+                'ktv_user_id' => $technicianId,
             ]);
 
             // Bắn notif cho người dùng khi đặt lịch thành công
@@ -317,6 +318,7 @@ class BookingService extends BaseService
                 message: $exception->getMessage()
             );
         } catch (\Exception $exception) {
+            dd($exception);
             DB::rollBack();
             LogHelper::error(
                 message: "Lỗi ServiceService@bookService",
@@ -383,6 +385,34 @@ class BookingService extends BaseService
         } catch (\Exception $exception) {
             LogHelper::error(
                 message: "Lỗi ServiceService@checkBooking",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: __("common_error.server_error")
+            );
+        }
+    }
+
+    /**
+     * Lấy chi tiết thông tin booking
+     * @param string $bookingId
+     * @return ServiceReturn
+     */
+    public function detailBooking(string $bookingId): ServiceReturn
+    {
+        try {
+            $booking = $this->bookingRepository->query()->find($bookingId);
+            if (!$booking) {
+                return ServiceReturn::error(
+                    message: __("booking.not_found")
+                );
+            }
+            return ServiceReturn::success(
+                data: $booking
+            );
+        } catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi ServiceService@detailBooking",
                 ex: $exception
             );
             return ServiceReturn::error(

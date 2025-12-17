@@ -119,10 +119,11 @@ Route::middleware('set-api-locale')->group(function () {
         // Lấy thông tin chi tiết dịch vụ
         Route::get('detail/{id}', [ServiceController::class, 'detailService'])->where('id', '[0-9]+');
 
-
+        // Lấy danh sách mã giảm giá
+        
         /**
          * router cần auth
-         */
+        */
         Route::middleware(['auth:sanctum'])->group(function () {
             // Đặt lịch dịch vụ
             Route::post('booking', [ServiceController::class, 'booking']);
@@ -137,6 +138,8 @@ Route::middleware('set-api-locale')->group(function () {
         Route::middleware(['auth:sanctum'])->group(function () {
             Route::get('list', [BookingController::class, 'listBooking']);
         });
+
+        // kiểm tra trạng thái booking
 
         Route::get('{bookingId}', [BookingController::class, 'checkBooking']);
     });

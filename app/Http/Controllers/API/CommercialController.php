@@ -67,6 +67,10 @@ class CommercialController extends BaseController
             return $this->sendError($result->getMessage());
         }
         $data = $result->getData();
-        return $this->sendSuccess(data: CouponResource::collection($data));
+
+        return $this->sendSuccess(data: [
+            'collectedCoupons' => CouponResource::collection($data['collectedCoupons']),
+            'errors' => $data['errors'],
+        ],);
     }
 }

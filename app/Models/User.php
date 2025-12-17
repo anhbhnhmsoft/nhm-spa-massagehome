@@ -167,7 +167,7 @@ class User extends Authenticatable
             'user_id',      // Khóa ngoại của User trong bảng trung gian
             'coupon_id'     // Khóa ngoại của Coupon trong bảng trung gian
         )
-            ->withPivot('quantity') // Lấy thêm cột quantity từ bảng trung gian
+            ->withPivot('is_used') // Lấy thêm cột is_used từ bảng trung gian
             ->withTimestamps();     // Nếu bảng coupon_users có created_at/updated_at
     }
 }
