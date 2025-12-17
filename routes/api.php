@@ -47,6 +47,8 @@ Route::middleware('set-api-locale')->group(function () {
             Route::delete('delete-avatar', [AuthController::class, 'deleteAvatar']);
             // Cập nhật thông tin hồ sơ người dùng.
             Route::post('edit-profile', [AuthController::class, 'editProfile']);
+            // Đăng xuất khỏi hệ thống.
+            Route::post('logout', [AuthController::class, 'logout']);
         });
     });
 
@@ -98,7 +100,8 @@ Route::middleware('set-api-locale')->group(function () {
          * router cần auth
          */
         Route::middleware(['auth:sanctum'])->group(function () {
-            // Lấy danh sách khách hàng đã đặt lịch trong ngày hôm nay
+            // Lấy thông tin chi tiết hồ sơ người dùng
+            Route::get('dashboard-profile', [UserController::class, 'dashboardProfile']);
         });
     });
 

@@ -386,4 +386,21 @@ class AuthController extends BaseController
             ],
         );
     }
+
+    /**
+     * Đăng xuất tài khoản.
+     * @return JsonResponse
+     */
+    public function logout(): JsonResponse
+    {
+        $result = $this->authService->logout();
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage(),
+            );
+        }
+        return $this->sendSuccess(
+            message: __('auth.success.logout'),
+        );
+    }
 }

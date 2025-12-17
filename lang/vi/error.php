@@ -2,13 +2,13 @@
 
 return [
     "service_not_found" => "Dịch vụ không tồn tại",
+    "service_not_active" => "Dịch vụ này hiện tại không hoạt động",
     "coupon_not_found" => "Mã giảm giá không tồn tại",
     "coupon_not_applicable" => "Mã giảm giá không áp dụng cho dịch vụ này",
     "service_duration_not_available" => "Dịch vụ này không có sẵn trong khoảng thời gian này",
     "coupon_invalid" => "Mã giảm giá không hợp lệ",
     "wallet_not_found" => "Hệ thống không tìm thấy ví tiền của bạn",
     'goong_error' => 'Goong API lỗi với trạng thái: :status',
-
     "config_wallet_error" => "Có lỗi xảy ra trong quá trình cấu hình thanh toán, vui lòng liên hệ với bộ phận hỗ trợ",
     "payment_type_not_supported" => "Hình thức thanh toán này hiện tại không được hỗ trợ",
     "transaction_not_found" => "Lịch sử giao dịch không tồn tại",
@@ -18,4 +18,5 @@ return [
     "notification_not_found" => "Thông báo không tồn tại",
     "need_identify_image" => "Cần có 1 ảnh căn cước mặt trước và 1 ảnh căn cước mặt sau.",
     "need_identify_image_display" => "Cần có 3 ảnh hiển thị.",
+    "unauthorized" => "Bạn không có quyền truy cập",
 ];

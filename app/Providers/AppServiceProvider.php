@@ -11,6 +11,7 @@ use App\Repositories\CategoryRepository;
 use App\Repositories\ConfigRepository;
 use App\Repositories\CouponRepository;
 use App\Repositories\CouponUsedRepository;
+use App\Repositories\CouponUserRepository;
 use App\Repositories\NotificationRepository;
 use App\Repositories\ProvinceRepository;
 use App\Repositories\ReviewRepository;
@@ -78,7 +79,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(CouponUsedRepository::class);
         $this->app->singleton(NotificationRepository::class);
         $this->app->singleton(ProvinceRepository::class);
-
+        $this->app->singleton(CouponUserRepository::class);
     }
 
     /**

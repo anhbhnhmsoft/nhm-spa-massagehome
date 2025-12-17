@@ -13,12 +13,10 @@ use App\Enums\DirectFile;
 use App\Enums\Gender;
 use App\Enums\Language;
 use App\Enums\UserRole;
-use App\Models\Service;
 use App\Models\User;
 use App\Repositories\UserProfileRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\WalletRepository;
-use App\Utils\Constants\StoragePath;
 use Exception;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -377,60 +375,6 @@ class AuthService extends BaseService
     }
 
     /**
-     * -------- Private methods --------
-     */
-
-    /**
-     * Tạo token đăng nhập cho user.
-     * @param User $user
-     * @return string
-     */
-    protected function createTokenAuth(User $user): string
-    {
-        return $user->createToken(
-            name: 'api-token',
-            abilities: ['*'],
-            expiresAt: now()->addDays(30),
-        )->plainTextToken;
-    }
-
-    /**
-     * Tạo OTP đăng ký và lưu vào cache.
-     * @param string $phone
-     * @throws ServiceException
-     */
-    protected function createCacheRegisterOtp(string $phone): void
-    {
-        //        $otp = rand(100000, 999999);
-        $otp = 123456; // Test
-        // Set OTP limit số lần gửi lại
-        if (!Caching::hasCache(key: CacheKey::CACHE_KEY_RESEND_REGISTER_OTP, uniqueKey: $phone)) {
-            Caching::setCache(
-                key: CacheKey::CACHE_KEY_RESEND_REGISTER_OTP,
-                value: 0,
-                uniqueKey: request()->ip() || request()->userAgent() || $phone,
-                expire: $this->blockTime
-            );
-        }
-        $attempts = Caching::incrementCache(key: CacheKey::CACHE_KEY_RESEND_REGISTER_OTP, uniqueKey: $phone);
-
-        // Kiểm tra số lần gửi lại OTP
-        if ($attempts > $this->maxResendOtp) {
-            throw new ServiceException(__('auth.error.resend_otp', ['minutes' => $this->blockTime]));
-        }
-        // Lưu OTP vào cache
-        Caching::setCache(
-            key: CacheKey::CACHE_KEY_OTP_REGISTER,
-            value: [
-                'otp' => $otp,
-                'phone' => $phone,
-            ],
-            uniqueKey: $phone,
-            expire: $this->otpTtl
-        );
-    }
-
-    /**
      * Cập nhật heartbeat cho user.
      * @return ServiceReturn
      */
@@ -658,5 +602,84 @@ class AuthService extends BaseService
 
             return ServiceReturn::error(__('common_error.server_error'));
         }
+    }
+
+    /**
+     * Đăng xuất tài khoản.
+     * @return ServiceReturn
+     */
+    public function logout(): ServiceReturn
+    {
+        try {
+            $user = Auth::user();
+            if (!$user) {
+                return ServiceReturn::error(message: __('error.unauthorized'));
+            }
+            $user->currentAccessToken()->delete();
+            return ServiceReturn::success(
+                message: __('auth.success.logout'),
+            );
+        } catch (Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi AuthService@logout",
+                ex: $exception
+            );
+            return ServiceReturn::error(message: __('common_error.server_error'));
+        }
+    }
+
+
+    /**
+     * -------- Private methods --------
+     */
+
+    /**
+     * Tạo token đăng nhập cho user.
+     * @param User $user
+     * @return string
+     */
+    protected function createTokenAuth(User $user): string
+    {
+        return $user->createToken(
+            name: 'api-token',
+            abilities: ['*'],
+            expiresAt: now()->addDays(30),
+        )->plainTextToken;
+    }
+
+    /**
+     * Tạo OTP đăng ký và lưu vào cache.
+     * @param string $phone
+     * @throws ServiceException
+     */
+    protected function createCacheRegisterOtp(string $phone): void
+    {
+        //        $otp = rand(100000, 999999);
+        $otp = 123456; // Test
+        // Set OTP limit số lần gửi lại
+        if (!Caching::hasCache(key: CacheKey::CACHE_KEY_RESEND_REGISTER_OTP, uniqueKey: $phone)) {
+            Caching::setCache(
+                key: CacheKey::CACHE_KEY_RESEND_REGISTER_OTP,
+                value: 0,
+                uniqueKey: request()->ip() || request()->userAgent() || $phone,
+                expire: $this->blockTime
+            );
+        }
+        $attempts = Caching::incrementCache(key: CacheKey::CACHE_KEY_RESEND_REGISTER_OTP, uniqueKey: $phone);
+
+        // Kiểm tra số lần gửi lại OTP
+        if ($attempts > $this->maxResendOtp) {
+            throw new ServiceException(__('auth.error.resend_otp', ['minutes' => $this->blockTime]));
+        }
+        // Lưu OTP vào cache
+        Caching::setCache(
+            key: CacheKey::CACHE_KEY_OTP_REGISTER,
+            value: [
+                'otp' => $otp,
+                'phone' => $phone,
+            ],
+            uniqueKey: $phone,
+            expire: $this->otpTtl
+        );
     }
 }

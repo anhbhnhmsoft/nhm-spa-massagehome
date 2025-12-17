@@ -34,8 +34,8 @@ class DatabaseSeeder extends Seeder
 //        $this->seedAdmin();
 //        $this->seedKTV();
 //        $this->seedCoupon();
-//        $this->seedConfig();
-        $this->seedBanner();
+        $this->seedConfig();
+//        $this->seedBanner();
     }
 
     protected function seedAdmin(): void
@@ -331,14 +331,14 @@ class DatabaseSeeder extends Seeder
                 ]
             );
 
-            Config::query()->updateOrCreate(
-                ['config_key' => ConfigName::GOONG_API_KEY->value],
-                [
-                    'config_value' => '',
-                    'config_type' => ConfigType::STRING->value,
-                    'description' => 'Mã API key Goong dùng để tích hợp tìm kiếm địa chỉ.',
-                ]
-            );
+//            Config::query()->updateOrCreate(
+//                ['config_key' => ConfigName::GOONG_API_KEY->value],
+//                [
+//                    'config_value' => '',
+//                    'config_type' => ConfigType::STRING->value,
+//                    'description' => 'Mã API key Goong dùng để tích hợp tìm kiếm địa chỉ.',
+//                ]
+//            );
             Config::query()->updateOrCreate(
                 ['config_key' => ConfigName::BREAK_TIME_GAP->value],
                 [
@@ -352,7 +352,7 @@ class DatabaseSeeder extends Seeder
                 [
                     'config_value' => '20',
                     'config_type' => ConfigType::NUMBER->value,
-                    'description' => 'Tỷ lệ chiết khấu',
+                    'description' => 'Tỷ lệ chiết khấu dịch vụ',
                 ]
             );
         } catch (\Exception $e) {

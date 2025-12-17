@@ -20,6 +20,22 @@ class UserController extends BaseController
         protected UserService $userService
     ) {}
 
+    public function dashboardProfile()
+    {
+        $result = $this->userService->dashboardProfile();
+
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage(),
+            );
+        }
+
+        return $this->sendSuccess(
+            data: $result->getData(),
+            message: $result->getMessage() ?? __('common.success.data_created')
+        );
+    }
+
     /**
      * Đăng ký cộng tác viên/đối tác
      */

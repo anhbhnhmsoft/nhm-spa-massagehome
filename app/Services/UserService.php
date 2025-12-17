@@ -5,23 +5,22 @@ namespace App\Services;
 use App\Core\Cache\CacheKey;
 use App\Core\Cache\Caching;
 use App\Core\Controller\FilterDTO;
-use App\Core\Helper;
 use App\Core\LogHelper;
 use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
+use App\Enums\BookingStatus;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserFileType;
 use App\Enums\UserRole;
 use App\Repositories\BookingRepository;
+use App\Repositories\CouponUserRepository;
 use App\Repositories\UserAddressRepository;
 use App\Repositories\UserFileRepository;
 use App\Repositories\UserProfileRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\UserReviewApplicationRepository;
 use App\Repositories\WalletRepository;
-use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
@@ -37,10 +36,59 @@ class UserService extends BaseService
         protected UserProfileRepository $userProfileRepository,
         protected WalletRepository $walletRepository,
         protected UserAddressRepository $userAddressRepository,
-        protected BookingRepository $bookingRepository
+        protected BookingRepository $bookingRepository,
+        protected CouponUserRepository $couponUserRepository
     ) {
         parent::__construct();
     }
+
+    public function dashboardProfile()
+    {
+        try {
+            $user = Auth::user();
+            // Số dư wallet
+            $wallet = $this->walletRepository->query()
+                ->where('user_id', $user->id)
+                ->first();
+            $walletBalance = $wallet?->balance ?? "0";
+
+
+            // Lấy số lượng đặt lịch theo từng trạng thái
+            $bookingRawCounts = $this->bookingRepository->query()
+                ->where('user_id', $user->id)
+                ->select('status', DB::raw('count(*) as total'))
+                ->groupBy('status')
+                ->pluck('total', 'status');
+            $bookingCount = collect(BookingStatus::cases())
+                ->mapWithKeys(function ($case) use ($bookingRawCounts) {
+                    return [$case->value => $bookingRawCounts->get($case->value, 0)];
+                })
+                ->toArray();
+
+            // Số lượng mã giảm giá
+            $couponUserCount = $this->couponUserRepository->query()
+                ->where('user_id', $user->id)
+                ->where('is_used', false)
+                ->count();
+
+            return ServiceReturn::success(
+                data: [
+                    'booking_count' => $bookingCount,
+                    'wallet_balance' => $walletBalance,
+                    'coupon_user_count' => $couponUserCount,
+                ]
+            );
+        }catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi UserService@dashboardCustomer",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: __('common_error.server_error')
+            );
+        }
+    }
+
 
     /**
      * Lấy danh sách KTV

@@ -123,14 +123,24 @@ class ServiceService extends BaseService
         try {
             $service = $this->serviceRepository->queryService()->find($id);
             if (!$service) {
-                return ServiceReturn::error(
+                throw new ServiceException(
                     message: __("messages.service_not_found")
+                );
+            }
+            if (!$service->is_active) {
+                throw new ServiceException(
+                    message: __("messages.service_not_active")
                 );
             }
             return ServiceReturn::success(
                 data: $service
             );
-        } catch (\Exception $exception) {
+        } catch (ServiceException $exception) {
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        }
+        catch (\Exception $exception) {
             LogHelper::error(
                 message: "Lỗi ServiceService@getDetailService",
                 ex: $exception

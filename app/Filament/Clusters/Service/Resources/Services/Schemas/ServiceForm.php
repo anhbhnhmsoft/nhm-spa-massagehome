@@ -7,6 +7,7 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Grid;
@@ -56,7 +57,7 @@ class ServiceForm
                                     ->label(__('admin.service.fields.status'))
                                     ->required()
                                     ->default(true),
-                                RichEditor::make('description.' . $lang)
+                                Textarea::make('description.' . $lang)
                                     ->label(__('admin.service.fields.description'))
                                     ->required(),
                             ]),

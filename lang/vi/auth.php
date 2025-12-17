@@ -10,6 +10,7 @@ return [
         'user' => 'Thông tin người dùng.',
         'set_language' => 'Ngôn ngữ đã được cập nhật.',
         'update_success' => 'Cập nhật thông tin thành công.',
+        'logout' => 'Bạn đã đăng xuất thành công.',
     ],
     'error' => [
         'phone_verified' => 'Số điện thoại này đã được đăng ký.',
