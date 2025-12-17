@@ -118,8 +118,6 @@ Route::middleware('set-api-locale')->group(function () {
         // Lấy thông tin chi tiết dịch vụ
         Route::get('detail/{id}', [ServiceController::class, 'detailService'])->where('id', '[0-9]+');
 
-        // Lấy danh sách mã giảm giá
-        Route::get('list-coupon', [ServiceController::class, 'listCoupon']);
 
         /**
          * router cần auth
@@ -129,7 +127,8 @@ Route::middleware('set-api-locale')->group(function () {
             Route::post('booking', [ServiceController::class, 'booking']);
             // Lấy danh sách lịch đã đặt hôm nay
             Route::get('today-booked/{id}', [ServiceController::class, 'getTodayBookedCustomers'])->where('id', '[0-9]+');
-
+            // Lấy danh sách mã giảm giá
+            Route::get('list-coupon', [ServiceController::class, 'listCoupon']);
         });
     });
 
@@ -178,6 +177,7 @@ Route::middleware('set-api-locale')->group(function () {
     Route::prefix('affiliate')->group(function () {
         Route::get('match', [AffiliateController::class, 'matchAffiliate']);
     });
+
     Route::prefix('commercial')->group(function () {
         // Lấy danh sách banner cho homepage
         Route::get('banners', [CommercialController::class, 'getBanner']);

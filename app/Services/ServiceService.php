@@ -178,7 +178,6 @@ class ServiceService extends BaseService
             $query = $this->couponRepository->sortQuery($query, $dto->sortBy, $dto->direction);
 
             $coupons = $query->get();
-
             // 3. Xử lý Time Slots & Daily Limits
             $filteredCoupons = $coupons->filter(function ($coupon) use ($ownedCouponIds, $currentTime, $today) {
                 $config = $coupon->config ?? [];

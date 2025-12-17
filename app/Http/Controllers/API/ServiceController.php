@@ -82,6 +82,8 @@ class ServiceController extends BaseController
         $dto = $request->getFilterOptions();
         // Lọc chỉ lấy mã giảm giá hợp lệ
         $dto->addFilter('is_valid', true);
+        // Lấy toàn bộ mã giảm giá (không phân trang)
+        $dto->addFilter('get_all', true);
 
         $result = $this->serviceService->getListCoupon($dto);
         if ($result->isError()) {
