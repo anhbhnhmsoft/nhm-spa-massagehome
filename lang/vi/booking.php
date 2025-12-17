@@ -23,7 +23,7 @@ return [
     'break_time_gap' => [
         'not_found' => 'không tìm thấy khoảng thời gian nghỉ',
     ],
-    'time_slot_not_available' => 'Kỹ thuật viên đã lên lịch phục vụ trong khoảng thời gian này',
+    'time_slot_not_available' => 'Kỹ thuật viên đã lên lịch phục vụ trong khoảng thời gian này, vui lòng chọn thời gian khác',
     'coupon' => [
         'used' => 'Bạn đã sử dụng mã giảm giá này',
         'not_found' => 'Mã giảm giá không tồn tại',

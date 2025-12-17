@@ -16,6 +16,7 @@ export const config = {
         password: process.env.REDIS_PASSWORD || undefined,
         channels: {
             notification: process.env.REDIS_CHANNEL_NOTIFICATION || 'expo_notifications',
+            chat: process.env.REDIS_CHANNEL_CHAT || 'chat_messages',
         }
     },
     app: {
