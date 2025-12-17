@@ -458,6 +458,31 @@ return new class extends Migration
             $table->timestamp('expires_at')->nullable()->index();
             $table->timestamps();
         });
+
+        // Bảng chat_rooms - Lưu thông tin phòng chat giữa khách hàng và KTV
+        Schema::create('chat_rooms', function (Blueprint $table) {
+            $table->id();
+            $table->bigInteger('customer_id')->comment('ID khách hàng');
+            $table->bigInteger('ktv_id')->comment('ID KTV');
+            $table->timestamps();
+
+            $table->foreign('customer_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('ktv_id')->references('id')->on('users')->onDelete('cascade');
+
+            $table->index(['customer_id', 'ktv_id']);
+        });
+
+        // Bảng messages - Lưu nội dung tin nhắn trong phòng chat
+        Schema::create('messages', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('room_id')->comment('ID phòng chat (chat_rooms.id)');
+            $table->bigInteger('sender_by')->comment('ID người gửi (users.id)');
+            $table->text('content')->comment('Nội dung tin nhắn');
+            $table->timestamps();
+
+            $table->foreign('room_id')->references('id')->on('chat_rooms')->onDelete('cascade');
+            $table->foreign('sender_by')->references('id')->on('users')->onDelete('cascade');
+        });
     }
 
     /**
