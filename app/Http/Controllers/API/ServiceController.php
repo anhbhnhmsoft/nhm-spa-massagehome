@@ -82,8 +82,6 @@ class ServiceController extends BaseController
         $dto = $request->getFilterOptions();
         // Lọc chỉ lấy mã giảm giá hợp lệ
         $dto->addFilter('is_valid', true);
-        // Lấy toàn bộ mã giảm giá (không phân trang)
-        $dto->addFilter('get_all', true);
 
         $result = $this->serviceService->getListCoupon($dto);
         if ($result->isError()) {
@@ -112,16 +110,6 @@ class ServiceController extends BaseController
             'book_time' => [
                 'required',
                 'date',
-                function ($attribute, $value, $fail) {
-                    $bookingTime = Carbon::parse($value)->setTimezone(config('app.timezone'));
-                    // Kiểm tra xem thời gian đặt có hợp lệ không
-                    $validateTime = now()->addHour()->setTimezone(config('app.timezone'));
-                    if (
-                        $bookingTime->isBefore($validateTime)
-                    ) {
-                        $fail(__('validation.book_time.after'));
-                    }
-                }
             ],
             // Validate Coupon (Không bắt buộc, nhưng nếu có phải tồn tại)
             'coupon_id' => [
@@ -133,6 +121,7 @@ class ServiceController extends BaseController
             // 4. Validate Địa chỉ & Note
             'address' => ['required', 'string', 'max:255'],
             'note' => ['nullable', 'string', 'max:500'],
+            'note_address' => ['nullable', 'string', 'max:500'],
             // 5. Validate Tọa độ (Lat/Lng)
             'latitude' => ['required', 'numeric', 'between:-90,90'],
             'longitude' => ['required', 'numeric', 'between:-180,180'],
@@ -144,9 +133,10 @@ class ServiceController extends BaseController
             'option_id.numeric' => __('validation.option_id.numeric'),
             'option_id.exists' => __('validation.option_id.exists'),
             'book_time.required' => __('validation.book_time.required'),
-            'book_time.date' => __('validation.book_time.date'),
+            'book_time.timestamp' => __('validation.book_time.timestamp'),
             'coupon_id.exists' => __('validation.coupon_id.exists'),
-            'address.required' => __('validation.address.required'),
+            'note.max' => __('validation.note.max'),
+            'note_address.max' => __('validation.note_address.max'),
             'latitude.required' => __('validation.latitude.required'),
             'longitude.required' => __('validation.longitude.required'),
         ]);
@@ -159,6 +149,7 @@ class ServiceController extends BaseController
             longitude: $validate['longitude'],
             bookTime: $validate['book_time'],
             note: $validate['note'] ?? null,
+            noteAddress: $validate['note_address'] ?? null,
         );
         if ($resultService->isError()) {
             return $this->sendError(

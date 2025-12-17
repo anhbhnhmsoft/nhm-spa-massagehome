@@ -15,6 +15,7 @@ use App\Repositories\BookingRepository;
 use App\Repositories\WalletRepository;
 use App\Repositories\WalletTransactionRepository;
 use App\Services\ConfigService;
+use Illuminate\Support\Facades\DB;
 
 class WalletService extends BaseService
 {
@@ -29,6 +30,7 @@ class WalletService extends BaseService
 
     public function paymentInitBooking($bookingId)
     {
+        DB::beginTransaction();
         try {
             $booking = $this->bookingRepository->query()->find($bookingId);
             if (!$booking) {
@@ -87,23 +89,26 @@ class WalletService extends BaseService
                 'exchange_rate_point' => $exchangeRate,
                 'point_amount' => $booking->price,
                 'balance_after' => $walletTechnician->balance,
-                'type' => WalletTransactionType::PAYMENT->value,
+                'type' => WalletTransactionType::PAYMENT_FOR_KTV->value,
                 'status' => WalletTransactionStatus::PENDING->value,
                 'transaction_code' => Helper::createDescPayment(PaymentType::BY_POINTS),
                 'description' => __('booking.payment.wallet_technician'),
                 'expired_at' => now()
             ]);
+
+            $booking->status = BookingStatus::CONFIRMED->value;
+            $booking->save();
+            DB::commit();
             return ServiceReturn::success(
                 message: __("booking.payment.success")
             );
         } catch (\Exception $exception) {
+            DB::rollBack();
             LogHelper::error(
                 message: "Lỗi WalletService@paymentBooking",
                 ex: $exception
             );
-            return ServiceReturn::error(
-                message: __("common_error.server_error")
-            );
+            throw $exception;
         }
     }
 }

@@ -195,6 +195,7 @@ return new class extends Migration
                 ->default(true)->comment('Trạng thái kích hoạt');
             $table->json('banners')->nullable()->comment('Danh sách banner đa ngôn ngữ');
             $table->boolean('display_ads')->default(true)->comment('Hiển thị quảng cáo ở homepage');
+            $table->json('config')->nullable()->comment('Cấu hình điều kiện sử dụng');
             $table->softDeletes();
             $table->timestamps();
             $table->unique(['code', 'created_by']);

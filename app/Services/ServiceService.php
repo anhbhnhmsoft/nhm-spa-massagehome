@@ -10,6 +10,7 @@ use App\Core\Service\ServiceReturn;
 use App\Enums\BookingStatus;
 use App\Enums\ServiceDuration;
 use App\Models\Coupon;
+use App\Models\User;
 use App\Repositories\BookingRepository;
 use App\Repositories\CategoryRepository;
 use App\Repositories\CouponRepository;
@@ -26,8 +27,7 @@ class ServiceService extends BaseService
         protected CategoryRepository $categoryRepository,
         protected CouponRepository   $couponRepository,
         protected BookingRepository  $bookingRepository,
-    )
-    {
+    ) {
         parent::__construct();
     }
 
@@ -141,37 +141,71 @@ class ServiceService extends BaseService
         }
     }
 
-
     /**
-     * Lấy danh sách mã giảm giá
+     * Lấy mã người dùng sở hữu và mã hợp lệ thời điểm booking
      * @param FilterDTO $dto
      * @return ServiceReturn
      */
+
     public function getListCoupon(FilterDTO $dto): ServiceReturn
     {
         try {
+            /** @var User $user */
+            $user = Auth::user();
+            $now = Carbon::now();
+            $currentTime = $now->format('H:i');
+            $today = $now->format('Y-m-d');
+
+            // 1. Lấy danh sách Coupon ID người dùng đang sở hữu và chưa dùng
+            $ownedCouponIds = $user->collectionCoupons()
+                ->where('is_used', false)
+                ->pluck('coupon_id')
+                ->toArray();
+
+            // 2. Query tất cả coupon hợp lệ tại thời điểm booking
             $query = $this->couponRepository->queryCoupon();
-            $query = $this->couponRepository->filterQuery(
-                query: $query,
-                filters: $dto->filters
-            );
-            $query = $this->couponRepository->sortQuery(
-                query: $query,
-                sortBy: $dto->sortBy,
-                direction: $dto->direction
-            );
+            $query = $this->couponRepository->filterQuery($query, $dto->filters);
+            $query = $this->couponRepository->sortQuery($query, $dto->sortBy, $dto->direction);
+
             $coupons = $query->get();
+
+            // 3. Xử lý Time Slots & Daily Limits
+            $filteredCoupons = $coupons->filter(function ($coupon) use ($ownedCouponIds, $currentTime, $today) {
+                $config = $coupon->config ?? [];
+                $isOwned = in_array($coupon->id, $ownedCouponIds);
+
+                // A. Kiểm tra Khung giờ(allowed_time_slots)
+                $slots = $config['allowed_time_slots'] ?? [];
+                if (!empty($slots)) {
+                    $inSlot = false;
+                    foreach ($slots as $slot) {
+                        if ($currentTime >= ($slot['start'] ?? '00:00') && $currentTime <= ($slot['end'] ?? '23:59')) {
+                            $inSlot = true;
+                            break;
+                        }
+                    }
+                    if (!$inSlot) return false; // Không nằm trong khung giờ cho phép sử dụng/hiển thị
+                }
+
+                // B. Kiểm tra giới hạn thu thập theo ngày (Nếu chưa sở hữu)
+                if (!$isOwned) {
+                    $collectLimit = $config['per_day_global'] ?? 0; // Giới hạn thu thập/ngày
+                    $currentCollected = $config['daily_collected'][$today] ?? 0;
+
+                    if ($collectLimit > 0 && $currentCollected >= $collectLimit) {
+                        return false; // Hết lượt thu thập hôm nay
+                    }
+                }
+
+                return true;
+            });
+
             return ServiceReturn::success(
-                data: $coupons
+                data: $filteredCoupons->values()
             );
         } catch (\Exception $exception) {
-            LogHelper::error(
-                message: "Lỗi ServiceService@getListCoupon",
-                ex: $exception
-            );
-            return ServiceReturn::error(
-                message: __("common_error.server_error")
-            );
+            LogHelper::error("Lỗi ServiceService@getListCoupon", $exception);
+            return ServiceReturn::error(message: __("common_error.server_error"));
         }
     }
 
@@ -182,8 +216,7 @@ class ServiceService extends BaseService
      */
     public function getTodayBookedCustomers(
         string $ktvUserId
-    ): ServiceReturn
-    {
+    ): ServiceReturn {
         try {
             $now = \Carbon\Carbon::now();
             $startOfDay = $now->copy()->startOfDay();
@@ -215,5 +248,4 @@ class ServiceService extends BaseService
             );
         }
     }
-
 }

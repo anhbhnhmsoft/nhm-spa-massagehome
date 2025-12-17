@@ -6,9 +6,12 @@ use App\Enums\DirectFile;
 use App\Enums\Language;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\KeyValue;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
@@ -137,6 +140,61 @@ class CouponForm
                                     ->columnSpanFull(),
                             ])
                             ->columns(2)
+                            ->columnSpanFull(),
+                        Section::make(__('admin.coupon.fields.config.label'))
+                            ->schema([
+                                Grid::make(4)
+                                    ->schema([
+                                        TextInput::make('config.per_day_global')
+                                            ->label(__('admin.coupon.fields.config.per_day_global'))
+                                            ->required()
+                                            ->numeric()
+                                            ->minValue(0)
+                                            ->validationMessages([
+                                                'required' => __("common.error.required"),
+                                                'numeric' => __("common.error.numeric"),
+                                            ]),
+
+                                        TextInput::make('config.min_order_value')
+                                            ->label(__('admin.coupon.fields.config.min_order_value'))
+                                            ->required()
+                                            ->numeric()
+                                            ->minValue(0)
+                                            ->suffix(__('admin.point'))
+                                            ->validationMessages([
+                                                'required' => __("common.error.required"),
+                                                'numeric' => __("common.error.numeric"),
+                                            ]),
+
+                                        KeyValue::make('config.daily_collected')
+                                            ->label(__('admin.coupon.fields.config.used_day'))
+                                            ->disabled(), // Quản trị viên chỉ xem, hệ thống tự cập nhật,
+                                        KeyValue::make('config.daily_used')
+                                            ->label(__('admin.coupon.fields.config.collected_day'))
+                                            ->disabled(), // Quản trị viên chỉ xem, hệ thống tự cập nhật
+                                    ]),
+
+                                Repeater::make('config.allowed_time_slots')
+                                    ->label(__('admin.coupon.fields.config.allowed_time_slots'))
+                                    ->schema([
+                                        TimePicker::make('start')
+                                            ->label(__('admin.common.from'))
+                                            ->required()
+                                            ->seconds(false),
+                                        TimePicker::make('end')
+                                            ->label(__('admin.common.to'))
+                                            ->required()
+                                            ->seconds(false)
+                                            ->after('start'), // Validation: thời gian kết thúc phải sau thời gian bắt đầu
+                                    ])
+                                    ->columns(2)
+                                    ->default([])
+                                    ->addActionLabel(__('admin.coupon.fields.config.add_time_slot'))
+                                    ->itemLabel(fn(array $state): ?string => ($state['start'] ?? '??') . ' - ' . ($state['end'] ?? '??'))
+                                    ->collapsible()
+                                    ->grid(2)
+                                    ->helperText(__('admin.coupon.fields.config.time_slots_helper')),
+                            ])
                             ->columnSpanFull(),
                     ])
                     ->columns(2)

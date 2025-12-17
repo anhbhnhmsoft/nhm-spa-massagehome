@@ -27,7 +27,8 @@ class ServiceBooking extends Model
         'address',
         'latitude',
         'longitude',
-        'service_option_id'
+        'service_option_id',
+        'note_address'
     ];
 
     protected $casts = [
