@@ -24,8 +24,25 @@ class BookingController extends BaseController
 
         $result = $this->bookingService->bookingPaginate($dto);
         $data = $result->getData();
-        return $this->sendResponse(
-
+        return $this->sendSuccess(
+            data: $data
+        );
+    }
+    
+    /**
+     * Kiểm tra booking
+     * @param string $bookingId
+     */
+    public function checkBooking(string $bookingId)
+    {
+        $result = $this->bookingService->checkBooking($bookingId);
+        if($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage()
+            );
+        }
+        return $this->sendSuccess(
+            data: $result
         );
     }
 }

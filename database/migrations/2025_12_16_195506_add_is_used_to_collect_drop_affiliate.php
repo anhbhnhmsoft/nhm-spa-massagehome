@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
             $table->dropColumn('affiliate_link');
         });
-        Schema::table('user_coupons', function (Blueprint $table) {
+        Schema::table('coupon_users', function (Blueprint $table) {
             $table->boolean('is_used')->default(false);
             $table->dropColumn('quantity');
         });
@@ -28,7 +28,7 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
             $table->dropColumn('affiliate_link');
         });
-        Schema::table('user_coupons', function (Blueprint $table) {
+        Schema::table('coupon_users', function (Blueprint $table) {
             $table->boolean('is_used')->default(false);
             $table->dropColumn('quantity');
         });

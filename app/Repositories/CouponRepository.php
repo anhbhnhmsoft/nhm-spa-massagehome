@@ -6,6 +6,7 @@ use App\Core\BaseRepository;
 use App\Models\Coupon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class CouponRepository extends BaseRepository
 {
@@ -78,13 +79,55 @@ class CouponRepository extends BaseRepository
 
     public function incrementUsedCountAtomic(string $couponId): bool
     {
-        return $this->model->query()
-            ->where('id', $couponId)
-            ->where('is_active', true)
-            ->where(function ($q) {
-                $q->whereNull('usage_limit')
-                    ->orWhereColumn('used_count', '<', 'usage_limit');
-            })
-            ->increment('used_count');
+        return DB::transaction(function () use ($couponId) {
+            $coupon = $this->model->query()
+                ->where('id', $couponId)
+                ->where('is_active', true)
+                ->where(function ($q) {
+                    $q->whereNull('usage_limit')
+                        ->orWhereColumn('used_count', '<', 'usage_limit');
+                })
+                ->lockForUpdate()
+                ->first();
+
+            if (!$coupon) return false;
+
+            $config = $coupon->config ?? [];
+            $today = now()->format('Y-m-d');
+
+            // Logic lưu lịch sử sử dụng thực tế (thanh toán thành công)
+            $history = $config['daily_used'] ?? [];
+            $history[$today] = ($history[$today] ?? 0) + 1;
+
+            $config['daily_used'] = $history;
+
+            return $coupon->update([
+                'used_count' => $coupon->used_count + 1,
+                'config' => $config
+            ]);
+        });
+    }
+
+    public function incrementDailyCollectCountAtomic(string $couponId): bool
+    {
+        return DB::transaction(function () use ($couponId) {
+            $coupon = $this->model->query()
+                ->where('id', $couponId)
+                ->where('is_active', true)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$coupon) return false;
+
+            $config = $coupon->config ?? [];
+            $today = now()->format('Y-m-d');
+
+            $history = $config['daily_collected'] ?? [];
+            $history[$today] = ($history[$today] ?? 0) + 1;
+
+            $config['daily_collected'] = $history;
+
+            return $coupon->update(['config' => $config]);
+        });
     }
 }

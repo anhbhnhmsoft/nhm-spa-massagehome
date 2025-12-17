@@ -17,6 +17,8 @@ use App\Repositories\CouponRepository;
 use App\Repositories\ServiceRepository;
 use App\Enums\ConfigName;
 use App\Enums\PaymentType;
+use App\Enums\WalletTransactionStatus;
+use App\Enums\WalletTransactionType;
 use App\Jobs\WalletTransactionBookingJob;
 use App\Models\Config;
 use App\Services\ConfigService;
@@ -107,6 +109,7 @@ class BookingService extends BaseService
         string          $longitude,
         string          $bookTime,
         ?string         $note = null,
+        ?string         $noteAddress = null,
     ): ServiceReturn {
         DB::beginTransaction();
         try {
@@ -132,7 +135,7 @@ class BookingService extends BaseService
             $finalPrice  = $priceBeforeDiscount;
 
             if ($couponId) {
-                $couponValidation = $this->couponService->validateCouponWithCache(
+                $couponValidation = $this->couponService->validateCoupon(
                     couponId: (string) $couponId,
                     userId: (string) $user->id,
                     serviceId: (string) $serviceId,
@@ -268,7 +271,7 @@ class BookingService extends BaseService
                 'booking_time' => $currentBookingStartTime,
                 'start_time' => $currentBookingStartTime,
                 'end_time' => $currentBookingEndTime,
-                'status' => BookingStatus::CONFIRMED->value,
+                'status' => BookingStatus::PENDING->value,
                 'price' => $finalPrice,
                 'price_before_discount' => $priceBeforeDiscount,
                 'payment_type' => PaymentType::BY_POINTS->value,
@@ -277,6 +280,7 @@ class BookingService extends BaseService
                 'latitude' => $latitude ?? 0,
                 'longitude' => $longitude ?? 0,
                 'service_option_id' => $optionId,
+                'note_address' => $noteAddress ?? '',
             ]);
 
             // Bắn notif cho người dùng khi đặt lịch thành công
@@ -316,6 +320,69 @@ class BookingService extends BaseService
             DB::rollBack();
             LogHelper::error(
                 message: "Lỗi ServiceService@bookService",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: __("common_error.server_error")
+            );
+        }
+    }
+
+    /**
+     * Hủy booking, trường hợp khách hàng chủ động hủy hoặc thất bại thanh toán 
+     * @param string $bookingId
+     * @param BookingStatus $status
+     * @return ServiceReturn
+     */
+    public function cancelBooking(string $bookingId, BookingStatus $status): ServiceReturn
+    {
+        try {
+            $booking = $this->bookingRepository->query()->find($bookingId);
+            if (!$booking) {
+                return ServiceReturn::error(
+                    message: __("booking.not_found")
+                );
+            }
+            $booking->status = $status->value;
+            $booking->save();
+            return ServiceReturn::success(
+                message: __("booking.cancelled")
+            );
+        } catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi ServiceService@cancelBooking",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: __("common_error.server_error")
+            );
+        }
+    }
+
+    /**
+     * Kiểm tra booking
+     * @param string $bookingId
+     * @return ServiceReturn
+     */
+    public function checkBooking(string $bookingId): ServiceReturn
+    {
+        try {
+            $booking = $this->bookingRepository->query()->find($bookingId);
+            if (!$booking) {
+                return ServiceReturn::error(
+                    message: __("booking.not_found")
+                );
+            }
+            $transaction = $this->walletTransactionRepository->query()->where('booking_id', $bookingId)->where('type', WalletTransactionType::PAYMENT->value)->first();
+            return ServiceReturn::success(
+                data: [
+                    'payment' => $transaction->status == WalletTransactionStatus::COMPLETED->value,
+                    'success' => $booking->status == BookingStatus::CONFIRMED->value,
+                ]
+            );
+        } catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi ServiceService@checkBooking",
                 ex: $exception
             );
             return ServiceReturn::error(

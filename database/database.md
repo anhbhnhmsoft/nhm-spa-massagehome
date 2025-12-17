@@ -346,6 +346,7 @@
     - softDeletes
     - timestamps
     - unique (code, created_by) -- mã giảm giá phải là duy nhất cho từng người dùng
+    - config (json, nullable) -- cấu hình điều kiện sử dụng
 # coupon_used
     #note
     - Bảng coupon_used lưu trữ thông tin mã giảm giá đã được sử dụng.

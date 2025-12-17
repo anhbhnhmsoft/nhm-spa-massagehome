@@ -5,6 +5,7 @@ return [
         'not_active' => 'Dịch vụ dừng phục vụ',
         'not_found'  => 'Dịch vụ không tồn tại',
     ],
+    'not_found' => 'Booking không tồn tại',
     'wallet' => [
         'not_active' => 'Tài khoản không hoạt động',
         'not_enough' => 'Số dư không đủ',
@@ -33,6 +34,8 @@ return [
         'usage_limit_reached' => 'Mã giảm giá đã đạt đến giới hạn sử dụng',
         'max_discount_exceeded' => 'Mã giảm giá vượt quá giá trị giảm tối đa',
         'used_successfully' => 'Mã giảm giá đã được áp dụng',
+        'not_allowed_time' => 'Mã giảm giá không áp dụng trong thời gian này',
+        'usage_limit_reached_or_daily_full' => 'Mã giảm giá đã đạt đến giới hạn sử dụng hoặc đã hết lượt sử dụng trong ngày',
     ],
     'payment' => [
         'wallet_customer' => 'Thanh toán đặt dịch vụ bằng ví',

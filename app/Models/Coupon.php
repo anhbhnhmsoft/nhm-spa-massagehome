@@ -36,7 +36,8 @@ class Coupon extends Model
         'used_count',
         'is_active',
         'banners',
-        'display_ads'
+        'display_ads',
+        'config'
     ];
 
     protected $casts = [
@@ -52,6 +53,15 @@ class Coupon extends Model
         'usage_limit' => 'integer',
         'used_count' => 'integer',
         'display_ads' => 'boolean',
+        'config' => 'array',
+        /**
+         * Cấu trúc config dự kiến:
+         * - per_day_global (int): Tổng mã tối đa được thu thập trong 1 ngày toàn hệ thống.
+         * - min_order_value (float): Giá trị đơn hàng tối thiểu để áp dụng mã. 
+         * - used_day (array): ['date' => 'Y-m-d', 'count' => int] - Theo dõi số lượng đã dùng theo ngày thực tế.
+         * - collected_day (array): ['date' => 'Y-m-d', 'count' => int] - Theo dõi số lượng đã thu theo ngày thực tế.
+         * - allowed_time_slots (array): Danh sách các khung giờ vàng cho phép sử dụng mã.
+         */
     ];
 
     // Người tạo mã (Admin/Staff/User)

@@ -134,6 +134,8 @@ Route::middleware('set-api-locale')->group(function () {
         Route::middleware(['auth:sanctum'])->group(function () {
             Route::get('list', [BookingController::class, 'listBooking']);
         });
+
+        Route::get('{bookingId}', [BookingController::class, 'checkBooking']);
     });
 
     Route::prefix('payment')->group(function () {
