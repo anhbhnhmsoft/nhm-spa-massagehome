@@ -144,6 +144,15 @@ class User extends Authenticatable
         return $this->hasMany(ServiceBooking::class, 'user_id');
     }
 
+    /**
+     * Lấy danh sách Booking mà User này ĐẶT (với tư cách là KTV)
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function ktvBookings()
+    {
+        return $this->hasMany(ServiceBooking::class, 'ktv_user_id');
+    }
+
     public function reviewWrited()
     {
         return $this->hasMany(Review::class, 'review_by');

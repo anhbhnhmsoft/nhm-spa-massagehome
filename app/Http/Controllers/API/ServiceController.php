@@ -7,6 +7,7 @@ use App\Core\Controller\ListRequest;
 use App\Enums\ServiceDuration;
 use App\Http\Resources\Service\CategoryResource;
 use App\Http\Resources\Service\CouponResource;
+use App\Http\Resources\Service\CouponUserResource;
 use App\Http\Resources\Service\ServiceResource;
 use App\Http\Resources\User\CustomerBookedTodayResource;
 use App\Services\BookingService;
@@ -22,7 +23,9 @@ class ServiceController extends BaseController
     public function __construct(
         protected ServiceService $serviceService,
         protected BookingService $bookingService,
-    ) {}
+    )
+    {
+    }
 
     /**
      * Lấy danh sách danh mục dịch vụ
@@ -38,6 +41,7 @@ class ServiceController extends BaseController
             data: CategoryResource::collection($data)->response()->getData()
         );
     }
+
     /**
      * Lấy danh sách dịch vụ
      * @param ListRequest $request
@@ -98,7 +102,32 @@ class ServiceController extends BaseController
     }
 
 
+    /**
+     * Lấy danh sách mã giảm giá của người dùng
+     * @param ListRequest $request
+     * @return JsonResponse
+     */
+    public function myListCoupon(ListRequest $request): JsonResponse
+    {
+        $dto = $request->getFilterOptions();
+        // Lọc chỉ lấy mã giảm giá chưa được sử dụng
+        $dto->addFilter('is_used', false);
+        // Lấy toàn bộ mã giảm giá của người dùng
+        $dto->addFilter('user_id', $request->user()->id);
+
+        $result = $this->serviceService->couponUserPaginate($dto);
+
+        $data = $result->getData();
+
+        return $this->sendSuccess(
+            data: CouponUserResource::collection($data)->response()->getData()
+        );
+    }
+
+
+
     // cần queue transactions-payment để ghi nhận giao dịch
+
     /**
      * Đặt lịch hẹn dịch vụ
      * @param Request $request
@@ -145,13 +174,13 @@ class ServiceController extends BaseController
         $resultService = $this->bookingService->bookService(
             serviceId: $validate['service_id'],
             optionId: $validate['option_id'],
-            couponId: $validate['coupon_id'] ?? null,
             address: $validate['address'],
             latitude: $validate['latitude'],
             longitude: $validate['longitude'],
             bookTime: $validate['book_time'],
             note: $validate['note'] ?? null,
             noteAddress: $validate['note_address'] ?? null,
+            couponId: $validate['coupon_id'] ?? null,
         );
         if ($resultService->isError()) {
             return $this->sendError(

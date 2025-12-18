@@ -112,7 +112,7 @@ class UserController extends BaseController
         }
         $data = $result->getData();
         return $this->sendSuccess(
-            data: new ItemKTVResource($data)
+            data: new ItemKTVResource($data['ktv'], $data['break_time_gap'])
         );
     }
 

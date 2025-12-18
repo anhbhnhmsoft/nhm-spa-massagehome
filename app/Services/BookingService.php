@@ -103,13 +103,13 @@ class BookingService extends BaseService
     public function bookService(
         int             $serviceId,
         int             $optionId,
-        ?int            $couponId = null,
         string          $address,
         string          $latitude,
         string          $longitude,
         string          $bookTime,
         ?string         $note = null,
         ?string         $noteAddress = null,
+        ?int            $couponId = null,
     ): ServiceReturn {
         DB::beginTransaction();
         try {
@@ -176,9 +176,12 @@ class BookingService extends BaseService
             if ($balanceCustomer < $finalPrice) {
                 return ServiceReturn::success(
                     data: [
-                        'not_enough_money' => true,
-                        'final_price' => $finalPrice,
-                        'balance_customer' => $balanceCustomer
+                        'status' => false,
+                        'failed' => [
+                            'not_enough_money' => true,
+                            'final_price' => $finalPrice,
+                            'balance_customer' => $balanceCustomer
+                        ]
                     ],
                     message: __("booking.wallet.not_enough")
                 );
@@ -255,8 +258,7 @@ class BookingService extends BaseService
 
                 // End Mới (>) Start Cũ
                 ->where('start_time', '<', $currentBookingEndTime)
-                ->exists();
-
+                ->first();
             if ($hasOverlappingBooking) {
                 return ServiceReturn::error(
                     message: __("booking.time_slot_not_available")
@@ -307,9 +309,10 @@ class BookingService extends BaseService
 
             return ServiceReturn::success(
                 data: [
-                    'final_price' => $finalPrice,
-                    'discount_amount' => $discountAmount,
-                    'booking_id' => $booking->id
+                    'status' => true,
+                    'success' => [
+                        'booking_id' => $booking->id,
+                    ]
                 ]
             );
         } catch (ServiceException $exception) {
@@ -318,7 +321,6 @@ class BookingService extends BaseService
                 message: $exception->getMessage()
             );
         } catch (\Exception $exception) {
-            dd($exception);
             DB::rollBack();
             LogHelper::error(
                 message: "Lỗi ServiceService@bookService",
@@ -331,7 +333,7 @@ class BookingService extends BaseService
     }
 
     /**
-     * Hủy booking, trường hợp khách hàng chủ động hủy hoặc thất bại thanh toán 
+     * Hủy booking, trường hợp khách hàng chủ động hủy hoặc thất bại thanh toán
      * @param string $bookingId
      * @param BookingStatus $status
      * @return ServiceReturn
@@ -375,13 +377,37 @@ class BookingService extends BaseService
                     message: __("booking.not_found")
                 );
             }
-            $transaction = $this->walletTransactionRepository->query()->where('booking_id', $bookingId)->where('type', WalletTransactionType::PAYMENT->value)->first();
-            return ServiceReturn::success(
-                data: [
-                    'payment' => $transaction->status == WalletTransactionStatus::COMPLETED->value,
-                    'success' => $booking->status == BookingStatus::CONFIRMED->value,
-                ]
-            );
+            if ($booking->status == BookingStatus::PENDING->value) {
+                return ServiceReturn::success(
+                    data: [
+                        'status' => 'waiting',
+                    ]
+                );
+            }elseif ($booking->status == BookingStatus::CONFIRMED->value) {
+                return ServiceReturn::success(
+                    data: [
+                        'status' => 'confirmed',
+                        'data' => [
+                            'booking_id' => $booking->id,
+                            'service_name' => $booking->service->name,
+                            'date' => Carbon::make($booking->booking_time)->format('d/m/Y H:i'),
+                            'location' => $booking->address,
+                            'technician' => $booking->ktvUser->name,
+                            'total_price' => $booking->price,
+                        ]
+                    ]
+                );
+            }elseif (in_array($booking->status, [BookingStatus::CANCELED->value, BookingStatus::PAYMENT_FAILED->value])) {
+                return ServiceReturn::success(
+                    data: [
+                        'status' => 'failed',
+                    ]
+                );
+            }else{
+                return ServiceReturn::error(
+                    message: __("booking.not_found")
+                );
+            }
         } catch (\Exception $exception) {
             LogHelper::error(
                 message: "Lỗi ServiceService@checkBooking",

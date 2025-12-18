@@ -36,9 +36,10 @@ class PaymentService extends BaseService
     /**
      * Lấy ví của người dùng
      * @param int $userId
+     * @param bool $withTotal
      * @return ServiceReturn
      */
-    public function getUserWallet(int $userId): ServiceReturn
+    public function getUserWallet(int $userId, bool $withTotal = false): ServiceReturn
     {
         try {
             $wallet = $this->walletRepository->queryWallet()
@@ -49,14 +50,40 @@ class PaymentService extends BaseService
                     message: __("error.wallet_not_found")
                 );
             }
+            // Nếu không cần lấy tổng số điểm đã nạp vào ví và rút ra khỏi ví
+            if (!$withTotal) {
+                return ServiceReturn::success(
+                    data: [
+                        'wallet' => $wallet,
+                    ]
+                );
+            }
+            // Lấy tổng số điểm đã nạp vào ví
+            $totalDeposit = $this->walletTransactionRepository->queryTransaction()
+                ->where('wallet_id', $wallet->id)
+                ->whereIn('type', WalletTransactionType::statusIn())
+                ->where('status', WalletTransactionStatus::COMPLETED)
+                ->sum('point_amount');
+            // Lấy tổng số điểm đã rút ra khỏi ví
+            $totalWithdrawal = $this->walletTransactionRepository->queryTransaction()
+                ->where('wallet_id', $wallet->id)
+                ->whereIn('type', WalletTransactionType::statusOut())
+                ->where('status', WalletTransactionStatus::COMPLETED)
+                ->sum('point_amount');
+
             return ServiceReturn::success(
-                data: $wallet
+                data: [
+                    'wallet' => $wallet,
+                    'total_deposit' => $totalDeposit,
+                    'total_withdrawal' => $totalWithdrawal,
+                ]
             );
         } catch (ServiceException $exception) {
             return ServiceReturn::error(
                 message: $exception->getMessage()
             );
         } catch (\Exception $exception) {
+            dd($exception);
             LogHelper::error(
                 message: "Lỗi PaymentService@getUserWallet",
                 ex: $exception
@@ -220,7 +247,7 @@ class PaymentService extends BaseService
                     $transaction->update([
                         'metadata' => json_encode($payosResponse),
                     ]);
-                    
+
                     // Bắn notif cho người dùng khi tạo transaction
                     SendNotificationJob::dispatch(
                         userId: $user->id,

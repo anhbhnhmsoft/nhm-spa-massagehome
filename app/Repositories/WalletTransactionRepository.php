@@ -21,8 +21,8 @@ class WalletTransactionRepository extends BaseRepository
 
     public function filterQuery(Builder $query, array $filters): Builder
     {
-        if (isset($filters['user_id'])) {
-            $query->where('user_id', $filters['user_id']);
+        if (isset($filters['wallet_id'])) {
+            $query->where('wallet_id', $filters['wallet_id']);
         }
         if (isset($filters['type'])) {
             $query->where('type', $filters['type']);

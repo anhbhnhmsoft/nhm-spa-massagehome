@@ -31,6 +31,7 @@ class PaymentController extends BaseController
     {
         $resService = $this->paymentService->getUserWallet(
             userId: Auth::id(),
+            withTotal: true,
         );
         if ($resService->isError()) {
             return $this->sendError(
@@ -39,7 +40,11 @@ class PaymentController extends BaseController
         }
         $data = $resService->getData();
         return $this->sendSuccess(
-            data: new WalletResource($data),
+            data: new WalletResource(
+                resource: $data['wallet'],
+                totalDeposit: $data['total_deposit'],
+                totalWithdrawal: $data['total_withdrawal'],
+            ),
         );
     }
 
@@ -54,7 +59,7 @@ class PaymentController extends BaseController
                 message: $walletRes->getMessage(),
             );
         }
-        $dto->addFilter('wallet_id', $walletRes->getData()->id);
+        $dto->addFilter('wallet_id', $walletRes->getData()['wallet']->id);
         $resService = $this->paymentService->transactionPagination($dto);
         if ($resService->isError()) {
             return $this->sendError(

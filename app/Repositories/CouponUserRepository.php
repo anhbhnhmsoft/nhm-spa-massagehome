@@ -14,10 +14,20 @@ class CouponUserRepository extends BaseRepository
     {
         return CouponUser::class;
     }
+    public function queryCouponUser(): Builder
+    {
+        return $this->model->query()
+            ->with(['coupon']);
+    }
 
     public function filterQuery(Builder $query, array $filters): Builder
     {
-
+        if (isset($filters['user_id'])) {
+            $query->where('user_id', $filters['user_id']);
+        }
+        if (isset($filters['is_used'])) {
+            $query->where('is_used', $filters['is_used']);
+        }
         return $query;
     }
 

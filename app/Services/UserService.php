@@ -10,6 +10,7 @@ use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
 use App\Enums\BookingStatus;
+use App\Enums\ConfigName;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserFileType;
 use App\Enums\UserRole;
@@ -37,7 +38,8 @@ class UserService extends BaseService
         protected WalletRepository $walletRepository,
         protected UserAddressRepository $userAddressRepository,
         protected BookingRepository $bookingRepository,
-        protected CouponUserRepository $couponUserRepository
+        protected CouponUserRepository $couponUserRepository,
+        protected ConfigService $configService
     ) {
         parent::__construct();
     }
@@ -139,6 +141,13 @@ class UserService extends BaseService
     public function getKtvById(int $id): ServiceReturn
     {
         try {
+            $breakTimeGapReturn = $this->configService->getConfig(ConfigName::BREAK_TIME_GAP);
+            if ($breakTimeGapReturn->isError()) {
+                return ServiceReturn::error(
+                    message: __("booking.break_time_gap.not_found")
+                );
+            }
+            $breakTimeGap = $breakTimeGapReturn->getData();
             $ktv = $this->userRepository->queryKTV()
                 ->with([
                     'files' => function ($query) {
@@ -149,6 +158,12 @@ class UserService extends BaseService
                         $query->where('hidden', false)
                             ->latest('created_at')
                             ->limit(1);
+                    },
+                    // Lấy lịch hẹn cuối cùng mà KTV này thực hiện hoặc đang diễn ra
+                    'ktvBookings' => function ($query) {
+                        $query->whereIn('status', [BookingStatus::CONFIRMED->value, BookingStatus::ONGOING->value])
+                            ->latest('booking_time')
+                            ->limit(1);
                     }
                 ])
                 ->find($id);
@@ -158,7 +173,10 @@ class UserService extends BaseService
                 );
             }
             return ServiceReturn::success(
-                data: $ktv
+                data: [
+                    'ktv' => $ktv,
+                    'break_time_gap' => $breakTimeGap['config_value'],
+                ]
             );
         } catch (\Exception $exception) {
             LogHelper::error(

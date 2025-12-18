@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Repositories\BookingRepository;
 use App\Repositories\CategoryRepository;
 use App\Repositories\CouponRepository;
+use App\Repositories\CouponUserRepository;
 use App\Repositories\ServiceRepository;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
@@ -27,6 +28,7 @@ class ServiceService extends BaseService
         protected CategoryRepository $categoryRepository,
         protected CouponRepository   $couponRepository,
         protected BookingRepository  $bookingRepository,
+        protected CouponUserRepository $couponUserRepository,
     ) {
         parent::__construct();
     }
@@ -218,6 +220,32 @@ class ServiceService extends BaseService
         }
     }
 
+
+    public function couponUserPaginate(FilterDTO $dto): ServiceReturn
+    {
+        try {
+            $query = $this->couponUserRepository->queryCouponUser();
+            $query = $this->couponUserRepository->filterQuery($query, $dto->filters);
+            $query = $this->couponUserRepository->sortQuery($query, $dto->sortBy, $dto->direction);
+            $paginate = $query->paginate(
+                perPage: $dto->perPage,
+                page: $dto->page
+            );
+            return ServiceReturn::success(
+                data: $paginate
+            );
+        } catch (\Exception $exception) {
+            LogHelper::error("Lỗi ServiceService@couponUserPaginate", $exception);
+            return ServiceReturn::success(
+                data: new LengthAwarePaginator(
+                    items: [],
+                    total: 0,
+                    perPage: $dto->perPage,
+                    currentPage: $dto->page
+                )
+            );
+        }
+    }
     /**
      * Lấy danh sách khách hàng đã đặt lịch trong ngày hôm nay
      * @param string $ktvUserId

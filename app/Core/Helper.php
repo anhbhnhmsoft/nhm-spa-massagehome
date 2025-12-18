@@ -6,6 +6,7 @@ use App\Enums\Language;
 use App\Enums\PaymentType;
 use App\Enums\UserRole;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 final class Helper
@@ -99,5 +100,15 @@ final class Helper
     public static function isMobileDevice($userAgent)
     {
         return preg_match('/(android|iphone|ipad|mobile)/i', $userAgent);
+    }
+
+    /**
+     * Lấy URL công khai cho tệp tin.
+     * @param string $path
+     * @return string
+     */
+    public static function getPublicUrl(string $path): string
+    {
+        return Storage::disk('public')->url($path);
     }
 }

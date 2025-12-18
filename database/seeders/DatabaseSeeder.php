@@ -343,7 +343,7 @@ class DatabaseSeeder extends Seeder
             Config::query()->updateOrCreate(
                 ['config_key' => ConfigName::BREAK_TIME_GAP->value],
                 [
-                    'config_value' => '15',
+                    'config_value' => '60',
                     'config_type' => ConfigType::NUMBER->value,
                     'description' => 'Khoảng cách giữa 2 lần phục vụ của kỹ thuật viên tính bằng phút',
                 ]

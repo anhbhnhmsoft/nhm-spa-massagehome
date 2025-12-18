@@ -23,7 +23,10 @@ class BookingRepository extends BaseRepository
         return $this->model->query()
             ->with([
                 'user',
-                'service'
+                'user.profile',
+                'service',
+                'ktvUser',
+                'ktvUser.profile',
             ]);
     }
 
