@@ -170,4 +170,12 @@ class User extends Authenticatable
             ->withPivot('is_used') // Lấy thêm cột is_used từ bảng trung gian
             ->withTimestamps();     // Nếu bảng coupon_users có created_at/updated_at
     }
+
+    /**
+     * Lấy danh sách Affiliate Record
+     */
+    public function affiliateRecords()
+    {
+        return $this->hasMany(AffiliateLink::class, 'referred_user_id');
+    }
 }
