@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\API;
 
 use App\Core\Controller\BaseController;
+use App\Core\Controller\ListRequest;
+use App\Http\Resources\Auth\AffiliateUserResource;
 use App\Jobs\SigninAffiliateHandleJob; // Vẫn cần dùng Job cho Match
 use App\Services\AffiliateService;
 use Illuminate\Http\JsonResponse;
@@ -53,6 +55,22 @@ class AffiliateController extends BaseController
         return $this->sendSuccess(
             data: $resutl->getData(),
             message: $resutl->getMessage()
+        );
+    }
+
+    public function listReffered(ListRequest $request): JsonResponse
+    {
+
+        $dto = $request->getFilterOptions();
+        $dto->addFilter('user_id', Auth::user()->id);
+        $result = $this->affiliateService->listAffiliateReffered($dto);
+        if (!$result->isSuccess()) {
+            return $this->sendError(
+                message: $result->getMessage()
+            );
+        }
+        return $this->sendSuccess(
+            data: AffiliateUserResource::collection($result->getData())->response()->getData(true),
         );
     }
 }

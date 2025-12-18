@@ -126,7 +126,7 @@ Route::middleware('set-api-locale')->group(function () {
 
         /**
          * router cần auth
-        */
+         */
         Route::middleware(['auth:sanctum'])->group(function () {
             // Đặt lịch dịch vụ
             Route::post('booking', [ServiceController::class, 'booking']);
@@ -186,6 +186,7 @@ Route::middleware('set-api-locale')->group(function () {
 
     Route::prefix('affiliate')->group(function () {
         Route::get('match', [AffiliateController::class, 'matchAffiliate']);
+        Route::middleware('auth:sanctum')->get('list-reffered', [AffiliateController::class, 'listReffered']);
     });
 
     Route::prefix('commercial')->group(function () {

@@ -3,6 +3,7 @@
 
 namespace App\Services;
 
+use App\Core\Controller\FilterDTO;
 use App\Core\LogHelper;
 use App\Core\Service\BaseService;
 use App\Core\Service\ServiceReturn;
@@ -10,6 +11,7 @@ use App\Repositories\AffiliateLinkRepository;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\DB;
 use Exception;
+use Illuminate\Support\Facades\Auth;
 
 class AffiliateService extends BaseService
 {
@@ -110,6 +112,39 @@ class AffiliateService extends BaseService
         } catch (Exception $e) {
             LogHelper::error(
                 message: "Lỗi AffiliateService@signinAffiliate",
+                ex: $e
+            );
+            return ServiceReturn::error(
+                message: $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * Lấy danh sách người người được giới thiệu liên quan đến bảnt thân
+     * @param FilterDTO $dto
+     * @return ServiceReturn
+     */
+    public function listAffiliateReffered(FilterDTO $dto): ServiceReturn
+    {
+
+        try {
+            $userId = Auth::user()->id;
+            $list = $this->userRepository->query()
+                ->where('referred_by_user_id', $userId)
+                ->with(['affiliateRecords' => function ($query) {
+                    $query->where('is_matched', true);
+                }])
+                ->paginate(
+                    perPage: $dto->perPage,
+                    page: $dto->page
+                );
+            return ServiceReturn::success(
+                data: $list
+            );
+        } catch (Exception $e) {
+            LogHelper::error(
+                message: "Lỗi AffiliateService@listAffiliateReffered",
                 ex: $e
             );
             return ServiceReturn::error(
