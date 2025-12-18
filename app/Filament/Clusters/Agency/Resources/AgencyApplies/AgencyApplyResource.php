@@ -58,7 +58,7 @@ class AgencyApplyResource extends Resource
     {
         $query = parent::getEloquentQuery();
 
-        $query->where('role', UserRole::AGENCY->value)
+        $query->whereIn('role', [UserRole::AGENCY->value, UserRole::CUSTOMER->value])
             ->with('reviewApplication', 'files')
             ->whereRelation('reviewApplication', 'status','!=', ReviewApplicationStatus::APPROVED->value);
 

@@ -392,6 +392,87 @@ class UserService extends BaseService
         }
     }
 
+    /**
+     * Đăng ký làm đối tác cho user hiện tại (không tạo user mới).
+     * - Tạo hoặc cập nhật bản ghi review_application với trạng thái CHỜ DUYỆT.
+     * - Gắn các file hồ sơ vào user hiện tại.
+     *
+     * @param array $data
+     * @return ServiceReturn
+     */
+    public function applyPartnerForCurrentUser(array $data): ServiceReturn
+    {
+        try {
+            DB::beginTransaction();
+
+            /** @var \App\Models\User $user */
+            $user = Auth::user();
+            if (!$user) {
+                throw new ServiceException(
+                    message: __("common_error.unauthenticated")
+                );
+            }
+
+            // Cập nhật tên nếu có truyền lên
+            if (!empty($data['name'])) {
+                $user->name = $data['name'];
+                $user->save();
+            }
+
+            if (!empty($data['apply_role'])) {
+                LogHelper::debug("User {$user->id} is applying for role: " . $data['apply_role']);
+            }
+
+            $reviewData = [
+                'user_id'          => $user->id,
+                'agency_id'        => optional($data['reviewApplication'])['agency_id'] ?? null,
+                'status'           => ReviewApplicationStatus::PENDING->value,
+                'province_code'    => optional($data['reviewApplication'])['province_code'] ?? null,
+                'address'          => optional($data['reviewApplication'])['address'] ?? null,
+                'application_date' => now(),
+                'bio'              => optional($data['reviewApplication'])['bio'] ?? null,
+            ];
+
+            $existingReview = $this->userReviewApplicationRepository
+                ->query()
+                ->where('user_id', $user->id)
+                ->first();
+
+            if ($existingReview) {
+                $existingReview->update($reviewData);
+            } else {
+                $this->userReviewApplicationRepository->create($reviewData);
+            }
+
+            if (!empty($data['files']) && is_array($data['files'])) {
+                foreach ($data['files'] as $file) {
+                    $this->userFileRepository->create([
+                        'user_id'   => $user->id,
+                        'type'      => optional($file)['type'] ?? null,
+                        'file_path' => optional($file)['file_path'] ?? null,
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            return ServiceReturn::success(
+                data: $user->load('reviewApplication', 'files'),
+                message: __("common.success.data_created")
+            );
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            LogHelper::error(
+                message: "Lỗi UserService@applyPartnerForCurrentUser",
+                ex: $exception
+            );
+
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        }
+    }
+
     public function makeNewApplyAgency(array $data)
     {
         DB::beginTransaction();
