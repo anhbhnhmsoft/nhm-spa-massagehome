@@ -141,8 +141,7 @@ class ServiceService extends BaseService
             return ServiceReturn::error(
                 message: $exception->getMessage()
             );
-        }
-        catch (\Exception $exception) {
+        } catch (\Exception $exception) {
             LogHelper::error(
                 message: "Lỗi ServiceService@getDetailService",
                 ex: $exception
@@ -179,40 +178,39 @@ class ServiceService extends BaseService
             $query = $this->couponRepository->filterQuery($query, $dto->filters);
             $query = $this->couponRepository->sortQuery($query, $dto->sortBy, $dto->direction);
 
+            $query->where(function ($q) use ($currentTime) {
+                $q->whereRaw("(config->'allowed_time_slots') IS NULL")
+                    ->orWhereRaw("jsonb_array_length(config->'allowed_time_slots') = 0")
+                    ->orWhereRaw("EXISTS (
+                        SELECT 1 FROM jsonb_array_elements(config->'allowed_time_slots') AS slot
+                        WHERE ? >= (slot->>'start') AND ? <= (slot->>'end')
+                    )", [$currentTime, $currentTime]);
+            });
+
+            $query = $this->couponRepository->sortQuery($query, $dto->sortBy, $dto->direction);
             $coupons = $query->get();
-            // 3. Xử lý Time Slots & Daily Limits
-            $filteredCoupons = $coupons->filter(function ($coupon) use ($ownedCouponIds, $currentTime, $today) {
-                $config = $coupon->config ?? [];
+
+            // 3. Lọc lượt nhặt trong ngày (Daily Limit)
+            $validCoupons = $coupons->filter(function ($coupon) use ($ownedCouponIds, $today) {
                 $isOwned = in_array($coupon->id, $ownedCouponIds);
 
-                // A. Kiểm tra Khung giờ(allowed_time_slots)
-                $slots = $config['allowed_time_slots'] ?? [];
-                if (!empty($slots)) {
-                    $inSlot = false;
-                    foreach ($slots as $slot) {
-                        if ($currentTime >= ($slot['start'] ?? '00:00') && $currentTime <= ($slot['end'] ?? '23:59')) {
-                            $inSlot = true;
-                            break;
-                        }
-                    }
-                    if (!$inSlot) return false; // Không nằm trong khung giờ cho phép sử dụng/hiển thị
-                }
+                // Đánh dấu trạng thái
+                $coupon->is_owned = $isOwned;
 
-                // B. Kiểm tra giới hạn thu thập theo ngày (Nếu chưa sở hữu)
-                if (!$isOwned) {
-                    $collectLimit = $config['per_day_global'] ?? 0; // Giới hạn thu thập/ngày
-                    $currentCollected = $config['daily_collected'][$today] ?? 0;
+                // Nếu ĐÃ sở hữu: Hiển thị luôn (vì thỏa mãn time_slot ở bước SQL rồi)
+                if ($isOwned) return true;
 
-                    if ($collectLimit > 0 && $currentCollected >= $collectLimit) {
-                        return false; // Hết lượt thu thập hôm nay
-                    }
-                }
+                // Nếu CHƯA sở hữu: Kiểm tra xem hôm nay còn lượt nhặt không
+                $config = $coupon->config ?? [];
+                $limit = (int) ($config['per_day_global'] ?? 0);
+                $currentCount = (int) ($config['daily_collected'][$today] ?? 0);
 
-                return true;
+                // Nếu có đặt giới hạn và đã đạt giới hạn thì ẩn đi (không cho nhặt nữa)
+                return !($limit > 0 && $currentCount >= $limit);
             });
 
             return ServiceReturn::success(
-                data: $filteredCoupons->values()
+                data: $validCoupons->values()
             );
         } catch (\Exception $exception) {
             LogHelper::error("Lỗi ServiceService@getListCoupon", $exception);

@@ -14,6 +14,7 @@ enum NotificationType: int
     case WALLET_DEPOSIT = 5;
     case WALLET_WITHDRAW = 6;
     case CHAT_MESSAGE = 7;
+    case TECHNICIAN_WALLET_NOT_ENOUGH = 8;
 }
 
 

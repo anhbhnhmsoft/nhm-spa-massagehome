@@ -195,7 +195,7 @@ return new class extends Migration
                 ->default(true)->comment('Trạng thái kích hoạt');
             $table->json('banners')->nullable()->comment('Danh sách banner đa ngôn ngữ');
             $table->boolean('display_ads')->default(true)->comment('Hiển thị quảng cáo ở homepage');
-            $table->json('config')->nullable()->comment('Cấu hình điều kiện sử dụng');
+            $table->jsonb('config')->nullable()->comment('Cấu hình điều kiện sử dụng');
             $table->softDeletes();
             $table->timestamps();
             $table->unique(['code', 'created_by']);
@@ -298,18 +298,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('affiliate_registrations', function (Blueprint $table) {
-            $table->id();
-            $table->bigInteger('user_id');
-            $table->smallInteger('status');
-            $table->text('note')->nullable();
-            $table->timestamp('processed_at')->nullable();
-            $table->softDeletes();
-            $table->timestamps();
-
-            $table->foreign('user_id')->references('id')->on('users');
-        });
-
         Schema::create('affiliate_configs', function (Blueprint $table) {
             $table->comment('Bảng affiliate_configs lưu trữ thông tin cấu hình Affiliate');
             $table->id();
@@ -322,24 +310,6 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->softDeletes();
             $table->timestamps();
-        });
-
-        Schema::create('affiliate_earnings', function (Blueprint $table) {
-            $table->comment('Bảng affiliate_earnings lưu trữ thông tin doanh thu Affiliate');
-            $table->id();
-            $table->bigInteger('affiliate_user_id');
-            $table->bigInteger('referred_user_id');
-            $table->bigInteger('transaction_id');
-            $table->decimal('commission_amount', 15, 2);
-            $table->decimal('commission_rate', 5, 2);
-            $table->smallInteger('status');
-            $table->timestamp('processed_at')->nullable();
-            $table->softDeletes();
-            $table->timestamps();
-
-            $table->foreign('affiliate_user_id')->references('id')->on('users');
-            $table->foreign('referred_user_id')->references('id')->on('users');
-            $table->foreign('transaction_id')->references('id')->on('wallet_transactions');
         });
 
         Schema::create('affiliate_links', function (Blueprint $table) {
@@ -508,9 +478,8 @@ return new class extends Migration
             'user_devices',
             'configs',
             'reviews',
-            'affiliate_earnings',
+            'affiliate_links',
             'affiliate_configs',
-            'affiliate_registrations',
             'wallet_transactions',
             'wallets',
             'service_bookings',

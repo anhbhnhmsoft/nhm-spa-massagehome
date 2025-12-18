@@ -208,17 +208,20 @@ class BookingService extends BaseService
                 $discountTechnician = ($priceBeforeDiscount * $rate) / 100;
 
                 if ($balanceTechnician < $discountTechnician) {
+                    SendNotificationJob::dispatch(
+                        userId: $user->id,
+                        type: NotificationType::BOOKING_CONFIRMED,
+                        data: [
+                            'booking_time' => Carbon::parse($bookTime)->format('Y-m-d H:i:s'),
+                            'price' => $finalPrice,
+                        ]
+                    );
                     // Nếu Kỹ thuật viên không đủ tiền chiết khấu (để hệ thống lấy lại)
                     return ServiceReturn::error(
                         message: __("booking.wallet.tech_not_enough")
                     );
-
-                    /**
-                     * Cần bổ sung logic gửi thông báo nạp ví cho kỹ thuật viên
-                     */
                 }
             }
-            // ...
             // Lấy thời gian nghỉ giữa 2 lần phục vụ của kỹ thuật viên
             // Giả định config_value là số phút
             $breakTimeGap = 0;
@@ -235,30 +238,40 @@ class BookingService extends BaseService
             // Lấy giá trị break time (phút)
             $breakTimeGapMinutes = (int) $breakTimeGapReturn->getData();
 
-            // Kiểm tra logic thời gian đặt có hợp lệ không
-            $durationMinutes = $serviceOption->duration; // duration tính bằng phút
-            $currentBookingStartTime = Carbon::parse($bookTime); // Thời gian đặt lịch (Start A)
+            // 1. Chuẩn bị dữ liệu thời gian
+            $durationMinutes = (int) $serviceOption->duration;
+            $currentBookingStartTime = Carbon::parse($bookTime); // Start A
 
-            // Tính thời gian kết thúc TOÀN BỘ (Dịch vụ + Thời gian nghỉ) cho booking mới (End A)
-            $currentBookingEndTime = $currentBookingStartTime
-                ->copy()
+            // Thời gian kết thúc dự kiến của booking đang đặt (End A = Start A + Duration + Break)
+            $currentBookingEndTime = $currentBookingStartTime->copy()
                 ->addMinutes($durationMinutes)
                 ->addMinutes($breakTimeGapMinutes);
 
-            // --- Kiểm tra trùng lặp theo Kỹ thuật viên (Technician) ---
-            $technicianId = $service->user_id;
+            // 2. Định nghĩa khung thời gian tìm kiếm (±3 tiếng)
+            $searchWindowStart = $currentBookingStartTime->copy()->subHours(3);
+            $searchWindowEnd = $currentBookingStartTime->copy()->addHours(3);
 
+            // 3. Truy vấn kiểm tra trùng lặp
             $hasOverlappingBooking = $this->bookingRepository->query()
-                // booking_time của booking cũ (Start B) + duration (phút) + breakTimeGap (phút) > currentBookingStartTime (Start A)
-                ->whereHas('service', function ($q) use ($technicianId) {
-                    $q->where('user_id', $technicianId);
+                ->where('ktv_user_id', $service->user_id)
+                ->whereDate('booking_time', $currentBookingStartTime->toDateString())
+                ->whereBetween('booking_time', [$searchWindowStart, $searchWindowEnd])
+                ->whereNotIn('status', [BookingStatus::CANCELED->value])
+                ->where(function ($q) use ($currentBookingStartTime, $currentBookingEndTime, $breakTimeGapMinutes) {
+                    /**
+                     * booking_time + (duration * INTERVAL '1 minute') + (? * INTERVAL '1 minute')
+                     */
+                    $q->where(function ($inner) use ($currentBookingStartTime, $breakTimeGapMinutes) {
+                        // StartA < EndB (Thời gian bắt đầu mới < Thời gian kết thúc dự kiến cũ)
+                        $inner->whereRaw(
+                            "booking_time + (duration + ?) * INTERVAL '1 minute' > ?", 
+                            [$breakTimeGapMinutes, $currentBookingStartTime]
+                        );
+                    })
+                    ->where('booking_time', '<', $currentBookingEndTime); // EndA > StartB
                 })
-                // Start Mới (<) End Cũ
-                ->where('end_time', '>', $currentBookingStartTime)
-
-                // End Mới (>) Start Cũ
-                ->where('start_time', '<', $currentBookingEndTime)
                 ->first();
+
             if ($hasOverlappingBooking) {
                 return ServiceReturn::error(
                     message: __("booking.time_slot_not_available")
@@ -271,8 +284,8 @@ class BookingService extends BaseService
                 'coupon_id' => $couponId,
                 'duration' => $durationMinutes,
                 'booking_time' => $currentBookingStartTime,
-                'start_time' => $currentBookingStartTime,
-                'end_time' => $currentBookingEndTime,
+                'start_time' => null,
+                'end_time' => null,
                 'status' => BookingStatus::PENDING->value,
                 'price' => $finalPrice,
                 'price_before_discount' => $priceBeforeDiscount,
@@ -283,13 +296,13 @@ class BookingService extends BaseService
                 'longitude' => $longitude ?? 0,
                 'service_option_id' => $optionId,
                 'note_address' => $noteAddress ?? '',
-                'ktv_user_id' => $technicianId,
+                'ktv_user_id' => $service->user_id,
             ]);
 
             // Bắn notif cho người dùng khi đặt lịch thành công
             SendNotificationJob::dispatch(
                 userId: $user->id,
-                type: NotificationType::BOOKING_CONFIRMED,
+                type: NotificationType::TECHNICIAN_WALLET_NOT_ENOUGH,
                 data: [
                     'booking_id' => $booking->id,
                     'service_id' => $service->id,
@@ -300,7 +313,6 @@ class BookingService extends BaseService
 
             DB::commit();
 
-            // cần bổ sung action thông báo từ số dư của khách hàng
             // xử lý giao dịch, ghi lại lịch sử dùng coupon, tính phí affiliate, chiết khấu cho nhà cung cấp
             WalletTransactionBookingJob::dispatch($booking->id, $couponId, $user->id, $serviceId);
 
@@ -397,7 +409,7 @@ class BookingService extends BaseService
                         ]
                     ]
                 );
-            }elseif (in_array($booking->status, [BookingStatus::CANCELED->value, BookingStatus::PAYMENT_FAILED->value])) {
+            } elseif (in_array($booking->status, [BookingStatus::CANCELED->value, BookingStatus::PAYMENT_FAILED->value])) {
                 return ServiceReturn::success(
                     data: [
                         'status' => 'failed',
