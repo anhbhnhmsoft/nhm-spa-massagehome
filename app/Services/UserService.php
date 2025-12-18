@@ -401,8 +401,13 @@ class UserService extends BaseService
                 $user->save();
             }
 
+            if (!empty($data['apply_role'])) {
+                LogHelper::debug("User {$user->id} is applying for role: " . $data['apply_role']);
+            }
+
             $reviewData = [
                 'user_id'          => $user->id,
+                'agency_id'        => optional($data['reviewApplication'])['agency_id'] ?? null,
                 'status'           => ReviewApplicationStatus::PENDING->value,
                 'province_code'    => optional($data['reviewApplication'])['province_code'] ?? null,
                 'address'          => optional($data['reviewApplication'])['address'] ?? null,

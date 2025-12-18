@@ -88,6 +88,8 @@ class UserController extends BaseController
     {
         $validator = Validator::make($request->all(), [
             'name' => ['nullable', 'string', 'max:255'],
+            'apply_role' => ['nullable', 'string', 'max:50'],
+            'reviewApplication.agency_id' => ['nullable', 'integer', 'exists:users,id'],
             'reviewApplication.province_code' => ['nullable', 'string', 'max:50', 'exists:provinces,code'],
             'reviewApplication.address' => ['nullable', 'string', 'max:255'],
             'reviewApplication.bio' => ['nullable', 'string'],
