@@ -103,6 +103,9 @@ Route::middleware('set-api-locale')->group(function () {
         Route::middleware(['auth:sanctum'])->group(function () {
             // Lấy thông tin chi tiết hồ sơ người dùng
             Route::get('dashboard-profile', [UserController::class, 'dashboardProfile']);
+
+            // User hiện tại đăng ký làm đối tác
+            Route::post('apply-partner', [UserController::class, 'applyPartner'])->middleware(['throttle:5,1']);
         });
     });
 
@@ -131,17 +134,20 @@ Route::middleware('set-api-locale')->group(function () {
             Route::get('today-booked/{id}', [ServiceController::class, 'getTodayBookedCustomers'])->where('id', '[0-9]+');
             // Lấy danh sách mã giảm giá
             Route::get('list-coupon', [ServiceController::class, 'listCoupon']);
+            // Lấy danh sách mã giảm giá của người dùng
+            Route::get('my-list-coupon', [ServiceController::class, 'myListCoupon']);
+
         });
     });
 
     Route::prefix('booking')->group(function () {
+        // router cần auth
         Route::middleware(['auth:sanctum'])->group(function () {
+            // Lấy danh sách lịch đặt
             Route::get('list', [BookingController::class, 'listBooking']);
+            // kiểm tra trạng thái booking
+            Route::get('{bookingId}', [BookingController::class, 'checkBooking']);
         });
-
-        // kiểm tra trạng thái booking
-
-        Route::get('{bookingId}', [BookingController::class, 'checkBooking']);
     });
 
     Route::prefix('payment')->group(function () {

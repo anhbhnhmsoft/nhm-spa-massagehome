@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class CouponUser extends Model
 {
     protected $table = 'coupon_users';
-    
+
     protected $fillable = [
         'coupon_id',
         'user_id',
@@ -15,6 +15,9 @@ class CouponUser extends Model
     ];
 
     protected $casts = [
+        'id' => 'string',
+        'coupon_id' => 'string',
+        'user_id' => 'string',
         'is_used' => 'boolean',
     ];
 

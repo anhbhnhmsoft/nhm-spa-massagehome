@@ -271,7 +271,6 @@ class LocationService  extends BaseService
             if (empty($places)) {
                 return ServiceReturn::success();
             }
-            LogHelper::error("LocationService@processCachingPlace", null, ['places' => $places]);
             $updateColumn = [
                 'formatted_address',
                 'keyword',
@@ -291,7 +290,6 @@ class LocationService  extends BaseService
 
                 return $place;
             })->toArray();
-            LogHelper::error("LocationService@processCachingPlace", null, ['places' => $preparedPlaces]);
             $this->geoCachingPlaceRepository->query()->upsert($preparedPlaces, 'place_id', $updateColumn);
 
             return ServiceReturn::success();
