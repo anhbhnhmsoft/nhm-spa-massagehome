@@ -82,6 +82,46 @@ class UserController extends BaseController
     }
 
     /**
+     * User hiện tại đăng ký làm đối tác (tạo hồ sơ chờ duyệt).
+     */
+    public function applyPartner(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => ['nullable', 'string', 'max:255'],
+            'reviewApplication.province_code' => ['nullable', 'string', 'max:50', 'exists:provinces,code'],
+            'reviewApplication.address' => ['nullable', 'string', 'max:255'],
+            'reviewApplication.bio' => ['nullable', 'string'],
+            'files' => ['nullable', 'array'],
+            'files.*.type' => ['nullable', 'integer'],
+            'files.*.file_path' => ['required_with:files.*', 'string'],
+        ], [
+            'reviewApplication.province_code.exists' => __('validation.exists', ['attribute' => 'province_code']),
+            'files.*.file_path.required_with' => __('validation.required', ['attribute' => 'file_path']),
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendValidation(
+                message: __('validation.error'),
+                errors: $validator->errors()->toArray()
+            );
+        }
+
+        $data = $validator->validated();
+        $result = $this->userService->applyPartnerForCurrentUser($data);
+
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage(),
+            );
+        }
+
+        return $this->sendSuccess(
+            data: $result->getData(),
+            message: $result->getMessage() ?? __('common.success.data_created')
+        );
+    }
+
+    /**
      * Lấy danh sách KTV
      * @param ListRequest $request
      * @return JsonResponse

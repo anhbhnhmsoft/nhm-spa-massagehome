@@ -103,6 +103,9 @@ Route::middleware('set-api-locale')->group(function () {
         Route::middleware(['auth:sanctum'])->group(function () {
             // Lấy thông tin chi tiết hồ sơ người dùng
             Route::get('dashboard-profile', [UserController::class, 'dashboardProfile']);
+
+            // User hiện tại đăng ký làm đối tác
+            Route::post('apply-partner', [UserController::class, 'applyPartner'])->middleware(['throttle:5,1']);
         });
     });
 
