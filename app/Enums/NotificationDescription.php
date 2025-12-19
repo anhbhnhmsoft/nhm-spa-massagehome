@@ -17,6 +17,7 @@ enum NotificationDescription: int
     case WALLET_DEPOSIT = 5;
     case WALLET_WITHDRAW = 6;
     case CHAT_MESSAGE = 7;
+    case TECHNICIAN_WALLET_NOT_ENOUGH = 8;
 
     /**
      * Convert từ NotificationType sang NotificationDescription
@@ -67,6 +68,11 @@ enum NotificationDescription: int
                 'en' => 'You have a new message',
                 'cn' => '您有新消息',
             ],
+            self::TECHNICIAN_WALLET_NOT_ENOUGH => [
+                'vi' => 'Ví của bạn không đủ số dư để nhận lịch hẹn',
+                'en' => 'Your wallet is not enough to receive the appointment',
+                'cn' => '您的钱包余额不足，无法接收预约',
+            ]
         };
     }
 
@@ -119,6 +125,11 @@ enum NotificationDescription: int
                 'vi' => 'Tin nhắn mới',
                 'en' => 'New message',
                 'cn' => '新消息',
+            ],
+            self::TECHNICIAN_WALLET_NOT_ENOUGH => [
+                'vi' => 'Không đủ số dư',
+                'en' => 'Not enough balance',
+                'cn' => '余额不足',
             ],
         };
     }

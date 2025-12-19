@@ -66,7 +66,7 @@ class WalletService extends BaseService
             $this->walletTransactionRepository->create([
                 'wallet_id' => $walletCustomer->id,
                 'foreign_key' => $bookingId,
-                'money_amount' => $booking->price,
+                'money_amount' => $booking->price * $exchangeRate,
                 'exchange_rate_point' => $exchangeRate,
                 'point_amount' => $booking->price,
                 'balance_after' => $walletCustomer->balance,
@@ -85,7 +85,7 @@ class WalletService extends BaseService
             $this->walletTransactionRepository->create([
                 'wallet_id' => $walletTechnician->id,
                 'foreign_key' => $bookingId,
-                'money_amount' => $booking->price,
+                'money_amount' => $booking->price * $exchangeRate,
                 'exchange_rate_point' => $exchangeRate,
                 'point_amount' => $booking->price,
                 'balance_after' => $walletTechnician->balance,
@@ -93,7 +93,7 @@ class WalletService extends BaseService
                 'status' => WalletTransactionStatus::PENDING->value,
                 'transaction_code' => Helper::createDescPayment(PaymentType::BY_POINTS),
                 'description' => __('booking.payment.wallet_technician'),
-                'expired_at' => now()
+                'expired_at' => now()->addMinutes($booking->duration + 120)
             ]);
 
             $booking->status = BookingStatus::CONFIRMED->value;

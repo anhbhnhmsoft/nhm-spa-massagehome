@@ -191,21 +191,6 @@
     - softDeletes
     - timestamps
 
-# affiliate_registrations
-    # note
-    - Bảng affiliate_registrations lưu trữ đơn đăng ký tham gia chương trình Affiliate của người dùng.
-
-    # relations
-
-    # cấu trúc
-    - id (bigint, primary key, auto-increment)
-    - user_id (bigint, foreign key to users.id) -- id người dùng
-    - status (smallint) -- trạng thái đăng ký (trong enum AffiliateRegistrationStatus)
-    - note (text, nullable) -- ghi chú
-    - processed_at (timestamp, nullable) -- thời gian xử lý duyệt đơn hoặc từ chối
-    - softDeletes
-    - timestamps
-
 # affiliate_configs
     # note
     - Bảng affiliate_configs lưu trữ thông tin cấu hình chương trình Affiliate.
@@ -224,21 +209,20 @@
     - softDeletes
     - timestamps
 
-# affiliate_earnings
+# affiliate_links
     # note
-    - Bảng affiliate_earnings lưu trữ thông tin hoa hồng kiếm được từ chương trình Affiliate.
+    - Bảng affiliate_links lưu trữ thông tin liên kết Affiliate.
 
     # relations
 
     # cấu trúc
     - id (bigint, primary key, auto-increment)
-    - affiliate_user_id (bigint, foreign key to users.id) -- id người dùng affiliate
-    - referred_user_id (bigint, foreign key to users.id) -- id người dùng đã phát sinh giao dịch
-    - transaction_id (bigint, foreign key to wallet_transactions.id) -- id giao dịch phát sinh hoa hồng
-    - commission_amount (decimal(15,2)) -- số tiền hoa hồng kiếm được
-    - commission_rate (decimal(5,2)) -- tỷ lệ hoa hồng (%) lúc được áp dụng
-    - status (smallint) -- trạng thái hoa hồng (trong enum AffiliateEarningStatus)
-    - processed_at (timestamp, nullable) -- thời gian xử lý hoa hồng (nhận hoặc từ chối)
+    - client_ip (varchar) -- IP của người dùng
+    - user_agent (varchar) -- User agent của người dùng
+    - referrer_id (bigint, foreign key to users.id) -- id người giới thiệu
+    - referred_user_id (bigint, foreign key to users.id) -- id người được giới thiệu (User mới đăng ký/đăng nhập)
+    - is_matched (boolean) -- trạng thái khớp
+    - expired_at (timestamp, nullable) -- thời gian hết hạn
     - softDeletes
     - timestamps
 
@@ -346,7 +330,7 @@
     - softDeletes
     - timestamps
     - unique (code, created_by) -- mã giảm giá phải là duy nhất cho từng người dùng
-    - config (json, nullable) -- cấu hình điều kiện sử dụng
+    - config (jsonb, nullable) -- cấu hình điều kiện sử dụng
 # coupon_used
     #note
     - Bảng coupon_used lưu trữ thông tin mã giảm giá đã được sử dụng.
