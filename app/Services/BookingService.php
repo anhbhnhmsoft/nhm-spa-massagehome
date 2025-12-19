@@ -134,28 +134,10 @@ class BookingService extends BaseService
                 );
             }
 
-            $priceBeforeDiscount = $serviceOption->price;
-            $discountAmount = 0.0;
-            $finalPrice  = $priceBeforeDiscount;
-
-            if ($couponId) {
-                $couponValidation = $this->couponService->validateUseCoupon(
-                    couponId: (string) $couponId,
-                    serviceId: (string) $serviceId,
-                    priceBeforeDiscount: $priceBeforeDiscount
-                );
-
-                if ($couponValidation->isError()) {
-                    return ServiceReturn::error(
-                        message: $couponValidation->getMessage()
-                    );
-                }
-
-                $validationData = $couponValidation->getData();
-                $discountAmount = $validationData['discount_amount'];
-                $finalPrice = $priceBeforeDiscount - $discountAmount;
-            }
-
+            $priceData = $this->calculateFinalPrice($serviceId, $serviceOption, $couponId);
+            $finalPrice = $priceData['final_price'];
+            $priceBeforeDiscount = $priceData['price_before_discount'];
+            $discountAmount = $priceData['discount_amount'];
 
             // Kiểm tra wallet người dùng và wallet kỹ thuật viên trước
             $userWallet = $this->walletRepository->query()->where('user_id', $user->id)->first();
@@ -213,7 +195,7 @@ class BookingService extends BaseService
                 if ($balanceTechnician < $discountTechnician) {
                     SendNotificationJob::dispatch(
                         userId: $user->id,
-                        type: NotificationType::BOOKING_CONFIRMED,
+                        type: NotificationType::TECHNICIAN_WALLET_NOT_ENOUGH,
                         data: [
                             'booking_time' => Carbon::parse($bookTime)->format('Y-m-d H:i:s'),
                             'price' => $finalPrice,
@@ -226,14 +208,7 @@ class BookingService extends BaseService
                 }
             }
 
-            if ($bookTime < Carbon::now()) {
-                return ServiceReturn::error(
-                    message: __("booking.book_time_not_valid")
-                );
-            }
             // Lấy thời gian nghỉ giữa 2 lần phục vụ của kỹ thuật viên
-            // Giả định config_value là số phút
-            $breakTimeGap = 0;
             /**
              * @var ServiceReturn $breakTimeGapReturn
              */
@@ -244,63 +219,30 @@ class BookingService extends BaseService
                 );
             }
 
-            // 1. Lấy cấu hình Break Time
-            $breakTimeGapReturn = $this->configService->getConfig(ConfigName::BREAK_TIME_GAP);
-            if ($breakTimeGapReturn->isError()) {
-                return ServiceReturn::error(message: __("booking.break_time_gap.not_found"));
-            }
-            $breakTimeGapMinutes = (int) $breakTimeGapReturn->getData();
-
-            // 2. Chuẩn bị thông tin Booking mới (Booking A)
-            $durationMinutes = (int) $serviceOption->duration;
-            $currentBookingStartTime = Carbon::parse($bookTime); // Start A
-            $currentBookingEndTime = $currentBookingStartTime->copy()->addMinutes($durationMinutes); // End A
-
-            // 3. Truy vấn toàn bộ booking trong ngày của KTV (00:00:00 - 23:59:59)
-            $bookingsInDay = $this->bookingRepository->query()
-                ->where('ktv_user_id', $service->user_id)
-                ->whereDate('booking_time', $currentBookingStartTime->toDateString())
-                ->whereIn('status', [
-                    BookingStatus::CONFIRMED->value,
-                    BookingStatus::ONGOING->value,
-                    BookingStatus::PENDING->value
-                ])
-                ->get();
-
-            // 4. Kiểm tra trùng lặp bằng vòng lặp
-            foreach ($bookingsInDay as $existingBooking) {
-                // Thông tin booking cũ (Booking B)
-                $bStart = Carbon::parse($existingBooking->booking_time);
-                $bDuration = (int) $existingBooking->duration;
-
-                // Thời điểm kết thúc của B bao gồm cả thời gian nghỉ
-                // End B = Start B + Duration B + BreakTime
-                $bEndWithBreak = $bStart->copy()->addMinutes($bDuration)->addMinutes($breakTimeGapMinutes);
-
-                // Thời điểm kết thúc của A (Booking mới) bao gồm cả thời gian nghỉ
-                // End A = Start A + Duration A + BreakTime
-                $aEndWithBreak = $currentBookingStartTime->copy()->addMinutes($durationMinutes)->addMinutes($breakTimeGapMinutes);
-
-                /**
-                 * LOGIC KIỂM TRA TRÙNG:
-                 * Hai khoảng thời gian trùng nhau khi: (StartA < EndB) VÀ (EndA > StartB)
-                 * Ở đây End được tính kèm cả BreakTime để đảm bảo khoảng nghỉ.
-                 */
-                $isOverlapping = $currentBookingStartTime->lt($bEndWithBreak) && $aEndWithBreak->gt($bStart);
-
-                if ($isOverlapping) {
-                    return ServiceReturn::error(
-                        message: __("booking.ktv_is_busy_at_this_time") // KTV đã có lịch trong khung giờ này
-                    );
-                }
+            $breakTime = (int) $breakTimeGapReturn->getData()['config_value'];
+            if (Carbon::parse($bookTime)->addMinutes($breakTime)->lt(Carbon::now())) {
+                return ServiceReturn::error(
+                    message: __("booking.book_time_not_valid")
+                );
             }
 
-            // 5. Nếu không trùng, tiến hành tạo Booking
+            $currentBookingStartTime = Carbon::parse($bookTime);
+            $isOverlapping = $this->checkKtvAvailability(
+                $service->user_id,
+                $currentBookingStartTime,
+                $serviceOption->duration,
+                $breakTime,
+            );
+            if ($isOverlapping) {
+                return ServiceReturn::error(
+                    message: __("booking.ktv_is_busy_at_this_time") // KTV đã có lịch trong khung giờ này
+                );
+            }
             $booking = $this->bookingRepository->create([
                 'user_id' => $user->id,
                 'service_id' => $serviceId,
                 'coupon_id' => $couponId,
-                'duration' => $durationMinutes,
+                'duration' => $serviceOption->duration,
                 'booking_time' => $currentBookingStartTime,
                 'start_time' => null,
                 'end_time' => null,
@@ -316,7 +258,7 @@ class BookingService extends BaseService
                 'note_address' => $noteAddress ?? '',
                 'ktv_user_id' => $service->user_id,
             ]);
-            
+
             // Bắn notif cho người dùng khi đặt lịch thành công
             SendNotificationJob::dispatch(
                 userId: $user->id,
@@ -475,5 +417,73 @@ class BookingService extends BaseService
                 message: __("common_error.server_error")
             );
         }
+    }
+
+    //-------- private method --------
+
+    private function checkKtvAvailability(int $ktvId, Carbon $startTime, int $duration, int $breakTimeGap): bool
+    {
+        $endTimeWithBreak = $startTime->copy()->addMinutes($duration + $breakTimeGap);
+
+        $bookingsInDay = $this->bookingRepository->query()
+            ->where('ktv_user_id', $ktvId)
+            ->whereDate('booking_time', $startTime->toDateString())
+            ->whereIn('status', [
+                BookingStatus::CONFIRMED->value,
+                BookingStatus::ONGOING->value,
+                BookingStatus::PENDING->value
+            ])
+            ->get();
+
+        foreach ($bookingsInDay as $existing) {
+            // Thông tin booking cũ (Booking B)
+            $bStart = Carbon::parse($existing->booking_time);
+            $bDuration = (int) $existing->duration;
+
+            // Thời điểm kết thúc của B bao gồm cả thời gian nghỉ
+            // End B = Start B + Duration B + BreakTime
+            $bEndWithBreak = $bStart->copy()->addMinutes($bDuration)->addMinutes($breakTimeGap);
+
+            // Thời điểm kết thúc của A (Booking mới) bao gồm cả thời gian nghỉ
+            // End A = Start A + Duration A + BreakTime
+            $aEndWithBreak = $startTime->copy()->addMinutes($duration)->addMinutes($breakTimeGap);
+
+            /**
+             * LOGIC KIỂM TRA TRÙNG:
+             * Hai khoảng thời gian trùng nhau khi: (StartA < EndB) VÀ (EndA > StartB)
+             * Ở đây End được tính kèm cả BreakTime để đảm bảo khoảng nghỉ.
+             */
+            $isOverlapping = $startTime->lt($bEndWithBreak) && $endTimeWithBreak->gt($bStart);
+
+            if ($isOverlapping) {
+                return true;
+            }
+        }
+
+        return false; // Trống lịch
+    }
+
+    private function calculateFinalPrice(int $serviceId, $serviceOption, ?int $couponId): array
+    {
+        $priceBeforeDiscount = $serviceOption->price;
+        $discountAmount = 0.0;
+
+        if ($couponId) {
+            $couponValidation = $this->couponService->validateUseCoupon(
+                (string) $couponId,
+                (string) $serviceId,
+                $priceBeforeDiscount
+            );
+
+            if (!$couponValidation->isError()) {
+                $discountAmount = $couponValidation->getData()['discount_amount'];
+            }
+        }
+
+        return [
+            'price_before_discount' => $priceBeforeDiscount,
+            'final_price' => $priceBeforeDiscount - $discountAmount,
+            'discount_amount' => $discountAmount
+        ];
     }
 }
