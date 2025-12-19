@@ -2,11 +2,13 @@
 
 namespace App\Services;
 
+use App\Core\Controller\FilterDTO;
 use App\Core\LogHelper;
 use App\Core\Service\BaseService;
 use App\Core\Service\ServiceReturn;
 use App\Repositories\BookingRepository;
 use App\Repositories\ReviewRepository;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -94,6 +96,42 @@ class ReviewService extends BaseService
 
             return ServiceReturn::error(
                 message: __('common_error.server_error')
+            );
+        }
+    }
+
+    public function reviewPaginate(FilterDTO $dto): ServiceReturn
+    {
+        try {
+            $query = $this->reviewRepository->query();
+            $query = $this->reviewRepository->filterQuery(
+                query: $query,
+                filters: $dto->filters
+            );
+            $query = $this->reviewRepository->sortQuery(
+                query: $query,
+                sortBy: $dto->sortBy,
+                direction: $dto->direction
+            );
+            $paginate = $query->paginate(
+                perPage: $dto->perPage,
+                page: $dto->page
+            );
+            return ServiceReturn::success(
+                data: $paginate,
+            );
+        } catch (\Throwable $exception) {
+            LogHelper::error(
+                message: "Lỗi ReviewService@reviewPaginate",
+                ex: $exception
+            );
+            return ServiceReturn::success(
+                data: new LengthAwarePaginator(
+                    items: [],
+                    total: 0,
+                    perPage: $dto->perPage,
+                    currentPage: $dto->page
+                )
             );
         }
     }

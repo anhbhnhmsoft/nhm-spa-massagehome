@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Core\Controller\BaseController;
+use App\Core\Controller\ListRequest;
 use App\Http\Resources\Review\ReviewResource;
 use App\Services\ReviewService;
 use Illuminate\Http\JsonResponse;
@@ -51,6 +52,14 @@ class ReviewController extends BaseController
             data: new ReviewResource($result->getData()),
             message: $result->getMessage() ?? __('review.success.created')
         );
+    }
+
+    public function listReview(ListRequest $request): JsonResponse
+    {
+        $dto = $request->getFilterOptions();
+        $result = $this->reviewService->reviewPaginate($dto);
+        $data = $result->getData();
+        return $this->sendSuccess(data: ReviewResource::collection($data)->response()->getData());
     }
 }
 
