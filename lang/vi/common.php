@@ -2,7 +2,7 @@
 
 return [
     'success' => [
-        'data_list' => 'Danh sách dữ liệu',
+        'data_list' => 'Lấy danh sách dữ liệu thành công',
         'data_created' => 'Dữ liệu đã được tạo',
         'data_updated' => 'Dữ liệu đã được cập nhật',
         'data_deleted' => 'Dữ liệu đã được xóa',

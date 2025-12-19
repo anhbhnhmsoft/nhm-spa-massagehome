@@ -316,14 +316,6 @@ class DatabaseSeeder extends Seeder
                 ]
             );
             Config::query()->updateOrCreate(
-                ['config_key' => ConfigName::PAYOS_CHECKSUM_KEY->value],
-                [
-                    'config_value' => 'bcdaecc9ad73edff55c076519e5ab5e127fd9681c13cfd19de1dfa29d9d8fce9',
-                    'config_type' => ConfigType::STRING->value,
-                    'description' => 'Mã checksum key PayOS dùng để tích hợp thanh toán PayOS.',
-                ]
-            );
-            Config::query()->updateOrCreate(
                 ['config_key' => ConfigName::CURRENCY_EXCHANGE_RATE->value],
                 [
                     'config_value' => '1000',
@@ -354,6 +346,32 @@ class DatabaseSeeder extends Seeder
                     'config_value' => '80',
                     'config_type' => ConfigType::NUMBER->value,
                     'description' => 'Tỷ lệ chiết khấu ứng dụng nhận được',
+                ]
+            );
+
+            // Support Channels Config
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::SP_ZALO->value],
+                [
+                    'config_value' => '0865643858',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'Số điện thoại Zalo hỗ trợ của admin',
+                ]
+            );
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::SP_FACEBOOK->value],
+                [
+                    'config_value' => 'https://www.facebook.com/profile.php?id=100063507007366',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'Trang Facebook hỗ trợ của admin',
+                ]
+            );
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::SP_WEB_CHAT->value],
+                [
+                    'config_value' => 'https://chat.zalo.me/c/0865643858',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'Website hỗ trợ của admin',
                 ]
             );
         } catch (\Exception $e) {
