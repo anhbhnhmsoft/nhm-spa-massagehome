@@ -11,6 +11,7 @@ use App\Http\Controllers\API\ServiceController;
 use App\Http\Controllers\API\ChatController;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\AffiliateController;
+use App\Http\Controllers\API\ConfigController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -202,5 +203,10 @@ Route::middleware('set-api-locale')->group(function () {
         Route::get('messages', [ChatController::class, 'listMessages']);
         // Gửi tin nhắn trong room (lưu DB + publish realtime)
         Route::post('messages', [ChatController::class, 'sendMessage']);
+    });
+
+    // Support channels - không cần auth
+    Route::prefix('config')->group(function () {
+        Route::get('support-channels', [ConfigController::class, 'getSupportChannels']);
     });
 });

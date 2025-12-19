@@ -127,6 +127,46 @@ class ConfigService extends BaseService
     }
 
     /**
+     * Lấy danh sách các kênh hỗ trợ
+     * @return ServiceReturn
+     */
+    public function getSupportChannels(): ServiceReturn
+    {
+        try {
+            $supportKeys = [
+                ConfigName::SP_ZALO,
+                ConfigName::SP_FACEBOOK,
+                ConfigName::SP_WEB_CHAT,
+            ];
+
+            $channels = [];
+            foreach ($supportKeys as $key) {
+                $config = $this->configRepository->query()
+                    ->where('config_key', $key->value)
+                    ->select('config_key', 'config_value')
+                    ->first();
+                
+                if ($config && !empty($config->config_value)) {
+                    $channels[] = [
+                        'key' => $key->value,
+                        'value' => $config->config_value,
+                    ];
+                }
+            }
+
+            return ServiceReturn::success(data: $channels);
+        } catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi ConfigService@getSupportChannels",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        }
+    }
+
+    /**
      * Lấy tất cả affiliate configs
      * @return ServiceReturn
      */
