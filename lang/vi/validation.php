@@ -98,4 +98,19 @@ return [
         'collect_error' => 'Không thể dùng mã :code vào thời điểm này',
         'collect_limit_error' => 'Mã :code đã hết lượt thu thập hôm nay',
     ],
+    'rating' => [
+        'required' => 'Vui lòng đánh giá.',
+        'integer' => 'Đánh giá phải là số.',
+        'min' => 'Đánh giá phải lớn hơn 0.',
+        'max' => 'Đánh giá phải nhỏ hơn 5.',
+    ],
+
+    'hidden' => [
+        'boolean' => 'Ẩn không hợp lệ.',
+    ],
+
+    'service_booking_id' => [
+        'required' => 'Vui lòng chọn booking dịch vụ.',
+        'exists' => 'Booking dịch vụ không tồn tại.',
+    ],
 ];
