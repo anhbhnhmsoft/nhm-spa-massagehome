@@ -23,16 +23,19 @@ class ReviewService extends BaseService
      * Tạo đánh giá cho booking dịch vụ
      * Logic: Không cho đánh giá lại nếu đã có review cho service_booking_id
      */
-    public function createReview(array $data): ServiceReturn
+    public function createReview(
+        int $serviceBookingId,
+        int $rating,
+        ?string $comment = null,
+        bool $hidden = false
+    ): ServiceReturn
     {
-        DB::beginTransaction();
         try {
             $user = Auth::user();
             if (!$user) {
                 return ServiceReturn::error(message: __('common_error.unauthorized'));
             }
 
-            $serviceBookingId = $data['service_booking_id'] ?? null;
             if (!$serviceBookingId) {
                 return ServiceReturn::error(message: __('validation.required', ['attribute' => 'service_booking_id']));
             }
@@ -71,13 +74,12 @@ class ReviewService extends BaseService
                 'user_id' => $ktvId, // KTV nhận đánh giá
                 'review_by' => $user->id, // Customer viết đánh giá
                 'service_booking_id' => $serviceBookingId,
-                'rating' => $data['rating'],
-                'comment' => $data['comment'] ?? null,
+                'rating' => $rating,
+                'comment' => $comment,
                 'review_at' => now(),
-                'hidden' => $data['hidden'] ?? false,
+                'hidden' => $hidden,
             ]);
 
-            DB::commit();
 
             return ServiceReturn::success(
                 data: $review->load('recipient', 'reviewer', 'serviceBooking'),

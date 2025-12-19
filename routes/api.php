@@ -209,7 +209,7 @@ Route::middleware('set-api-locale')->group(function () {
         Route::post('messages', [ChatController::class, 'sendMessage']);
     });
 
-        Route::prefix('review')->middleware(['auth:sanctum'])->group(function () {
+    Route::prefix('review')->middleware(['auth:sanctum'])->group(function () {
         // Tạo đánh giá cho booking dịch vụ
         Route::post('/', [ReviewController::class, 'create'])->middleware(['throttle:10,1']);
     });

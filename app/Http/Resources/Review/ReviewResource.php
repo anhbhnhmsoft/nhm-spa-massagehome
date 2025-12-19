@@ -23,24 +23,11 @@ class ReviewResource extends JsonResource
             'comment' => $this->comment,
             'hidden' => $this->hidden,
             'review_at' => $this->review_at?->toISOString(),
-            'created_at' => $this->created_at?->toISOString(),
-            'updated_at' => $this->updated_at?->toISOString(),
-            'recipient' => $this->whenLoaded('recipient', function () {
-                return [
-                    'id' => $this->recipient->id,
-                    'name' => $this->recipient->name,
-                ];
-            }),
             'reviewer' => $this->whenLoaded('reviewer', function () {
                 return [
                     'id' => $this->reviewer->id,
+                    'avatar' => $this->reviewer->avatar,
                     'name' => $this->reviewer->name,
-                ];
-            }),
-            'service_booking' => $this->whenLoaded('serviceBooking', function () {
-                return [
-                    'id' => $this->serviceBooking->id,
-                    'service_id' => $this->serviceBooking->service_id,
                 ];
             }),
         ];

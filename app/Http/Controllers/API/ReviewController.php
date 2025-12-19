@@ -21,21 +21,27 @@ class ReviewController extends BaseController
     public function create(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'service_booking_id' => ['required', 'string', 'exists:service_bookings,id'],
+            'service_booking_id' => ['required', 'numeric', 'exists:service_bookings,id'],
             'rating' => ['required', 'integer', 'min:1', 'max:5'],
             'comment' => ['nullable', 'string', 'max:1000'],
             'hidden' => ['nullable', 'boolean'],
         ], [
-            'service_booking_id.required' => __('validation.service_booking_id.required', ['attribute' => 'service_booking_id']),
-            'service_booking_id.exists' => __('validation.service_booking_id.exists', ['attribute' => 'service_booking_id']),
-            'rating.required' => __('validation.rating.required', ['attribute' => 'rating']),
-            'rating.integer' => __('validation.rating.integer', ['attribute' => 'rating']),
-            'rating.min' => __('validation.rating.min', ['attribute' => 'rating']),
-            'rating.max' => __('validation.rating.max', ['attribute' => 'rating']),
-            'hidden.boolean' => __('validation.hidden.boolean', ['attribute' => 'hidden']),
+            'service_booking_id.required' => __('validation.service_booking_id.required'),
+            'service_booking_id.numeric' => __('validation.service_booking_id.numeric'),
+            'service_booking_id.exists' => __('validation.service_booking_id.exists'),
+            'rating.required' => __('validation.rating.required'),
+            'rating.integer' => __('validation.rating.integer'),
+            'rating.min' => __('validation.rating.min'),
+            'rating.max' => __('validation.rating.max'),
+            'hidden.boolean' => __('validation.hidden.boolean'),
         ]);
 
-        $result = $this->reviewService->createReview($data);
+        $result = $this->reviewService->createReview(
+            serviceBookingId: $data['service_booking_id'],
+            rating: $data['rating'],
+            comment: $data['comment'],
+            hidden: $data['hidden'] ?? false
+        );
 
         if ($result->isError()) {
             return $this->sendError(message: $result->getMessage());

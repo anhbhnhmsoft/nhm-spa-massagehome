@@ -111,6 +111,7 @@ return [
 
     'service_booking_id' => [
         'required' => 'Vui lòng chọn booking dịch vụ.',
+        'numeric' => 'Booking dịch vụ phải là số.',
         'exists' => 'Booking dịch vụ không tồn tại.',
     ],
 ];
