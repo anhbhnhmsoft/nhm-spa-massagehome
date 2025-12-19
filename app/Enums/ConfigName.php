@@ -11,4 +11,7 @@ enum ConfigName: string
     case GOONG_API_KEY = 'GOONG_API_KEY';
     case BREAK_TIME_GAP = 'BREAK_TIME_GAP'; // Khoảng cách giữa 2 lần phục vụ của kỹ thuật viên tính bằng phút
     case DISCOUNT_RATE = 'DISCOUNT_RATE'; // Tỷ lệ chiết khấu dành cho kỹ thuật viên %
+    case SP_ZALO = 'SP_ZALO'; // Số điện thoại Zalo hỗ trợ của admin
+    case SP_FACEBOOK = 'SP_FACEBOOK'; // Trang Facebook hỗ trợ của admin
+    case SP_WEB_CHAT = 'SP_WEB_CHAT'; // Website hỗ trợ của admin
 }
