@@ -26,15 +26,13 @@ class CouponService extends BaseService
     }
 
     /**
-     * Phương thức kiểm tra tính hợp lệ của Coupon.
-     *
-     * @param string $couponId
-     * @param string $userId
-     * @param string $serviceId
-     * @param float $priceBeforeDiscount
+     * Phương thức kiểm tra tính hợp lệ của Coupon khi sử dụng.
+     * @param int $couponId
+     * @param int $serviceId
+     * @param  $priceBeforeDiscount
      * @return ServiceReturn
      */
-    public function validateCoupon(string $couponId, string $userId, string $serviceId, float $priceBeforeDiscount): ServiceReturn
+    public function validateUseCoupon(int $couponId, int $serviceId, $priceBeforeDiscount): ServiceReturn
     {
 
         $coupon = $this->couponRepository->query()->find($couponId);
@@ -45,7 +43,6 @@ class CouponService extends BaseService
             );
         }
 
-
         // --- 1. Kiểm tra trạng thái và thời gian (dùng dữ liệu từ Cache) ---
         if (!$coupon->is_active) {
             return ServiceReturn::error(
@@ -53,6 +50,7 @@ class CouponService extends BaseService
             );
         }
 
+        // --- 2. Kiểm tra thời gian (dùng dữ liệu từ Cache) ---
         $now = Carbon::now();
         if ($now->isBefore(Carbon::parse($coupon->start_at))) {
             return ServiceReturn::error(
@@ -65,14 +63,14 @@ class CouponService extends BaseService
             );
         }
 
-        // --- 2. Kiểm tra điều kiện áp dụng ---
+        // --- 3. Kiểm tra dịch vụ áp dụng ---
         if ($coupon->for_service_id !== null && $coupon->for_service_id != $serviceId) {
             return ServiceReturn::error(
                 message: __("booking.coupon.not_match_service")
             );
         }
 
-        // --- 3. Kiểm tra giới hạn sử dụng ---
+        // --- 4. Kiểm tra giới hạn sử dụng ---
         // Kiểm tra giới hạn sử dụng toàn bộ
         if ($coupon->usage_limit !== null && $coupon->used_count >= $coupon->usage_limit) {
             return ServiceReturn::error(
@@ -80,29 +78,26 @@ class CouponService extends BaseService
             );
         }
 
-
-        // --- 4. Kiểm tra giá trị tối đa của mã có vượt quá giá trị sau áp dụng không ---
-
+        // --- 5. Kiểm tra giá trị tối đa của mã có vượt quá giá trị sau áp dụng không ---
         if ($coupon->is_percentage) {
             $discountAmount = ($priceBeforeDiscount * $coupon->discount_value) / 100;
         } else {
             $discountAmount = $priceBeforeDiscount - $coupon->discount_value;
         }
-
+        // Kiểm tra giá trị giảm tối đa
         if ($discountAmount > $coupon->max_discount) {
             return ServiceReturn::error(
                 message: __("booking.coupon.max_discount_exceeded")
             );
         }
 
-        // -- 5. Kiểm tra thời gian sử dụng hợp lệ hay không --
+        // --- 6. Kiểm tra thời gian sử dụng hợp lệ hay không ---
         $config = $coupon->config ?? [];
         $allowTime = $config['allowed_time_slots'] ?? [];
 
         if (!empty($allowTime)) {
             $currentTime = Carbon::now()->format('H:i');
             $isValidTimeSlot = false;
-
             foreach ($allowTime as $time) {
                 // Chỉ cần khớp 1 trong các khung giờ là OK
                 if ($currentTime >= $time['start'] && $currentTime <= $time['end']) {
@@ -110,7 +105,6 @@ class CouponService extends BaseService
                     break;
                 }
             }
-
             if (!$isValidTimeSlot) {
                 return ServiceReturn::error(
                     message: __('booking.coupon.not_allowed_time')
@@ -128,13 +122,96 @@ class CouponService extends BaseService
     }
 
     /**
-     * Phương thức GHI (Write) - Kiểm tra, sử dụng, tăng used_count và đồng bộ Cache.
-     *
+     * Phương thức kiểm tra tính hợp lệ của Coupon khi thu thập.
+     * @param Coupon $coupon
+     * @return ServiceReturn
+     */
+    public function validateCollectCoupon(Coupon $coupon): ServiceReturn
+    {
+        $today = now()->format('Y-m-d');
+        $config = $coupon->config ?? [];
+        $limit = $config['per_day_global'] ?? 0;
+        $currentCollected = $config['daily_collected'][$today] ?? 0;
+        if ($limit > 0 && $currentCollected >= $limit) {
+           return ServiceReturn::error(
+                message: __('validation.coupon.collect_limit_error', ['code' => $coupon->code])
+            );
+        }
+        return ServiceReturn::success();
+    }
+
+    /**
+     * Tăng số lần thu thập Coupon
+     * @param int $couponId
+     * @return ServiceReturn
+     */
+    public function incrementCollectCount(int $couponId): ServiceReturn
+    {
+        try {
+            $coupon = $this->couponRepository->queryCoupon()
+                ->where('id', $couponId)
+                ->lockForUpdate()
+                ->first();
+            if (!$coupon) {
+                throw new ServiceException(__("booking.coupon.not_found"));
+            }
+            $config = $coupon->config ?? [];
+            $today = now()->format('Y-m-d');
+            $history = $config['daily_collected'] ?? [];
+            $history[$today] = ($history[$today] ?? 0) + 1;
+            $config['daily_collected'] = $history;
+            $coupon->update(['config' => $config]);
+            return ServiceReturn::success();
+        }catch (ServiceException $e) {
+            return ServiceReturn::error(
+                message: $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * Tăng số lần sử dụng Coupon
+     * @param int $couponId
+     * @return ServiceReturn
+     */
+    public function incrementUsedCount(int $couponId): ServiceReturn
+    {
+        try {
+            $coupon = $this->couponRepository->queryCoupon()
+                ->where('id', $couponId)
+                ->lockForUpdate()
+                ->first();
+            if (!$coupon) {
+                throw new ServiceException(__("booking.coupon.not_found"));
+            }
+            $config = $coupon->config ?? [];
+            $today = now()->format('Y-m-d');
+
+            // Logic lưu lịch sử sử dụng thực tế (thanh toán thành công)
+            $history = $config['daily_used'] ?? [];
+            $history[$today] = ($history[$today] ?? 0) + 1;
+
+            $config['daily_used'] = $history;
+
+            $coupon->update([
+                'used_count' => $coupon->used_count + 1,
+                'config' => $config
+            ]);
+            return ServiceReturn::success();
+        }catch (ServiceException $e) {
+            return ServiceReturn::error(
+                message: $e->getMessage()
+            );
+        }
+    }
+
+
+    /**
+     * Phương thức GHI (Write) - Kiểm tra, sử dụng, tăng used_count
      * @param string $couponId
      * @param string $userId
      * @param string $serviceId
      * @param string $bookingId
-     * @param float $discountApplied Giá trị giảm giá đã được tính toán ở bước kiểm tra
      * @return ServiceReturn
      */
     public function useCoupon(
@@ -189,9 +266,9 @@ class CouponService extends BaseService
 
             // 4. Tăng lượt sử dụng thực tế (used_count + daily_used trong config)
             // Lưu ý: Hàm này trong Repository của bạn đã xử lý JSON history và check usage_limit
-            $successIncrement = $this->couponRepository->incrementUsedCountAtomic($coupon->id);
+            $successIncrement = $this->incrementUsedCount($coupon->id);
 
-            if (!$successIncrement) {
+            if (!$successIncrement->isError()) {
                 throw new ServiceException(__("booking.coupon.usage_limit_reached_or_daily_full"));
             }
 

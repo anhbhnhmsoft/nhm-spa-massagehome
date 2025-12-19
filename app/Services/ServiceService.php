@@ -29,6 +29,7 @@ class ServiceService extends BaseService
         protected CouponRepository   $couponRepository,
         protected BookingRepository  $bookingRepository,
         protected CouponUserRepository $couponUserRepository,
+        protected CouponService $couponService,
     ) {
         parent::__construct();
     }
@@ -161,52 +162,15 @@ class ServiceService extends BaseService
     public function getListCoupon(FilterDTO $dto): ServiceReturn
     {
         try {
-            /** @var User $user */
-            $user = Auth::user();
-            $now = Carbon::now();
-            $currentTime = $now->format('H:i');
-            $today = $now->format('Y-m-d');
-
-            // 1. Lấy danh sách Coupon ID người dùng đang sở hữu và chưa dùng
-            $ownedCouponIds = $user->collectionCoupons()
-                ->where('is_used', false)
-                ->pluck('coupon_id')
-                ->toArray();
-
-            // 2. Query tất cả coupon hợp lệ tại thời điểm booking
             $query = $this->couponRepository->queryCoupon();
             $query = $this->couponRepository->filterQuery($query, $dto->filters);
             $query = $this->couponRepository->sortQuery($query, $dto->sortBy, $dto->direction);
-
-            $query->where(function ($q) use ($currentTime) {
-                $q->whereRaw("(config->'allowed_time_slots') IS NULL")
-                    ->orWhereRaw("jsonb_array_length(config->'allowed_time_slots') = 0")
-                    ->orWhereRaw("EXISTS (
-                        SELECT 1 FROM jsonb_array_elements(config->'allowed_time_slots') AS slot
-                        WHERE ? >= (slot->>'start') AND ? <= (slot->>'end')
-                    )", [$currentTime, $currentTime]);
-            });
-
-            $query = $this->couponRepository->sortQuery($query, $dto->sortBy, $dto->direction);
             $coupons = $query->get();
-
             // 3. Lọc lượt nhặt trong ngày (Daily Limit)
-            $validCoupons = $coupons->filter(function ($coupon) use ($ownedCouponIds, $today) {
-                $isOwned = in_array($coupon->id, $ownedCouponIds);
-
-                // Đánh dấu trạng thái
-                $coupon->is_owned = $isOwned;
-
-                // Nếu ĐÃ sở hữu: Hiển thị luôn (vì thỏa mãn time_slot ở bước SQL rồi)
-                if ($isOwned) return true;
-
+            $validCoupons = $coupons->filter(function ($coupon) {
                 // Nếu CHƯA sở hữu: Kiểm tra xem hôm nay còn lượt nhặt không
-                $config = $coupon->config ?? [];
-                $limit = (int) ($config['per_day_global'] ?? 0);
-                $currentCount = (int) ($config['daily_collected'][$today] ?? 0);
-
-                // Nếu có đặt giới hạn và đã đạt giới hạn thì ẩn đi (không cho nhặt nữa)
-                return !($limit > 0 && $currentCount >= $limit);
+                $valid = $this->couponService->validateCollectCoupon($coupon);
+                return $valid->isSuccess();
             });
 
             return ServiceReturn::success(

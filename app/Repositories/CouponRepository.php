@@ -37,13 +37,23 @@ class CouponRepository extends BaseRepository
         // Sử dụng filter_var để chấp nhận cả 'true', '1', true, 1
         if (isset($filters['is_valid']) && filter_var($filters['is_valid'], FILTER_VALIDATE_BOOLEAN)) {
             $now = Carbon::now();
-            $query->where('is_active', true) // Bổ sung check active
-                ->where('start_at', '<=', $now)
+            $currentTime = $now->copy()->format('H:i');
+            // Lọc theo thời gian hiệu lực
+            $query->where('start_at', '<=', $now)
                 ->where('end_at', '>=', $now)
                 ->where(function ($q) {
                     $q->whereNull('usage_limit')
                         ->orWhereColumn('used_count', '<', 'usage_limit');
                 });
+            // Lọc theo thời gian sử dụng (nếu có)
+            $query->where(function ($q) use ($currentTime) {
+                $q->whereRaw("(config->'allowed_time_slots') IS NULL")
+                    ->orWhereRaw("jsonb_array_length(config->'allowed_time_slots') = 0")
+                    ->orWhereRaw("EXISTS (
+                SELECT 1 FROM jsonb_array_elements(config->'allowed_time_slots') AS slot
+                WHERE ? >= (slot->>'start') AND ? <= (slot->>'end')
+            )", [$currentTime, $currentTime]);
+            });
         }
 
         // Lọc theo Dịch vụ (Logic: Lấy mã của dịch vụ này HOẶC mã toàn sàn)
@@ -59,10 +69,23 @@ class CouponRepository extends BaseRepository
                     $q->orWhereNull('for_service_id');
                 }
             });
-        }
-        // Nếu không truyền service_id nhưng vẫn muốn lấy mã toàn sàn
+        } // Nếu không truyền service_id nhưng vẫn muốn lấy mã toàn sàn
         elseif (isset($filters['get_all']) && filter_var($filters['get_all'], FILTER_VALIDATE_BOOLEAN)) {
             $query->whereNull('for_service_id');
+        }
+
+        // Lọc theo Người dùng (Logic: Lấy mã mà người dùng này chưa sử dụng)
+        if (isset($filters['user_id_is_not_used'])) {
+            $userId = $filters['user_id_is_not_used'];
+            // Logic: Lấy coupon mà KHÔNG CÓ (quan hệ với user này VÀ trạng thái là đã dùng)
+            // Tức là:
+            // 1. Coupon chưa thu thập -> Thỏa mãn (Vì không có quan hệ)
+            // 2. Coupon đã thu thập nhưng chưa dùng -> Thỏa mãn (Vì quan hệ có is_used = false)
+            // 3. Coupon đã thu thập và đã dùng -> Bị loại (Vì khớp điều kiện bên trong)
+            $query->whereDoesntHave('users', function ($q) use ($userId) {
+                $q->where('user_id', $userId)
+                    ->where('is_used', true); // Chú ý: Ở đây ta filter những cái ĐÃ DÙNG để loại bỏ nó
+            });
         }
         return $query;
     }
@@ -75,59 +98,5 @@ class CouponRepository extends BaseRepository
         $column = $sortBy ?? 'created_at';
         $query->orderBy($column, $direction);
         return $query;
-    }
-
-    public function incrementUsedCountAtomic(string $couponId): bool
-    {
-        return DB::transaction(function () use ($couponId) {
-            $coupon = $this->model->query()
-                ->where('id', $couponId)
-                ->where('is_active', true)
-                ->where(function ($q) {
-                    $q->whereNull('usage_limit')
-                        ->orWhereColumn('used_count', '<', 'usage_limit');
-                })
-                ->lockForUpdate()
-                ->first();
-
-            if (!$coupon) return false;
-
-            $config = $coupon->config ?? [];
-            $today = now()->format('Y-m-d');
-
-            // Logic lưu lịch sử sử dụng thực tế (thanh toán thành công)
-            $history = $config['daily_used'] ?? [];
-            $history[$today] = ($history[$today] ?? 0) + 1;
-
-            $config['daily_used'] = $history;
-
-            return $coupon->update([
-                'used_count' => $coupon->used_count + 1,
-                'config' => $config
-            ]);
-        });
-    }
-
-    public function incrementDailyCollectCountAtomic(string $couponId): bool
-    {
-        return DB::transaction(function () use ($couponId) {
-            $coupon = $this->model->query()
-                ->where('id', $couponId)
-                ->where('is_active', true)
-                ->lockForUpdate()
-                ->first();
-
-            if (!$coupon) return false;
-
-            $config = $coupon->config ?? [];
-            $today = now()->format('Y-m-d');
-
-            $history = $config['daily_collected'] ?? [];
-            $history[$today] = ($history[$today] ?? 0) + 1;
-
-            $config['daily_collected'] = $history;
-
-            return $coupon->update(['config' => $config]);
-        });
     }
 }

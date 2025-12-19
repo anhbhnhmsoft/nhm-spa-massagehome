@@ -4,18 +4,18 @@ namespace App\Services;
 
 use App\Core\LogHelper;
 use App\Core\Service\BaseService;
+use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
-use App\Enums\Language;
 use App\Repositories\BannerRepository;
 use App\Repositories\CouponRepository;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Auth;
 
 class CommercialService extends BaseService
 {
     public function __construct(
         protected BannerRepository $bannerRepository,
         protected CouponRepository $couponRepository,
+        protected CouponService $couponService,
     ) {
         parent::__construct();
     }
@@ -72,64 +72,60 @@ class CommercialService extends BaseService
 
     /**
      * Thu thập mã giảm giá
-     * @param array $couponIds
+     * @param int $couponId
      * @return ServiceReturn
      */
-    public function collectCouponAds(array $couponIds): ServiceReturn
+    public function collectCoupon(int $couponId): ServiceReturn
     {
         try {
-            /**
-             * @var User $user
-             */
-            $user = Auth::user();
-            $today = now()->format('Y-m-d');
-            // 1. Lấy danh sách Coupon
-            $coupons = $this->couponRepository
+            $user = auth('sanctum')->user();
+            if (!$user) {
+                return ServiceReturn::success(
+                   data: [
+                       'need_login' => true,
+                    ]
+                );
+            }
+            // Lấy coupon
+            $coupon = $this->couponRepository
                 ->filterQuery($this->couponRepository->queryCoupon(), ['is_valid' => true])
-                ->whereIn('id', $couponIds)
-                ->get();
-
-            $collectedIds = [];
-            $errors = [];
-            foreach ($coupons as $coupon) {
-                // 2. Kiểm tra xem User đã có Coupon này chưa
-                $alreadyHas = $user->collectionCoupons()->where('coupon_id', $coupon->id)->exists();
-                if ($alreadyHas) continue;
-
-                // 2. Kiểm tra giới hạn thu thập trong ngày (Daily Collect Limit)
-                $config = $coupon->config ?? [];
-                $limit = $config['per_day_global'] ?? 0;
-                $currentCollected = $config['daily_collected'][$today] ?? 0;
-
-                if ($limit > 0 && $currentCollected >= $limit) {
-                    $errors[] = __('validation.coupon.collect_limit_error', ['code' => $coupon->code]);
-                    continue;
-                }
-
-                // 3. Thực hiện tăng số lượng Atomic
-                $isIncremented = $this->couponRepository->incrementDailyCollectCountAtomic($coupon->id);
-
-                if ($isIncremented) {
-                    $collectedIds[] = $coupon->id;
-                } else {
-                    $errors[] = __('validation.coupon.collect_error', ['code' => $coupon->code]);
-                }
+                ->where('id', $couponId)
+                ->first();
+            if (!$coupon) {
+                throw new ServiceException(__("error.coupon_not_found"));
             }
-
-            // 4. Ghi vào "ví" người dùng
-            if (!empty($collectedIds)) {
-                $syncData = collect($collectedIds)->mapWithKeys(fn($id) => [$id => ['is_used' => false]]);
-                $user->collectionCoupons()->syncWithoutDetaching($syncData->toArray());
+            // Kiểm tra xem User đã có Coupon này chưa
+            $alreadyHas = $user->collectionCoupons()->where('coupon_id', $coupon->id)->exists();
+            if ($alreadyHas) {
+                return ServiceReturn::success(
+                    data: [
+                        'already_collected' => true,
+                    ]
+                );
             }
-            return ServiceReturn::success(
-                data: [
-                    'collectedCoupons' => $user->collectionCoupons()->get(),
-                    'errors' => $errors
-                ]
+            // Kiểm tra tính hợp lệ của Coupon khi thu thập
+            $validateResult = $this->couponService->validateCollectCoupon($coupon);
+            if ($validateResult->isError()) {
+                throw new ServiceException($validateResult->getMessage());
+            }
+            // Tăng số lần thu thập Coupon
+            $isIncremented = $this->couponService->incrementCollectCount($coupon->id);
+            if ($isIncremented->isError()) {
+                throw new ServiceException(__('validation.coupon.collect_error', ['code' => $coupon->code]));
+            }
+            // Ghi vào "ví" người dùng
+            $user->collectionCoupons()->syncWithoutDetaching([
+                $coupon->id => ['is_used' => false],
+            ]);
+            return ServiceReturn::success();
+        }catch (ServiceException $exception) {
+            return ServiceReturn::error(
+                message: $exception->getMessage()
             );
-        } catch (\Exception $exception) {
+        }
+        catch (\Exception $exception) {
             LogHelper::error(
-                message: "Lỗi CommercialService@collectCouponAds",
+                message: "Lỗi CommercialService@collectCoupon",
                 ex: $exception,
             );
             return ServiceReturn::error(

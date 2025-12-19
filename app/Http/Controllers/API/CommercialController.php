@@ -18,7 +18,7 @@ class CommercialController extends BaseController
 
     /**
      * Lấy danh sách banner cho homepage
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function getBanner()
     {
@@ -32,9 +32,9 @@ class CommercialController extends BaseController
 
     /**
      * Lấy danh sách coupon ads cho homepage
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
-    public function getCouponAds()
+    public function getCouponAds(): JsonResponse
     {
         $result = $this->commercialService->getCouponAds();
         if ($result->isError()) {
@@ -46,31 +46,16 @@ class CommercialController extends BaseController
 
     /**
      * Lấy danh sách coupon ads cho homepage
-     * @return \Illuminate\Http\JsonResponse
+     * @param int $couponId
+     * @return JsonResponse
      */
-    public function collectCouponAds(Request $request): JsonResponse
+    public function collectCouponAds(int $couponId): JsonResponse
     {
-        $coupons = $request->validate(
-            [
-                'coupons' => 'required|array',
-                'coupons.*' => 'required|exists:coupons,id',
-            ],
-            [
-                'coupons.required' => __('validation.coupon.required'),
-                'coupons.array' => __('validation.coupon.array'),
-                'coupons.*.required' => __('validation.coupon.required'),
-                'coupons.*.exists' => __('validation.coupon.exists'),
-            ]
-        );
-        $result = $this->commercialService->collectCouponAds($coupons['coupons']);
+        $result = $this->commercialService->collectCoupon($couponId);
         if ($result->isError()) {
             return $this->sendError($result->getMessage());
         }
         $data = $result->getData();
-
-        return $this->sendSuccess(data: [
-            'collectedCoupons' => CouponResource::collection($data['collectedCoupons']),
-            'errors' => $data['errors'],
-        ],);
+        return $this->sendSuccess(data: $data);
     }
 }

@@ -83,7 +83,6 @@ class PaymentService extends BaseService
                 message: $exception->getMessage()
             );
         } catch (\Exception $exception) {
-            dd($exception);
             LogHelper::error(
                 message: "Lỗi PaymentService@getUserWallet",
                 ex: $exception

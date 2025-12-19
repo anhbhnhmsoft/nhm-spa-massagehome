@@ -50,7 +50,11 @@ class BookingService extends BaseService
         parent::__construct();
     }
 
-
+    /**
+     * Lấy danh sách lịch hẹn dịch vụ của người dùng
+     * @param FilterDTO $dto
+     * @return ServiceReturn
+     */
     public function bookingPaginate(FilterDTO $dto): ServiceReturn
     {
         try {
@@ -135,10 +139,9 @@ class BookingService extends BaseService
             $finalPrice  = $priceBeforeDiscount;
 
             if ($couponId) {
-                $couponValidation = $this->couponService->validateCoupon(
-                    couponId: (string) $couponId,
-                    userId: (string) $user->id,
-                    serviceId: (string) $serviceId,
+                $couponValidation = $this->couponService->validateUseCoupon(
+                    couponId: $couponId,
+                    serviceId: $serviceId,
                     priceBeforeDiscount: $priceBeforeDiscount
                 );
 
@@ -264,7 +267,7 @@ class BookingService extends BaseService
                     $q->where(function ($inner) use ($currentBookingStartTime, $breakTimeGapMinutes) {
                         // StartA < EndB (Thời gian bắt đầu mới < Thời gian kết thúc dự kiến cũ)
                         $inner->whereRaw(
-                            "booking_time + (duration + ?) * INTERVAL '1 minute' > ?", 
+                            "booking_time + (duration + ?) * INTERVAL '1 minute' > ?",
                             [$breakTimeGapMinutes, $currentBookingStartTime]
                         );
                     })

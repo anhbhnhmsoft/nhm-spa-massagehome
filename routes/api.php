@@ -194,11 +194,10 @@ Route::middleware('set-api-locale')->group(function () {
         Route::get('banners', [CommercialController::class, 'getBanner']);
         // Lấy danh sách coupon ads cho homepage
         Route::get('coupons', [CommercialController::class, 'getCouponAds']);
-        // Lấy danh sách coupon ads cho homepage
-        Route::middleware(['auth:sanctum'])->group(function () {
-            Route::post('collect-coupons', [CommercialController::class, 'collectCouponAds']);
-        });
+        // Collect coupon ads
+        Route::post('collect-coupon/{couponId}', [CommercialController::class, 'collectCouponAds'])->where('couponId', '[0-9]+');
     });
+
     Route::prefix('chat')->middleware(['auth:sanctum'])->group(function () {
         // Tạo/lấy phòng chat giữa customer (user hiện tại) và KTV
         Route::post('room', [ChatController::class, 'createOrGetRoom']);
