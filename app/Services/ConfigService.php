@@ -18,7 +18,6 @@ class ConfigService extends BaseService
     public function __construct(
         protected ConfigRepository $configRepository,
         protected AffiliateConfigRepository $affiliateConfigRepository,
-
     )
     {
         parent::__construct();
@@ -64,8 +63,6 @@ class ConfigService extends BaseService
         }
     }
 
-
-
     /**
      * Lấy tất cả config settings
      * @return ServiceReturn
@@ -109,6 +106,11 @@ class ConfigService extends BaseService
                         'config_type' => is_numeric($value) ? ConfigType::NUMBER : ConfigType::STRING,
                     ]
                 );
+                // Xóa cache config
+                Caching::deleteCache(
+                    key: CacheKey::CACHE_KEY_CONFIG,
+                    uniqueKey: $key
+                );
             }
             DB::commit();
             return ServiceReturn::success(
@@ -136,23 +138,26 @@ class ConfigService extends BaseService
             $supportKeys = [
                 ConfigName::SP_ZALO,
                 ConfigName::SP_FACEBOOK,
-                ConfigName::SP_WEB_CHAT,
+                ConfigName::SP_WECHAT,
+                ConfigName::SP_PHONE,
             ];
 
-            $channels = [];
-            foreach ($supportKeys as $key) {
-                $config = $this->configRepository->query()
-                    ->where('config_key', $key->value)
-                    ->select('config_key', 'config_value')
-                    ->first();
-                
-                if ($config && !empty($config->config_value)) {
-                    $channels[] = [
-                        'key' => $key->value,
-                        'value' => $config->config_value,
+            $channels = array_reduce($supportKeys, function ($carry, $item) {
+                $config = $this->getConfig($item);
+                if ($config->isSuccess()) {
+                    $config = $config->getData();
+                } else {
+                    return $carry;
+                }
+                if ($config && !empty($config['config_value'])) {
+                    $carry[] = [
+                        'key' => $item->value,
+                        'value' => $config['config_value'],
                     ];
                 }
-            }
+                return $carry;
+            }, []);
+
 
             return ServiceReturn::success(data: $channels);
         } catch (\Exception $exception) {

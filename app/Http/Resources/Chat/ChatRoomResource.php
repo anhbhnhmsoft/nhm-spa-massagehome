@@ -13,8 +13,7 @@ class ChatRoomResource extends JsonResource
             'id' => $this->id,
             'customer_id' => $this->customer_id,
             'ktv_id' => $this->ktv_id,
-            'created_at' => $this->created_at?->toISOString(),
-            'updated_at' => $this->updated_at?->toISOString(),
+            'room_socket' => config('chat.room_socket'),
         ];
     }
 }

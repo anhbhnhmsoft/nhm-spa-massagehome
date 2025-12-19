@@ -208,8 +208,8 @@ Route::middleware('set-api-locale')->group(function () {
         Route::post('messages', [ChatController::class, 'sendMessage']);
     });
 
-    // Support channels - không cần auth
     Route::prefix('config')->group(function () {
+        // Lấy thông tin cấu hình hỗ trợ
         Route::get('support-channels', [ConfigController::class, 'getSupportChannels']);
     });
 });

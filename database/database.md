@@ -430,6 +430,7 @@
     - image_url (json) -- URL hình ảnh banner (lưu trữ dưới dạng JSON đa ngôn ngữ)
     - order (smallint, default 0) -- Sắp xếp banner
     - is_active (boolean, default true) -- Trạng thái kích hoạt
+
 # chat_rooms
     # note
     - Bảng chat_rooms lưu trữ thông tin phòng chat giữa Khách hàng và KTV.

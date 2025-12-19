@@ -349,29 +349,38 @@ class DatabaseSeeder extends Seeder
                 ]
             );
 
-            // Support Channels Config
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::SP_PHONE->value],
+                [
+                    'config_value' => '0865643858',
+                    'config_type'  => ConfigType::STRING->value,
+                    'description'  => 'Số điện thoại hỗ trợ',
+                ]
+            );
             Config::query()->updateOrCreate(
                 ['config_key' => ConfigName::SP_ZALO->value],
                 [
-                    'config_value' => '0865643858',
-                    'config_type' => ConfigType::STRING->value,
-                    'description' => 'Số điện thoại Zalo hỗ trợ của admin',
+                    'config_value' => 'https://zalo.me/0865643858',
+                    'config_type'  => ConfigType::STRING->value,
+                    'description'  => 'Trang Zalo hỗ trợ của admin',
                 ]
             );
+
             Config::query()->updateOrCreate(
                 ['config_key' => ConfigName::SP_FACEBOOK->value],
                 [
-                    'config_value' => 'https://www.facebook.com/profile.php?id=100063507007366',
-                    'config_type' => ConfigType::STRING->value,
-                    'description' => 'Trang Facebook hỗ trợ của admin',
+                    'config_value' => 'https://facebook.com/admin.support',
+                    'config_type'  => ConfigType::STRING->value,
+                    'description'  => 'Trang Facebook hỗ trợ của admin',
                 ]
             );
+
             Config::query()->updateOrCreate(
-                ['config_key' => ConfigName::SP_WEB_CHAT->value],
+                ['config_key' => ConfigName::SP_WECHAT->value],
                 [
-                    'config_value' => 'https://chat.zalo.me/c/0865643858',
-                    'config_type' => ConfigType::STRING->value,
-                    'description' => 'Website hỗ trợ của admin',
+                    'config_value' => 'wechat_admin_support',
+                    'config_type'  => ConfigType::STRING->value,
+                    'description'  => 'Link WeChat hỗ trợ của admin',
                 ]
             );
         } catch (\Exception $e) {

@@ -23,10 +23,8 @@ class ConfigController extends BaseController
         if ($result->isError()) {
             return $this->sendError(message: $result->getMessage());
         }
-
         return $this->sendSuccess(
             data: $result->getData(),
-            message: __('common.success.data_list')
         );
     }
 }

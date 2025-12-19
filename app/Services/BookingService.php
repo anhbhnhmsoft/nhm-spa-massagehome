@@ -140,8 +140,8 @@ class BookingService extends BaseService
 
             if ($couponId) {
                 $couponValidation = $this->couponService->validateUseCoupon(
-                    couponId: $couponId,
-                    serviceId: $serviceId,
+                    couponId: (string) $couponId,
+                    serviceId: (string) $serviceId,
                     priceBeforeDiscount: $priceBeforeDiscount
                 );
 

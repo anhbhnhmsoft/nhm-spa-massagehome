@@ -43,7 +43,7 @@ class ChatService extends BaseService
                 })
                 ->first();
 
-            if (! $room) {
+            if (!$room) {
                 $room = $this->chatRoomRepository->create([
                     'customer_id' => $customerId,
                     'ktv_id' => $ktvId,
@@ -199,7 +199,7 @@ class ChatService extends BaseService
         try {
             /** @var \App\Models\User $user */
             $user = Auth::user();
-            
+
             if (!$user) {
                 return ServiceReturn::error(message: __('common_error.unauthorized'));
             }
