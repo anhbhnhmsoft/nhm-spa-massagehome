@@ -6,6 +6,8 @@ return [
         'not_found'  => 'Dịch vụ không tồn tại',
     ],
     'not_found' => 'Booking không tồn tại',
+    'book_time_not_valid' => 'Thời gian đặt không hợp lệ, cần phải lớn hơn thời gian hiện tại!',
+    'ktv_is_busy_at_this_time' => 'Kỹ thuật viên đã có lịch trong khung giờ này!',
     'wallet' => [
         'not_active' => 'Tài khoản không hoạt động',
         'not_enough' => 'Số dư không đủ',
