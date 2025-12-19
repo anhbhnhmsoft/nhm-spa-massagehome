@@ -225,6 +225,12 @@ class BookingService extends BaseService
                     );
                 }
             }
+
+            if ($bookTime < Carbon::now()) {
+                return ServiceReturn::error(
+                    message: __("booking.book_time_not_valid")
+                );
+            }
             // Lấy thời gian nghỉ giữa 2 lần phục vụ của kỹ thuật viên
             // Giả định config_value là số phút
             $breakTimeGap = 0;
@@ -238,50 +244,59 @@ class BookingService extends BaseService
                 );
             }
 
-            // Lấy giá trị break time (phút)
+            // 1. Lấy cấu hình Break Time
+            $breakTimeGapReturn = $this->configService->getConfig(ConfigName::BREAK_TIME_GAP);
+            if ($breakTimeGapReturn->isError()) {
+                return ServiceReturn::error(message: __("booking.break_time_gap.not_found"));
+            }
             $breakTimeGapMinutes = (int) $breakTimeGapReturn->getData();
 
-            // 1. Chuẩn bị dữ liệu thời gian
+            // 2. Chuẩn bị thông tin Booking mới (Booking A)
             $durationMinutes = (int) $serviceOption->duration;
             $currentBookingStartTime = Carbon::parse($bookTime); // Start A
+            $currentBookingEndTime = $currentBookingStartTime->copy()->addMinutes($durationMinutes); // End A
 
-            // Thời gian kết thúc dự kiến của booking đang đặt (End A = Start A + Duration + Break)
-            $currentBookingEndTime = $currentBookingStartTime->copy()
-                ->addMinutes($durationMinutes)
-                ->addMinutes($breakTimeGapMinutes);
-
-            // 2. Định nghĩa khung thời gian tìm kiếm (±3 tiếng)
-            $searchWindowStart = $currentBookingStartTime->copy()->subHours(3);
-            $searchWindowEnd = $currentBookingStartTime->copy()->addHours(3);
-
-            // 3. Truy vấn kiểm tra trùng lặp
-            $hasOverlappingBooking = $this->bookingRepository->query()
+            // 3. Truy vấn toàn bộ booking trong ngày của KTV (00:00:00 - 23:59:59)
+            $bookingsInDay = $this->bookingRepository->query()
                 ->where('ktv_user_id', $service->user_id)
                 ->whereDate('booking_time', $currentBookingStartTime->toDateString())
-                ->whereBetween('booking_time', [$searchWindowStart, $searchWindowEnd])
-                ->whereNotIn('status', [BookingStatus::CANCELED->value])
-                ->where(function ($q) use ($currentBookingStartTime, $currentBookingEndTime, $breakTimeGapMinutes) {
-                    /**
-                     * booking_time + (duration * INTERVAL '1 minute') + (? * INTERVAL '1 minute')
-                     */
-                    $q->where(function ($inner) use ($currentBookingStartTime, $breakTimeGapMinutes) {
-                        // StartA < EndB (Thời gian bắt đầu mới < Thời gian kết thúc dự kiến cũ)
-                        $inner->whereRaw(
-                            "booking_time + (duration + ?) * INTERVAL '1 minute' > ?",
-                            [$breakTimeGapMinutes, $currentBookingStartTime]
-                        );
-                    })
-                    ->where('booking_time', '<', $currentBookingEndTime); // EndA > StartB
-                })
-                ->first();
+                ->whereIn('status', [
+                    BookingStatus::CONFIRMED->value,
+                    BookingStatus::ONGOING->value,
+                    BookingStatus::PENDING->value
+                ])
+                ->get();
 
-            if ($hasOverlappingBooking) {
-                return ServiceReturn::error(
-                    message: __("booking.time_slot_not_available")
-                );
+            // 4. Kiểm tra trùng lặp bằng vòng lặp
+            foreach ($bookingsInDay as $existingBooking) {
+                // Thông tin booking cũ (Booking B)
+                $bStart = Carbon::parse($existingBooking->booking_time);
+                $bDuration = (int) $existingBooking->duration;
+
+                // Thời điểm kết thúc của B bao gồm cả thời gian nghỉ
+                // End B = Start B + Duration B + BreakTime
+                $bEndWithBreak = $bStart->copy()->addMinutes($bDuration)->addMinutes($breakTimeGapMinutes);
+
+                // Thời điểm kết thúc của A (Booking mới) bao gồm cả thời gian nghỉ
+                // End A = Start A + Duration A + BreakTime
+                $aEndWithBreak = $currentBookingStartTime->copy()->addMinutes($durationMinutes)->addMinutes($breakTimeGapMinutes);
+
+                /**
+                 * LOGIC KIỂM TRA TRÙNG:
+                 * Hai khoảng thời gian trùng nhau khi: (StartA < EndB) VÀ (EndA > StartB)
+                 * Ở đây End được tính kèm cả BreakTime để đảm bảo khoảng nghỉ.
+                 */
+                $isOverlapping = $currentBookingStartTime->lt($bEndWithBreak) && $aEndWithBreak->gt($bStart);
+
+                if ($isOverlapping) {
+                    return ServiceReturn::error(
+                        message: __("booking.ktv_is_busy_at_this_time") // KTV đã có lịch trong khung giờ này
+                    );
+                }
             }
-            // khởi tạo booking mới
-            $booking =  $this->bookingRepository->create([
+
+            // 5. Nếu không trùng, tiến hành tạo Booking
+            $booking = $this->bookingRepository->create([
                 'user_id' => $user->id,
                 'service_id' => $serviceId,
                 'coupon_id' => $couponId,
@@ -301,7 +316,7 @@ class BookingService extends BaseService
                 'note_address' => $noteAddress ?? '',
                 'ktv_user_id' => $service->user_id,
             ]);
-
+            
             // Bắn notif cho người dùng khi đặt lịch thành công
             SendNotificationJob::dispatch(
                 userId: $user->id,
@@ -398,7 +413,7 @@ class BookingService extends BaseService
                         'status' => 'waiting',
                     ]
                 );
-            }elseif ($booking->status == BookingStatus::CONFIRMED->value) {
+            } elseif ($booking->status == BookingStatus::CONFIRMED->value) {
                 return ServiceReturn::success(
                     data: [
                         'status' => 'confirmed',
@@ -418,7 +433,7 @@ class BookingService extends BaseService
                         'status' => 'failed',
                     ]
                 );
-            }else{
+            } else {
                 return ServiceReturn::error(
                     message: __("booking.not_found")
                 );
