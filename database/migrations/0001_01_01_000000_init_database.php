@@ -328,6 +328,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('review_by')->constrained('users')->onDelete('cascade');
+            $table->foreignId('service_booking_id')->constrained('service_bookings')->onDelete('cascade');
             $table->timestamp('review_at')->useCurrent()->comment('Thời gian đánh giá');
             $table->boolean('hidden')->default(false)->comment('Có ẩn hay không');
             $table->smallInteger('rating')->unsigned()->default(0)->comment('Đánh giá từ 1-5');
@@ -494,6 +495,8 @@ return new class extends Migration
             'coupon_used',
             'provinces',
             'geo_caching_places',
+            'messages',
+            'chat_rooms'
         ];
 
         foreach ($tables as $table) {
