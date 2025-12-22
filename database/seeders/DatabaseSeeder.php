@@ -29,14 +29,13 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        //        $this->seedProvince();
-        //        $this->seedCategory();
-        //        $this->seedAdmin();
-        //        $this->seedKTV();
-        //        $this->seedCoupon();
+        $this->seedProvince();
+        $this->seedCategory();
+        $this->seedAdmin();
+//        $this->seedKTV();
+        $this->seedCoupon();
         $this->seedConfig();
-//        $this->seedConfigAffiliate();
-        // $this->seedBanner();
+        $this->seedConfigAffiliate();
     }
 
     protected function seedAdmin(): void
@@ -166,11 +165,11 @@ class DatabaseSeeder extends Seeder
                     Language::CHINESE->value => '全身按摩',
                 ],
                 'description' => [
-                    Language::VIETNAMESE->value => fake('vi_VN')->paragraph(),
-                    Language::ENGLISH->value => fake('en_US')->paragraph(),
-                    Language::CHINESE->value => fake('zh_CN')->paragraph(),
+                    Language::VIETNAMESE->value => 'Liệu trình massage toàn thân giúp thư giãn cơ bắp, cải thiện tuần hoàn máu và giảm căng thẳng sau ngày dài mệt mỏi.',
+                    Language::ENGLISH->value => 'A full body massage therapy that helps relax muscles, improve blood circulation, and relieve stress after a long day.',
+                    Language::CHINESE->value => '全身按摩疗程，有助于放松肌肉、促进血液循环，并缓解一天后的疲劳与压力。',
                 ],
-                'image_url' => fake()->imageUrl(),
+                'image_url' => null,
                 'position' => 1,
                 'is_featured' => true,
                 'usage_count' => fake()->numberBetween(0, 100),
@@ -183,11 +182,11 @@ class DatabaseSeeder extends Seeder
                     Language::CHINESE->value => '手 massage',
                 ],
                 'description' => [
-                    Language::VIETNAMESE->value => fake('vi_VN')->paragraph(),
-                    Language::ENGLISH->value => fake('en_US')->paragraph(),
-                    Language::CHINESE->value => fake('zh_CN')->paragraph(),
+                    Language::VIETNAMESE->value => 'Liệu trình massage toàn thân giúp thư giãn cơ bắp, cải thiện tuần hoàn máu và giảm căng thẳng sau ngày dài mệt mỏi.',
+                    Language::ENGLISH->value => 'A full body massage therapy that helps relax muscles, improve blood circulation, and relieve stress after a long day.',
+                    Language::CHINESE->value => '全身按摩疗程，有助于放松肌肉、促进血液循环，并缓解一天后的疲劳与压力。',
                 ],
-                'image_url' => fake()->imageUrl(),
+                'image_url' => null,
                 'position' => 2,
                 'is_featured' => true,
                 'usage_count' => fake()->numberBetween(0, 100),
@@ -195,16 +194,16 @@ class DatabaseSeeder extends Seeder
             ]);
             Category::query()->create([
                 'name' => [
-                    Language::VIETNAMESE->value => 'Massage Thụy Điển',
-                    Language::ENGLISH->value => 'Foot Massage',
-                    Language::CHINESE->value => '脚 massage',
+                    Language::VIETNAMESE->value => 'Massage toàn thân',
+                    Language::ENGLISH->value => 'Full Body Massage',
+                    Language::CHINESE->value => '全身按摩',
                 ],
                 'description' => [
-                    Language::VIETNAMESE->value => fake('vi_VN')->paragraph(),
-                    Language::ENGLISH->value => fake('en_US')->paragraph(),
-                    Language::CHINESE->value => fake('zh_CN')->paragraph(),
+                    Language::VIETNAMESE->value => 'Liệu trình chuyên sâu cho vùng cổ, vai và gáy, giúp giảm đau nhức do ngồi lâu hoặc làm việc căng thẳng.',
+                    Language::ENGLISH->value => 'A targeted therapy for neck and shoulders to relieve pain caused by long sitting or work stress.',
+                    Language::CHINESE->value => '针对颈部和肩部的深层按摩，有效缓解久坐或工作压力引起的酸痛。',
                 ],
-                'image_url' => fake()->imageUrl(),
+                'image_url' => null,
                 'position' => 3,
                 'is_featured' => true,
                 'usage_count' => fake()->numberBetween(0, 100),
@@ -217,11 +216,11 @@ class DatabaseSeeder extends Seeder
                     Language::CHINESE->value => '头 massage',
                 ],
                 'description' => [
-                    Language::VIETNAMESE->value => fake('vi_VN')->paragraph(),
-                    Language::ENGLISH->value => fake('en_US')->paragraph(),
-                    Language::CHINESE->value => fake('zh_CN')->paragraph(),
+                    Language::VIETNAMESE->value => 'Massage da đầu giúp thư giãn thần kinh, cải thiện giấc ngủ và giảm căng thẳng tinh thần.',
+                    Language::ENGLISH->value => 'A head massage that relaxes the nervous system, improves sleep quality, and reduces mental stress.',
+                    Language::CHINESE->value => '头部按摩有助于放松神经系统，改善睡眠质量并缓解精神压力。',
                 ],
-                'image_url' => fake()->imageUrl(),
+                'image_url' => null,
                 'position' => 4,
                 'is_featured' => false,
                 'usage_count' => fake()->numberBetween(0, 100),
@@ -234,11 +233,11 @@ class DatabaseSeeder extends Seeder
                     Language::CHINESE->value => '脚 massage',
                 ],
                 'description' => [
-                    Language::VIETNAMESE->value => fake('vi_VN')->paragraph(),
-                    Language::ENGLISH->value => fake('en_US')->paragraph(),
-                    Language::CHINESE->value => fake('zh_CN')->paragraph(),
+                    Language::VIETNAMESE->value => 'Massage chân giúp giảm sưng mỏi, kích thích huyệt đạo và cải thiện lưu thông máu.',
+                    Language::ENGLISH->value => 'A leg and foot massage that reduces swelling, stimulates acupressure points, and improves blood circulation.',
+                    Language::CHINESE->value => '足部按摩有助于缓解肿胀与疲劳，刺激穴位并促进血液循环。',
                 ],
-                'image_url' => fake()->imageUrl(),
+                'image_url' => null,
                 'position' => 5,
                 'is_featured' => false,
                 'usage_count' => fake()->numberBetween(0, 100),
@@ -324,14 +323,14 @@ class DatabaseSeeder extends Seeder
                 ]
             );
 
-//            Config::query()->updateOrCreate(
-//                ['config_key' => ConfigName::GOONG_API_KEY->value],
-//                [
-//                    'config_value' => '',
-//                    'config_type' => ConfigType::STRING->value,
-//                    'description' => 'Mã API key Goong dùng để tích hợp tìm kiếm địa chỉ.',
-//                ]
-//            );
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::GOONG_API_KEY->value],
+                [
+                    'config_value' => 'dpxUCPncHcWczUMJY5EfatOFCpxGI2tB9ADsR4sb',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'Mã API key Goong dùng để tích hợp tìm kiếm địa chỉ.',
+                ]
+            );
             Config::query()->updateOrCreate(
                 ['config_key' => ConfigName::BREAK_TIME_GAP->value],
                 [
@@ -353,16 +352,16 @@ class DatabaseSeeder extends Seeder
                 ['config_key' => ConfigName::SP_PHONE->value],
                 [
                     'config_value' => '0865643858',
-                    'config_type'  => ConfigType::STRING->value,
-                    'description'  => 'Số điện thoại hỗ trợ',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'Số điện thoại hỗ trợ',
                 ]
             );
             Config::query()->updateOrCreate(
                 ['config_key' => ConfigName::SP_ZALO->value],
                 [
                     'config_value' => 'https://zalo.me/0865643858',
-                    'config_type'  => ConfigType::STRING->value,
-                    'description'  => 'Trang Zalo hỗ trợ của admin',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'Trang Zalo hỗ trợ của admin',
                 ]
             );
 
@@ -370,8 +369,8 @@ class DatabaseSeeder extends Seeder
                 ['config_key' => ConfigName::SP_FACEBOOK->value],
                 [
                     'config_value' => 'https://facebook.com/admin.support',
-                    'config_type'  => ConfigType::STRING->value,
-                    'description'  => 'Trang Facebook hỗ trợ của admin',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'Trang Facebook hỗ trợ của admin',
                 ]
             );
 
@@ -379,8 +378,8 @@ class DatabaseSeeder extends Seeder
                 ['config_key' => ConfigName::SP_WECHAT->value],
                 [
                     'config_value' => 'wechat_admin_support',
-                    'config_type'  => ConfigType::STRING->value,
-                    'description'  => 'Link WeChat hỗ trợ của admin',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'Link WeChat hỗ trợ của admin',
                 ]
             );
         } catch (\Exception $e) {
@@ -532,43 +531,4 @@ class DatabaseSeeder extends Seeder
         return true;
     }
 
-    protected function seedBanner()
-    {
-        Banner::query()->create([
-            'image_url' => [
-                Language::VIETNAMESE->value => 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
-                Language::ENGLISH->value => 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
-                Language::CHINESE->value => 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
-            ],
-            'order' => 1,
-            'is_active' => true,
-        ]);
-        Banner::query()->create([
-            'image_url' => [
-                Language::VIETNAMESE->value => 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
-                Language::ENGLISH->value    => 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
-                Language::CHINESE->value    => 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
-            ],
-            'order' => 2,
-            'is_active' => true,
-        ]);
-        Banner::query()->create([
-            'image_url' => [
-                Language::VIETNAMESE->value => 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
-                Language::ENGLISH->value    => 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
-                Language::CHINESE->value    => 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
-            ],
-            'order' => 3,
-            'is_active' => true,
-        ]);
-        Banner::query()->create([
-            'image_url' => [
-                Language::VIETNAMESE->value => 'https://images.unsplash.com/photo-1515377905703-c4788e51af15?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
-                Language::ENGLISH->value    => 'https://images.unsplash.com/photo-1515377905703-c4788e51af15?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
-                Language::CHINESE->value    => 'https://images.unsplash.com/photo-1515377905703-c4788e51af15?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80',
-            ],
-            'order' => 4,
-            'is_active' => true,
-        ]);
-    }
 }

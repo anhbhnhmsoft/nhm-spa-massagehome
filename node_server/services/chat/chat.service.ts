@@ -1,10 +1,10 @@
-import { config } from '@/core/app.config.ts';
-import { redisPub, redisSub } from '@/core/app.redis.ts';
+import { config } from '#/core/app.config.js';
+import { redisPub, redisSub } from '#/core/app.redis.js';
 import {
     _ChatConstant,
     PayloadNewMessage,
     UserSession,
-} from '@/services/chat/types.ts';
+} from '#/services/chat/types.js';
 import type { Server, Socket } from 'socket.io';
 
 export class ChatService {
