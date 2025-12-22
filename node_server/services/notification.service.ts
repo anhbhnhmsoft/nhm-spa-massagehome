@@ -1,6 +1,6 @@
 import { Expo, ExpoPushMessage } from 'expo-server-sdk';
-import { redisSub } from '@/core/app.redis';
-import { config } from '@/core/app.config';
+import { redisSub } from '#/core/app.redis.js';
+import { config } from '#/core/app.config.js';
 
 interface NotificationPayload {
     tokens: string[];

@@ -2,14 +2,18 @@
     "$schema": "https://www.schemastore.org/package.json",
     "private": true,
     "type": "module",
+    "imports": {
+        "#/*": "./dist/*.js"
+    },
     "scripts": {
         "build": "vite build",
         "dev": "vite",
         "lint": "eslint . --fix",
         "types": "tsc --noEmit",
         "node-server": "tsx --tsconfig ./node_server/tsconfig.json ./node_server/index.ts",
-        "node-build": "tsc -p ./node_server/tsconfig.json",
-        "node-prod": "pm2 start dist/index.js --name node-chat-server"
+        "node-build": "rm -rf dist && tsc -p ./node_server/tsconfig.json",
+        "node-prod": "pm2 restart ecosystem.config.cjs",
+        "node-prod-test": "node dist/index.js"
     },
     "devDependencies": {
         "@eslint/js": "^9.19.0",
@@ -42,6 +46,7 @@
         "ioredis": "^5.8.2",
         "laravel-vite-plugin": "^2.0",
         "socket.io": "^4.8.1",
+        "tsconfig-paths": "^4.2.0",
         "typescript": "^5.7.2",
         "vite": "7.1.11"
     }

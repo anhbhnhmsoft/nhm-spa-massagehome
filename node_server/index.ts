@@ -2,9 +2,9 @@ import express from 'express';
 import { createServer } from 'http';
 import cors from 'cors';
 import { Server } from 'socket.io';
-import { config } from '@/core/app.config';
-import { NotificationService } from '@/services/notification.service';
-import { ChatService } from '@/services/chat/chat.service';
+import { config } from '#/core/app.config.js';
+import { NotificationService } from '#/services/notification.service.js';
+import { ChatService } from '#/services/chat/chat.service.js';
 
 
 const bootstrap = async () => {
