@@ -18,6 +18,7 @@ class Review extends Model
     protected $fillable = [
         'user_id',    // ID người nhận review (Provider)
         'review_by',  // ID người viết review (Customer)
+        'service_booking_id', // ID booking dịch vụ được đánh giá
         'rating',
         'comment',
         'hidden',
@@ -28,6 +29,7 @@ class Review extends Model
         'id' => 'string',
         'user_id' => 'string',
         'review_by' => 'string',
+        'service_booking_id' => 'string',
         'rating' => 'integer',
         'review_at' => 'datetime',
         'hidden' => 'boolean',
@@ -43,5 +45,11 @@ class Review extends Model
     public function reviewer()
     {
         return $this->belongsTo(User::class, 'review_by');
+    }
+
+    // Booking dịch vụ được đánh giá
+    public function serviceBooking()
+    {
+        return $this->belongsTo(ServiceBooking::class, 'service_booking_id');
     }
 }

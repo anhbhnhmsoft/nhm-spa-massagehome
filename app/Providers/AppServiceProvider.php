@@ -3,7 +3,6 @@
 namespace App\Providers;
 
 use App\Filament\Pages\Dashboard;
-use App\Models\User;
 use App\Repositories\AffiliateConfigRepository;
 use App\Repositories\AffiliateEarningRepository;
 use App\Repositories\BookingRepository;
@@ -37,7 +36,7 @@ use App\Services\ServiceService;
 use App\Services\UserService;
 use App\Services\WalletService;
 use App\Services\AffiliateService;
-use Illuminate\Support\Facades\URL;
+use App\Services\ReviewService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -110,6 +109,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(CouponService::class);
         $this->app->singleton(AffiliateService::class);
         $this->app->singleton(ProvinceService::class);
+        $this->app->singleton(ReviewService::class);
     }
 
 
