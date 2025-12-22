@@ -110,7 +110,7 @@ class KTVForm
                         Select::make('status')
                             ->label(__('admin.common.table.status'))
                             ->options(ReviewApplicationStatus::toOptions())
-                            ->default(ReviewApplicationStatus::PENDING),
+                            ->default(ReviewApplicationStatus::APPROVED),
                         Select::make('agency_id')
                             ->label(__('admin.ktv_apply.fields.agency'))
                             ->searchable()
