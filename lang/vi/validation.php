@@ -132,4 +132,8 @@ return [
         'string' => 'Nội dung tin nhắn phải là chuỗi.',
         'max' => 'Nội dung tin nhắn không được vượt quá :max ký tự.',
     ],
+    'role' => [
+        'required' => 'Vui lòng chọn vai trò.',
+        'in' => 'Vai trò không hợp lệ.',
+    ],
 ];

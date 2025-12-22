@@ -18,6 +18,7 @@ class UserFile extends Model
         'file_name',
         'file_size',
         'file_type',
+        'is_public',
         'role',
     ];
 
