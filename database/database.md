@@ -460,5 +460,5 @@
     - room_id (bigint, foreign key to chat_rooms.id) -- ID phòng chat
     - sender_by (bigint, foreign key to users.id) -- ID người gửi tin nhắn
     - content (text) -- Nội dung tin nhắn
-    - softDeletes
+    - seen_at (timestamp, nullable) -- Thời gian đã đọc tin nhắn
     - timestamps

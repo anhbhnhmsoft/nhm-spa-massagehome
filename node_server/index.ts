@@ -4,7 +4,9 @@ import cors from 'cors';
 import { Server } from 'socket.io';
 import { config } from './core/app.config.ts';
 import { NotificationService } from './services/notification.service.ts';
-import { ChatService } from './services/chat.service.ts';
+import { ChatService } from './services/chat/chat.service.ts';
+
+
 const bootstrap = async () => {
     // 1. Khởi tạo Express & HTTP Server
     const app = express();
@@ -22,24 +24,23 @@ const bootstrap = async () => {
         },
     });
 
-    console.log('🔄 Initializing Services...');
-
-    // Notification Service (Vẫn lắng nghe Redis như cũ)
+    // Notification Service
     const notificationService = new NotificationService();
     notificationService.init();
 
-    // Chat Service (Socket.IO)
+    // Chat Service
     const chatService = new ChatService(io);
     chatService.init();
 
     // 3. Mở Port lắng nghe (Start Server)
     const PORT = config.app.port;
+    const HOST = config.app.host;
 
-    httpServer.listen(PORT, () => {
-        console.log(`🚀 Node Server running at http://localhost:${PORT}`);
+    httpServer.listen(PORT, HOST, () => {
+        console.log(`🚀 Node Server running at http://${HOST}:${PORT}`);
     });
 
-    // Graceful Shutdown
+    // 4. Xử lý tín hiệu ngắt (graceful shutdown)
     process.on('SIGTERM', () => {
         console.log('SIGTERM received. Closing server...');
         httpServer.close(() => process.exit(0));

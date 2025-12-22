@@ -123,8 +123,6 @@ Route::middleware('set-api-locale')->group(function () {
         // Lấy thông tin chi tiết dịch vụ
         Route::get('detail/{id}', [ServiceController::class, 'detailService'])->where('id', '[0-9]+');
 
-        // Lấy danh sách mã giảm giá
-
         /**
          * router cần auth
          */
@@ -203,9 +201,9 @@ Route::middleware('set-api-locale')->group(function () {
         // Tạo/lấy phòng chat giữa customer (user hiện tại) và KTV
         Route::post('room', [ChatController::class, 'createOrGetRoom']);
         // Lấy danh sách tin nhắn theo room_id (paginate)
-        Route::get('messages', [ChatController::class, 'listMessages']);
+        Route::get('messages/{roomId}', [ChatController::class, 'listMessages'])->where('roomId', '[0-9]+');
         // Gửi tin nhắn trong room (lưu DB + publish realtime)
-        Route::post('messages', [ChatController::class, 'sendMessage']);
+        Route::post('message', [ChatController::class, 'sendMessage']);
     });
 
     Route::prefix('config')->group(function () {

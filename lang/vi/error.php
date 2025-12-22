@@ -20,4 +20,5 @@ return [
     "need_identify_image_display" => "Cần có 3 ảnh hiển thị.",
     "unauthorized" => "Bạn không có quyền truy cập",
     "user_not_found" => "Người dùng không tồn tại",
+    "ktv_not_found" => "KTV không tồn tại",
 ];

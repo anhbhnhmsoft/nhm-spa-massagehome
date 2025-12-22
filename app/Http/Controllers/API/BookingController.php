@@ -22,7 +22,7 @@ class BookingController extends BaseController
     public function listBooking(ListRequest $request): JsonResponse
     {
         $dto = $request->getFilterOptions();
-
+        $dto->addFilter('user_id', $request->user()->id);
         $result = $this->bookingService->bookingPaginate($dto);
         $data = $result->getData();
         return $this->sendSuccess(

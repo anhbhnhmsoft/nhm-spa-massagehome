@@ -68,8 +68,6 @@ return [
     'location' => [
         'keyword_required' => 'Từ khóa không được để trống',
         'keyword_string' => 'Từ khóa phải là chuỗi',
-        'latitude_numeric' => 'Vĩ độ phải là số',
-        'longitude_numeric' => 'Kinh độ phải là số',
         'radius_numeric' => 'Khoảng cách phải là số',
         'limit_numeric' => 'Giới hạn phải là số',
         'place_id_required' => 'ID địa điểm không được để trống',
@@ -97,5 +95,25 @@ return [
         'array' => 'Mã giảm giá phải là mảng.',
         'collect_error' => 'Không thể dùng mã :code vào thời điểm này',
         'collect_limit_error' => 'Mã :code đã hết lượt thu thập hôm nay',
+    ],
+    'ktv_id' => [
+        'required' => 'Vui lòng chọn KTV.',
+        'numeric' => 'ID KTV phải là số.',
+        'exists' => 'ID KTV không tồn tại.',
+    ],
+    'user_id' => [
+        'required' => 'Vui lòng chọn khách hàng :field.',
+        'numeric' => 'ID khách hàng phải là số.',
+        'exists' => 'ID khách hàng không tồn tại.',
+    ],
+    'room_id' => [
+        'required' => 'Vui lòng chọn phòng chat.',
+        'string' => 'ID phòng chat phải là chuỗi.',
+        'exists' => 'ID phòng chat không tồn tại.',
+    ],
+    'content' => [
+        'required' => 'Vui lòng nhập nội dung tin nhắn.',
+        'string' => 'Nội dung tin nhắn phải là chuỗi.',
+        'max' => 'Nội dung tin nhắn không được vượt quá :max ký tự.',
     ],
 ];
