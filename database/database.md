@@ -380,6 +380,7 @@
     - id (bigint, primary key, auto-increment)
     - user_id (bigint, foreign key to users.id) -- id người được đánh giá
     - review_by (bigint, foreign key to users.id) -- id người dùng đánh giá
+    - service_booking_id (bigint, foreign key to service_bookings.id) id của đơn dịch vụ đã đặt
     - rating (smallint) -- xếp hạng (dạng số từ 1-5)
     - comment (text, nullable) -- bình luận
     - review_at (timestamp) -- thời gian đánh giá
@@ -460,5 +461,5 @@
     - room_id (bigint, foreign key to chat_rooms.id) -- ID phòng chat
     - sender_by (bigint, foreign key to users.id) -- ID người gửi tin nhắn
     - content (text) -- Nội dung tin nhắn
-    - softDeletes
+    - seen_at (timestamp, nullable) -- Thời gian đã đọc tin nhắn
     - timestamps

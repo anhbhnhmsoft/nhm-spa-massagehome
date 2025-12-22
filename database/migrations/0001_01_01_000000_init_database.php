@@ -330,6 +330,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('review_by')->constrained('users')->onDelete('cascade');
+            $table->foreignId('service_booking_id')->constrained('service_bookings')->onDelete('cascade');
             $table->timestamp('review_at')->useCurrent()->comment('Thời gian đánh giá');
             $table->boolean('hidden')->default(false)->comment('Có ẩn hay không');
             $table->smallInteger('rating')->unsigned()->default(0)->comment('Đánh giá từ 1-5');
@@ -447,9 +448,11 @@ return new class extends Migration
         // Bảng messages - Lưu nội dung tin nhắn trong phòng chat
         Schema::create('messages', function (Blueprint $table) {
             $table->id();
+            $table->string('temp_id')->nullable()->comment('ID tạm thời cho tin nhắn');
             $table->unsignedBigInteger('room_id')->comment('ID phòng chat (chat_rooms.id)');
             $table->bigInteger('sender_by')->comment('ID người gửi (users.id)');
             $table->text('content')->comment('Nội dung tin nhắn');
+            $table->timestamp('seen_at')->nullable()->comment('Thời gian đã đọc tin nhắn');
             $table->timestamps();
 
             $table->foreign('room_id')->references('id')->on('chat_rooms')->onDelete('cascade');
@@ -496,6 +499,8 @@ return new class extends Migration
             'coupon_used',
             'provinces',
             'geo_caching_places',
+            'messages',
+            'chat_rooms'
         ];
 
         foreach ($tables as $table) {

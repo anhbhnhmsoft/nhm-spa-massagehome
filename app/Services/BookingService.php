@@ -9,16 +9,12 @@ use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
 use App\Enums\BookingStatus;
 use App\Enums\NotificationType;
-use App\Enums\ServiceDuration;
 use App\Jobs\SendNotificationJob;
-use App\Models\Coupon;
 use App\Repositories\BookingRepository;
 use App\Repositories\CouponRepository;
 use App\Repositories\ServiceRepository;
 use App\Enums\ConfigName;
 use App\Enums\PaymentType;
-use App\Enums\WalletTransactionStatus;
-use App\Enums\WalletTransactionType;
 use App\Jobs\WalletTransactionBookingJob;
 use App\Models\Config;
 use App\Services\ConfigService;
@@ -59,6 +55,7 @@ class BookingService extends BaseService
     {
         try {
             $query = $this->bookingRepository->queryBooking();
+
             $query = $this->bookingRepository->filterQuery(
                 query: $query,
                 filters: $dto->filters

@@ -16,12 +16,16 @@ class Message extends Model
         'room_id',
         'sender_by',
         'content',
+        'seen_at',
+        'temp_id',
     ];
 
     protected $casts = [
         'id' => 'string',
         'room_id' => 'string',
         'sender_by' => 'string',
+        'seen_at' => 'datetime',
+        'temp_id' => 'string',
     ];
 
     public function room(): BelongsTo

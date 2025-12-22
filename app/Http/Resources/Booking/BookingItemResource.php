@@ -40,6 +40,8 @@ class BookingItemResource extends JsonResource
             'duration' => $this->duration,
             'status' => $this->status,
             'price' => $this->price,
+            // Số lượng đánh giá
+            'has_reviews' => $this->reviews_count > 0,
         ];
     }
 

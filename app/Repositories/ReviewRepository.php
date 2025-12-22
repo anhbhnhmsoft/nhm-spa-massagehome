@@ -13,13 +13,31 @@ class ReviewRepository extends BaseRepository
         return Review::class;
     }
 
+    public function queryReview()
+    {
+        return $this->query()
+            ->with(['reviewer', 'reviewer.profile']);
+    }
+
     public function filterQuery(Builder $query, array $filters): Builder
     {
+        if (isset($filters['user_id'])) {
+            $query->where('user_id', $filters['user_id']);
+        }
         if (isset($filters['rating'])) {
             $query->where('rating', $filters['rating']);
         }
         if (isset($filters['hidden'])) {
             $query->where('hidden', $filters['hidden']);
+        }
+        if (isset($filters['service_booking_id'])) {
+            $query->where('service_booking_id', $filters['service_booking_id']);
+        }
+        if (isset($filters['user_id'])) {
+            $query->where('user_id', $filters['user_id']);
+        }
+        if (isset($filters['review_by'])) {
+            $query->where('review_by', $filters['review_by']);
         }
         return $query;
     }
