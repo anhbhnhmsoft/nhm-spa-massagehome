@@ -2,7 +2,6 @@
 
 namespace App\Filament\Clusters\User\Resources\Reviews\Tables;
 
-use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -27,8 +26,8 @@ class ReviewsTable
                     ->label(__('admin.review.fields.provider'))
                     ->searchable(),
                 TextColumn::make('rating')
-                    ->label(__('admin.review.fields.rating'))
-                    ->sortable(),
+                        ->label(__('admin.review.fields.rating'))
+                        ->sortable(),
                 TextColumn::make('comment')
                     ->label(__('admin.review.fields.comment'))
                     ->limit(50),

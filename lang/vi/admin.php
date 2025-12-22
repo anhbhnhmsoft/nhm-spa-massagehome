@@ -310,7 +310,7 @@ return
                 'type' => 'Loại giao dịch',
                 'amount' => 'Số tiền',
                 'status' => 'Trạng thái',
-                'created_at' => 'Ngày tạo',
+                'created_at' => 'Thời điểm giao dịch',
             ],
             'type' => [
                 'DEPOSIT_QR_CODE' => 'Nạp tiền (QR)',

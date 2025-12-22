@@ -3,6 +3,7 @@
 namespace App\Filament\Clusters\Service\Resources\Services\Schemas;
 
 use App\Enums\DirectFile;
+use App\Enums\UserRole;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -50,7 +51,12 @@ class ServiceForm
                                     ]),
                                 Select::make('user_id')
                                     ->label(__('admin.service.fields.provider'))
-                                    ->relationship('provider', 'name')
+                                    ->relationship(
+                                        name: 'provider',
+                                        titleAttribute: 'name',
+                                        modifyQueryUsing: fn(Builder $query) => $query
+                                           ->where('is_active', true)->where('role', UserRole::KTV->value),
+                                    )
                                     ->required()
                                     ->validationMessages([
                                         'required' => __('common.error.required'),

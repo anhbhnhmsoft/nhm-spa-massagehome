@@ -42,6 +42,7 @@ class WalletTransactionsTable
                     })
                     ->badge(),
                 TextColumn::make('created_at')
+                    ->label(__('admin.transaction.fields.created_at'))
                     ->dateTime()
                     ->sortable(),
             ])
