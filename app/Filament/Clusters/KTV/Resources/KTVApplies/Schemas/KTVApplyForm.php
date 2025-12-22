@@ -102,7 +102,7 @@ class KTVApplyForm
                     ])
                     ->columns(2),
                 Section::make(__('admin.ktv_apply.fields.registration_info'))
-                    ->relationship('reviewApplication')
+                    ->relationship('getStaffReviewsAttribute')
                     ->schema([
                         Select::make('status')
                             ->label(__('admin.common.table.status'))
@@ -207,6 +207,8 @@ class KTVApplyForm
                                     ->maxSize(102400)
                                     ->downloadable()
                                     ->columnSpan(2),
+                                Hidden::make('role')
+                                    ->default(fn ($record) => $record?->role),
                             ])
                             ->columns(3)
                             ->addable(fn($livewire) => $livewire instanceof CreateRecord)

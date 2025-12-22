@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Core\Cache\CacheKey;
 use App\Core\Cache\Caching;
 use App\Core\GenerateId\HasBigIntId;
+use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -61,6 +62,16 @@ class User extends Authenticatable
     public function reviewApplication()
     {
         return $this->hasOne(UserReviewApplication::class);
+    }
+
+    public function getAgencyReviewsAttribute()
+    {
+        return $this->hasOne(UserReviewApplication::class)->where('role', UserRole::AGENCY->value)->latestOfMany();
+    }
+
+    public function getStaffReviewsAttribute()
+    {
+        return $this->hasOne(UserReviewApplication::class)->where('role', UserRole::KTV->value)->latestOfMany();
     }
 
     public function files()

@@ -73,6 +73,7 @@ return new class extends Migration
             $table->text('note')->nullable()->comment('Ghi chú thêm');
             $table->timestamp('effective_date')->nullable()->comment('Ngày hiệu lực');
             $table->timestamp('application_date')->nullable()->comment('Ngày nộp hồ sơ');
+            $table->smallInteger('role')->comment('Vai trò muốn apply (trong enum UserRole)');
 
             $table->softDeletes();
             $table->timestamps();
@@ -101,6 +102,7 @@ return new class extends Migration
             $table->string('file_size')->nullable();
             $table->string('file_type')->nullable();
             $table->boolean('is_public')->default(false);
+            $table->smallInteger('role')->comment('Vai trò muốn apply (trong enum UserRole)');
             $table->softDeletes();
             $table->timestamps();
 
