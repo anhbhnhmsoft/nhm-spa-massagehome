@@ -7,7 +7,9 @@
         "dev": "vite",
         "lint": "eslint . --fix",
         "types": "tsc --noEmit",
-        "node-server": "tsx --tsconfig ./node_server/tsconfig.json ./node_server/index.ts"
+        "node-server": "tsx --tsconfig ./node_server/tsconfig.json ./node_server/index.ts",
+        "node-build": "tsc -p ./node_server/tsconfig.json",
+        "node-prod": "pm2 start dist/index.js --name node-chat-server"
     },
     "devDependencies": {
         "@eslint/js": "^9.19.0",

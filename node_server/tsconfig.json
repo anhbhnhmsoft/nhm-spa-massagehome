@@ -1,14 +1,18 @@
 {
     "compilerOptions": {
+        "outDir": "../dist",
         "target": "ESNext",
-        "module": "ESNext",
-        "moduleResolution": "Bundler",
-        "noEmit": true,
-        "allowImportingTsExtensions": true,
+        "module": "CommonJS",
+        "moduleResolution": "node",
+        "noEmit": false,
+        "allowImportingTsExtensions": false,
         "types": ["node"],
         "paths": {
             "@/*": ["./*"]
-        }
+        },
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "rootDir": "./"
     },
-    "include": ["."]
+    "include": ["**/*.ts"]
 }

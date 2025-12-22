@@ -201,36 +201,6 @@ return new class extends Migration
             $table->unique(['code', 'created_by']);
         });
 
-        Schema::create('coupon_used', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('coupon_id')->comment('ID mã giảm giá');
-            $table->unsignedBigInteger('user_id')->comment('ID người dùng sử dụng');
-            $table->unsignedBigInteger('service_id')->comment('ID dịch vụ');
-            $table->unsignedBigInteger('booking_id')->unique()->comment('ID đơn đặt lịch/giao dịch');
-
-            $table->foreign('coupon_id')->references('id')->on('coupons')->onDelete('cascade');
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->foreign('service_id')->references('id')->on('services')->onDelete('cascade');
-            $table->foreign('booking_id')->references('id')->on('service_bookings')->onDelete('cascade');
-
-            $table->timestamps();
-            $table->softDeletes();
-
-            $table->unique(['booking_id', 'coupon_id']);
-        });
-
-        Schema::create('coupon_users', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('coupon_id')->comment('ID mã giảm giá');
-            $table->unsignedBigInteger('user_id')->comment('ID người dùng');
-            $table->foreign('coupon_id')->references('id')->on('coupons')->onDelete('cascade');
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->smallInteger('is_used')->default(false);
-            $table->timestamps();
-            $table->softDeletes();
-            $table->unique(['user_id', 'coupon_id']);
-        });
-
         Schema::create('service_bookings', function (Blueprint $table) {
             $table->comment('Bảng service_bookings lưu trữ thông tin đặt lịch hẹn');
             $table->id();
@@ -260,6 +230,36 @@ return new class extends Migration
             $table->foreign('service_id')->references('id')->on('services')->onDelete('cascade');
             $table->foreign('service_option_id')->references('id')->on('service_options')->onDelete('set null');
             $table->foreign('coupon_id')->references('id')->on('coupons')->onDelete('set null');
+        });
+
+        Schema::create('coupon_used', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('coupon_id')->comment('ID mã giảm giá');
+            $table->unsignedBigInteger('user_id')->comment('ID người dùng sử dụng');
+            $table->unsignedBigInteger('service_id')->comment('ID dịch vụ');
+            $table->unsignedBigInteger('booking_id')->comment('ID đơn đặt lịch/giao dịch');
+
+            $table->foreign('coupon_id')->references('id')->on('coupons')->onDelete('cascade');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('service_id')->references('id')->on('services')->onDelete('cascade');
+            $table->foreign('booking_id')->references('id')->on('service_bookings')->onDelete('cascade');
+
+            $table->timestamps();
+            $table->softDeletes();
+
+            $table->unique(['booking_id', 'coupon_id']);
+        });
+
+        Schema::create('coupon_users', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('coupon_id')->comment('ID mã giảm giá');
+            $table->unsignedBigInteger('user_id')->comment('ID người dùng');
+            $table->foreign('coupon_id')->references('id')->on('coupons')->onDelete('cascade');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->smallInteger('is_used')->default(false);
+            $table->timestamps();
+            $table->softDeletes();
+            $table->unique(['user_id', 'coupon_id']);
         });
 
         Schema::create('wallets', function (Blueprint $table) {
@@ -368,6 +368,33 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        // Bảng chat_rooms - Lưu thông tin phòng chat giữa khách hàng và KTV
+        Schema::create('chat_rooms', function (Blueprint $table) {
+            $table->id();
+            $table->bigInteger('customer_id')->comment('ID khách hàng');
+            $table->bigInteger('ktv_id')->comment('ID KTV');
+            $table->timestamps();
+
+            $table->foreign('customer_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('ktv_id')->references('id')->on('users')->onDelete('cascade');
+
+            $table->index(['customer_id', 'ktv_id']);
+        });
+
+        // Bảng messages - Lưu nội dung tin nhắn trong phòng chat
+        Schema::create('messages', function (Blueprint $table) {
+            $table->id();
+            $table->string('temp_id')->nullable()->comment('ID tạm thời cho tin nhắn');
+            $table->unsignedBigInteger('room_id')->comment('ID phòng chat (chat_rooms.id)');
+            $table->bigInteger('sender_by')->comment('ID người gửi (users.id)');
+            $table->text('content')->comment('Nội dung tin nhắn');
+            $table->timestamp('seen_at')->nullable()->comment('Thời gian đã đọc tin nhắn');
+            $table->timestamps();
+
+            $table->foreign('room_id')->references('id')->on('chat_rooms')->onDelete('cascade');
+            $table->foreign('sender_by')->references('id')->on('users')->onDelete('cascade');
+        });
+
         /**
          * Các bảng của Laravel
          */
@@ -430,32 +457,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Bảng chat_rooms - Lưu thông tin phòng chat giữa khách hàng và KTV
-        Schema::create('chat_rooms', function (Blueprint $table) {
-            $table->id();
-            $table->bigInteger('customer_id')->comment('ID khách hàng');
-            $table->bigInteger('ktv_id')->comment('ID KTV');
-            $table->timestamps();
 
-            $table->foreign('customer_id')->references('id')->on('users')->onDelete('cascade');
-            $table->foreign('ktv_id')->references('id')->on('users')->onDelete('cascade');
-
-            $table->index(['customer_id', 'ktv_id']);
-        });
-
-        // Bảng messages - Lưu nội dung tin nhắn trong phòng chat
-        Schema::create('messages', function (Blueprint $table) {
-            $table->id();
-            $table->string('temp_id')->nullable()->comment('ID tạm thời cho tin nhắn');
-            $table->unsignedBigInteger('room_id')->comment('ID phòng chat (chat_rooms.id)');
-            $table->bigInteger('sender_by')->comment('ID người gửi (users.id)');
-            $table->text('content')->comment('Nội dung tin nhắn');
-            $table->timestamp('seen_at')->nullable()->comment('Thời gian đã đọc tin nhắn');
-            $table->timestamps();
-
-            $table->foreign('room_id')->references('id')->on('chat_rooms')->onDelete('cascade');
-            $table->foreign('sender_by')->references('id')->on('users')->onDelete('cascade');
-        });
     }
 
     /**
@@ -463,11 +465,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Disable FK checks to avoid constraint errors while dropping tables
         Schema::disableForeignKeyConstraints();
 
         $tables = [
-            'banners',
+            // Laravel system tables
             'personal_access_tokens',
             'failed_jobs',
             'job_batches',
@@ -476,29 +477,48 @@ return new class extends Migration
             'cache',
             'sessions',
 
+            // Chat
+            'messages',
+            'chat_rooms',
 
-            'service_options',
-            'user_devices',
-            'configs',
+            // Reviews & coupons
             'reviews',
-            'affiliate_links',
-            'affiliate_configs',
+            'coupon_used',
+            'coupon_users',
+
+            // Wallet
             'wallet_transactions',
             'wallets',
+
+            // Affiliate
+            'affiliate_links',
+            'affiliate_configs',
+
+            // Service booking (phải drop trước services / coupons)
             'service_bookings',
-            'coupons',
+
+            // Service related
+            'service_options',
             'services',
-            'categories',
+
+            // Coupons
+            'coupons',
+
+            // User related
+            'user_devices',
             'user_address',
             'user_files',
             'user_profiles',
             'user_review_application',
+
+            // Core tables
+            'categories',
+            'banners',
+            'configs',
+
             'users',
-            'coupon_used',
             'provinces',
             'geo_caching_places',
-            'messages',
-            'chat_rooms'
         ];
 
         foreach ($tables as $table) {
