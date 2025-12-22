@@ -197,7 +197,10 @@ class KTVForm
                                     ->label(__('admin.ktv_apply.fields.file_type'))
                                     ->options(UserFileType::toOptions())
                                     ->required()
-                                    ->columnSpan(1),
+                                    ->columnSpan(1)
+                                    ->validationMessages([
+                                        'required' => __('common.error.required'),
+                                    ]),
 
                                 FileUpload::make('file_path')
                                     ->label('File')
@@ -207,9 +210,12 @@ class KTVForm
                                     ->image()
                                     ->maxSize(102400)
                                     ->downloadable()
-                                    ->columnSpan(2),
-                                    Hidden::make('role')
-                                        ->default(fn ($record) => $record?->role),
+                                    ->columnSpan(2)
+                                    ->validationMessages([
+                                        'required' => __('common.error.required'),
+                                    ]),
+                                Hidden::make('role')
+                                    ->default(fn ($record) => $record?->role)
                             ])
                             ->columns(3)
                             ->addable(true)

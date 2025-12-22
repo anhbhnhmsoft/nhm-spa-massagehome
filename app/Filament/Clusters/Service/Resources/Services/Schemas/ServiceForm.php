@@ -5,7 +5,6 @@ namespace App\Filament\Clusters\Service\Resources\Services\Schemas;
 use App\Enums\DirectFile;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -29,7 +28,11 @@ class ServiceForm
                                 TextInput::make('name.' . $lang)
                                     ->label(__('admin.service.fields.name'))
                                     ->required()
-                                    ->maxLength(255),
+                                    ->maxLength(255)
+                                    ->validationMessages([
+                                        'required' => __('common.error.required'),
+                                        'max'      => __('common.error.max_length', ['max' => 255]),
+                                    ]),
 
                                 Select::make('category_id')
                                     ->label(__('admin.service.fields.category'))
@@ -41,25 +44,40 @@ class ServiceForm
                                     )
                                     ->searchable()
                                     ->preload()
-                                    ->required(),
+                                    ->required()
+                                    ->validationMessages([
+                                        'required' => __('common.error.required'),
+                                    ]),
                                 Select::make('user_id')
                                     ->label(__('admin.service.fields.provider'))
                                     ->relationship('provider', 'name')
-                                    ->required(),
+                                    ->required()
+                                    ->validationMessages([
+                                        'required' => __('common.error.required'),
+                                    ]),
                                 FileUpload::make('image_url')
                                     ->label(__('admin.service.fields.image'))
                                     ->required()
                                     ->disk('public')
                                     ->image()
                                     ->directory(DirectFile::SERVICE->value)
-                                    ->image(),
+                                    ->image()
+                                    ->validationMessages([
+                                        'required' => __('common.error.required'),
+                                    ]),
                                 Toggle::make('is_active')
                                     ->label(__('admin.service.fields.status'))
                                     ->required()
-                                    ->default(true),
+                                    ->default(true)
+                                    ->validationMessages([
+                                        'required' => __('common.error.required'),
+                                    ]),
                                 Textarea::make('description.' . $lang)
                                     ->label(__('admin.service.fields.description'))
-                                    ->required(),
+                                    ->required()
+                                    ->validationMessages([
+                                        'required' => __('common.error.required'),
+                                    ]),
                             ]),
                         Section::make()
                             ->schema([
@@ -70,12 +88,18 @@ class ServiceForm
                                             ->schema([
                                                 TextInput::make('duration')
                                                     ->label(__('admin.service.fields.duration'))
-                                                    ->required(),
+                                                    ->required()
+                                                    ->validationMessages([
+                                                        'required' => __('common.error.required'),
+                                                    ]),
                                                 TextInput::make('price')
                                                     ->label(__('admin.service.fields.price'))
                                                     ->numeric()
                                                     ->suffix(__('admin.common.currency'))
-                                                    ->required(),
+                                                    ->required()
+                                                    ->validationMessages([
+                                                        'required' => __('common.error.required'),
+                                                    ]),
                                             ])
                                     ])
                                     ->label(__('admin.service.fields.options'))

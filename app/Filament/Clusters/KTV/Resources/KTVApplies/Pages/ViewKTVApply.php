@@ -55,7 +55,11 @@ class ViewKTVApply extends ViewRecord
                         ->label(__('admin.ktv_apply.actions.reject.reason_label'))
                         ->required()
                         ->rows(3)
-                        ->maxLength(500),
+                        ->maxLength(500)
+                        ->validationMessages([
+                            'required' => __('common.error.required'),
+                            'max'      => __('common.error.max_length', ['max' => 500]),
+                        ]),
                 ])
                 ->visible(fn() => $this->record->reviewApplication?->status === ReviewApplicationStatus::PENDING)
                 ->action(function (array $data) {

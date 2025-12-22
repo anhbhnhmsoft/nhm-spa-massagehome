@@ -470,5 +470,17 @@ return
                 'active' => 'Kích hoạt',
                 'inactive' => 'Tắt',
             ],
-        ]
+        ],
+        'page_static' => [
+            'navigation_label' => 'Trang tĩnh',
+            'label' => 'Trang tĩnh',
+            'title' => 'Tiêu đề',
+            'slug' => 'Slug',
+            'content' => 'Nội dung',
+            'og_image' => 'Hình ảnh',
+            'meta_title' => 'Meta title',
+            'meta_description' => 'Meta description',
+            'meta_keywords' => 'Meta keywords',
+            'is_active' => 'Trạng thái',
+        ],
     ];
