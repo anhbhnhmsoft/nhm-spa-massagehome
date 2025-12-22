@@ -94,6 +94,8 @@ class AgencyForm
                                     ->maxSize(102400)
                                     ->downloadable()
                                     ->columnSpan(2),
+                                    Hidden::make('role')
+                                        ->default(fn ($record) => $record?->role),
                             ])
                             ->columns(3)
                             ->addable(true)
@@ -139,7 +141,7 @@ class AgencyForm
                     ])
                     ->columns(2),
                 Section::make(__('admin.agency_apply.fields.registration_info'))
-                    ->relationship(name: 'reviewApplication')
+                    ->relationship(name: 'getAgencyReviewsAttribute')
                     ->schema([
 
                         Select::make('province_code')

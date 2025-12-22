@@ -58,7 +58,8 @@ return
                 'download_template' => 'Tải mẫu xuống',
                 'save' => 'Lưu',
                 'cancel' => 'Hủy',
-                'book' => 'Lên lịch'
+                'book' => 'Lên lịch',
+                'close' => 'Đóng',
             ],
             'tooltip' => [
                 'view' => 'Xem chi tiết ',
@@ -318,6 +319,7 @@ return
                 'WITHDRAWAL' => 'Rút tiền',
                 'PAYMENT' => 'Thanh toán',
                 'AFFILIATE' => 'Hoa hồng',
+                'PAYMENT_FOR_KTV' => 'Thanh toán cho KTV',
             ],
             'status' => [
                 'PENDING' => 'Chờ xử lý',
