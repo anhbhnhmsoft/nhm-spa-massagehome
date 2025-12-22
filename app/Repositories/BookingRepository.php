@@ -37,6 +37,21 @@ class BookingRepository extends BaseRepository
             $query->where('status', $filters['status']);
         }
 
+        if (isset($filters['user_id'])) {
+            $query->where('user_id', $filters['user_id']);
+            // Lọc theo số lượng đánh giá
+            if (isset($filters['count_reviews_by_this_user_id']) && $filters['count_reviews_by_this_user_id'] === true) {
+                $query->withCount(['reviews' => function (Builder $query) use ($filters) {
+                    $query->where('review_by', $filters['user_id']);
+                }]);
+            }
+        }
+
+        if (isset($filters['ktv_user_id'])) {
+            $query->where('ktv_user_id', $filters['ktv_user_id']);
+        }
+
+
         return $query;
     }
 

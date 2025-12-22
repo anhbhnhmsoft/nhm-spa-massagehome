@@ -10,8 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ChatRoom extends Model
 {
-    use HasFactory;
-    use HasBigIntId;
+    use HasFactory, HasBigIntId;
 
     protected $fillable = [
         'customer_id',

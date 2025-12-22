@@ -12,6 +12,7 @@ use App\Http\Controllers\API\ChatController;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\AffiliateController;
 use App\Http\Controllers\API\ConfigController;
+use App\Http\Controllers\API\ReviewController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -123,8 +124,6 @@ Route::middleware('set-api-locale')->group(function () {
         // Lấy thông tin chi tiết dịch vụ
         Route::get('detail/{id}', [ServiceController::class, 'detailService'])->where('id', '[0-9]+');
 
-        // Lấy danh sách mã giảm giá
-
         /**
          * router cần auth
          */
@@ -137,7 +136,10 @@ Route::middleware('set-api-locale')->group(function () {
             Route::get('list-coupon', [ServiceController::class, 'listCoupon']);
             // Lấy danh sách mã giảm giá của người dùng
             Route::get('my-list-coupon', [ServiceController::class, 'myListCoupon']);
-
+            // Tạo đánh giá cho booking dịch vụ
+            Route::post('review', [ReviewController::class, 'create'])->middleware(['throttle:10,1']);
+             // Lấy danh sách đánh giá của dịch vụ
+             Route::get('list-review', [ReviewController::class, 'listReview']);
         });
     });
 
@@ -203,11 +205,17 @@ Route::middleware('set-api-locale')->group(function () {
         // Tạo/lấy phòng chat giữa customer (user hiện tại) và KTV
         Route::post('room', [ChatController::class, 'createOrGetRoom']);
         // Lấy danh sách tin nhắn theo room_id (paginate)
-        Route::get('messages', [ChatController::class, 'listMessages']);
+        Route::get('messages/{roomId}', [ChatController::class, 'listMessages'])->where('roomId', '[0-9]+');
         // Gửi tin nhắn trong room (lưu DB + publish realtime)
-        Route::post('messages', [ChatController::class, 'sendMessage']);
+        Route::post('message', [ChatController::class, 'sendMessage']);
     });
 
+    Route::prefix('review')->middleware(['auth:sanctum'])->group(function () {
+        // Tạo đánh giá cho booking dịch vụ
+        Route::get('list', [ReviewController::class, 'listReview']);
+    });
+
+    // Support channels - không cần auth
     Route::prefix('config')->group(function () {
         // Lấy thông tin cấu hình hỗ trợ
         Route::get('support-channels', [ConfigController::class, 'getSupportChannels']);

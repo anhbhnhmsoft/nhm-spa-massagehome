@@ -77,4 +77,10 @@ class ServiceBooking extends Model
     {
         return $this->belongsTo(ServiceOption::class);
     }
+
+    // Lấy thông tin đánh giá (nếu có)
+    public function reviews()
+    {
+        return $this->hasMany(Review::class, 'service_booking_id');
+    }
 }

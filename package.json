@@ -7,7 +7,7 @@
         "dev": "vite",
         "lint": "eslint . --fix",
         "types": "tsc --noEmit",
-        "start": "tsx --tsconfig ./node_server/tsconfig.json ./node_server/index.ts"
+        "node-server": "tsx --tsconfig ./node_server/tsconfig.json ./node_server/index.ts"
     },
     "devDependencies": {
         "@eslint/js": "^9.19.0",
