@@ -136,7 +136,10 @@ Route::middleware('set-api-locale')->group(function () {
             Route::get('list-coupon', [ServiceController::class, 'listCoupon']);
             // Lấy danh sách mã giảm giá của người dùng
             Route::get('my-list-coupon', [ServiceController::class, 'myListCoupon']);
-
+            // Tạo đánh giá cho booking dịch vụ
+            Route::post('review', [ReviewController::class, 'create'])->middleware(['throttle:10,1']);
+             // Lấy danh sách đánh giá của dịch vụ
+             Route::get('list-review', [ReviewController::class, 'listReview']);
         });
     });
 
@@ -209,7 +212,6 @@ Route::middleware('set-api-locale')->group(function () {
 
     Route::prefix('review')->middleware(['auth:sanctum'])->group(function () {
         // Tạo đánh giá cho booking dịch vụ
-        Route::post('/', [ReviewController::class, 'create'])->middleware(['throttle:10,1']);
         Route::get('list', [ReviewController::class, 'listReview']);
     });
 

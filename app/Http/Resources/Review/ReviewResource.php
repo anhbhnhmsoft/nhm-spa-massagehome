@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Review;
 
+use App\Core\Helper;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -23,10 +24,10 @@ class ReviewResource extends JsonResource
             'comment' => $this->comment,
             'hidden' => $this->hidden,
             'review_at' => $this->review_at?->toISOString(),
-            'reviewer' => $this->whenLoaded('reviewer', function () {
+            'reviewer' =>  $this->hidden ? null : $this->whenLoaded('reviewer', function () {
                 return [
                     'id' => $this->reviewer->id,
-                    'avatar' => $this->reviewer->avatar,
+                    'avatar' => $this->reviewer->profile?->avatar_url ? Helper::getPublicUrl($this->reviewer->profile->avatar_url) : null,
                     'name' => $this->reviewer->name,
                 ];
             }),

@@ -50,7 +50,6 @@ class ReviewController extends BaseController
 
         return $this->sendSuccess(
             data: new ReviewResource($result->getData()),
-            message: $result->getMessage() ?? __('review.success.created')
         );
     }
 

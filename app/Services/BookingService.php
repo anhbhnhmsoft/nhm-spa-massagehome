@@ -55,6 +55,7 @@ class BookingService extends BaseService
     {
         try {
             $query = $this->bookingRepository->queryBooking();
+
             $query = $this->bookingRepository->filterQuery(
                 query: $query,
                 filters: $dto->filters
@@ -391,7 +392,7 @@ class BookingService extends BaseService
      * Lấy chi tiết thông tin booking
      * @param string $bookingId
      * @return ServiceReturn
-     */ 
+     */
     public function detailBooking(string $bookingId): ServiceReturn
     {
         try {

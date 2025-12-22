@@ -100,10 +100,15 @@ class ReviewService extends BaseService
         }
     }
 
+    /**
+     * Lấy danh sách đánh giá của dịch vụ
+     * @param FilterDTO $dto
+     * @return ServiceReturn
+     */
     public function reviewPaginate(FilterDTO $dto): ServiceReturn
     {
         try {
-            $query = $this->reviewRepository->query();
+            $query = $this->reviewRepository->queryReview();
             $query = $this->reviewRepository->filterQuery(
                 query: $query,
                 filters: $dto->filters
@@ -121,6 +126,7 @@ class ReviewService extends BaseService
                 data: $paginate,
             );
         } catch (\Throwable $exception) {
+            dd($exception);
             LogHelper::error(
                 message: "Lỗi ReviewService@reviewPaginate",
                 ex: $exception

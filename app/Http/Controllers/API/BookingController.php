@@ -23,6 +23,7 @@ class BookingController extends BaseController
     {
         $dto = $request->getFilterOptions();
         $dto->addFilter('user_id', $request->user()->id);
+        $dto->addFilter('count_reviews_by_this_user_id', true);
         $result = $this->bookingService->bookingPaginate($dto);
         $data = $result->getData();
         return $this->sendSuccess(
