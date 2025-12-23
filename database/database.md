@@ -191,6 +191,26 @@
     - softDeletes
     - timestamps
 
+# user_withdraw_info
+    # note
+    - Lưu cấu hình thông tin rút tiền của user (1 user nhiều cấu hình, ví dụ bank/momo/zalo).
+
+    # relations
+    - Quan hệ n-1 với bảng users.
+
+    # cấu trúc
+    - id (bigint, pk)
+    - user_id (bigint, fk -> users.id)
+    - type (smallint, enum UserWithdrawInfo: 1=bank, 2=momo, 3=zalo)
+    - config (json, nullable) -- thông tin chi tiết theo type (bank_code/account_number/account_name hoặc phone/name)
+    - softDeletes
+    - timestamps
+
+    # lưu ý
+    - Model sử dụng table `user_withdraw_info` (không phải số nhiều).
+    - API withdraw/info trả về record theo user; nếu chưa có -> trả lỗi `error.withdraw_info_not_found`.
+    - API withdraw/request tạo giao dịch trong `wallet_transactions` type WITHDRAWAL, status PENDING để admin duyệt; chưa trừ số dư tại thời điểm tạo.
+
 # affiliate_configs
     # note
     - Bảng affiliate_configs lưu trữ thông tin cấu hình chương trình Affiliate.

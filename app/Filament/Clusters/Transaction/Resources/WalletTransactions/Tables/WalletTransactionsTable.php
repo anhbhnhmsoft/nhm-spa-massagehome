@@ -28,9 +28,10 @@ class WalletTransactionsTable
                     ->label(__('admin.transaction.fields.type'))
                     ->formatStateUsing(fn($state) => WalletTransactionType::tryFrom($state)?->name ? __('admin.transaction.type.' . WalletTransactionType::tryFrom($state)->name) : '')
                     ->badge(),
-                TextColumn::make('amount')
+                TextColumn::make('point_amount')
                     ->label(__('admin.transaction.fields.amount'))
-                    ->money(),
+                    ->numeric(2)
+                    ->suffix(' P'),
                 TextColumn::make('status')
                     ->label(__('admin.transaction.fields.status'))
                     ->formatStateUsing(fn($state) => WalletTransactionStatus::tryFrom($state)?->name ? __('admin.transaction.status.' . WalletTransactionStatus::tryFrom($state)->name) : '')
@@ -67,7 +68,7 @@ class WalletTransactionsTable
                                 $record->type === WalletTransactionType::DEPOSIT_ZALO_PAY->value ||
                                 $record->type === WalletTransactionType::DEPOSIT_MOMO_PAY->value
                             ) {
-                                $record->wallet()->increment('balance', (int) $record->amount);
+                                $record->wallet()->increment('balance', (float) $record->point_amount);
                             }
                         })
                         ->requiresConfirmation(),
@@ -76,7 +77,14 @@ class WalletTransactionsTable
                         ->icon('heroicon-o-x-mark')
                         ->color('danger')
                         ->visible(fn($record) => $record->status === WalletTransactionStatus::PENDING->value)
-                        ->action(fn($record) => $record->update(['status' => WalletTransactionStatus::FAILED]))
+                        ->action(function ($record) {
+                            // Nếu là giao dịch rút tiền, hoàn tiền về ví khi hủy
+                            if ($record->type === WalletTransactionType::WITHDRAWAL->value) {
+                                $record->wallet()->increment('balance', (float) $record->point_amount);
+                            }
+
+                            $record->update(['status' => WalletTransactionStatus::FAILED->value]);
+                        })
                         ->requiresConfirmation(),
                 ])
             ]);

@@ -19,6 +19,7 @@ use App\Repositories\UserFileRepository;
 use App\Repositories\UserProfileRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\UserReviewApplicationRepository;
+use App\Repositories\UserWithdrawInfoRepository;
 use App\Repositories\WalletRepository;
 use App\Repositories\WalletTransactionRepository;
 use App\Repositories\ChatRoomRepository;
@@ -34,6 +35,7 @@ use App\Services\PayOsService;
 use App\Services\ProvinceService;
 use App\Services\ServiceService;
 use App\Services\UserService;
+use App\Services\UserWithdrawInfoService;
 use App\Services\WalletService;
 use App\Services\AffiliateService;
 use App\Services\ReviewService;
@@ -84,7 +86,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(CouponUserRepository::class);
         $this->app->singleton(ChatRoomRepository::class);
         $this->app->singleton(MessageRepository::class);
-
+        $this->app->singleton(UserWithdrawInfoRepository::class);
     }
 
     /**
@@ -110,6 +112,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(AffiliateService::class);
         $this->app->singleton(ProvinceService::class);
         $this->app->singleton(ReviewService::class);
+        $this->app->singleton(UserWithdrawInfoService::class);
     }
 
 

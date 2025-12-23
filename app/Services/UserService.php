@@ -419,8 +419,11 @@ class UserService extends BaseService
                 $user->save();
             }
 
-            if (!empty($data['apply_role'])) {
-                LogHelper::debug("User {$user->id} is applying for role: " . $data['apply_role']);
+            $applyRole = !empty($data['role']) ? (int)$data['role'] : null;
+            if (!$applyRole || !in_array($applyRole, [UserRole::KTV->value, UserRole::AGENCY->value])) {
+                throw new ServiceException(
+                    message: __("common_error.invalid_data")
+                );
             }
 
             $reviewData = [
@@ -431,6 +434,7 @@ class UserService extends BaseService
                 'address'          => optional($data['reviewApplication'])['address'] ?? null,
                 'application_date' => now(),
                 'bio'              => optional($data['reviewApplication'])['bio'] ?? null,
+                'role'             => $applyRole,
             ];
 
             $existingReview = $this->userReviewApplicationRepository
@@ -450,6 +454,8 @@ class UserService extends BaseService
                         'user_id'   => $user->id,
                         'type'      => optional($file)['type'] ?? null,
                         'file_path' => optional($file)['file_path'] ?? null,
+                        'is_public' => (bool)(optional($file)['is_public'] ?? false),
+                        'role'      => $applyRole,
                     ]);
                 }
             }

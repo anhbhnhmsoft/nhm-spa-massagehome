@@ -10,7 +10,6 @@ use App\Repositories\BookingRepository;
 use App\Repositories\ReviewRepository;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class ReviewService extends BaseService
 {
@@ -39,7 +38,7 @@ class ReviewService extends BaseService
             }
 
             if (!$serviceBookingId) {
-                return ServiceReturn::error(message: __('validation.required', ['attribute' => 'service_booking_id']));
+                return ServiceReturn::error(message: __('validation.service_booking_id.required'));
             }
 
             // Kiểm tra booking có tồn tại không
@@ -88,7 +87,6 @@ class ReviewService extends BaseService
                 message: __('review.success.created')
             );
         } catch (\Throwable $exception) {
-            DB::rollBack();
             LogHelper::error(
                 message: 'Lỗi ReviewService@createReview',
                 ex: $exception

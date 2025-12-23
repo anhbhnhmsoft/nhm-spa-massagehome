@@ -88,7 +88,7 @@ class UserController extends BaseController
     {
         $validator = Validator::make($request->all(), [
             'name' => ['nullable', 'string', 'max:255'],
-            'apply_role' => ['nullable', 'string', 'max:50'],
+            'role' => ['required', 'integer', 'in:2,3'], // 2 = KTV, 3 = AGENCY
             'reviewApplication.agency_id' => ['nullable', 'integer', 'exists:users,id'],
             'reviewApplication.province_code' => ['nullable', 'string', 'max:50', 'exists:provinces,code'],
             'reviewApplication.address' => ['nullable', 'string', 'max:255'],
@@ -96,7 +96,10 @@ class UserController extends BaseController
             'files' => ['nullable', 'array'],
             'files.*.type' => ['nullable', 'integer'],
             'files.*.file_path' => ['required_with:files.*', 'string'],
+            'files.*.is_public' => ['nullable', 'boolean'],
         ], [
+            'role.required' => __('validation.required', ['attribute' => 'role']),
+            'role.in' => __('validation.in', ['attribute' => 'role']),
             'reviewApplication.province_code.exists' => __('validation.exists', ['attribute' => 'province_code']),
             'files.*.file_path.required_with' => __('validation.required', ['attribute' => 'file_path']),
         ]);

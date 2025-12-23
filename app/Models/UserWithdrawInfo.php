@@ -2,30 +2,27 @@
 
 namespace App\Models;
 
-use App\Core\GenerateId\HasBigIntId;
-use App\Enums\UserFileType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class UserFile extends Model
+class UserWithdrawInfo extends Model
 {
-    use SoftDeletes, HasBigIntId;
+    use SoftDeletes;
+
+    protected $table = 'user_withdraw_info';
 
     protected $fillable = [
+        'id',
         'user_id',
         'type',
-        'file_path',
-        'file_name',
-        'file_size',
-        'file_type',
-        'is_public',
-        'role',
+        'config',
     ];
 
     protected $casts = [
         'id' => 'string',
         'user_id' => 'string',
-        'type' => UserFileType::class,
+        'type' => 'integer',
+        'config' => 'array',
     ];
 
     public function user()
