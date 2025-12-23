@@ -1,0 +1,77 @@
+<?php
+
+namespace App\Filament\Clusters\Marketing\Resources\Banners\Schemas;
+
+use App\Enums\DirectFile;
+use App\Enums\Language;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+
+class BannerForm
+{
+    public static function configure(Schema $schema): Schema
+    {
+        return $schema
+            ->components([
+                Section::make()
+                    ->schema([
+                        Grid::make()
+                            ->schema([
+                                TextInput::make('order')
+                                    ->label(__('admin.banner.fields.order'))
+                                    ->required()
+                                    ->numeric()
+                                    ->default(0)
+                                    ->validationMessages([
+                                        'required' => __("common.error.required"),
+                                        'numeric' => __("common.error.numeric"),
+                                    ]),
+                                Toggle::make('is_active')
+                                    ->label(__('admin.banner.fields.is_active'))
+                                    ->default(true)
+                                    ->required(),
+                                Grid::make()
+                                    ->columns(3)
+                                    ->schema([
+                                        FileUpload::make('image_url.' . Language::VIETNAMESE->value)
+                                            ->label(__('admin.banner.fields.image_url.' . Language::VIETNAMESE->value))
+                                            ->image()
+                                            ->disk('public')
+                                            ->directory(DirectFile::BANNER->value)
+                                            ->required()
+                                            ->validationMessages([
+                                                'required' => __("common.error.required"),
+                                            ]),
+                                        FileUpload::make('image_url.' . Language::ENGLISH->value)
+                                            ->label(__('admin.banner.fields.image_url.' . Language::ENGLISH->value))
+                                            ->image()
+                                            ->disk('public')
+                                            ->directory(DirectFile::BANNER->value)
+                                            ->required()
+                                            ->validationMessages([
+                                                'required' => __("common.error.required"),
+                                            ]),
+                                        FileUpload::make('image_url.' . Language::CHINESE->value)
+                                            ->label(__('admin.banner.fields.image_url.' . Language::CHINESE->value))
+                                            ->image()
+                                            ->disk('public')
+                                            ->directory(DirectFile::BANNER->value)
+                                            ->required()
+                                            ->validationMessages([
+                                                'required' => __("common.error.required"),
+                                            ]),
+                                    ])
+                                    ->columnSpanFull(),
+                            ])
+                            ->columns(2)
+                            ->columnSpanFull(),
+                    ])
+                    ->columns(2)
+                    ->columnSpanFull(),
+            ]);
+    }
+}

@@ -9,6 +9,7 @@ enum DirectFile: string
     case AGENCY = 'agency';
     case SERVICE = 'service';
     case COUPON = 'coupon';
+    case BANNER = 'banner';
     case AVATAR_USER = 'avatar_user';
 
     public static function makePathById(DirectFile $type, string $id): string

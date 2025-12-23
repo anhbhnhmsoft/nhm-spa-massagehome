@@ -18,9 +18,9 @@ class Banner extends Model
     ];
 
     protected $fillable = [
-        'link',
         'order',
         'is_active',
+        'image_url'
     ];
 
     protected $casts = [
