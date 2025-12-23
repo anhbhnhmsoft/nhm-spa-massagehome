@@ -37,8 +37,8 @@ class ListKTVResource extends JsonResource
             'review_application' => [
                 'address' => $reviewApplication->address,
                 'experience' => $reviewApplication->experience,
-                'latitude' => $reviewApplication->latitude,
-                'longitude' => $reviewApplication->longitude,
+                'latitude' => (float) $reviewApplication->latitude,
+                'longitude' => (float) $reviewApplication->longitude,
                 'bio' => $reviewApplication->bio,
             ],
         ];

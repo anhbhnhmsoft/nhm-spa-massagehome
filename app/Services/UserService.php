@@ -118,6 +118,7 @@ class UserService extends BaseService
                 data: $paginate
             );
         } catch (\Exception $exception) {
+            dd($exception);
             LogHelper::error(
                 message: "Lỗi UserService@pagination",
                 ex: $exception
@@ -179,6 +180,7 @@ class UserService extends BaseService
                 ]
             );
         } catch (\Exception $exception) {
+            dd($exception);
             LogHelper::error(
                 message: "Lỗi UserService@getKtvById",
                 ex: $exception

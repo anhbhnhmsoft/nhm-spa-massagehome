@@ -37,8 +37,8 @@ class UserRepository extends BaseRepository
     public function queryKTV(): Builder
     {
         $query = $this->query()
-            ->where('role', UserRole::KTV->value)
-            ->where('is_active', true)
+            ->where('users.role', UserRole::KTV->value)
+            ->where('users.is_active', true)
             // Chỉ lấy KTV đã được duyệt
             ->whereHas('reviewApplication', function ($q) {
                 $q->where('status', ReviewApplicationStatus::APPROVED->value);
