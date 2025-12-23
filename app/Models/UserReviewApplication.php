@@ -29,6 +29,7 @@ class UserReviewApplication extends Model
         'note',
         'effective_date',
         'application_date',
+        'role',
     ];
 
     protected $casts = [

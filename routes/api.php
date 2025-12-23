@@ -13,6 +13,7 @@ use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\AffiliateController;
 use App\Http\Controllers\API\ConfigController;
 use App\Http\Controllers\API\ReviewController;
+use App\Http\Controllers\API\WithdrawController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -108,6 +109,16 @@ Route::middleware('set-api-locale')->group(function () {
 
             // User hiện tại đăng ký làm đối tác
             Route::post('apply-partner', [UserController::class, 'applyPartner'])->middleware(['throttle:5,1']);
+
+            // Withdraw
+            Route::prefix('withdraw')->group(function () {
+                //Lấy thông tin tài khoản rút tiền
+                Route::get('info', [WithdrawController::class, 'getWithdrawInfo']);
+                //Tạo thông tin tài khoản rút tiền
+                Route::post('info', [WithdrawController::class, 'createWithdrawInfo']);
+                //Yêu cầu rút tiền
+                Route::post('request', [WithdrawController::class, 'requestWithdraw']);
+            });
         });
     });
 
