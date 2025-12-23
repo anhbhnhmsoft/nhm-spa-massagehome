@@ -39,28 +39,48 @@ class AffiliateConfigForm extends Component implements HasForms
                     ->schema([
                         TextInput::make('name')
                             ->label(__('admin.common.table.name'))
-                            ->required(),
+                            ->required()
+                            ->validationMessages([
+                                'required' => __('common.error.required'),
+                            ]),
                         TextInput::make('commission_rate')
                             ->label(__('admin.setting.fields.commission_rate'))
                             ->numeric()
                             ->suffix('%')
-                            ->required(),
+                            ->required()
+                            ->validationMessages([
+                                'required' => __('common.error.required'),
+                            ]),
                         TextInput::make('min_commission')
                             ->label(__('admin.setting.fields.min_commission'))
                             ->numeric()
                             ->prefix('point')
-                            ->required(),
+                            ->required()
+                            ->validationMessages([
+                                'required' => __('common.error.required'),
+                            ]),
                         TextInput::make('max_commission')
                             ->label(__('admin.setting.fields.max_commission'))
                             ->numeric()
                             ->prefix('point')
-                            ->required(),
+                            ->required()
+                            ->validationMessages([
+                                'required' => __('common.error.required'),
+                            ]),
                         Select::make('target_role')
                             ->label(__('admin.setting.fields.target_role'))
                             ->options(\App\Enums\UserRole::class)
                             ->required()
-                            ->disabled(),
-                        Toggle::make('is_active')->label(__('admin.setting.fields.is_active'))->disabled(),
+                            ->disabled()
+                            ->validationMessages([
+                                'required' => __('common.error.required'),
+                            ]),
+                        Toggle::make('is_active')
+                            ->label(__('admin.setting.fields.is_active'))
+                            ->disabled()
+                            ->validationMessages([
+                                'required' => __('common.error.required'),
+                            ]),
                     ])
                     ->addable(false)
                     ->deletable(false)

@@ -33,7 +33,7 @@ class AffiliateController extends BaseController
         // 2. GHI NHẬN TRACKING (TẠO FINGERPRINT RECORD)
         $this->affiliateService->trackClick($referrerId, $request->ip(), $userAgent);
 
-        return view('affiliate', ['chplay' => $chplay, 'appstore' => $appstore]);
+        return view('web.affiliate', ['chplay' => $chplay, 'appstore' => $appstore]);
     }
 
     /**

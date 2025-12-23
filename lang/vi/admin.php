@@ -310,7 +310,7 @@ return
                 'type' => 'Loại giao dịch',
                 'amount' => 'Số tiền',
                 'status' => 'Trạng thái',
-                'created_at' => 'Ngày tạo',
+                'created_at' => 'Thời điểm giao dịch',
             ],
             'type' => [
                 'DEPOSIT_QR_CODE' => 'Nạp tiền (QR)',
@@ -470,5 +470,31 @@ return
                 'active' => 'Kích hoạt',
                 'inactive' => 'Tắt',
             ],
-        ]
+        ],
+        'page_static' => [
+            'navigation_label' => 'Trang tĩnh',
+            'label' => 'Trang tĩnh',
+            'title' => 'Tiêu đề',
+            'slug' => 'Slug',
+            'content' => 'Nội dung',
+            'og_image' => 'Hình ảnh',
+            'meta_title' => 'Meta title',
+            'meta_description' => 'Meta description',
+            'meta_keywords' => 'Meta keywords',
+            'is_active' => 'Trạng thái',
+        ],
+        'banner' => [
+            'label' => 'Banner',
+            'navigation_label' => 'Quản lý Banner',
+            'fields' => [
+                'order' => 'Thứ tự hiển thị',
+                'is_active' => 'Trạng thái',
+                'image_url' => [
+                    'label' => 'Hình ảnh',
+                    'vi' => 'Banner tiếng Việt',
+                    'en' => 'Banner tiếng Anh',
+                    'cn' => 'Banner tiếng Trung',
+                ],
+            ],
+        ],
     ];

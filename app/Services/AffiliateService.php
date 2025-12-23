@@ -37,15 +37,29 @@ class AffiliateService extends BaseService
      * @param string $userAgent
      * @return AffiliateLink
      */
-    public function trackClick($referrerId, $ip, $userAgent)
+    public function trackClick($referrerId, $ip, $userAgent) : ServiceReturn
     {
-        return $this->affiliateLinkRepository->create([
-            'referrer_id' => $referrerId,
-            'client_ip' => $ip,
-            'user_agent' => $userAgent,
-            'is_matched' => false,
-            'expired_at' => now()->addHours(2),
-        ]);
+        DB::beginTransaction();
+        try {
+            $this->affiliateLinkRepository->create([
+                'referrer_id' => $referrerId,
+                'client_ip' => $ip,
+                'user_agent' => $userAgent,
+                'is_matched' => false,
+                'expired_at' => now()->addHours(2),
+                ]);
+                DB::commit();
+                return ServiceReturn::success();
+        } catch (Exception $e) {
+            LogHelper::error(
+                message: "Lỗi AffiliateService@trackClick",
+                ex: $e
+            );
+            DB::rollBack();
+            return ServiceReturn::error(
+                message: $e->getMessage()
+            );
+        }
     }
 
     /**
