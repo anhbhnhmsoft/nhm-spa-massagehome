@@ -10,16 +10,17 @@ use App\Enums\UserRole;
 use App\Models\Province;
 use App\Models\User;
 use App\Services\LocationService;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Hidden;
+use Filament\Resources\Pages\CreateRecord;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Resources\Pages\CreateRecord;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -93,7 +94,7 @@ class KTVForm
                                 Select::make('gender')
                                     ->label(__('admin.common.table.gender'))
                                     ->options(Gender::toOptions()),
-                                DateTimePicker::make('date_of_birth')
+                                DatePicker::make('date_of_birth')
                                     ->label(__('admin.common.table.date_of_birth'))
                                     ->required()
                                     ->validationMessages([
@@ -105,8 +106,12 @@ class KTVForm
                     ->columns(2),
 
                 Section::make(__('admin.ktv_apply.fields.registration_info'))
-                    ->relationship('getStaffReviewsAttribute')
+                    ->relationship('reviewApplication')
                     ->schema([
+                        Hidden::make('role')
+                            ->default(UserRole::KTV->value)
+                            ->dehydrateStateUsing(fn() => UserRole::KTV->value)
+                            ->dehydrated(true),
                         Select::make('status')
                             ->label(__('admin.common.table.status'))
                             ->options(ReviewApplicationStatus::toOptions())
@@ -159,8 +164,17 @@ class KTVForm
                             ->dehydrated(false)
                             ->columnSpanFull(),
 
-                        Hidden::make('latitude'),
-                        Hidden::make('longitude'),
+                        TextInput::make('latitude')
+                            ->label(__('admin.ktv_apply.fields.latitude') ?? 'Latitude')
+                            ->numeric()
+                            ->rules(['nullable', 'numeric', 'between:-90,90'])
+                            ->columnSpan(1),
+
+                        TextInput::make('longitude')
+                            ->label(__('admin.ktv_apply.fields.longitude') ?? 'Longitude')
+                            ->numeric()
+                            ->rules(['nullable', 'numeric', 'between:-180,180'])
+                            ->columnSpan(1),
 
                         Textarea::make('address')
                             ->label(__('admin.ktv_apply.fields.address'))
@@ -210,12 +224,11 @@ class KTVForm
                                     ->image()
                                     ->maxSize(102400)
                                     ->downloadable()
-                                    ->columnSpan(2)
-                                    ->validationMessages([
-                                        'required' => __('common.error.required'),
-                                    ]),
+                                    ->columnSpan(2),
                                 Hidden::make('role')
-                                    ->default(fn ($record) => $record?->role)
+                                    ->default(fn ($record) => $record?->role ?? UserRole::KTV->value)
+                                    ->dehydrateStateUsing(fn() => UserRole::KTV->value)
+                                    ->dehydrated(true),
                             ])
                             ->columns(3)
                             ->addable(true)

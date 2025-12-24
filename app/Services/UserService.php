@@ -434,6 +434,8 @@ class UserService extends BaseService
                 'status'           => ReviewApplicationStatus::PENDING->value,
                 'province_code'    => optional($data['reviewApplication'])['province_code'] ?? null,
                 'address'          => optional($data['reviewApplication'])['address'] ?? null,
+                'latitude'         => optional($data['reviewApplication'])['latitude'] ?? null,
+                'longitude'        => optional($data['reviewApplication'])['longitude'] ?? null,
                 'application_date' => now(),
                 'bio'              => optional($data['reviewApplication'])['bio'] ?? null,
                 'role'             => $applyRole,

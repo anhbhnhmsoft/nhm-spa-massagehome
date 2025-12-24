@@ -46,6 +46,7 @@ return [
     'lng' => [
         'required' => 'Vui lòng nhập tọa độ longitude.',
     ],
+    'agency_not_found' => 'Không tìm thấy mã Agency này hoặc Agency không hoạt động.',
     'duration' => [
         'required' => 'Vui lòng chọn thời gian.',
         'in' => 'Thời gian không hợp lệ.',
