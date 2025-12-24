@@ -44,7 +44,7 @@ class KTVResource extends Resource
     {
         $query = parent::getEloquentQuery();
 
-        $query = $query->where('role', UserRole::KTV->value)
+        $query = $query->where('role', UserRole::KTV->value, UserRole::CUSTOMER->value)
             ->with('profile', 'reviewApplication')
             ->whereRelation('reviewApplication', 'status', ReviewApplicationStatus::APPROVED->value)
             ->withoutGlobalScopes([
@@ -86,10 +86,8 @@ class KTVResource extends Resource
 
     public static function getRecordRouteBindingEloquentQuery(): Builder
     {
-
-        return parent::getRecordRouteBindingEloquentQuery()
-            ->withoutGlobalScopes([
-                SoftDeletingScope::class,
-            ]);
+        return User::query()->withoutGlobalScopes([
+            SoftDeletingScope::class,
+        ]);
     }
 }

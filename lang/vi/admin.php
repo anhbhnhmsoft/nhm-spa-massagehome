@@ -105,8 +105,8 @@ return
 
         ],
         "ktv_apply" => [
-            "nav" => "Quản lý đăng ký",
-            "label" => "KTV đăng ký",
+            "nav" => "Đơn đăng ký KTV",
+            "label" => "Đơn đăng ký KTV",
             "status" => [
                 "pending" => "Chờ duyệt",
                 "approved" => "Đã duyệt",
@@ -136,6 +136,8 @@ return
                 "registration_info" => "Thông tin đăng ký",
                 "personal_info" => "Thông tin cá nhân",
                 'agency' => 'Cơ sở làm việc',
+                'latitude' => 'Vĩ độ',
+                'longitude' => 'Kinh độ',
             ],
             "actions" => [
                 "approve" => [
@@ -157,7 +159,18 @@ return
             ],
         ],
         "ktv" => [
-            "label" => "Kỹ thuật viên"
+            "label" => "Quản lý KTV",
+            "action" => [
+                "view_services" => "Xem dịch vụ"
+            ],
+            "tooltip" => [
+                "view_services" => "Xem danh sách dịch vụ của KTV"
+            ],
+            "modal" => [
+                "services_title" => "Danh sách dịch vụ của :name",
+                "services_created" => "Dịch vụ đã tạo",
+                "services_booked" => "Dịch vụ đang được đặt"
+            ]
         ],
         "user_role" => [
             "customer" => "Khách hàng",

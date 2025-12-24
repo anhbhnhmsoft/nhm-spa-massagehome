@@ -11,6 +11,11 @@ class CreateKTV extends CreateRecord
 {
     protected static string $resource = KTVResource::class;
 
+    protected function getRedirectUrl(): string
+    {
+        return static::getResource()::getUrl('index');
+    }
+
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         // Set role to KTV
@@ -18,6 +23,17 @@ class CreateKTV extends CreateRecord
         $data['phone_verified_at'] = now();
         $data['language'] = app()->getLocale();
         $data['is_active'] = true;
+
+        if (isset($data['reviewApplication']) && is_array($data['reviewApplication'])) {
+            $data['reviewApplication']['role'] = UserRole::KTV->value;
+        }
+
+        if (isset($data['files']) && is_array($data['files'])) {
+            foreach ($data['files'] as $key => $file) {
+                $data['files'][$key]['role'] = UserRole::KTV->value;
+            }
+        }
+
         return $data;
     }
 }

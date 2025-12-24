@@ -5,10 +5,10 @@ namespace App\Http\Controllers\API;
 use App\Core\Controller\BaseController;
 use App\Core\Controller\ListRequest;
 use App\Http\Resources\User\AddressResource;
-use App\Http\Resources\User\CustomerBookedTodayResource;
 use App\Http\Resources\User\ItemKTVResource;
 use App\Http\Resources\User\ListAddressResource;
 use App\Http\Resources\User\ListKTVResource;
+use App\Rules\AgencyExistsRule;
 use App\Services\UserService;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\JsonResponse;
@@ -89,9 +89,16 @@ class UserController extends BaseController
         $validator = Validator::make($request->all(), [
             'name' => ['nullable', 'string', 'max:255'],
             'role' => ['required', 'integer', 'in:2,3'], // 2 = KTV, 3 = AGENCY
-            'reviewApplication.agency_id' => ['nullable', 'integer', 'exists:users,id'],
+            'reviewApplication.agency_id' => [
+                'nullable',
+                'integer',
+                'exists:users,id',
+                new AgencyExistsRule(),
+            ],
             'reviewApplication.province_code' => ['nullable', 'string', 'max:50', 'exists:provinces,code'],
             'reviewApplication.address' => ['nullable', 'string', 'max:255'],
+            'reviewApplication.latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'reviewApplication.longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'reviewApplication.bio' => ['nullable', 'string'],
             'files' => ['nullable', 'array'],
             'files.*.type' => ['nullable', 'integer'],
@@ -101,6 +108,10 @@ class UserController extends BaseController
             'role.required' => __('validation.required', ['attribute' => 'role']),
             'role.in' => __('validation.in', ['attribute' => 'role']),
             'reviewApplication.province_code.exists' => __('validation.exists', ['attribute' => 'province_code']),
+            'reviewApplication.latitude.numeric' => __('validation.location.latitude_numeric'),
+            'reviewApplication.latitude.between' => __('validation.location.latitude_between'),
+            'reviewApplication.longitude.numeric' => __('validation.location.longitude_numeric'),
+            'reviewApplication.longitude.between' => __('validation.location.longitude_between'),
             'files.*.file_path.required_with' => __('validation.required', ['attribute' => 'file_path']),
         ]);
 

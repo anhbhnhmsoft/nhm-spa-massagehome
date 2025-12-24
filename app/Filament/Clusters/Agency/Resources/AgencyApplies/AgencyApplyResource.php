@@ -60,7 +60,8 @@ class AgencyApplyResource extends Resource
 
         $query->whereIn('role', [UserRole::AGENCY->value, UserRole::CUSTOMER->value])
             ->with('reviewApplication', 'files')
-            ->whereRelation('reviewApplication', 'status','!=', ReviewApplicationStatus::APPROVED->value);
+            ->whereRelation('reviewApplication', 'status', '!=', ReviewApplicationStatus::APPROVED->value)
+            ->whereRelation('reviewApplication', 'role', UserRole::AGENCY->value);
 
         return $query->withoutGlobalScopes([
             SoftDeletingScope::class,
