@@ -18,4 +18,11 @@ return [
     'unit' => [
         'minute' => 'phút',
     ],
+    'user_withdraw_info' => [
+        'bank' => [
+            'bank_bin' => 'Mã ngân hàng',
+            'bank_account' => 'Số tài khoản',
+            'bank_holder' => 'Chủ tài khoản',
+        ],
+    ],
 ];

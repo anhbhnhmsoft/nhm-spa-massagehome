@@ -17,7 +17,6 @@ use App\Http\Controllers\API\WithdrawController;
 use Illuminate\Support\Facades\Route;
 
 
-
 Route::middleware('set-api-locale')->group(function () {
     // Authenticate routes
     Route::prefix('auth')->group(function () {
@@ -109,16 +108,6 @@ Route::middleware('set-api-locale')->group(function () {
 
             // User hiện tại đăng ký làm đối tác
             Route::post('apply-partner', [UserController::class, 'applyPartner'])->middleware(['throttle:5,1']);
-
-            // Withdraw
-            Route::prefix('withdraw')->group(function () {
-                //Lấy thông tin tài khoản rút tiền
-                Route::get('info', [WithdrawController::class, 'getWithdrawInfo']);
-                //Tạo thông tin tài khoản rút tiền
-                Route::post('info', [WithdrawController::class, 'createWithdrawInfo']);
-                //Yêu cầu rút tiền
-                Route::post('request', [WithdrawController::class, 'requestWithdraw']);
-            });
         });
     });
 
@@ -149,8 +138,8 @@ Route::middleware('set-api-locale')->group(function () {
             Route::get('my-list-coupon', [ServiceController::class, 'myListCoupon']);
             // Tạo đánh giá cho booking dịch vụ
             Route::post('review', [ReviewController::class, 'create'])->middleware(['throttle:10,1']);
-             // Lấy danh sách đánh giá của dịch vụ
-             Route::get('list-review', [ReviewController::class, 'listReview']);
+            // Lấy danh sách đánh giá của dịch vụ
+            Route::get('list-review', [ReviewController::class, 'listReview']);
         });
     });
 
@@ -173,11 +162,26 @@ Route::middleware('set-api-locale')->group(function () {
 
         // Lấy danh sách dịch vụ
         Route::middleware(['auth:sanctum'])->group(function () {
+            // Lấy danh sách giao dịch
             Route::get('transactions', [PaymentController::class, 'listTransaction']);
+            // Lấy ví người dùng
             Route::get('wallet', [PaymentController::class, 'userWallet']);
+            // Lấy cấu hình thanh toán
             Route::get('config', [PaymentController::class, 'configPayment']);
+            // Nạp tiền vào ví người dùng
             Route::post('deposit', [PaymentController::class, 'deposit']);
+            // Kiểm tra trạng thái giao dịch
             Route::get('check-transaction', [PaymentController::class, 'checkTransaction']);
+            // Lấy danh sách ngân hàng hỗ trợ rút tiền
+            Route::get('bank-info', [PaymentController::class, 'getBank']);
+            //Lấy thông tin tài khoản rút tiền
+            Route::get('info-withdraw', [WithdrawController::class, 'getWithdrawInfo']);
+            //Tạo thông tin tài khoản rút tiền
+            Route::post('info-withdraw', [WithdrawController::class, 'createWithdrawInfo']);
+            // Xóa thông tin tài khoản rút tiền
+            Route::delete('info-withdraw/{id}', [WithdrawController::class, 'deleteWithdrawInfo']);
+            //Yêu cầu rút tiền
+            Route::post('request-withdraw', [WithdrawController::class, 'requestWithdraw']);
         });
     });
 

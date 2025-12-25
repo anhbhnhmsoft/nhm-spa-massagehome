@@ -28,7 +28,9 @@ class CategoryRepository extends BaseRepository
             $keyword = trim($filters['keyword']);
             $query->whereRaw("unaccent(name->>'{$locale}') ILIKE unaccent(?)", ["%{$keyword}%"]);
         }
-
+        if (isset($filters['is_featured'])) {
+            $query->where('is_featured', true);
+        }
         return $query;
     }
 

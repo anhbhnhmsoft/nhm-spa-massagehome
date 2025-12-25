@@ -44,6 +44,41 @@ class UserService extends BaseService
         parent::__construct();
     }
 
+
+    public function dashboardKtv()
+    {
+        try {
+            $user = Auth::user();
+            // Kiểm tra quyền truy cập
+            if ($user->role !== UserRole::KTV->value) {
+                throw new ServiceException(
+                    message: __('common_error.unauthorized')
+                );
+            }
+
+            // Lấy thông tin booking sắp tới của user
+
+
+
+        }catch (ServiceException $e){
+            return ServiceReturn::error(
+                message: $e->getMessage()
+            );
+        } catch (\Exception $e){
+            LogHelper::error(
+                message: "Lỗi UserService@dashboardKtv",
+                ex: $e
+            );
+            return ServiceReturn::error(
+                message: __('common_error.server_error')
+            );
+        }
+    }
+
+    /**
+     * Lấy thông tin dashboard profile của user hiện tại
+     * @return ServiceReturn
+     */
     public function dashboardProfile()
     {
         try {
@@ -118,7 +153,6 @@ class UserService extends BaseService
                 data: $paginate
             );
         } catch (\Exception $exception) {
-            dd($exception);
             LogHelper::error(
                 message: "Lỗi UserService@pagination",
                 ex: $exception

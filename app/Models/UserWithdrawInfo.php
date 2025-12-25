@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Core\GenerateId\HasBigIntId;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class UserWithdrawInfo extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, HasBigIntId;
 
     protected $table = 'user_withdraw_info';
 

@@ -4,7 +4,6 @@ namespace App\Http\Controllers\API;
 
 use App\Core\Controller\BaseController;
 use App\Core\Controller\ListRequest;
-use App\Http\Requests\Chat\ListMessagesRequest;
 use App\Http\Resources\Chat\ChatRoomResource;
 use App\Http\Resources\Chat\MessageResource;
 use App\Services\ChatService;

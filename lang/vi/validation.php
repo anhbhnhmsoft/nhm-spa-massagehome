@@ -136,4 +136,16 @@ return [
         'required' => 'Vui lòng chọn vai trò.',
         'in' => 'Vai trò không hợp lệ.',
     ],
+    'type_withdraw_info' => [
+        'required' => 'Vui lòng chọn loại rút tiền.',
+        'in' => 'Loại rút tiền không hợp lệ.',
+    ],
+    'config_withdraw_info' => [
+        'required' => 'Vui lòng nhập thông tin rút tiền.',
+        'invalid' => 'Thông tin rút tiền không hợp lệ.',
+        'missing_field' => 'Thông tin rút tiền đang thiếu các trường cần thiết.',
+    ],
+    'user_withdraw_info' => [
+        'invalid' => 'Thông tin rút tiền không hợp lệ.',
+    ],
 ];

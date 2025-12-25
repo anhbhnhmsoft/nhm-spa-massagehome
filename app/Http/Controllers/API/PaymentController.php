@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Core\Controller\BaseController;
 use App\Core\Controller\ListRequest;
 use App\Core\Helper;
+use App\Enums\BankBin;
 use App\Enums\PaymentType;
 use App\Http\Resources\Payment\WalletResource;
 use App\Http\Resources\Payment\WalletTransactionResource;
@@ -171,5 +172,12 @@ class PaymentController extends BaseController
         return $this->sendSuccess(message: "Giao dịch thành công");
     }
 
+    public function getBank(): JsonResponse
+    {
+        $bank = BankBin::getAll();
 
+        return $this->sendSuccess(
+            data: $bank,
+        );
+    }
 }

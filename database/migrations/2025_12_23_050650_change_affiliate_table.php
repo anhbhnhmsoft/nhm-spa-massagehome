@@ -16,7 +16,6 @@ return new class extends Migration
             $table->foreign('referrer_id')->references('id')->on('users')->onDelete('cascade');
             $table->unsignedBigInteger('reffered_user_id')->index()->comment('ID người giới thiệu');
             $table->foreign('reffered_user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->dropForeign(['user_id']);
             $table->dropColumn('user_id');
         });
     }

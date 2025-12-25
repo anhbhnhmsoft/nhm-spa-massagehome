@@ -20,11 +20,12 @@ use Illuminate\Support\Facades\DB;
 class UserWithdrawInfoService extends BaseService
 {
     public function __construct(
-        protected UserWithdrawInfoRepository $userWithdrawInfoRepository,
-        protected WalletRepository $walletRepository,
+        protected UserWithdrawInfoRepository  $userWithdrawInfoRepository,
+        protected WalletRepository            $walletRepository,
         protected WalletTransactionRepository $walletTransactionRepository,
-        protected ConfigService $configService,
-    ) {
+        protected ConfigService               $configService,
+    )
+    {
         parent::__construct();
     }
 
@@ -37,17 +38,11 @@ class UserWithdrawInfoService extends BaseService
             $withdrawInfo = $this->userWithdrawInfoRepository->query()
                 ->where('user_id', $userId)
                 ->get();
-            if (!$withdrawInfo || $withdrawInfo->isEmpty()) {
-                throw new ServiceException(
-                    message: __("error.withdraw_info_not_found")
-                );
-            }
             return ServiceReturn::success(
                 data: $withdrawInfo,
             );
-        } catch (ServiceException $exception) {
-            return ServiceReturn::error(message: $exception->getMessage());
-        } catch (\Exception $exception) {
+        }
+        catch (\Exception $exception) {
             LogHelper::error(
                 message: "Lỗi UserWithdrawInfoService@getWithdrawInfoByUserId",
                 ex: $exception
@@ -79,6 +74,34 @@ class UserWithdrawInfoService extends BaseService
     }
 
     /**
+     * Xóa thông tin rút tiền
+     */
+    public function deleteWithdrawInfo(int $userId, int $withdrawInfoId): ServiceReturn
+    {
+        try {
+            $withdrawInfo = $this->userWithdrawInfoRepository->query()
+                ->where('user_id', $userId)
+                ->where('id', $withdrawInfoId)
+                ->first();
+            if (!$withdrawInfo) {
+                throw new ServiceException(message: __("error.withdraw_info_not_found"));
+            }
+            $withdrawInfo->delete();
+            return ServiceReturn::success(message: __("common.success.data_deleted"));
+        } catch (ServiceException $exception) {
+            return ServiceReturn::error(message: $exception->getMessage());
+        }
+        catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi UserWithdrawInfoService@deleteWithdrawInfo",
+                ex: $exception
+            );
+            return ServiceReturn::error(message: __("common_error.server_error"));
+        }
+    }
+
+
+    /**
      * Tạo yêu cầu rút tiền (ghi transaction pending)
      */
     public function requestWithdraw(int $userId, int $withdrawInfoId, float $amount, ?string $note = null): ServiceReturn
@@ -99,11 +122,11 @@ class UserWithdrawInfoService extends BaseService
                 ->where('user_id', $userId)
                 ->first();
             if (!$wallet) {
-                throw new ServiceException(message: __("wallet.not_found"));
+                throw new ServiceException(message: __("error.wallet_not_found"));
             }
-
+            // Kiểm tra số dư trong ví tiền có đủ không để rút
             if ($wallet->balance < $amount) {
-                throw new ServiceException(message: __("wallet.not_enough_balance"));
+                throw new ServiceException(message: __("error.wallet_not_enough_balance_to_withdraw"));
             }
 
             // Trừ tiền ngay khi tạo lệnh rút
@@ -116,7 +139,7 @@ class UserWithdrawInfoService extends BaseService
 
             $meta = $withdrawInfo->config ?? [];
             if (!is_array($meta)) {
-                $decoded = json_decode((string) $meta, true);
+                $decoded = json_decode((string)$meta, true);
                 $meta = is_array($decoded) ? $decoded : [];
             }
 

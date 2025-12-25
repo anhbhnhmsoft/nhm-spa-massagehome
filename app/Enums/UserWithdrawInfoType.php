@@ -4,7 +4,18 @@ namespace App\Enums;
 
 enum UserWithdrawInfoType: int
 {
+    // Hiện tại chỉ cho bank
     case BANK = 1;
-    case MOMO = 2;
-    case ZALO = 3;
+
+    public static function getConfig(self $userWithdrawInfoType): array
+    {
+        return match ($userWithdrawInfoType) {
+            self::BANK => [
+                'bank_bin',
+                'bank_name',
+                'bank_account',
+                'bank_holder',
+            ],
+        };
+    }
 }

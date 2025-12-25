@@ -48,6 +48,7 @@ class CategoryForm
                                 'required' => __('common.error.required'),
                             ]),
                         FileUpload::make('image_url')
+                            ->disk('public')
                             ->label(__('admin.common.form.image'))
                             ->required()
                             ->image()

@@ -85,7 +85,7 @@ final class Helper
      */
     public static function checkLanguage(?string $language = null): bool
     {
-        return in_array($language, [Language::VIETNAMESE->value, Language::ENGLISH->value, Language::CHINESE], true);
+        return in_array($language, [Language::VIETNAMESE->value, Language::ENGLISH->value, Language::CHINESE->value], true);
     }
 
     public static function FileUrl(string $path): string

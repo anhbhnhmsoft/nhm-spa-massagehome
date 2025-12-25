@@ -2,7 +2,7 @@
 
 namespace App\Enums;
 
-class BankBin
+final class BankBin
 {
 
     protected static $banks = [

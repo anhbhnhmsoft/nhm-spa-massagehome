@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Core\Controller\BaseController;
 use App\Core\Controller\ListRequest;
+use App\Http\Requests\ListKTVRequest;
 use App\Http\Resources\User\AddressResource;
 use App\Http\Resources\User\CustomerBookedTodayResource;
 use App\Http\Resources\User\ItemKTVResource;
@@ -20,6 +21,27 @@ class UserController extends BaseController
         protected UserService $userService
     ) {}
 
+
+    public function dashboardKtv()
+    {
+        $result = $this->userService->dashboardKtv();
+
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage(),
+            );
+        }
+
+        return $this->sendSuccess(
+            data: $result->getData(),
+            message: $result->getMessage() ?? __('common.success.data_created')
+        );
+    }
+
+    /**
+     * Lấy thông tin dashboard profile của user hiện tại
+     * @return JsonResponse
+     */
     public function dashboardProfile()
     {
         $result = $this->userService->dashboardProfile();
@@ -38,6 +60,8 @@ class UserController extends BaseController
 
     /**
      * Đăng ký cộng tác viên/đối tác
+     * @param Request $request
+     * @return JsonResponse
      */
     public function registerAgency(Request $request): JsonResponse
     {
@@ -128,10 +152,10 @@ class UserController extends BaseController
 
     /**
      * Lấy danh sách KTV
-     * @param ListRequest $request
+     * @param ListKTVRequest $request
      * @return JsonResponse
      */
-    public function listKtv(ListRequest $request): \Illuminate\Http\JsonResponse
+    public function listKtv(ListKTVRequest $request): \Illuminate\Http\JsonResponse
     {
         $dto = $request->getFilterOptions();
 
