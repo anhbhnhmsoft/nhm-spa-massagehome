@@ -124,7 +124,6 @@ class ReviewService extends BaseService
                 data: $paginate,
             );
         } catch (\Throwable $exception) {
-            dd($exception);
             LogHelper::error(
                 message: "Lỗi ReviewService@reviewPaginate",
                 ex: $exception
