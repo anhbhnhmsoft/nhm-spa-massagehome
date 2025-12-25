@@ -8,7 +8,7 @@ use Filament\Support\Icons\Heroicon;
 
 class TransactionCluster extends Cluster
 {
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedSquares2x2;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::ArrowsRightLeft;
 
     public static function getNavigationLabel(): string
     {

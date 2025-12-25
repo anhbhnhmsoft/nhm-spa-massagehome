@@ -4,9 +4,11 @@ namespace App\Filament\Clusters\KTV\Resources\KTVApplies\Tables;
 
 use App\Enums\Gender;
 use App\Enums\ReviewApplicationStatus;
+use App\Filament\Clusters\KTV\Resources\KTVs\KTVResource;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\ImageColumn;
@@ -81,6 +83,9 @@ class KTVAppliesTable
             ])
             ->recordActions([
                 ActionGroup::make([
+                    EditAction::make()
+                        ->url(fn($record) => KTVResource::getUrl('edit', ['record' => $record]))
+                        ->openUrlInNewTab(),
                     ViewAction::make(),
                 ]),
             ])
