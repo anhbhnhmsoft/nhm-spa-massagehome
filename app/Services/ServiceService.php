@@ -356,7 +356,86 @@ class ServiceService extends BaseService
         }
     }
 
+    /*
+     * Cập nhật dịch vụ
+     * @param string $id
+     * @param array $data
+     * @return ServiceReturn
+     */
+    public function updateService(string $id, array $data): ServiceReturn
+    {
+        $uploadedPath = null; // fallback nếu xảy ra lỗi
+        DB::beginTransaction();
+        try {
+            $service = $this->serviceRepository->query()->find($id);
+            if (!$service) {
+                return ServiceReturn::error(
+                    message: __("service.not_found")
+                );
+            }
+            if($service->user_id !== $data['user_id']) {
+                return ServiceReturn::error(
+                    message: __("service.not_authorized")
+                );
+            }
 
+            if (isset($data['image']) && $data['image'] instanceof \Illuminate\Http\UploadedFile) {
+                if ($service->image_url && Storage::disk('public')->exists($service->image_url)) {
+                    Storage::disk('public')->delete($service->image_url);
+                }
+                $uploadedPath = $data['image']->store(DirectFile::makePathById(
+                    type: DirectFile::SERVICE,
+                    id: $service->user_id
+                ), 'public');
+                $data['image_url'] = $uploadedPath;
+            }
 
+            $multilingualPayload = function ($field) use ($data) {
+                $source = $data[$field] ?? [];
+                $fallback = null;
+                foreach ($source as $val) {
+                    if (!empty($val)) {
+                        $fallback = $val;
+                        break;
+                    }
+                }
+                return [
+                    Language::VIETNAMESE->value => !empty($source[Language::VIETNAMESE->value]) ? $source[Language::VIETNAMESE->value] : $fallback,
+                    Language::ENGLISH->value    => !empty($source[Language::ENGLISH->value]) ? $source[Language::ENGLISH->value] : $fallback,
+                    Language::CHINESE->value    => !empty($source[Language::CHINESE->value]) ? $source[Language::CHINESE->value] : $fallback,
+                ];
+            };
 
+            if (isset($data['name'])) {
+                $data['name'] = $multilingualPayload('name');
+            }
+            if (isset($data['description'])) {
+                $data['description'] = $multilingualPayload('description');
+            }
+
+            $service->update($data);
+
+            if (isset($data['options'])) {
+                $service->options()->delete();
+                $service->options()->createMany($data['options']);
+            }
+
+            DB::commit();
+            return ServiceReturn::success(
+                data: $service
+            );
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            if ($uploadedPath && Storage::disk('public')->exists($uploadedPath)) {
+                Storage::disk('public')->delete($uploadedPath);
+            }
+            LogHelper::error(
+                message: "Lỗi ServiceService@updateService",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: __("common_error.server_error")
+            );
+        }
+    }
 }
