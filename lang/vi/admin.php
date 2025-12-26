@@ -18,7 +18,6 @@ return
             'table' => [
                 'name' => 'Tên',
                 'email' => 'Email',
-                'phone' => 'Số điện thoại',
                 'address' => 'Địa chỉ',
                 'created_at' => 'Ngày tạo',
                 'updated_at' => 'Ngày cập nhật',
@@ -275,6 +274,7 @@ return
                 'ongoing' => 'Đang diễn ra',
                 'completed' => 'Đã hoàn thành',
                 'canceled' => 'Đã hủy',
+                'payment_failed' => 'Thanh toán thất bại',
             ],
             'payment_type' => [
                 'qr_banking' => 'Thanh toán qua mã QR',

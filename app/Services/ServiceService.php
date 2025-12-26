@@ -407,4 +407,48 @@ class ServiceService extends BaseService
             );
         }
     }
+        /**
+         * Xóa dịch vụ
+         * @param int $id
+         * @return ServiceReturn
+         */
+    public function deleteService(int $id): ServiceReturn
+    {
+        DB::beginTransaction();
+        try {
+            $service = $this->serviceRepository->query()->find($id);
+            if (!$service) {
+                return ServiceReturn::error(
+                    message: __("error.service_not_found")
+                );
+            }
+            $user = Auth::user();
+            if ($service->user_id !== $user->id) {
+                return ServiceReturn::error(
+                    message: __("error.service_not_authorized")
+                );
+            }
+
+            $haveAnyBooking = $this->bookingRepository->query()->where('service_id', $id)->exists();
+            if ($haveAnyBooking) {
+                return ServiceReturn::error(
+                    message: __("error.service_have_booking")
+                );
+            }
+            $service->delete();
+            DB::commit();
+            return ServiceReturn::success(
+                message: __("common.success.data_deleted")
+            );
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            LogHelper::error(
+                message: "Lỗi ServiceService@deleteService",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: __("common_error.server_error")
+            );
+        }
+    }
 }

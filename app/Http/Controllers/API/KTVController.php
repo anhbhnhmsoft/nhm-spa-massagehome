@@ -168,4 +168,22 @@ class KTVController extends BaseController
             data: new ServiceResource($data),
         );
     }
+
+    /**
+     * Xóa dịch vụ
+     * @param int $id
+     * @return JsonResponse
+     */
+    public function deleteService(int $id): JsonResponse
+    {
+        $result = $this->serviceService->deleteService($id);
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage(),
+            );
+        }
+        return $this->sendSuccess(
+            message: $result->getMessage(),
+        );
+    }
 }

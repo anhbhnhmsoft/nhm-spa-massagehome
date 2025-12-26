@@ -80,7 +80,7 @@ class WalletService extends BaseService
             // cần bổ sung thông báo thay đổi số dư ví
 
             $walletTechnician = $this->walletRepository->query()->where('user_id', $booking->service->user_id)->first();
-            // tạo transaction tạm để trả tiền cho kỹ thuật viên 
+            // tạo transaction tạm để trả tiền cho kỹ thuật viên
             // sau khi kết thúc booking và thanh toán thành công, duyệt transaction này và tiến hành cộng số dư cho kỹ thuật viên
             $this->walletTransactionRepository->create([
                 'wallet_id' => $walletTechnician->id,
@@ -110,5 +110,36 @@ class WalletService extends BaseService
             );
             throw $exception;
         }
+    }
+
+    /**
+     * Khởi tạo ví cho nhân viên
+     * @param int $staffId
+     * @return ServiceReturn
+     */
+    public function initWalletForStaff(int $staffId): ServiceReturn
+    {
+        try {
+            $wallet = $this->walletRepository->query()->where('user_id', $staffId)->first();
+            if (!$wallet) {
+                $this->walletRepository->create([
+                    'user_id' => $staffId,
+                    'is_active' => true,
+                    'balance' => 0,
+                ]);
+            }
+            return ServiceReturn::success(
+                message: __("wallet.init_success")
+            );
+        } catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi WalletService@initWalletForStaff",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: __("wallet.init_failed")
+            );
+        }
+
     }
 }
