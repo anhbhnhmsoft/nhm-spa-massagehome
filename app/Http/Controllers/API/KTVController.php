@@ -8,6 +8,7 @@ use App\Http\Requests\FormServiceRequest;
 use App\Http\Resources\Booking\BookingItemResource;
 use App\Http\Resources\Review\ReviewResource;
 use App\Http\Resources\Service\CategoryResource;
+use App\Http\Resources\Service\DetailServiceResource;
 use App\Http\Resources\Service\ServiceResource;
 use App\Services\BookingService;
 use App\Services\ServiceService;
@@ -184,6 +185,25 @@ class KTVController extends BaseController
         }
         return $this->sendSuccess(
             message: $result->getMessage(),
+        );
+    }
+
+    /**
+     * Lấy thông tin chi tiết dịch vụ
+     * @param string $id
+     * @return JsonResponse
+     */
+    public function detailService(string $id): JsonResponse
+    {
+        $result = $this->serviceService->detailService($id);
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage(),
+            );
+        }
+        $data = $result->getData();
+        return $this->sendSuccess(
+            data: new DetailServiceResource($data),
         );
     }
 }

@@ -153,12 +153,12 @@ class ServiceService extends BaseService
             $service = $this->serviceRepository->queryService()->find($id);
             if (!$service) {
                 throw new ServiceException(
-                    message: __("messages.service_not_found")
+                    message: __("error.service_not_found")
                 );
             }
             if (!$service->is_active) {
                 throw new ServiceException(
-                    message: __("messages.service_not_active")
+                    message: __("error.service_not_active")
                 );
             }
             return ServiceReturn::success(
@@ -450,5 +450,40 @@ class ServiceService extends BaseService
                 message: __("common_error.server_error")
             );
         }
+    }
+        /**
+         * Lấy thông tin chi tiết dịch vụ
+         * @param string $id
+         * @return ServiceReturn
+         */
+    public function detailService(string $id): ServiceReturn
+    {
+        try {
+            $service = $this->serviceRepository->query()->find($id);
+            if (!$service) {
+                return ServiceReturn::error(
+                    message: __("error.service_not_found")
+                );
+            }
+            $user = Auth::user();
+            if ($service->user_id !== $user->id) {
+                return ServiceReturn::error(
+                    message: __("error.service_not_authorized")
+                );
+            }
+
+            return ServiceReturn::success(
+                data: $service
+            );
+        } catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi ServiceService@detailService",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: __("error.service_not_authorized")
+            );
+        }
+
     }
 }
