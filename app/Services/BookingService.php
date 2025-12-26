@@ -9,6 +9,7 @@ use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
 use App\Enums\BookingStatus;
 use App\Enums\NotificationType;
+use App\Enums\UserRole;
 use App\Jobs\SendNotificationJob;
 use App\Repositories\BookingRepository;
 use App\Repositories\CouponRepository;
@@ -390,16 +391,32 @@ class BookingService extends BaseService
 
     /**
      * Lấy chi tiết thông tin booking
-     * @param string $bookingId
+     * @param int $bookingId
      * @return ServiceReturn
      */
-    public function detailBooking(string $bookingId): ServiceReturn
+    public function detailBooking(int $bookingId): ServiceReturn
     {
         try {
-            $booking = $this->bookingRepository->query()->find($bookingId);
+            $user = Auth::user();
+            if($user->role !== UserRole::CUSTOMER->value && $user->role !== UserRole::KTV->value ){
+                return ServiceReturn::error(
+                    message: __("common_error.unauthorized")
+                );
+            }
+            $booking = $this->bookingRepository->query()->find( (int) $bookingId);
             if (!$booking) {
                 return ServiceReturn::error(
                     message: __("booking.not_found")
+                );
+            }
+            if($user->role === UserRole::CUSTOMER->value && $booking->user_id !== $user->id){
+                return ServiceReturn::error(
+                    message: __("common_error.unauthorized")
+                );
+            }
+            if($user->role === UserRole::KTV->value && $booking->ktv_user_id !== $user->id){
+                return ServiceReturn::error(
+                    message: __("common_error.unauthorized")
                 );
             }
             return ServiceReturn::success(
