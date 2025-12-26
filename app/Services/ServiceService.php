@@ -435,7 +435,6 @@ class ServiceService extends BaseService
                     message: __("error.service_have_booking")
                 );
             }
-            $service->options()->delete();
             $service->delete();
             DB::commit();
             return ServiceReturn::success(
