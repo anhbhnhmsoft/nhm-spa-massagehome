@@ -159,6 +159,7 @@ return
         ],
         "ktv" => [
             "label" => "Quản lý KTV",
+            "model_label" => "Kỹ thuật viên",
             "action" => [
                 "view_services" => "Xem dịch vụ"
             ],

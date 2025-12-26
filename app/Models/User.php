@@ -6,6 +6,7 @@ use App\Core\Cache\CacheKey;
 use App\Core\Cache\Caching;
 use App\Core\GenerateId\HasBigIntId;
 use App\Enums\UserRole;
+use App\Enums\UserFileType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -77,6 +78,26 @@ class User extends Authenticatable
     public function files()
     {
         return $this->hasMany(UserFile::class);
+    }
+
+    public function cccdFront()
+    {
+        return $this->hasOne(UserFile::class)->where('type', UserFileType::IDENTITY_CARD_FRONT);
+    }
+
+    public function cccdBack()
+    {
+        return $this->hasOne(UserFile::class)->where('type', UserFileType::IDENTITY_CARD_BACK);
+    }
+
+    public function certificate()
+    {
+        return $this->hasOne(UserFile::class)->where('type', UserFileType::LICENSE);
+    }
+
+    public function gallery()
+    {
+        return $this->hasMany(UserFile::class)->where('type', UserFileType::KTV_IMAGE_DISPLAY);
     }
 
     public function wallet()

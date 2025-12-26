@@ -65,7 +65,7 @@ class KTVResource extends Resource
 
     public static function getModelLabel(): string
     {
-        return __('admin.ktv.label');
+        return __('admin.ktv.model_label');
     }
 
     public static function getRelations(): array

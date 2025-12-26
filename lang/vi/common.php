@@ -14,6 +14,8 @@ return [
         'email'    => 'Giá trị này phải là một email hợp lệ',
         'max_digits' => 'Giá trị này không được vượt quá :max số',
         'min_items' => 'Giá trị này phải có ít nhất :min mục',
+        'max_items' => 'Giá trị này phải có tối đa :max mục',
+        'max_length' => 'Giá trị này không được vượt quá :max ký tự',
     ],
     'unit' => [
         'minute' => 'phút',

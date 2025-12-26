@@ -36,14 +36,13 @@ class KTVForm
                     ->schema([
                         Section::make()
                             ->schema([
-
                                 TextInput::make('name')
                                     ->label(__('admin.common.table.name'))
                                     ->required()
                                     ->maxLength(255)
                                     ->validationMessages([
                                         'required' => __('common.error.required'),
-                                        'max'      => __('common.error.max_length', ['max' => 255])
+                                        'max' => __('common.error.max_length', ['max' => 255])
                                     ]),
 
                                 TextInput::make('password')
@@ -56,21 +55,19 @@ class KTVForm
                                     ->maxLength(255)
                                     ->validationMessages([
                                         'required' => __('common.error.required'),
-                                        'max'      => __('common.error.max_length', ['max' => 255])
+                                        'max' => __('common.error.max_length', ['max' => 255])
                                     ]),
                                 TextInput::make('phone')
                                     ->label(__('admin.common.table.phone'))
                                     ->tel()
                                     ->maxLength(20)
-                                    ->numeric()
                                     ->required()
                                     ->unique()
                                     ->validationMessages([
-                                        'max'      => __('common.error.max_length', ['max' => 20]),
-                                        'numeric'  => __('common.error.numeric'),
+                                        'max' => __('common.error.max_length', ['max' => 20]),
                                         'max_digits' => __('common.error.max_digits', ['max' => 20]),
                                         'required' => __('common.error.required'),
-                                        'unique'   => __('common.error.unique'),
+                                        'unique' => __('common.error.unique'),
                                     ]),
                             ]),
 
@@ -190,87 +187,107 @@ class KTVForm
                             ->label(__('admin.ktv_apply.fields.experience_desc'))
                             ->rows(3)
                             ->columnSpanFull(),
-                        Placeholder::make('effective_date')
-                            ->label(__('admin.common.table.effective_date'))
-                            ->content(fn($record) => $record?->reviewApplication?->effective_date?->format('d/m/Y H:i:s')),
-
-                        Placeholder::make('application_date')
-                            ->label(__('admin.common.table.application_date'))
-                            ->content(fn($record) => $record?->reviewApplication?->application_date?->format('d/m/Y H:i:s')),
+                        Hidden::make('role')
+                            ->default(UserRole::KTV->value),
                     ])
                     ->columns(2),
 
                 Section::make(__('admin.ktv_apply.fields.files'))
                     ->schema([
-                        Repeater::make('files')
-                            ->label(__('admin.ktv_apply.fields.files'))
-                            ->relationship('files')
-                            ->columns(3)
+                        Section::make(__('admin.ktv_apply.file_type.identity_card_front'))
+                            ->relationship('cccdFront')
                             ->schema([
-                                Select::make('type')
-                                    ->label(__('admin.ktv_apply.fields.file_type'))
-                                    ->options(UserFileType::toOptions())
-                                    ->required()
-                                    ->columnSpan(1)
-                                    ->validationMessages([
-                                        'required' => __('common.error.required'),
-                                    ]),
-
+                                Hidden::make('type')
+                                    ->default(UserFileType::IDENTITY_CARD_FRONT)
+                                    ->dehydrated(true),
                                 FileUpload::make('file_path')
-                                    ->label('File')
+                                    ->label(__('admin.ktv_apply.file_type.identity_card_front'))
                                     ->directory(DirectFile::KTVA->value)
                                     ->disk('private')
                                     ->required()
                                     ->image()
                                     ->maxSize(102400)
                                     ->downloadable()
-                                    ->columnSpan(2),
+                                    ->columnSpanFull(),
                                 Hidden::make('role')
-                                    ->default(fn ($record) => $record?->role ?? UserRole::KTV->value)
+                                    ->default(fn($record) => $record?->role ?? UserRole::KTV->value)
+                                    ->dehydrateStateUsing(fn() => UserRole::KTV->value)
+                                    ->dehydrated(true),
+                            ])->columnSpan(1),
+
+                        Section::make(__('admin.ktv_apply.file_type.identity_card_back'))
+                            ->relationship('cccdBack')
+                            ->schema([
+                                Hidden::make('type')
+                                    ->default(UserFileType::IDENTITY_CARD_BACK)
+                                    ->dehydrated(true),
+                                FileUpload::make('file_path')
+                                    ->label(__('admin.ktv_apply.file_type.identity_card_back'))
+                                    ->directory(DirectFile::KTVA->value)
+                                    ->disk('private')
+                                    ->required()
+                                    ->image()
+                                    ->maxSize(102400)
+                                    ->downloadable()
+                                    ->columnSpanFull(),
+                                Hidden::make('role')
+                                    ->default(fn($record) => $record?->role ?? UserRole::KTV->value)
+                                    ->dehydrateStateUsing(fn() => UserRole::KTV->value)
+                                    ->dehydrated(true),
+                            ])->columnSpan(1),
+
+                        Section::make(__('admin.ktv_apply.file_type.license'))
+                            ->relationship('certificate')
+                            ->schema([
+                                Hidden::make('type')
+                                    ->default(UserFileType::LICENSE)
+                                    ->dehydrated(true),
+                                FileUpload::make('file_path')
+                                    ->label(__('admin.ktv_apply.file_type.license'))
+                                    ->directory(DirectFile::KTVA->value)
+                                    ->disk('private')
+                                    ->nullable()
+                                    ->image()
+                                    ->maxSize(102400)
+                                    ->downloadable()
+                                    ->columnSpanFull(),
+                                Hidden::make('role')
+                                    ->default(fn($record) => $record?->role ?? UserRole::KTV->value)
+                                    ->dehydrateStateUsing(fn() => UserRole::KTV->value)
+                                    ->dehydrated(true),
+                            ])->columnSpanFull(),
+
+                        Repeater::make('gallery')
+                            ->label(__('admin.ktv_apply.file_type.ktv_image_display'))
+                            ->relationship('gallery')
+                            ->grid(2)
+                            ->schema([
+                                Hidden::make('type')
+                                    ->default(UserFileType::KTV_IMAGE_DISPLAY)
+                                    ->dehydrated(true),
+                                FileUpload::make('file_path')
+                                    ->label(__('admin.ktv_apply.file_type.ktv_image_display'))
+                                    ->directory(DirectFile::KTVA->value)
+                                    ->disk('private')
+                                    ->required()
+                                    ->image()
+                                    ->maxSize(102400)
+                                    ->downloadable()
+                                    ->columnSpanFull(),
+                                Hidden::make('role')
+                                    ->default(fn($record) => $record?->role ?? UserRole::KTV->value)
                                     ->dehydrateStateUsing(fn() => UserRole::KTV->value)
                                     ->dehydrated(true),
                             ])
-                            ->columns(3)
-                            ->addable(true)
-                            ->deletable(true)
-                            ->reorderable(true)
-                            ->rules([
-                                fn() => function (string $attribute, $value, \Closure $fail) {
-                                    if (! is_array($value)) {
-                                        return;
-                                    }
-                                    $selectedTypes = collect($value)->pluck('type')->map(fn($t) => (int) $t);
-                                    $counts = $selectedTypes->countBy();
-                                    $frontCount = $counts->get(UserFileType::IDENTITY_CARD_FRONT->value, 0);
-                                    $backCount = $counts->get(UserFileType::IDENTITY_CARD_BACK->value, 0);
-                                    $displayCount = $counts->get(UserFileType::KTV_IMAGE_DISPLAY->value, 0);
-
-                                    $errors = [];
-
-                                    if ($frontCount < 1) {
-                                        $errors[] = __('error.need_identify_image');
-                                    }
-
-                                    if ($backCount < 1) {
-                                        $errors[] = __('error.need_identify_image');
-                                    }
-
-                                    if ($displayCount < 3) {
-                                        $errors[] = __('error.need_identify_image_display');
-                                    }
-
-                                    if (!empty($errors)) {
-                                        $fail(implode(' ', $errors));
-                                    }
-                                },
-                            ])
-                            ->minItems(5)
-                            ->defaultItems(5)
+                            ->minItems(3)
+                            ->maxItems(5)
+                            ->defaultItems(3)
                             ->validationMessages([
-                                'min' => __('common.error.min_items', ['min' => 5]),
-                                'required' => __('common.error.required'),
-                            ]),
-                    ]),
+                                'min' => __('common.error.min_items', ['min' => 3]),
+                                'max' => __('common.error.max_items', ['max' => 5]),
+                            ])
+                            ->columnSpanFull(),
+                    ])->columns(2),
 
                 Section::make(__('admin.ktv_apply.fields.system_info'))
                     ->schema([

@@ -5,6 +5,7 @@ namespace App\Filament\Clusters\Agency\Resources\Agencies\Schemas;
 use App\Enums\DirectFile;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserFileType;
+use App\Enums\UserRole;
 use App\Models\Province;
 use App\Services\LocationService;
 use Filament\Forms\Components\FileUpload;
@@ -29,29 +30,26 @@ class AgencyForm
             ->components([
                 Section::make(__('admin.agency_apply.fields.personal_info'))
                     ->schema([
-
                         TextInput::make('name')
                             ->label(__('admin.common.table.name'))
                             ->required()
                             ->maxLength(255)
                             ->validationMessages([
                                 'required' => __('common.error.required'),
-                                'max'      => __('common.error.max_length', ['max' => 255])
+                                'max' => __('common.error.max_length', ['max' => 255])
                             ]),
 
                         TextInput::make('phone')
                             ->label(__('admin.common.table.phone'))
                             ->tel()
                             ->maxLength(20)
-                            ->numeric()
                             ->unique()
                             ->required()
                             ->validationMessages([
-                                'max'      => __('common.error.max_length', ['max' => 20]),
-                                'numeric'  => __('common.error.numeric'),
+                                'max' => __('common.error.max_length', ['max' => 20]),
                                 'max_digits' => __('common.error.max_digits', ['max' => 20]),
                                 'required' => __('common.error.required'),
-                                'unique'   => __('common.error.unique'),
+                                'unique' => __('common.error.unique'),
                             ]),
                         TextInput::make('password')
                             ->label(__('admin.common.table.password'))
@@ -63,7 +61,7 @@ class AgencyForm
                             ->maxLength(255)
                             ->validationMessages([
                                 'required' => __('common.error.required'),
-                                'max'      => __('common.error.max_length', ['max' => 255])
+                                'max' => __('common.error.max_length', ['max' => 255])
                             ])
                             ->hidden(fn($livewire) => $livewire instanceof ViewRecord),
                         Placeholder::make('created_at')
@@ -74,76 +72,57 @@ class AgencyForm
                             ->label(__('admin.common.table.updated_at'))
                             ->content(fn($record) => $record?->updated_at?->format('d/m/Y H:i:s')),
 
-                        Repeater::make('files')
-                            ->label(__('admin.agency_apply.fields.files'))
-                            ->relationship(name: 'files')
-                            ->columns(3)
+                        Section::make(__('admin.agency_apply.fields.files'))
                             ->schema([
-                                Select::make('type')
-                                    ->label(__('admin.agency_apply.fields.file_type'))
-                                    ->options(UserFileType::toOptions())
-                                    ->required()
-                                    ->columnSpan(1),
+                                Section::make(__('admin.ktv_apply.file_type.identity_card_front'))
+                                    ->relationship('cccdFront')
+                                    ->schema([
+                                        Hidden::make('type')
+                                            ->default(UserFileType::IDENTITY_CARD_FRONT)
+                                            ->dehydrated(true),
+                                        FileUpload::make('file_path')
+                                            ->label(__('admin.ktv_apply.file_type.identity_card_front'))
+                                            ->directory(DirectFile::AGENCY->value)
+                                            ->disk('private')
+                                            ->required()
+                                            ->image()
+                                            ->maxSize(102400)
+                                            ->downloadable()
+                                            ->columnSpanFull(),
+                                        Hidden::make('role')
+                                            ->default(fn($record) => $record?->role ?? UserRole::AGENCY->value)
+                                            ->dehydrateStateUsing(fn() => UserRole::AGENCY->value)
+                                            ->dehydrated(true),
+                                    ])->columnSpan(1),
 
-                                FileUpload::make('file_path')
-                                    ->label('File')
-                                    ->directory(DirectFile::AGENCY->value)
-                                    ->disk('private')
-                                    ->required()
-                                    ->image()
-                                    ->maxSize(102400)
-                                    ->downloadable()
-                                    ->columnSpan(2),
-                                    Hidden::make('role')
-                                        ->default(fn ($record) => $record?->role),
+                                Section::make(__('admin.ktv_apply.file_type.identity_card_back'))
+                                    ->relationship('cccdBack')
+                                    ->schema([
+                                        Hidden::make('type')
+                                            ->default(UserFileType::IDENTITY_CARD_BACK)
+                                            ->dehydrated(true),
+                                        FileUpload::make('file_path')
+                                            ->label(__('admin.ktv_apply.file_type.identity_card_back'))
+                                            ->directory(DirectFile::AGENCY->value)
+                                            ->disk('private')
+                                            ->required()
+                                            ->image()
+                                            ->maxSize(102400)
+                                            ->downloadable()
+                                            ->columnSpanFull(),
+                                        Hidden::make('role')
+                                            ->default(fn($record) => $record?->role ?? UserRole::AGENCY->value)
+                                            ->dehydrateStateUsing(fn() => UserRole::AGENCY->value)
+                                            ->dehydrated(true),
+                                    ])->columnSpan(1),
                             ])
-                            ->columns(3)
-                            ->addable(true)
-                            ->deletable(true)
-                            ->reorderable(true)
-                            ->rules([
-                                fn() => function (string $attribute, $value, \Closure $fail) {
-                                    if (! is_array($value)) {
-                                        return;
-                                    }
-                                    $selectedTypes = collect($value)->pluck('type')->map(fn($t) => (int) $t);
-                                    $counts = $selectedTypes->countBy();
-                                    $frontCount = $counts->get(UserFileType::IDENTITY_CARD_FRONT->value, 0);
-                                    $backCount = $counts->get(UserFileType::IDENTITY_CARD_BACK->value, 0);
-                                    $displayCount = $counts->get(UserFileType::KTV_IMAGE_DISPLAY->value, 0);
-
-                                    $errors = [];
-
-                                    if ($frontCount < 1) {
-                                        $errors[] = __('error.need_identify_image');
-                                    }
-
-                                    if ($backCount < 1) {
-                                        $errors[] = __('error.need_identify_image');
-                                    }
-
-                                    if ($displayCount < 3) {
-                                        $errors[] = __('error.need_identify_image_display');
-                                    }
-
-                                    if (!empty($errors)) {
-                                        $fail(implode(' ', $errors));
-                                    }
-                                },
-                            ])
-                            ->minItems(5)
-                            ->defaultItems(5)
-                            ->validationMessages([
-                                'min' => __('common.error.min_items', ['min' => 5]),
-                                'required' => __('common.error.required'),
-                            ])
-                            ->columnSpan('full'),
+                            ->columns(2)
+                            ->columnSpanFull(),
                     ])
                     ->columns(2),
                 Section::make(__('admin.agency_apply.fields.registration_info'))
                     ->relationship(name: 'getAgencyReviewsAttribute')
                     ->schema([
-
                         Select::make('province_code')
                             ->label(__('admin.agency_apply.fields.province'))
                             ->searchable()
@@ -203,7 +182,8 @@ class AgencyForm
                             ->default(ReviewApplicationStatus::APPROVED),
                         TextInput::make('note')
                             ->label(__('admin.agency_apply.fields.note')),
-
+                        Hidden::make('role')
+                            ->default(UserRole::AGENCY->value),
                     ])
                     ->columns(2),
             ]);
