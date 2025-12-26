@@ -50,9 +50,9 @@ class BookingController extends BaseController
 
     /**
      * Lấy chi tiết thông tin booking
-     * @param string $bookingId
+     * @param int $bookingId
      */
-    public function detailBooking(string $bookingId): JsonResponse
+    public function detailBooking(int $bookingId): JsonResponse
     {
         $result = $this->bookingService->detailBooking($bookingId);
         if ($result->isError()) {
@@ -61,7 +61,27 @@ class BookingController extends BaseController
             );
         }
         return $this->sendSuccess(
-            data: $result
+            data: BookingItemResource::make($result->getData())->response()->getData()
+        );
+    }
+
+    public function startBooking(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'booking_id' => 'required|integer',
+        ],
+            [
+                'booking_id.required' => __('booking.validate.required'),
+                'booking_id.integer' => __('booking.validate.integer'),
+            ]);
+        $result = $this->bookingService->startBooking((int) $data['booking_id']);
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage()
+            );
+        }
+        return $this->sendSuccess(
+            data: $result->getData()
         );
     }
 }

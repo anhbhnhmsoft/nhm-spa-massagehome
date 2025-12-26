@@ -8,6 +8,8 @@ return [
     'not_found' => 'Booking không tồn tại',
     'book_time_not_valid' => 'Thời gian đặt không hợp lệ, cần phải lớn hơn thời gian hiện tại!',
     'ktv_is_busy_at_this_time' => 'Kỹ thuật viên đã có lịch trong khung giờ này!',
+    'status_not_confirmed' => 'Booking chưa được xác nhận',
+    'already_started' => 'Booking đã bắt đầu',
     'wallet' => [
         'not_active' => 'Tài khoản không hoạt động',
         'not_enough' => 'Số dư không đủ',
@@ -48,5 +50,9 @@ return [
         'wallet_customer_not_found' => 'Không tìm thấy tài khoản ví',
         'wallet_technician_not_found' => 'Không tìm thấy tài khoản ví kĩ thuật viên',
         'booking_not_found' => 'Không tìm thấy booking',
-    ]
+    ],
+    'validate' => [
+        'required' => 'Booking ID không được để trống',
+        'integer' => 'Booking ID phải là số nguyên.',
+    ],
 ];
