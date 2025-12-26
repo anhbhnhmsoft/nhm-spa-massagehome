@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\CheckKtv;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\SetWebLocale;
@@ -19,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
         $middleware->alias([
             'set-api-locale' => SetLocale::class,
+            'check-ktv' => CheckKtv::class,
         ]);
         $middleware->web(append: [
             HandleAppearance::class,

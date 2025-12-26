@@ -74,7 +74,7 @@ class BookingService extends BaseService
             );
         } catch (\Exception $exception) {
             LogHelper::error(
-                message: "Lỗi ServiceService@categoryPaginate",
+                message: "Lỗi ServiceService@bookingPaginate",
                 ex: $exception
             );
             return ServiceReturn::success(

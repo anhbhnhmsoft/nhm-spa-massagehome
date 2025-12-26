@@ -8,6 +8,8 @@ use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
 use App\Enums\BookingStatus;
+use App\Enums\DirectFile;
+use App\Enums\Language;
 use App\Enums\ServiceDuration;
 use App\Models\Coupon;
 use App\Models\User;
@@ -20,6 +22,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class ServiceService extends BaseService
 {
@@ -71,6 +74,28 @@ class ServiceService extends BaseService
                     perPage: $dto->perPage,
                     currentPage: $dto->page
                 )
+            );
+        }
+    }
+
+    /**
+     * Lấy tất cả categories (không phân trang)
+     * @return ServiceReturn
+     */
+    public function allCategories(): ServiceReturn
+    {
+        try {
+            $categories = $this->categoryRepository->queryCategory()->get();
+            return ServiceReturn::success(
+                data: $categories
+            );
+        } catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi ServiceService@allCategories",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: __("common_error.server_error")
             );
         }
     }
@@ -158,7 +183,6 @@ class ServiceService extends BaseService
      * @param FilterDTO $dto
      * @return ServiceReturn
      */
-
     public function getListCoupon(FilterDTO $dto): ServiceReturn
     {
         try {
@@ -182,7 +206,11 @@ class ServiceService extends BaseService
         }
     }
 
-
+    /**
+     * Lấy danh sách mã coupon đã được sử dụng
+     * @param FilterDTO $dto
+     * @return ServiceReturn
+     */
     public function couponUserPaginate(FilterDTO $dto): ServiceReturn
     {
         try {
@@ -208,6 +236,7 @@ class ServiceService extends BaseService
             );
         }
     }
+
     /**
      * Lấy danh sách khách hàng đã đặt lịch trong ngày hôm nay
      * @param string $ktvUserId
@@ -247,4 +276,87 @@ class ServiceService extends BaseService
             );
         }
     }
+
+
+    /**
+     * Tạo dịch vụ mới
+     * @param array $data
+     * @return ServiceReturn
+     */
+    public function createService(array $data): ServiceReturn
+    {
+        // Biến lưu đường dẫn ảnh để cleanup nếu lỗi
+        $uploadedPath = null;
+        DB::beginTransaction();
+        try {
+            $image = $data['image'];
+            if (!($image instanceof \Illuminate\Http\UploadedFile)) {
+                throw new ServiceException(
+                    message: __("error.invalid_image")
+                );
+            }
+            $uploadedPath = $image->store(DirectFile::makePathById(
+                type: DirectFile::SERVICE,
+                id: $data['user_id']
+            ), 'public');
+
+            $multilingualPayload = function ($field) use ($data) {
+                $source = $data[$field] ?? [];
+                // Tìm giá trị fallback (lấy giá trị đầu tiên không rỗng trong mảng)
+                $fallback = null;
+                foreach ($source as $val) {
+                    if (!empty($val)) {
+                        $fallback = $val;
+                        break;
+                    }
+                }
+                return [
+                    Language::VIETNAMESE->value => !empty($source[Language::VIETNAMESE->value]) ? $source[Language::VIETNAMESE->value] : $fallback,
+                    Language::ENGLISH->value    => !empty($source[Language::ENGLISH->value]) ? $source[Language::ENGLISH->value] : $fallback,
+                    Language::CHINESE->value    => !empty($source[Language::CHINESE->value]) ? $source[Language::CHINESE->value] : $fallback,
+                ];
+            };
+            $name = $multilingualPayload('name');
+            $description = $multilingualPayload('description');
+
+            $service = $this->serviceRepository->create([
+                'name' => $name,
+                'description' => $description,
+                'category_id' => $data['category_id'],
+                'image_url' => $uploadedPath,
+                'is_active' => $data['is_active'],
+                'user_id' => $data['user_id'],
+            ]);
+            $service->options()->createMany($data['options']);
+
+            DB::commit();
+            return ServiceReturn::success(
+                data: $service
+            );
+        } catch (ServiceException $exception) {
+            DB::rollBack();
+            if ($uploadedPath && Storage::disk('public')->exists($uploadedPath)) {
+                Storage::disk('public')->delete($uploadedPath);
+            }
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            if ($uploadedPath && Storage::disk('public')->exists($uploadedPath)) {
+                Storage::disk('public')->delete($uploadedPath);
+            }
+            LogHelper::error(
+                message: "Lỗi ServiceService@createService",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: __("common_error.server_error")
+            );
+        }
+    }
+
+
+
+
 }

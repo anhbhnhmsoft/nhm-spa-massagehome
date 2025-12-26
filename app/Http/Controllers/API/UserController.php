@@ -21,23 +21,6 @@ class UserController extends BaseController
         protected UserService $userService
     ) {}
 
-
-    public function dashboardKtv()
-    {
-        $result = $this->userService->dashboardKtv();
-
-        if ($result->isError()) {
-            return $this->sendError(
-                message: $result->getMessage(),
-            );
-        }
-
-        return $this->sendSuccess(
-            data: $result->getData(),
-            message: $result->getMessage() ?? __('common.success.data_created')
-        );
-    }
-
     /**
      * Lấy thông tin dashboard profile của user hiện tại
      * @return JsonResponse

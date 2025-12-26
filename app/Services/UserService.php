@@ -14,16 +14,21 @@ use App\Enums\ConfigName;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserFileType;
 use App\Enums\UserRole;
+use App\Enums\WalletTransactionStatus;
+use App\Enums\WalletTransactionType;
 use App\Repositories\BookingRepository;
 use App\Repositories\CouponUserRepository;
+use App\Repositories\ReviewRepository;
 use App\Repositories\UserAddressRepository;
 use App\Repositories\UserFileRepository;
 use App\Repositories\UserProfileRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\UserReviewApplicationRepository;
 use App\Repositories\WalletRepository;
+use App\Repositories\WalletTransactionRepository;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -34,44 +39,98 @@ class UserService extends BaseService
         protected UserRepository                  $userRepository,
         protected UserFileRepository              $userFileRepository,
         protected UserReviewApplicationRepository $userReviewApplicationRepository,
-        protected UserProfileRepository $userProfileRepository,
-        protected WalletRepository $walletRepository,
-        protected UserAddressRepository $userAddressRepository,
-        protected BookingRepository $bookingRepository,
-        protected CouponUserRepository $couponUserRepository,
-        protected ConfigService $configService
-    ) {
+        protected UserProfileRepository           $userProfileRepository,
+        protected WalletRepository                $walletRepository,
+        protected UserAddressRepository           $userAddressRepository,
+        protected BookingRepository               $bookingRepository,
+        protected CouponUserRepository            $couponUserRepository,
+        protected ConfigService                   $configService,
+        protected WalletTransactionRepository     $walletTransactionRepository,
+        protected ReviewRepository                $reviewRepository,
+    )
+    {
         parent::__construct();
     }
 
 
+    /**
+     * Lấy thông tin dashboard của KTV
+     * @return ServiceReturn
+     */
     public function dashboardKtv()
     {
         try {
             $user = Auth::user();
-            // Kiểm tra quyền truy cập
-            if ($user->role !== UserRole::KTV->value) {
-                throw new ServiceException(
-                    message: __('common_error.unauthorized')
-                );
+
+            // 1. Chuẩn bị mốc thời gian (Dùng Carbon để chính xác và tận dụng Index DB tốt hơn)
+            $todayStart = Carbon::today();
+            $todayEnd = Carbon::today()->endOfDay();
+            $yesterdayStart = Carbon::yesterday()->startOfDay();
+            $yesterdayEnd = Carbon::yesterday()->endOfDay();
+
+            // 2. Lấy Wallet (Check exists nhanh hơn nếu chỉ cần check, nhưng ở đây cần ID nên giữ nguyên)
+            $wallet = $this->walletRepository->query()
+                ->where('user_id', $user->id)
+                ->select('id')
+                ->first();
+
+            if (!$wallet) {
+                throw new ServiceException(__('error.wallet_not_found'));
             }
 
-            // Lấy thông tin booking sắp tới của user
+            // 3. TỐI ƯU 1: Gộp doanh thu Hôm nay & Hôm qua vào 1 Query
+            // Thay vì 2 query, ta dùng SUM kết hợp CASE WHEN (hoặc IF trong MySQL)
+            $revenueStats = $this->walletTransactionRepository->query()
+                ->where('wallet_id', $wallet->id)
+                ->where('type', WalletTransactionType::PAYMENT_FOR_KTV->value)
+                ->where('status', WalletTransactionStatus::COMPLETED->value)
+                ->where('created_at', '>=', $yesterdayStart) // Chỉ quét dữ liệu từ hôm qua đến nay (Tận dụng Index)
+                ->toBase() // Bỏ qua việc hydrate Model để tăng tốc độ (trả về object thuần)
+                ->selectRaw("SUM(CASE WHEN created_at >= ? THEN point_amount ELSE 0 END) as today", [$todayStart])
+                ->selectRaw("SUM(CASE WHEN created_at < ? THEN point_amount ELSE 0 END) as yesterday", [$todayStart])
+                ->first();
 
+            // 4. TỐI ƯU 2: Gộp thống kê Booking (Completed & Pending) vào 1 Query
+            $bookingStats = $this->bookingRepository->queryBooking()
+                ->where('ktv_user_id', $user->id)
+                ->whereBetween('booking_time', [$todayStart, $todayEnd]) // Tận dụng Index tốt hơn whereDate
+                ->toBase()
+                ->selectRaw("COUNT(CASE WHEN status = ? THEN 1 END) as completed", [BookingStatus::COMPLETED->value])
+                ->selectRaw("COUNT(CASE WHEN status IN (?, ?) THEN 1 END) as pending", [BookingStatus::PENDING->value, BookingStatus::CONFIRMED->value])
+                ->first();
 
+            // 5. Lấy booking sắp tới (hoặc mới nhất)
+            // Lưu ý: Nếu là "sắp tới" thì nên dùng 'asc' và điều kiện >= now().
+            // Nhưng tôi giữ nguyên logic 'desc' của bạn.
+            $booking = $this->bookingRepository->queryBooking()
+                ->where('ktv_user_id', $user->id)
+                ->whereIn('status', [BookingStatus::PENDING->value, BookingStatus::CONFIRMED->value])
+                ->orderBy('booking_time', 'desc')
+                ->first();
 
-        }catch (ServiceException $e){
-            return ServiceReturn::error(
-                message: $e->getMessage()
+            // 6. Review mới nhất hôm nay
+            $reviewToday = $this->reviewRepository->queryReview()
+                ->where('user_id', $user->id)
+                ->whereBetween('review_at', [$todayStart, $todayEnd])
+                ->orderBy('review_at', 'desc')
+                ->get();
+
+            return ServiceReturn::success(
+                data: [
+                    'booking' => $booking,
+                    'total_revenue_today' => (float)($revenueStats->today ?? 0),
+                    'total_revenue_yesterday' => (float)($revenueStats->yesterday ?? 0),
+                    'total_booking_completed_today' => (int)($bookingStats->completed ?? 0),
+                    'total_booking_pending_today' => (int)($bookingStats->pending ?? 0),
+                    'review_today' => $reviewToday,
+                ]
             );
-        } catch (\Exception $e){
-            LogHelper::error(
-                message: "Lỗi UserService@dashboardKtv",
-                ex: $e
-            );
-            return ServiceReturn::error(
-                message: __('common_error.server_error')
-            );
+
+        } catch (ServiceException $e) {
+            return ServiceReturn::error($e->getMessage());
+        } catch (\Exception $e) {
+            LogHelper::error("Lỗi UserService@dashboardKtv", $e);
+            return ServiceReturn::error(__('common_error.server_error'));
         }
     }
 
@@ -115,7 +174,7 @@ class UserService extends BaseService
                     'coupon_user_count' => $couponUserCount,
                 ]
             );
-        }catch (\Exception $exception) {
+        } catch (\Exception $exception) {
             LogHelper::error(
                 message: "Lỗi UserService@dashboardCustomer",
                 ex: $exception
@@ -462,16 +521,16 @@ class UserService extends BaseService
             }
 
             $reviewData = [
-                'user_id'          => $user->id,
-                'agency_id'        => optional($data['reviewApplication'])['agency_id'] ?? null,
-                'status'           => ReviewApplicationStatus::PENDING->value,
-                'province_code'    => optional($data['reviewApplication'])['province_code'] ?? null,
-                'address'          => optional($data['reviewApplication'])['address'] ?? null,
-                'latitude'         => optional($data['reviewApplication'])['latitude'] ?? null,
-                'longitude'        => optional($data['reviewApplication'])['longitude'] ?? null,
+                'user_id' => $user->id,
+                'agency_id' => optional($data['reviewApplication'])['agency_id'] ?? null,
+                'status' => ReviewApplicationStatus::PENDING->value,
+                'province_code' => optional($data['reviewApplication'])['province_code'] ?? null,
+                'address' => optional($data['reviewApplication'])['address'] ?? null,
+                'latitude' => optional($data['reviewApplication'])['latitude'] ?? null,
+                'longitude' => optional($data['reviewApplication'])['longitude'] ?? null,
                 'application_date' => now(),
-                'bio'              => optional($data['reviewApplication'])['bio'] ?? null,
-                'role'             => $applyRole,
+                'bio' => optional($data['reviewApplication'])['bio'] ?? null,
+                'role' => $applyRole,
             ];
 
             $existingReview = $this->userReviewApplicationRepository
@@ -488,11 +547,11 @@ class UserService extends BaseService
             if (!empty($data['files']) && is_array($data['files'])) {
                 foreach ($data['files'] as $file) {
                     $this->userFileRepository->create([
-                        'user_id'   => $user->id,
-                        'type'      => optional($file)['type'] ?? null,
+                        'user_id' => $user->id,
+                        'type' => optional($file)['type'] ?? null,
                         'file_path' => optional($file)['file_path'] ?? null,
                         'is_public' => (bool)(optional($file)['is_public'] ?? false),
-                        'role'      => $applyRole,
+                        'role' => $applyRole,
                     ]);
                 }
             }
@@ -692,8 +751,7 @@ class UserService extends BaseService
                 data: $userAddress,
                 message: __("common.success.data_created")
             );
-        }
-        catch (\Exception $exception) {
+        } catch (\Exception $exception) {
             DB::rollBack();
             LogHelper::error(
                 message: "Lỗi UserService@saveAddress",
@@ -747,8 +805,7 @@ class UserService extends BaseService
             return ServiceReturn::error(
                 message: $exception->getMessage()
             );
-        }
-        catch (\Exception $exception) {
+        } catch (\Exception $exception) {
             LogHelper::error(
                 message: "Lỗi UserService@editAddress",
                 ex: $exception
@@ -799,8 +856,7 @@ class UserService extends BaseService
             return ServiceReturn::error(
                 message: $exception->getMessage()
             );
-        }
-        catch (\Exception $exception) {
+        } catch (\Exception $exception) {
             DB::rollBack();
             LogHelper::error(
                 message: "Lỗi UserService@deleteAddress",

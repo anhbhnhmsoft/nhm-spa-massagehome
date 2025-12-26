@@ -67,4 +67,16 @@ class Service extends Model
     {
         return $this->hasMany(ServiceOption::class);
     }
+
+    public function reviews()
+    {
+        return $this->hasManyThrough(
+            Review::class,
+            ServiceBooking::class,
+            'service_id',
+            'service_booking_id',
+            'id',
+            'id'
+        );
+    }
 }

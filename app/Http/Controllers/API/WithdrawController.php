@@ -110,7 +110,7 @@ class WithdrawController extends BaseController
     public function requestWithdraw(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'user_withdraw_info_id' => ['required','numeric', 'exists:user_withdraw_infos,id'],
+            'user_withdraw_info_id' => ['required','numeric', 'exists:user_withdraw_info,id'],
             'amount' => ['required', 'numeric', 'gt:0'],
             'note' => ['nullable', 'string', 'max:255'],
         ],[

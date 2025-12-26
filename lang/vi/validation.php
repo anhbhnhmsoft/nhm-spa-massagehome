@@ -103,11 +103,9 @@ return [
         'min' => 'Đánh giá phải lớn hơn 0.',
         'max' => 'Đánh giá phải nhỏ hơn 5.',
     ],
-
     'hidden' => [
         'boolean' => 'Ẩn không hợp lệ.',
     ],
-
     'service_booking_id' => [
         'required' => 'Vui lòng chọn booking dịch vụ.',
         'numeric' => 'Booking dịch vụ phải là số.',
@@ -148,5 +146,35 @@ return [
     ],
     'user_withdraw_info' => [
         'invalid' => 'Thông tin rút tiền không hợp lệ.',
+    ],
+    'category_id' => [
+        'required' => 'Vui lòng chọn danh mục dịch vụ.',
+        'invalid' => 'Danh mục dịch vụ không hợp lệ.',
+    ],
+    'image' => [
+        'required' => 'Vui lòng tải lên ảnh đại diện.',
+        'max'      => 'Ảnh không được vượt quá 20MB.',
+        'mimes'    => 'Định dạng ảnh không hợp lệ (chỉ chấp nhận jpeg, png, jpg).',
+    ],
+    'name_service' => [
+        'required' => 'Vui lòng nhập tên dịch vụ ít nhất bằng 1 ngôn ngữ.',
+        'invalid' => 'Dữ liệu tên dịch vụ không đúng định dạng.',
+        'max'    => 'Tên dịch vụ quá dài (tối đa 255 ký tự).',
+    ],
+    'description_service' => [
+        'required' => 'Vui lòng nhập mô tả dịch vụ ít nhất bằng 1 ngôn ngữ.',
+        'invalid' => 'Dữ liệu mô tả dịch vụ không đúng định dạng.',
+        'max'    => 'Mô tả quá dài (tối đa 1000 ký tự).',
+    ],
+    'option_service' => [
+        'required' => 'Vui lòng thêm ít nhất 1 lựa chọn dịch vụ.',
+        'price' => [
+            'required' => 'Vui lòng nhập giá tiền cho gói dịch vụ.',
+            'min'      => 'Giá tiền không được nhỏ hơn 0.',
+        ],
+        'duration' => [
+            'required' => 'Vui lòng chọn thời lượng.',
+            'enum'     => 'Thời lượng dịch vụ không hợp lệ.',
+        ],
     ],
 ];

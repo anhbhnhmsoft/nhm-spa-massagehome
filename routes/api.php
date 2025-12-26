@@ -4,6 +4,7 @@ use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\CommercialController;
 use App\Http\Controllers\API\FileController;
 use App\Http\Controllers\API\BookingController;
+use App\Http\Controllers\API\KTVController;
 use App\Http\Controllers\API\LocationController;
 use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\API\PaymentController;
@@ -230,9 +231,23 @@ Route::middleware('set-api-locale')->group(function () {
         Route::get('list', [ReviewController::class, 'listReview']);
     });
 
-    // Support channels - không cần auth
     Route::prefix('config')->group(function () {
         // Lấy thông tin cấu hình hỗ trợ
         Route::get('support-channels', [ConfigController::class, 'getSupportChannels']);
     });
+
+    // Chỉ dành cho KTV
+    Route::prefix('ktv')->middleware(['auth:sanctum', 'check-ktv'])->group(function () {
+        // Lấy thông tin dashboard profile của user hiện tại
+        Route::get('dashboard', [KTVController::class, 'dashboard']);
+        // Lấy danh sách booking của KTV
+        Route::get('list-booking', [KTVController::class, 'listBooking']);
+        // Lấy tất cả categories
+        Route::get('all-categories', [KTVController::class, 'allCategories']);
+        // Lấy danh sách service của KTV
+        Route::get('list-service', [KTVController::class, 'listService']);
+        // Thêm service mới
+        Route::post('add-service', [KTVController::class, 'addService']);
+    });
+
 });

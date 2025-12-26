@@ -26,6 +26,7 @@ class ServiceRepository extends BaseRepository
                 },
                 'options',
             ])
+            ->withAvg('reviews', 'rating')
             ->withCount([
                 // Đếm số lượng booking đã hoàn thành
                 'bookings' => function ($query) {
@@ -41,7 +42,7 @@ class ServiceRepository extends BaseRepository
         if (isset($filters['category_id'])) {
             $query->where('category_id', $filters['category_id']);
         }
-        // Lọc theo trạng thái
+        // Lọc theo
         if (isset($filters['user_id'])) {
             $query->where('user_id', $filters['user_id']);
         }

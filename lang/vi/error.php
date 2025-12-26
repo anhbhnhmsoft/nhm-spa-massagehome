@@ -23,4 +23,5 @@ return [
     "user_not_found" => "Người dùng không tồn tại",
     "ktv_not_found" => "KTV không tồn tại",
     "wallet_not_enough_balance_to_withdraw" => "Số dư trong ví tiền không đủ để rút",
+    "invalid_image" => "Hình ảnh không hợp lệ",
 ];

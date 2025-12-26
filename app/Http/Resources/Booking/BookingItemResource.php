@@ -33,6 +33,8 @@ class BookingItemResource extends JsonResource
             ],
             'address' => $this->address,
             'note_address' => $this->note_address,
+            'lat' => (string)$this->latitude,
+            'lng' => (string)$this->longitude,
             'booking_time' => $this->booking_time,
             'start_time' => $this->start_time,
             'end_time' => $this->end_time,
