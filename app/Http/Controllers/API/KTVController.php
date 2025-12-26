@@ -21,8 +21,7 @@ class KTVController extends BaseController
         protected UserService    $userService,
         protected BookingService $bookingService,
         protected ServiceService $serviceService,
-    )
-    {
+    ) {
         /**
          * Tất cả các endpoint trong controller này đều yêu cầu quyền KTV, qua validate middleware CheckKtv
          */
@@ -107,7 +106,7 @@ class KTVController extends BaseController
         );
     }
 
-     /**
+    /**
      * Lấy tất cả categories
      * @param Request $request
      * @return JsonResponse
@@ -148,5 +147,25 @@ class KTVController extends BaseController
         );
     }
 
-
+    /**
+     * Cập nhật dịch vụ
+     * @param FormServiceRequest $request
+     * @param string $id
+     * @return JsonResponse
+     */
+    public function updateService(FormServiceRequest $request, string $id): JsonResponse
+    {
+        $data = $request->validated();
+        $data['user_id'] = $request->user()->id;
+        $result = $this->serviceService->updateService($id, $data);
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage(),
+            );
+        }
+        $data = $result->getData();
+        return $this->sendSuccess(
+            data: new ServiceResource($data),
+        );
+    }
 }

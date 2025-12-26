@@ -175,6 +175,7 @@ return [
         'duration' => [
             'required' => 'Vui lòng chọn thời lượng.',
             'enum'     => 'Thời lượng dịch vụ không hợp lệ.',
+            'invalid' => 'Thời lượng dịch vụ không hợp lệ.',
         ],
     ],
 ];

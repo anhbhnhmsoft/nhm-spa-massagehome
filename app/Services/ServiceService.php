@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Core\Controller\FilterDTO;
+use App\Core\Helper;
 use App\Core\LogHelper;
 use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
@@ -300,24 +301,8 @@ class ServiceService extends BaseService
                 id: $data['user_id']
             ), 'public');
 
-            $multilingualPayload = function ($field) use ($data) {
-                $source = $data[$field] ?? [];
-                // Tìm giá trị fallback (lấy giá trị đầu tiên không rỗng trong mảng)
-                $fallback = null;
-                foreach ($source as $val) {
-                    if (!empty($val)) {
-                        $fallback = $val;
-                        break;
-                    }
-                }
-                return [
-                    Language::VIETNAMESE->value => !empty($source[Language::VIETNAMESE->value]) ? $source[Language::VIETNAMESE->value] : $fallback,
-                    Language::ENGLISH->value    => !empty($source[Language::ENGLISH->value]) ? $source[Language::ENGLISH->value] : $fallback,
-                    Language::CHINESE->value    => !empty($source[Language::CHINESE->value]) ? $source[Language::CHINESE->value] : $fallback,
-                ];
-            };
-            $name = $multilingualPayload('name');
-            $description = $multilingualPayload('description');
+            $name = Helper::multilingualPayload($data, 'name');
+            $description = Helper::multilingualPayload($data, 'description');
 
             $service = $this->serviceRepository->create([
                 'name' => $name,
@@ -356,7 +341,70 @@ class ServiceService extends BaseService
         }
     }
 
+    /*
+     * Cập nhật dịch vụ
+     * @param string $id
+     * @param array $data
+     * @return ServiceReturn
+     */
+    public function updateService(string $id, array $data): ServiceReturn
+    {
+        $uploadedPath = null; // fallback nếu xảy ra lỗi
+        DB::beginTransaction();
+        try {
+            $service = $this->serviceRepository->query()->find($id);
+            if (!$service) {
+                return ServiceReturn::error(
+                    message: __("error.service_not_found")
+                );
+            }
+            if ($service->user_id !== $data['user_id']) {
+                return ServiceReturn::error(
+                    message: __("error.service_not_authorized")
+                );
+            }
 
+            if (isset($data['image']) && $data['image'] instanceof \Illuminate\Http\UploadedFile) {
+                if ($service->image_url && Storage::disk('public')->exists($service->image_url)) {
+                    Storage::disk('public')->delete($service->image_url);
+                }
+                $uploadedPath = $data['image']->store(DirectFile::makePathById(
+                    type: DirectFile::SERVICE,
+                    id: $service->user_id
+                ), 'public');
+                $data['image_url'] = $uploadedPath;
+            }
 
+            if (isset($data['name'])) {
+                $data['name'] = Helper::multilingualPayload($data, 'name');
+            }
+            if (isset($data['description'])) {
+                $data['description'] = Helper::multilingualPayload($data, 'description');
+            }
 
+            $service->update($data);
+
+            if (isset($data['options'])) {
+                $service->options()->delete();
+                $service->options()->createMany($data['options']);
+            }
+
+            DB::commit();
+            return ServiceReturn::success(
+                data: $service
+            );
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            if ($uploadedPath && Storage::disk('public')->exists($uploadedPath)) {
+                Storage::disk('public')->delete($uploadedPath);
+            }
+            LogHelper::error(
+                message: "Lỗi ServiceService@updateService",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: __("common_error.server_error")
+            );
+        }
+    }
 }
