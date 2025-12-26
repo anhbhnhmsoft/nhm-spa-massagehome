@@ -441,6 +441,11 @@ class BookingService extends BaseService
     {
         try {
             $booking = $this->bookingRepository->query()->find($booking_id);
+            if($booking->start_time !== null || $booking->status !== BookingStatus::CONFIRMED->value){
+                return ServiceReturn::error(
+                    message: __("booking.already_started")
+                );
+            }
             if (!$booking) {
                 return ServiceReturn::error(
                     message: __("booking.not_found")
