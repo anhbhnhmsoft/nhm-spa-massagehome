@@ -5,7 +5,9 @@ namespace App\Filament\Clusters\KTV\Resources\KTVs\Pages;
 use App\Core\Helper;
 use App\Enums\UserRole;
 use App\Filament\Clusters\KTV\Resources\KTVs\KTVResource;
+use App\Services\WalletService;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Database\Eloquent\Model;
 
 class CreateKTV extends CreateRecord
 {
@@ -35,5 +37,17 @@ class CreateKTV extends CreateRecord
         }
 
         return $data;
+    }
+
+    protected function handleRecordCreation(array $data): Model
+    {
+        $record = parent::handleRecordCreation($data);
+
+        if(isset($record->id) ){
+            $walletService = app(WalletService::class);
+            $walletService->initWalletForStaff($record->id);
+        }
+
+        return $record;
     }
 }

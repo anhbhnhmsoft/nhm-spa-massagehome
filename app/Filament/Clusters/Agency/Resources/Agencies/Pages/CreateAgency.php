@@ -6,7 +6,9 @@ use App\Core\Helper;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserRole;
 use App\Filament\Clusters\Agency\Resources\Agencies\AgencyResource;
+use App\Services\WalletService;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Database\Eloquent\Model;
 
 class CreateAgency extends CreateRecord
 {
@@ -19,5 +21,17 @@ class CreateAgency extends CreateRecord
         $data['language'] = app()->getLocale();
         $data['is_active'] = true;
         return $data;
+    }
+
+    protected function handleRecordCreation(array $data): Model
+    {
+        $record = parent::handleRecordCreation($data);
+
+        if(isset($record->id) ){
+            $walletService = app(WalletService::class);
+            $walletService->initWalletForStaff($record->id);
+        }
+
+        return $record;
     }
 }

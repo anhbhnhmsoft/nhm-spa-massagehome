@@ -25,4 +25,5 @@ return [
     "wallet_not_enough_balance_to_withdraw" => "Số dư trong ví tiền không đủ để rút",
     "invalid_image" => "Hình ảnh không hợp lệ",
     'service_not_authorized' => 'Bạn không có quyền cập nhật dịch vụ này',
+    'service_have_booking' => 'Dịch vụ này đã có đặt lịch, không thể xóa',
 ];
