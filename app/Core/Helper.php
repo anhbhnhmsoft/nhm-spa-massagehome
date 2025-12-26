@@ -112,4 +112,28 @@ final class Helper
     {
         return Storage::disk('public')->url($path);
     }
+
+    /**
+     * Xử lý dữ liệu đa ngôn ngữ.
+     * @param array $source
+     * @param string $field
+     * @return array
+     */
+    public static function multilingualPayload(array $source, string $field): array
+    {
+        $data = $source[$field] ?? [];
+        // Tìm giá trị fallback (lấy giá trị đầu tiên không rỗng trong mảng)
+        $fallback = null;
+        foreach ($data as $val) {
+            if (!empty($val)) {
+                $fallback = $val;
+                break;
+            }
+        }
+        return [
+            Language::VIETNAMESE->value => !empty($data[Language::VIETNAMESE->value]) ? $data[Language::VIETNAMESE->value] : $fallback,
+            Language::ENGLISH->value    => !empty($data[Language::ENGLISH->value]) ? $data[Language::ENGLISH->value] : $fallback,
+            Language::CHINESE->value    => !empty($data[Language::CHINESE->value]) ? $data[Language::CHINESE->value] : $fallback,
+        ];
+    }
 }

@@ -44,7 +44,7 @@ class FormServiceRequest extends FormRequest
             'options' => ['required', 'array', 'min:1'],
 
             // Validate chi tiết từng item trong mảng options
-            'options.*.price' => ['required', 'numeric', 'min:0'],
+            'options.*.price' => ['required', 'numeric', 'min:15'],
             'options.*.duration' => [
                 'required',
                 'integer',

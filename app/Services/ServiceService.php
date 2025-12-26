@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Core\Controller\FilterDTO;
+use App\Core\Helper;
 use App\Core\LogHelper;
 use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
@@ -300,24 +301,8 @@ class ServiceService extends BaseService
                 id: $data['user_id']
             ), 'public');
 
-            $multilingualPayload = function ($field) use ($data) {
-                $source = $data[$field] ?? [];
-                // Tìm giá trị fallback (lấy giá trị đầu tiên không rỗng trong mảng)
-                $fallback = null;
-                foreach ($source as $val) {
-                    if (!empty($val)) {
-                        $fallback = $val;
-                        break;
-                    }
-                }
-                return [
-                    Language::VIETNAMESE->value => !empty($source[Language::VIETNAMESE->value]) ? $source[Language::VIETNAMESE->value] : $fallback,
-                    Language::ENGLISH->value    => !empty($source[Language::ENGLISH->value]) ? $source[Language::ENGLISH->value] : $fallback,
-                    Language::CHINESE->value    => !empty($source[Language::CHINESE->value]) ? $source[Language::CHINESE->value] : $fallback,
-                ];
-            };
-            $name = $multilingualPayload('name');
-            $description = $multilingualPayload('description');
+            $name = Helper::multilingualPayload($data, 'name');
+            $description = Helper::multilingualPayload($data, 'description');
 
             $service = $this->serviceRepository->create([
                 'name' => $name,
@@ -370,12 +355,12 @@ class ServiceService extends BaseService
             $service = $this->serviceRepository->query()->find($id);
             if (!$service) {
                 return ServiceReturn::error(
-                    message: __("service.not_found")
+                    message: __("error.service_not_found")
                 );
             }
-            if($service->user_id !== $data['user_id']) {
+            if ($service->user_id !== $data['user_id']) {
                 return ServiceReturn::error(
-                    message: __("service.not_authorized")
+                    message: __("error.service_not_authorized")
                 );
             }
 
@@ -390,27 +375,11 @@ class ServiceService extends BaseService
                 $data['image_url'] = $uploadedPath;
             }
 
-            $multilingualPayload = function ($field) use ($data) {
-                $source = $data[$field] ?? [];
-                $fallback = null;
-                foreach ($source as $val) {
-                    if (!empty($val)) {
-                        $fallback = $val;
-                        break;
-                    }
-                }
-                return [
-                    Language::VIETNAMESE->value => !empty($source[Language::VIETNAMESE->value]) ? $source[Language::VIETNAMESE->value] : $fallback,
-                    Language::ENGLISH->value    => !empty($source[Language::ENGLISH->value]) ? $source[Language::ENGLISH->value] : $fallback,
-                    Language::CHINESE->value    => !empty($source[Language::CHINESE->value]) ? $source[Language::CHINESE->value] : $fallback,
-                ];
-            };
-
             if (isset($data['name'])) {
-                $data['name'] = $multilingualPayload('name');
+                $data['name'] = Helper::multilingualPayload($data, 'name');
             }
             if (isset($data['description'])) {
-                $data['description'] = $multilingualPayload('description');
+                $data['description'] = Helper::multilingualPayload($data, 'description');
             }
 
             $service->update($data);
