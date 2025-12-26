@@ -152,6 +152,7 @@ Route::middleware('set-api-locale')->group(function () {
             // kiểm tra trạng thái booking
             Route::get('{bookingId}', [BookingController::class, 'checkBooking']);
             Route::get('detail/{id}', [BookingController::class, 'detailBooking'])->where('id', '[0-9]+');
+            Route::post('start', [BookingController::class, 'startBooking']);
         });
     });
 

@@ -64,4 +64,24 @@ class BookingController extends BaseController
             data: BookingItemResource::make($result->getData())->response()->getData()
         );
     }
+
+    public function startBooking(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'booking_id' => 'required|integer',
+        ],
+            [
+                'booking_id.required' => __('booking.validate.required'),
+                'booking_id.integer' => __('booking.validate.integer'),
+            ]);
+        $result = $this->bookingService->startBooking((int) $data['booking_id']);
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage()
+            );
+        }
+        return $this->sendSuccess(
+            data: $result->getData()
+        );
+    }
 }

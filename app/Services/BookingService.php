@@ -18,12 +18,10 @@ use App\Enums\ConfigName;
 use App\Enums\PaymentType;
 use App\Jobs\WalletTransactionBookingJob;
 use App\Models\Config;
-use App\Services\ConfigService;
 use App\Repositories\ServiceOptionRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\WalletRepository;
 use App\Repositories\WalletTransactionRepository;
-use App\Services\WalletService;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -425,6 +423,67 @@ class BookingService extends BaseService
         } catch (\Exception $exception) {
             LogHelper::error(
                 message: "Lỗi ServiceService@detailBooking",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: __("common_error.server_error")
+            );
+        }
+    }
+
+
+    /*
+     * Bắt đầu thực hiện dịch vụ
+     * @param int $booking_id
+     * @return ServiceReturn
+     */
+    public function startBooking(int $booking_id) : ServiceReturn
+    {
+        try {
+            $booking = $this->bookingRepository->query()->find($booking_id);
+            if (!$booking) {
+                return ServiceReturn::error(
+                    message: __("booking.not_found")
+                );
+            }
+            $user = Auth::user();
+            if ($user->role != UserRole::KTV->value) {
+                return ServiceReturn::error(
+                    message: __("common_error.unauthorized")
+                );
+            }
+            if(!$user->is_online){
+                return ServiceReturn::error(
+                    message: __("common_error.unauthorized")
+                );
+            }
+            if ($user->id != $booking->ktv_user_id) {
+                return ServiceReturn::error(
+                    message: __("common_error.unauthorized")
+                );
+            }
+            if (
+                $booking->status != BookingStatus::CONFIRMED->value
+                || $booking->start_time != null
+                || $booking->end_time != null
+                || $booking->duration == null
+            ) {
+                return ServiceReturn::error(
+                    message: __("booking.status_not_confirmed")
+                );
+            }
+            $booking->status = BookingStatus::ONGOING->value;
+            $booking->start_time = now();
+            $booking->save();
+            return ServiceReturn::success(
+                data: [
+                    'status' => BookingStatus::ONGOING->value,
+                    'start_time' => ($booking->start_time)->toDateTimeString(),
+                ]
+            );
+        } catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi ServiceService@startBooking",
                 ex: $exception
             );
             return ServiceReturn::error(

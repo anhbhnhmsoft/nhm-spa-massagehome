@@ -317,6 +317,7 @@
     - price_before_discount (decimal(15,2)) -- giá dịch vụ trước khi áp dụng mã giảm giá
     - note (text, nullable) -- ghi chú
     - address (varchar, nullable) -- địa chỉ hẹn
+    - note_address (varchar, nullable) -- ghi chú thêm (ví dụ: yêu cầu đặc biệt)
     - latitude (decimal(10,8), nullable) -- vĩ độ
     - longitude (decimal(11,8), nullable) -- kinh độ
     - payment_type (smallint, nullable) -- hình thức thanh toán (trong enum PaymentType), null là khi dịch vụ chưa được xác nhận
