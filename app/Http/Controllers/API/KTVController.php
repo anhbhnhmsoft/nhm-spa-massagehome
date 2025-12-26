@@ -4,9 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Core\Controller\BaseController;
 use App\Core\Controller\ListRequest;
-use App\Enums\Language;
-use App\Enums\ServiceDuration;
-use App\Http\Requests\CreateServiceRequest;
+use App\Http\Requests\FormServiceRequest;
 use App\Http\Resources\Booking\BookingItemResource;
 use App\Http\Resources\Review\ReviewResource;
 use App\Http\Resources\Service\CategoryResource;
@@ -16,7 +14,6 @@ use App\Services\ServiceService;
 use App\Services\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Validation\Rule;
 
 class KTVController extends BaseController
 {
@@ -131,10 +128,10 @@ class KTVController extends BaseController
 
     /**
      * Thêm dịch vụ mới
-     * @param CreateServiceRequest $request
+     * @param FormServiceRequest $request
      * @return JsonResponse
      */
-    public function addService(CreateServiceRequest $request): JsonResponse
+    public function addService(FormServiceRequest $request): JsonResponse
     {
         $data = $request->validated();
         $data['user_id'] = $request->user()->id;
@@ -150,4 +147,6 @@ class KTVController extends BaseController
             data: new ServiceResource($data),
         );
     }
+
+
 }

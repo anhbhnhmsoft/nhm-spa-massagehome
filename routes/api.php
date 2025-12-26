@@ -248,6 +248,8 @@ Route::middleware('set-api-locale')->group(function () {
         Route::get('list-service', [KTVController::class, 'listService']);
         // Thêm service mới
         Route::post('add-service', [KTVController::class, 'addService']);
+        // Cập nhật service
+        Route::put('update-service/{id}', [KTVController::class, 'updateService'])->where('id', '[0-9]+');
     });
 
 });
