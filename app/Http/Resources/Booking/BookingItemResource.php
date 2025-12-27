@@ -20,6 +20,7 @@ class BookingItemResource extends JsonResource
             'service' => [
                 'id' => $service->id,
                 'name' => $service->name,
+                'image' => $service->image_url ? Helper::getPublicUrl($service->image_url) : null,
             ],
             'ktv_user' => [
                 'id' => $ktvUser->id,

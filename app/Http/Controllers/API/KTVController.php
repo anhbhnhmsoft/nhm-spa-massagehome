@@ -92,7 +92,7 @@ class KTVController extends BaseController
     public function listService(ListRequest $request): JsonResponse
     {
         $dto = $request->getFilterOptions();
-        $dto->addFilter('ktv_user_id', $request->user()->id);
+        $dto->addFilter('user_id', $request->user()->id);
         $dto->setSortBy('created_at');
         $dto->setDirection('desc');
         $result = $this->serviceService->servicePaginate($dto);

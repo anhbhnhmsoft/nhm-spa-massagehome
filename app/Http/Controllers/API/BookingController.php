@@ -65,23 +65,34 @@ class BookingController extends BaseController
         );
     }
 
+    /**
+     * Bắt đầu thực hiện booking
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function startBooking(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'booking_id' => 'required|integer',
+            'booking_id' => 'required|numeric',
         ],
             [
                 'booking_id.required' => __('booking.validate.required'),
-                'booking_id.integer' => __('booking.validate.integer'),
+                'booking_id.numeric' => __('booking.validate.invalid'),
             ]);
-        $result = $this->bookingService->startBooking((int) $data['booking_id']);
+        $result = $this->bookingService->startBooking($data['booking_id']);
         if ($result->isError()) {
             return $this->sendError(
                 message: $result->getMessage()
             );
         }
+        $data = $result->getData();
         return $this->sendSuccess(
-            data: $result->getData()
+            data: [
+                'status' => $data['status'],
+                'start_time' => $data['start_time'],
+                'duration' => $data['duration'],
+                'booking' => BookingItemResource::make($result->getData())->response()->getData(),
+            ]
         );
     }
 }

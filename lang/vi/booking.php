@@ -53,6 +53,6 @@ return [
     ],
     'validate' => [
         'required' => 'Booking ID không được để trống',
-        'integer' => 'Booking ID phải là số nguyên.',
+        'invalid' => 'Booking ID không hợp lệ.',
     ],
 ];

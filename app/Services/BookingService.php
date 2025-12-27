@@ -250,7 +250,6 @@ class BookingService extends BaseService
                 'address' => $address ?? '',
                 'latitude' => $latitude ?? 0,
                 'longitude' => $longitude ?? 0,
-                'service_option_id' => $optionId,
                 'note_address' => $noteAddress ?? '',
                 'ktv_user_id' => $service->user_id,
             ]);
@@ -401,7 +400,7 @@ class BookingService extends BaseService
                     message: __("common_error.unauthorized")
                 );
             }
-            $booking = $this->bookingRepository->query()->find( (int) $bookingId);
+            $booking = $this->bookingRepository->query()->find($bookingId);
             if (!$booking) {
                 return ServiceReturn::error(
                     message: __("booking.not_found")
@@ -432,37 +431,29 @@ class BookingService extends BaseService
     }
 
 
-    /*
+    /**
      * Bắt đầu thực hiện dịch vụ
-     * @param int $booking_id
+     * @param string $booking_id
      * @return ServiceReturn
      */
-    public function startBooking(int $booking_id) : ServiceReturn
+    public function startBooking(string $booking_id) : ServiceReturn
     {
         try {
+            $user = Auth::user();
             $booking = $this->bookingRepository->query()->find($booking_id);
-            if($booking->start_time !== null || $booking->status !== BookingStatus::CONFIRMED->value){
-                return ServiceReturn::error(
-                    message: __("booking.already_started")
-                );
-            }
             if (!$booking) {
                 return ServiceReturn::error(
                     message: __("booking.not_found")
                 );
             }
-            $user = Auth::user();
-            if ($user->role != UserRole::KTV->value) {
+            if($booking->start_time !== null || $booking->status !== BookingStatus::CONFIRMED->value){
                 return ServiceReturn::error(
-                    message: __("common_error.unauthorized")
+                    message: __("booking.already_started")
                 );
             }
-            if(!$user->is_online){
-                return ServiceReturn::error(
-                    message: __("common_error.unauthorized")
-                );
-            }
-            if ($user->id != $booking->ktv_user_id) {
+            if (
+                $user->role != UserRole::KTV->value &&
+                $user->id != $booking->ktv_user_id) {
                 return ServiceReturn::error(
                     message: __("common_error.unauthorized")
                 );
@@ -483,7 +474,9 @@ class BookingService extends BaseService
             return ServiceReturn::success(
                 data: [
                     'status' => BookingStatus::ONGOING->value,
-                    'start_time' => ($booking->start_time)->toDateTimeString(),
+                    'start_time' => $booking->start_time,
+                    'duration' => $booking->duration,
+                    'booking' => $booking,
                 ]
             );
         } catch (\Exception $exception) {

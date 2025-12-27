@@ -27,7 +27,6 @@ class ServiceBooking extends Model
         'address',
         'latitude',
         'longitude',
-        'service_option_id',
         'note_address'
     ];
 
@@ -46,7 +45,6 @@ class ServiceBooking extends Model
         'payment_type' => 'integer',
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
-        'service_option_id' => 'string',
     ];
 
     // Lấy thông tin khách hàng đặt

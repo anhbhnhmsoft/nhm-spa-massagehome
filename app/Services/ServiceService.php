@@ -407,14 +407,14 @@ class ServiceService extends BaseService
             );
         }
     }
-        /**
-         * Xóa dịch vụ
-         * @param int $id
-         * @return ServiceReturn
-         */
+
+    /**
+     * Xóa dịch vụ
+     * @param int $id
+     * @return ServiceReturn
+     */
     public function deleteService(int $id): ServiceReturn
     {
-        DB::beginTransaction();
         try {
             $service = $this->serviceRepository->query()->find($id);
             if (!$service) {
@@ -436,12 +436,10 @@ class ServiceService extends BaseService
                 );
             }
             $service->delete();
-            DB::commit();
             return ServiceReturn::success(
                 message: __("common.success.data_deleted")
             );
         } catch (\Exception $exception) {
-            DB::rollBack();
             LogHelper::error(
                 message: "Lỗi ServiceService@deleteService",
                 ex: $exception
