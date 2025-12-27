@@ -15,6 +15,8 @@ enum NotificationType: int
     case WALLET_WITHDRAW = 6;
     case CHAT_MESSAGE = 7;
     case TECHNICIAN_WALLET_NOT_ENOUGH = 8;
+    case STAFF_APPLY_SUCCESS = 9;
+    case STAFF_APPLY_REJECTED = 10;
 }
 
 

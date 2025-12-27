@@ -28,7 +28,7 @@ class ViewAgencyApply extends ViewRecord
                 ->action(function () {
 
                     $userService = app(UserService::class);
-                    $result = $userService->activeKTVapply($this->record->id);
+                    $result = $userService->activeStaffApply($this->record->id);
                     if ($result->isSuccess()) {
                         Notification::make()
                             ->success()
@@ -67,17 +67,21 @@ class ViewAgencyApply extends ViewRecord
                 ->visible(fn() => $this->record->reviewApplication?->status === ReviewApplicationStatus::PENDING)
                 ->action(function (array $data) {
 
-                    if ($this->record->reviewApplication) {
-                        $this->record->reviewApplication->status = ReviewApplicationStatus::REJECTED;
-                        $this->record->reviewApplication->note = $data['note'] ?? null;
-                        $this->record->reviewApplication->save();;
+                    $userService = app(UserService::class);
+                    $result = $userService->rejectStaffApply($this->record->id, $data['note']);
+                    if ($result->isSuccess()) {
+                        Notification::make()
+                            ->warning()
+                            ->title(__('admin.ktv_apply.actions.reject.success_title'))
+                            ->body(__('admin.ktv_apply.actions.reject.success_body'))
+                            ->send();
+                    } else {
+                        Notification::make()
+                            ->error()
+                            ->title(__('admin.ktv_apply.actions.reject.error_title'))
+                            ->body($result->getMessage())
+                            ->send();
                     }
-
-                    Notification::make()
-                        ->warning()
-                        ->title(__('admin.ktv_apply.actions.reject.success_title'))
-                        ->body(__('admin.ktv_apply.actions.reject.success_body'))
-                        ->send();
 
                     return redirect()->to(AgencyApplyResource::getUrl('index'));
                 }),
