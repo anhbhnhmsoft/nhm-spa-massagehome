@@ -175,10 +175,9 @@ class AuthController extends BaseController
     public function login(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'phone' => [new PhoneRule()],
-            'password' => [new PasswordRule()],
+            'phone' => ['required', new PhoneRule()],
+            'password' => ['required', new PasswordRule()],
         ]);
-
         // Đăng nhập tài khoản
         $resService = $this->authService->login(
             phone: $data['phone'],

@@ -2,9 +2,9 @@
 
 namespace App\Http\Resources\Service;
 
+use App\Core\Helper;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Storage;
 
 class ServiceResource extends JsonResource
 {
@@ -18,14 +18,16 @@ class ServiceResource extends JsonResource
         $category = $this->category;
         $provider = $this->provider;
         $options = $this->options;
+        $rating = $this->reviews_avg_rating ?? 0;
         return [
             'id' => $this->id,
             'name' => $this->name,
             'category_id' => $this->category_id,
             'description' => $this->description,
-            'image_url' => Storage::disk('public')->url($this->image_url),
+            'image_url' => $this->image_url ? Helper::getPublicUrl($this->image_url) : null,
             'bookings_count' => $this->bookings_count,
             'is_active' => $this->is_active,
+            'avg_rating' => number_format($rating, 1),
             'category' => [
                 'id' => $category->id,
                 'name' => $category->name,

@@ -305,7 +305,6 @@
     - id (bigint, primary key, auto-increment)
     - user_id (bigint, foreign key to users.id) -- id người dùng đặt lịch
     - ktv_user_id (bigint, foreign key to users.id) -- id người làm dịch vụ (KTV)
-    - service_option_id (bigint, foreign key to service_options.id) -- id tùy chọn dịch vụ
     - service_id (bigint, foreign key to services.id) -- id dịch vụ
     - coupon_id (bigint, foreign key to coupons.id, nullable) -- id mã giảm giá
     - duration (smallint) -- thời gian thực hiện dịch vụ (dạng enum ServiceDuration - minutes)
