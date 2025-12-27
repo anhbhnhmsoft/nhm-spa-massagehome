@@ -18,6 +18,8 @@ enum NotificationDescription: int
     case WALLET_WITHDRAW = 6;
     case CHAT_MESSAGE = 7;
     case TECHNICIAN_WALLET_NOT_ENOUGH = 8;
+    case STAFF_APPLY_SUCCESS = 9;
+    case STAFF_APPLY_REJECTED = 10;
 
     /**
      * Convert từ NotificationType sang NotificationDescription
@@ -73,6 +75,17 @@ enum NotificationDescription: int
                 'en' => 'Your wallet is not enough to receive the appointment',
                 'cn' => '您的钱包余额不足，无法接收预约',
             ]
+            ,
+            self::STAFF_APPLY_SUCCESS => [
+                'vi' => 'Đơn ứng tuyển của bạn đã được chấp nhận bởi hệ thống, bạn có thể tiến hành thực hiện dịch vụ ',
+                'en' => 'Your staff apply has been accepted by the system, you can now proceed with the service',
+                'cn' => '员工申请成功',
+            ],
+            self::STAFF_APPLY_REJECTED => [
+                'vi' => 'Đơn ứng tuyển của bạn đã bị từ chối bởi hệ thống',
+                'en' => 'Your staff apply has been rejected by the system',
+                'cn' => '员工申请被拒绝',
+            ],
         };
     }
 
@@ -130,6 +143,16 @@ enum NotificationDescription: int
                 'vi' => 'Không đủ số dư',
                 'en' => 'Not enough balance',
                 'cn' => '余额不足',
+            ],
+            self::STAFF_APPLY_SUCCESS => [
+                'vi' => 'Đơn ứng tuyển của bạn đã được chấp nhận',
+                'en' => 'Your staff apply has been accepted',
+                'cn' => '员工申请成功',
+            ],
+            self::STAFF_APPLY_REJECTED => [
+                'vi' => 'Đơn ứng tuyển của bạn đã bị từ chối',
+                'en' => 'Your staff apply has been rejected',
+                'cn' => '员工申请被拒绝',
             ],
         };
     }

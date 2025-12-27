@@ -134,7 +134,7 @@ return
                 "system_info" => "Thông tin hệ thống",
                 "registration_info" => "Thông tin đăng ký",
                 "personal_info" => "Thông tin cá nhân",
-                'agency' => 'Cơ sở làm việc',
+                'agency' => 'Thuộc đối tác',
                 'latitude' => 'Vĩ độ',
                 'longitude' => 'Kinh độ',
             ],

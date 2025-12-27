@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\KTV\Resources\KTVApplies\Schemas;
 
+use App\Core\Helper;
 use App\Enums\DirectFile;
 use App\Enums\Gender;
 use App\Enums\ReviewApplicationStatus;
@@ -181,7 +182,7 @@ class KTVApplyForm
                                     ->dehydrated(true),
                                 FileUpload::make('file_path')
                                     ->label(__('admin.ktv_apply.file_type.identity_card_front'))
-                                    ->directory(DirectFile::KTVA->value)
+                                    ->directory( fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
                                     ->disk('private')
                                     ->required()
                                     ->image()
@@ -202,7 +203,7 @@ class KTVApplyForm
                                     ->dehydrated(true),
                                 FileUpload::make('file_path')
                                     ->label(__('admin.ktv_apply.file_type.identity_card_back'))
-                                    ->directory(DirectFile::KTVA->value)
+                                    ->directory( fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
                                     ->disk('private')
                                     ->required()
                                     ->image()
@@ -223,7 +224,7 @@ class KTVApplyForm
                                     ->dehydrated(true),
                                 FileUpload::make('file_path')
                                     ->label(__('admin.ktv_apply.file_type.license'))
-                                    ->directory(DirectFile::KTVA->value)
+                                    ->directory( fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
                                     ->disk('private')
                                     ->nullable()
                                     ->image()
@@ -246,7 +247,7 @@ class KTVApplyForm
                                     ->dehydrated(true),
                                 FileUpload::make('file_path')
                                     ->label(__('admin.ktv_apply.file_type.ktv_image_display'))
-                                    ->directory(DirectFile::KTVA->value)
+                                    ->directory( fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
                                     ->disk('private')
                                     ->required()
                                     ->image()
@@ -265,6 +266,7 @@ class KTVApplyForm
                                 'min' => __('common.error.min_items', ['min' => 3]),
                                 'max' => __('common.error.max_items', ['max' => 5]),
                             ])
+                            ->helperText(__('common.notice.image_gallery'))
                             ->columnSpanFull(),
                     ])->columns(2),
 

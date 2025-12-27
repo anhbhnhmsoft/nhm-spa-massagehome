@@ -16,6 +16,7 @@ return [
         'min_items' => 'Giá trị này phải có ít nhất :min mục',
         'max_items' => 'Giá trị này phải có tối đa :max mục',
         'max_length' => 'Giá trị này không được vượt quá :max ký tự',
+        'title' => 'Có lỗi xảy ra, vui lòng thử lại sau!',
     ],
     'unit' => [
         'minute' => 'phút',
@@ -27,4 +28,7 @@ return [
             'bank_holder' => 'Chủ tài khoản',
         ],
     ],
+    'notice' => [
+        'image_gallery'=> 'Không đăng ảnh ảo, hở hang. Ảnh cần rõ mặt, rõ nét, chính diện, nghiêm túc, phù hợp đi làm. Nghiêm cấm để thông tin cá nhân (Số điện thoại, Trang cá nhân, Địa chỉ chi tiết,...).'
+    ]
 ];
