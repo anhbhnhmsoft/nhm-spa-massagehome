@@ -123,7 +123,7 @@ return [
     ],
     'room_id' => [
         'required' => 'Vui lòng chọn phòng chat.',
-        'string' => 'ID phòng chat phải là chuỗi.',
+        'numeric' => 'ID phòng chat phải là số.',
         'exists' => 'ID phòng chat không tồn tại.',
     ],
     'content' => [

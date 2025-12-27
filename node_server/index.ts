@@ -5,6 +5,7 @@ import { Server } from 'socket.io';
 import { config } from '#/core/app.config.js';
 import { NotificationService } from '#/services/notification.service.js';
 import { ChatService } from '#/services/chat/chat.service.js';
+import { redisPub, redisSub } from '#/core/app.redis';
 
 
 const bootstrap = async () => {
@@ -43,6 +44,10 @@ const bootstrap = async () => {
     // 4. Xử lý tín hiệu ngắt (graceful shutdown)
     process.on('SIGTERM', () => {
         console.log('SIGTERM received. Closing server...');
+        // Dừng các service redis
+        redisPub.quit();
+        redisSub.quit();
+        // đóng http server
         httpServer.close(() => process.exit(0));
     });
 }

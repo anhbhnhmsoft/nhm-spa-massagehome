@@ -17,6 +17,9 @@ export class ChatService {
         // Xử lý khi client kết nối
         this.io.on('connection', (socket) => this.handleConnection(socket));
 
+        // Xử lý khi client ngắt kết nối
+        this.io.on('disconnect', (socket) => this.handleDisconnect(socket));
+
         // Listen Redis pub/sub from Laravel
         redisSub.subscribe(config.redis.channels.chat, (err) => {
             if (err) console.error('Redis Chat Subscribe Error:', err);
@@ -49,11 +52,15 @@ export class ChatService {
                     this.io
                         .to(roomName)
                         .emit(_ChatConstant.CHAT_MESSAGE_NEW, payload);
-
-                    console.log(`Emitted to ${roomName}`);
+                    // Emit riêng cho người nhận để cập nhật conversation
+                    if (payload.receiver_id){
+                        const receiverPrivateRoom = this.getPrivateUserRoom(payload.receiver_id);
+                        this.io.to(receiverPrivateRoom).emit(_ChatConstant.CHAT_CONVERSATION_UPDATE, payload);
+                    }
                 }
             }
-        } catch (error) {
+        }
+        catch (error) {
             console.error('ChatService@handleLaravelMessage error', error);
         }
     }
@@ -63,6 +70,8 @@ export class ChatService {
      */
     protected handleConnection(socket: Socket) {
         const user = socket.data.user as UserSession;
+        const userPrivateRoom = this.getPrivateUserRoom(user.id);
+        socket.join(userPrivateRoom);
         // Tự động join phòng cá nhân (để nhận noti riêng sau này)
         // --- JOIN ROOM CÓ CALLBACK ---
         this.updateUserOnlineStatus(user?.id || '', true);
@@ -133,10 +142,24 @@ export class ChatService {
                 }
             },
         );
-        socket.on('disconnect', () => {
-            console.log(`Socket Disconnected: ${user?.name}`);
-            this.updateUserOnlineStatus(user?.id || '', false);
-        });
+    }
+
+    /**
+     * Xử lý khi client ngắt kết nối
+     */
+    protected handleDisconnect(socket: Socket) {
+        const user = socket.data.user as UserSession;
+        const token = socket.data.token as string;
+
+        const userPrivateRoom = this.getPrivateUserRoom(user.id);
+        // Rời phòng cá nhân khi ngắt kết nối
+        socket.leave(userPrivateRoom);
+
+        // Xóa token khỏi Redis khi ngắt kết nối
+        if (token) {
+            const tokenKey = this.getTokenKey(token);
+            redisPub.del(tokenKey);
+        }
     }
 
     /**
@@ -147,18 +170,35 @@ export class ChatService {
     }
 
     /**
+     * Lấy key lưu trữ session user trong Redis từ token
+     * @param token
+     * @protected
+     */
+    protected getTokenKey(token: string): string {
+        return `${config.redis.channels.chat_auth}:${token}`;
+    }
+
+    /**
+     * Lấy tên phòng cá nhân từ userId
+     */
+    protected getPrivateUserRoom(userId: string): string {
+        return `user:${userId}`;
+    }
+
+    /**
      * Xác thực token khi client kết nối
      */
     protected middleware() {
         this.io.use(async (socket, next) => {
             try {
                 const token = socket.handshake.auth.token;
-                if (!token)
+                if (!token) {
                     return next(
                         new Error('Authentication error: Token missing'),
                     );
+                }
                 // Key mà Node đang định tìm
-                const rawKey = `${config.redis.channels.chat_auth}:${token}`;
+                const rawKey = this.getTokenKey(token);
                 // --- DEBUG LOG ---
                 const rawData = await redisPub.get(rawKey);
                 if (!rawData) {
@@ -169,10 +209,13 @@ export class ChatService {
                     );
                 }
                 const user: UserSession = JSON.parse(rawData);
+                // Lưu user vào socket data
                 socket.data.user = user;
+                socket.data.token = token;
+
                 next();
-            } catch (err) {
-                console.log('Middleware Error:', err);
+            } catch (error) {
+                console.error('Middleware Error:', error);
                 return next(new Error('Authentication error: Internal Error'));
             }
         });

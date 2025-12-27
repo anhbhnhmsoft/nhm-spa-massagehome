@@ -9,7 +9,7 @@ use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
 use App\Enums\NodeServerConstant;
 use App\Enums\UserRole;
-use App\Http\Resources\Chat\MessageResource;
+use App\Http\Resources\Chat\MessageSenderResource;
 use App\Repositories\ChatRoomRepository;
 use App\Repositories\MessageRepository;
 use App\Core\Controller\FilterDTO;
@@ -27,9 +27,10 @@ class ChatService extends BaseService
 {
     public function __construct(
         protected ChatRoomRepository $chatRoomRepository,
-        protected MessageRepository $messageRepository,
-        protected UserRepository $userRepository,
-    ) {
+        protected MessageRepository  $messageRepository,
+        protected UserRepository     $userRepository,
+    )
+    {
         parent::__construct();
     }
 
@@ -42,9 +43,6 @@ class ChatService extends BaseService
     {
         try {
             // Check Auth & Token
-            if (!Auth::check()) {
-                throw new ServiceException(message: __('common_error.unauthorized'));
-            }
             $currentUser = Auth::user();
             $token = request()->bearerToken();
             if (!$token) {
@@ -57,7 +55,7 @@ class ChatService extends BaseService
             // Nếu là KTV, tìm customer theo ID. Nếu là Customer, tìm KTV
             if ($isCurrentUserKtv) {
                 $partnerQuery->whereNot('role', UserRole::KTV->value);
-            }else{
+            } else {
                 $partnerQuery->where('role', UserRole::KTV->value);
             }
             // Tìm đối phương
@@ -81,26 +79,13 @@ class ChatService extends BaseService
                     'customer_id' => $customerId,
                 ]);
             }
-            // Lưu token vào Redis
-            $key = config('services.node_server.channel_chat_auth') . ":{$token}";
-            $redisPayload = [
-                'id' => (string) $currentUser->id,
-                'name' =>  $currentUser->name,
-                'room_id' => (string) $room->id,
-            ];
-            RedisFacade::connection()->setex(
-                $key,              // Key
-                60 * 60 * 2,       // Thời gian hết hạn (giây) - TTL
-                json_encode($redisPayload) // Value
-            );
             return ServiceReturn::success(data: [
                 'room' => $room,
                 'partner' => $partner,
             ]);
         } catch (ServiceException $exception) {
             return ServiceReturn::error(message: $exception->getMessage());
-        }
-        catch (\Throwable $exception) {
+        } catch (\Throwable $exception) {
             LogHelper::error(
                 message: 'Lỗi ChatService@getOrCreateRoom',
                 ex: $exception
@@ -130,7 +115,7 @@ class ChatService extends BaseService
                 throw new ServiceException(message: __('common_error.data_not_found'));
             }
 
-            if ((string) $room->customer_id !== (string) $user->id && (string) $room->ktv_id !== (string) $user->id) {
+            if ((string)$room->customer_id !== (string)$user->id && (string)$room->ktv_id !== (string)$user->id) {
                 throw new ServiceException(message: __('common_error.unauthorized'));
             }
 
@@ -141,12 +126,36 @@ class ChatService extends BaseService
             $paginate = $query->paginate(perPage: $dto->perPage, page: $dto->page);
 
             return ServiceReturn::success(data: $paginate);
-        }catch (ServiceException $exception) {
+        } catch (ServiceException $exception) {
             return ServiceReturn::error(message: $exception->getMessage());
-        }
-        catch (\Throwable $exception) {
+        } catch (\Throwable $exception) {
             LogHelper::error(
                 message: 'Lỗi ChatService@getMessages',
+                ex: $exception
+            );
+            return ServiceReturn::success(
+                data: new LengthAwarePaginator([], 0, $dto->perPage, $dto->page)
+            );
+        }
+    }
+
+
+    /**
+     * Lấy danh sách phòng chat của KTV
+     * @param FilterDTO $dto
+     * @return ServiceReturn
+     */
+    public function chatRoomConversationPagination(FilterDTO $dto): ServiceReturn
+    {
+        try {
+            $query = $this->chatRoomRepository->queryRoomKTV();
+            $query = $this->chatRoomRepository->filterQuery($query, $dto->filters);
+            $query = $this->chatRoomRepository->sortQuery($query, $dto->sortBy, $dto->direction);
+            $paginate = $query->paginate(perPage: $dto->perPage, page: $dto->page);
+            return ServiceReturn::success(data: $paginate);
+        } catch (\Throwable $exception) {
+            LogHelper::error(
+                message: 'Lỗi ChatService@getChatRoomConversations',
                 ex: $exception
             );
             return ServiceReturn::success(
@@ -163,8 +172,8 @@ class ChatService extends BaseService
      * @return ServiceReturn
      */
     public function sendMessageToRoom(
-        int $roomId,
-        string $text,
+        int     $roomId,
+        string  $text,
         ?string $tempId = null
     ): ServiceReturn
     {
@@ -182,8 +191,8 @@ class ChatService extends BaseService
             }
 
             // Chỉ cho phép người tham gia gửi (customer hoặc ktv)
-            if ((string) $room->customer_id !== (string) $user->id
-                && (string) $room->ktv_id !== (string) $user->id) {
+            if ((string)$room->customer_id !== (string)$user->id
+                && (string)$room->ktv_id !== (string)$user->id) {
                 throw new ServiceException(message: __('common_error.unauthorized'));
             }
 
@@ -202,9 +211,9 @@ class ChatService extends BaseService
             DB::commit();
 
             // Nếu người nhận offline (không heartbeat) thì bắn push notification
-            $receiverId = (string) $room->customer_id === (string) $user->id
-                ? (string) $room->ktv_id
-                : (string) $room->customer_id;
+            $receiverId = (string)$room->customer_id === (string)$user->id
+                ? (string)$room->ktv_id
+                : (string)$room->customer_id;
             $isReceiverOnline = Caching::hasCache(
                 key: CacheKey::CACHE_USER_HEARTBEAT,
                 uniqueKey: $receiverId
@@ -216,9 +225,9 @@ class ChatService extends BaseService
                     userId: $receiverId,
                     type: NotificationType::CHAT_MESSAGE,
                     data: [
-                        'room_id' => (string) $room->id,
-                        'message_id' => (string) $message->id,
-                        'sender_id' => (string) $user->id,
+                        'room_id' => (string)$room->id,
+                        'message_id' => (string)$message->id,
+                        'sender_id' => (string)$user->id,
                         'sender_name' => $user->name, // Thêm tên để hiển thị trên Noti
                         'content' => $message->content,
                     ]
@@ -230,7 +239,7 @@ class ChatService extends BaseService
                 config('services.node_server.channel_chat'),
                 json_encode([
                     'type' => NodeServerConstant::CHAT_MESSAGE_NEW,
-                    'payload' => new MessageResource($message),
+                    'payload' => new MessageSenderResource($message, $receiverId),
                 ])
             );
 
@@ -240,8 +249,7 @@ class ChatService extends BaseService
         } catch (ServiceException $exception) {
             DB::rollBack();
             return ServiceReturn::error(message: $exception->getMessage());
-        }
-        catch (\Throwable $exception) {
+        } catch (\Throwable $exception) {
             DB::commit();
             LogHelper::error(
                 message: 'Lỗi ChatService@sendMessageToRoom',
@@ -253,5 +261,44 @@ class ChatService extends BaseService
         }
     }
 
+    /**
+     * Cập nhật tin nhắn đã đọc trong phòng chat
+     * @param int $roomId
+     * @return ServiceReturn
+     */
+    public function seenMessage(int $roomId): ServiceReturn
+    {
+        DB::beginTransaction();
+        try {
+            $user = Auth::user();
+            if (!$user) {
+                throw new ServiceException(message: __('common_error.unauthorized'));
+            }
+            $room = $this->chatRoomRepository->find($roomId);
+            if (!$room) {
+                throw new ServiceException(message: __('common_error.data_not_found'));
+            }
+            // Update last_seen_at của user trong room
+            $this->messageRepository->query()
+                ->where('room_id', $roomId)
+                ->where('sender_by', '<>', $user->id)
+                ->whereNull('seen_at')
+                ->update(['seen_at' => now()]);
+             // Cập nhật thời gian tin nhắn mới nhất trong phòng chat
+             $room->touch();
+             return ServiceReturn::success();
+        } catch (ServiceException $exception) {
+            return ServiceReturn::error(message: $exception->getMessage());
+        }
+        catch (\Throwable $exception) {
+            LogHelper::error(
+                message: 'Lỗi ChatService@seenMessage',
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: __('common_error.server_error')
+            );
+        }
+    }
 }
 

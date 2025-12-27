@@ -37,6 +37,12 @@ class ChatRoom extends Model
     {
         return $this->hasMany(Message::class, 'room_id');
     }
+
+    // Lấy tin nhắn mới nhất trong phòng chat
+    public function latestMessage()
+    {
+        return $this->hasOne(Message::class, 'room_id')->latestOfMany();
+    }
 }
 
 

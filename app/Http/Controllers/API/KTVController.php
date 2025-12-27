@@ -70,7 +70,7 @@ class KTVController extends BaseController
     {
         $dto = $request->getFilterOptions();
         $dto->addFilter('ktv_user_id', $request->user()->id);
-        $dto->setSortBy('created_at');
+        $dto->setSortBy('booking_time');
         $dto->setDirection('desc');
         $result = $this->bookingService->bookingPaginate($dto);
         if ($result->isError()) {
