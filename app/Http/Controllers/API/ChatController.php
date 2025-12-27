@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Core\Controller\BaseController;
 use App\Core\Controller\ListRequest;
+use App\Http\Resources\Chat\ChatKTVConversationResource;
 use App\Http\Resources\Chat\ChatRoomResource;
 use App\Http\Resources\Chat\MessageResource;
 use App\Services\ChatService;
@@ -14,7 +15,8 @@ class ChatController extends BaseController
 {
     public function __construct(
         protected ChatService $chatService,
-    ) {
+    )
+    {
     }
 
     /**
@@ -24,7 +26,7 @@ class ChatController extends BaseController
     {
         $data = $request->validate([
             'user_id' => ['required', 'numeric', 'exists:users,id'],
-        ],[
+        ], [
             'user_id.required' => __('validation.user_id.required'),
             'user_id.numeric' => __('validation.user_id.numeric'),
             'user_id.exists' => __('validation.user_id.exists'),
@@ -69,12 +71,12 @@ class ChatController extends BaseController
     public function sendMessage(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'room_id' => ['required', 'string', 'exists:chat_rooms,id'],
+            'room_id' => ['required', 'numeric', 'exists:chat_rooms,id'],
             'content' => ['required', 'string', 'max:2000'],
             'temp_id' => ['nullable', 'string'], // temp_id để client track message khi gửi lỗi
-        ],[
+        ], [
             'room_id.required' => __('validation.room_id.required'),
-            'room_id.string' => __('validation.room_id.string'),
+            'room_id.numeric' => __('validation.room_id.numeric'),
             'room_id.exists' => __('validation.room_id.exists'),
             'content.required' => __('validation.content.required'),
             'content.string' => __('validation.content.string'),
@@ -93,6 +95,53 @@ class ChatController extends BaseController
 
         return $this->sendSuccess(
             message: __('common.success.data_created'),
+        );
+    }
+
+    /**
+     * Đánh dấu xem tin nhắn đã đọc
+     */
+    public function seenMessage(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'room_id' => ['required', 'numeric', 'exists:chat_rooms,id'],
+        ], [
+            'room_id.required' => __('validation.room_id.required'),
+            'room_id.numeric' => __('validation.room_id.numeric'),
+            'room_id.exists' => __('validation.room_id.exists'),
+        ]);
+
+        $result = $this->chatService->seenMessage(
+            roomId: $data['room_id'],
+        );
+
+        if ($result->isError()) {
+            return $this->sendError(message: $result->getMessage());
+        }
+
+        return $this->sendSuccess(
+            message: __('common.success.data_updated'),
+        );
+    }
+
+    /**
+     * Lấy danh sách phòng chat KTV
+     * @param ListRequest $request
+     * @return JsonResponse
+     */
+    public function listKtvConversation(ListRequest $request): JsonResponse
+    {
+        $dto = $request->getFilterOptions();
+        $dto->addFilter('ktv_id', $request->user()->id);
+        $dto->addFilter('unread_count', true);
+        $dto->setSortBy('last_message_at');
+        $dto->setDirection('desc');
+        $result = $this->chatService->chatRoomConversationPagination($dto);
+
+        $data = $result->getData();
+
+        return $this->sendSuccess(
+            data: ChatKTVConversationResource::collection($data)->response()->getData(),
         );
     }
 }

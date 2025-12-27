@@ -119,16 +119,14 @@ Route::middleware('set-api-locale')->group(function () {
         // Lấy danh sách dịch vụ
         Route::get('list-category', [ServiceController::class, 'listCategory']);
 
-        // Lấy danh sách dịch vụ
-        Route::get('list', [ServiceController::class, 'listServices']);
-
-        // Lấy thông tin chi tiết dịch vụ
-        Route::get('detail/{id}', [ServiceController::class, 'detailService'])->where('id', '[0-9]+');
-
         /**
          * router cần auth
          */
         Route::middleware(['auth:sanctum'])->group(function () {
+            // Lấy danh sách dịch vụ
+            Route::get('list', [ServiceController::class, 'listServices']);
+            // Lấy thông tin chi tiết dịch vụ
+            Route::get('detail/{id}', [ServiceController::class, 'detailService'])->where('id', '[0-9]+');
             // Đặt lịch dịch vụ
             Route::post('booking', [ServiceController::class, 'booking']);
             // Lấy danh sách lịch đã đặt hôm nay
@@ -226,6 +224,13 @@ Route::middleware('set-api-locale')->group(function () {
         Route::get('messages/{roomId}', [ChatController::class, 'listMessages'])->where('roomId', '[0-9]+');
         // Gửi tin nhắn trong room (lưu DB + publish realtime)
         Route::post('message', [ChatController::class, 'sendMessage']);
+        // Đánh dấu xem tin nhắn đã đọc
+        Route::post('seen', [ChatController::class, 'seenMessage']);
+
+        Route::middleware(['check-ktv'])->group(function () {
+            // Lấy danh sách phòng chat KTV
+            Route::get('ktv-conversation', [ChatController::class, 'listKtvConversation']);
+        });
     });
 
     Route::prefix('review')->middleware(['auth:sanctum'])->group(function () {

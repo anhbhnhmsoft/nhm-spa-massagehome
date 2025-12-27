@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Redis as RedisFacade;
 use Illuminate\Support\Facades\Storage;
 
 
@@ -385,7 +386,10 @@ class AuthService extends BaseService
             if (!$user) {
                 return ServiceReturn::error(message: __('auth.error.unauthorized'));
             }
-
+            $token = request()->bearerToken();
+            if (!$token || !$user) {
+                throw new ServiceException(message: __('common_error.unauthorized'));
+            }
             Caching::setCache(
                 key: CacheKey::CACHE_USER_HEARTBEAT,
                 value: true,
@@ -401,6 +405,20 @@ class AuthService extends BaseService
                 $user->last_login_at = $now;
                 $user->save();
             }
+
+            // --- TẦNG 3: REDIS CHAT AUTH ---
+            // Lưu token vào Redis
+            $key = config('services.node_server.channel_chat_auth') . ":{$token}";
+            $redisPayload = [
+                'id' => (string)$user->id,
+                'name' => $user->name,
+                'role' => $user->role,
+            ];
+            RedisFacade::connection()->setex(
+                $key,
+                60 * 60 * 1, // 1 giờ
+                json_encode($redisPayload)
+            );
             return ServiceReturn::success();
         } catch (Exception $exception) {
             LogHelper::error(

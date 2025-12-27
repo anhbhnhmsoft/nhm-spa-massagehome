@@ -12,6 +12,7 @@ use App\Enums\BookingStatus;
 use App\Enums\DirectFile;
 use App\Enums\Language;
 use App\Enums\ServiceDuration;
+use App\Enums\UserRole;
 use App\Models\Coupon;
 use App\Models\User;
 use App\Repositories\BookingRepository;
@@ -150,16 +151,26 @@ class ServiceService extends BaseService
     public function getDetailService(int $id): ServiceReturn
     {
         try {
+            $user = Auth::user();
             $service = $this->serviceRepository->queryService()->find($id);
             if (!$service) {
                 throw new ServiceException(
                     message: __("error.service_not_found")
                 );
             }
-            if (!$service->is_active) {
-                throw new ServiceException(
-                    message: __("error.service_not_active")
-                );
+            // Kiểm tra dịch vụ có hoạt động không
+            if ($user->role === UserRole::KTV->value){
+                if ($service->user_id !== $user->id) {
+                    throw new ServiceException(
+                        message: __("error.service_not_found")
+                    );
+                }
+            }else{
+                if (!$service->is_active) {
+                    throw new ServiceException(
+                        message: __("error.service_not_active")
+                    );
+                }
             }
             return ServiceReturn::success(
                 data: $service
