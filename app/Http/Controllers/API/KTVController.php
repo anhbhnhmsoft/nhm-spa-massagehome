@@ -11,6 +11,7 @@ use App\Http\Resources\Service\CategoryResource;
 use App\Http\Resources\Service\DetailServiceResource;
 use App\Http\Resources\Service\ServiceResource;
 use App\Http\Resources\TotalIncome\TotalIncomeResource;
+use App\Http\Resources\User\ProfileKTVResource;
 use App\Services\BookingService;
 use App\Services\ServiceService;
 use App\Services\UserService;
@@ -238,5 +239,15 @@ class KTVController extends BaseController
         $incomeData = $result->getData();
 
         return $this->sendSuccess(data: new TotalIncomeResource($incomeData));
+    }
+
+    /**
+     * Lấy profile KTV
+     * @return JsonResponse
+     */
+    public function profile(Request $request): JsonResponse
+    {
+        $user = auth()->user();
+        return $this->sendSuccess(data: new ProfileKTVResource($user));
     }
 }

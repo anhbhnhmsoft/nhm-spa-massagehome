@@ -267,5 +267,7 @@ Route::middleware('set-api-locale')->group(function () {
         Route::post('start-booking', [BookingController::class, 'startBooking']);
         // tổng hợp thu nhập
         Route::get('total-income', [KTVController::class, 'totalIncome']);
+        // lấy profile ktv ( hình ảnh )
+        Route::get('profile', [KTVController::class, 'profile']);
     });
 });
