@@ -94,6 +94,7 @@ class KTVAppliesTable
                     DeleteBulkAction::make(),
                     RestoreBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->poll('5s');
     }
 }

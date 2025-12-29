@@ -102,7 +102,7 @@ class KTVsTable
                             } else {
                                 $servicesHtml .= '<div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="border-b"><th class="text-left p-2">' . __('admin.service.fields.name') . '</th><th class="text-left p-2">' . __('admin.common.table.status') . '</th><th class="text-left p-2">' . __('admin.common.table.created_at') . '</th></tr></thead><tbody>';
                                 foreach ($services as $service) {
-                                    $statusBadge = $service->is_active 
+                                    $statusBadge = $service->is_active
                                         ? '<span class="px-2 py-1 bg-green-100 text-green-800 rounded">' . __('admin.common.status.active') . '</span>'
                                         : '<span class="px-2 py-1 bg-gray-100 text-gray-800 rounded">' . __('admin.common.status.inactive') . '</span>';
                                     $servicesHtml .= '<tr class="border-b"><td class="p-2">' . e($service->name ?? '-') . '</td><td class="p-2">' . $statusBadge . '</td><td class="p-2">' . ($service->created_at?->format('d/m/Y H:i') ?? '-') . '</td></tr>';
@@ -188,6 +188,7 @@ class KTVsTable
                         ->modalDescription(__('admin.common.modal.force_delete_confirm'))
                         ->modalSubmitActionLabel(__('admin.common.action.confirm_delete')),
                 ]),
-            ]);
+            ])
+            ->poll('5s');
     }
 }

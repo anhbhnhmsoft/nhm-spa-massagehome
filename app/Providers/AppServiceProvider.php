@@ -3,8 +3,21 @@
 namespace App\Providers;
 
 use App\Filament\Pages\Dashboard;
+use App\Models\Banner;
+use App\Models\Category;
+use App\Models\Coupon;
+use App\Models\Page;
+use App\Models\Service;
+use App\Models\UserFile;
+use App\Models\UserProfile;
+use App\Observers\BannerObserver;
+use App\Observers\CategoryObserver;
+use App\Observers\CouponObserver;
+use App\Observers\PageObserver;
+use App\Observers\ServiceObserver;
+use App\Observers\UserFileObserver;
+use App\Observers\UserProfileObserver;
 use App\Repositories\AffiliateConfigRepository;
-use App\Repositories\AffiliateEarningRepository;
 use App\Repositories\BookingRepository;
 use App\Repositories\CategoryRepository;
 use App\Repositories\ConfigRepository;
@@ -60,6 +73,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Register observers
+        $this->registerObservers();
     }
 
     protected function registerRepository(): void
@@ -78,7 +93,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(UserReviewApplicationRepository::class);
         $this->app->singleton(WalletTransactionRepository::class);
         $this->app->singleton(AffiliateConfigRepository::class);
-        $this->app->singleton(AffiliateEarningRepository::class);
         $this->app->singleton(ReviewRepository::class);
         $this->app->singleton(CouponUsedRepository::class);
         $this->app->singleton(NotificationRepository::class);
@@ -115,5 +129,17 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(UserWithdrawInfoService::class);
     }
 
-
+    /**
+     * Register observers.
+     */
+    protected function registerObservers(): void
+    {
+        Banner::observe(BannerObserver::class);
+        Category::observe(CategoryObserver::class);
+        Service::observe(ServiceObserver::class);
+        Coupon::observe(CouponObserver::class);
+        Page::observe(PageObserver::class);
+        UserFile::observe(UserFileObserver::class);
+        UserProfile::observe(UserProfileObserver::class);
+    }
 }
