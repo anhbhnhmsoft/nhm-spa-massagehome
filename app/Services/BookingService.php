@@ -1006,22 +1006,22 @@ class BookingService extends BaseService
     public function totalIncome(User $user, string $type = 'day'): ServiceReturn
     {
         try {
-//            $uniqueKey = 'user_' . $user->id;
-//            $cachedData = Caching::getCache(CacheKey::CACHE_KEY_TOTAL_INCOME, $uniqueKey);
+            $uniqueKey = 'user_' . $user->id;
+            $cachedData = Caching::getCache(CacheKey::CACHE_KEY_TOTAL_INCOME, $uniqueKey);
 
             // Kiểm tra cache theo type
-//            if ($cachedData && $cachedData['type'] === $type) {
-//                return ServiceReturn::success(data: $cachedData['content']);
-//            }
+            if ($cachedData && $cachedData['type'] === $type) {
+                return ServiceReturn::success(data: $cachedData['content']);
+            }
 
             $wallet = $user->wallet;
             if (!$wallet) return ServiceReturn::error(__("error.wallet_not_found"));
-    
+
             $now = Carbon::now();
             $fromDate = match ($type) {
                 'day' => $now->copy()->startOfDay(),
                 'week' => $now->copy()->subDays(7)->startOfDay(),
-                'month' => $now->copy()->subMonth()->startOfDay(),
+                'month' => $now->copy()->startOfMonth(),
                 'quarter' => $now->copy()->subMonths(3)->startOfDay(),
                 'year' => $now->copy()->startOfYear(),
                 default => $now->copy()->startOfDay(),
@@ -1071,7 +1071,6 @@ class BookingService extends BaseService
 
             // 6. Dữ liệu biểu đồ
             if ($type === 'day') {
-                // Logic chia 4 múi giờ cho PostgreSQL
                 $chartData = $this->walletTransactionRepository->query()
                     ->selectRaw("
             CASE
@@ -1086,12 +1085,18 @@ class BookingService extends BaseService
                     ->where('type', WalletTransactionType::PAYMENT_FOR_KTV->value)
                     ->whereBetween('created_at', [$fromDate, $toDate])
                     ->groupByRaw("date")
-                    ->orderByRaw("MIN(created_at) ASC") // Sắp xếp theo thời gian thực tế để đúng thứ tự múi giờ
+                    ->orderByRaw("MIN(created_at) ASC")
                     ->get();
             } else {
-                // Giữ nguyên logic cho week, month, year
+                // Điều chỉnh logic format ngày cho year, month, week
+                $format = match ($type) {
+                    'year'  => "to_char(created_at, 'YYYY-MM')", // Lấy theo tháng nếu là Year
+                    'month', 'week' => "to_char(created_at, 'YYYY-MM-DD')", // Lấy theo ngày nếu là Month/Week
+                    default => "to_char(created_at, 'YYYY-MM-DD')",
+                };
+
                 $chartData = $this->walletTransactionRepository->query()
-                    ->selectRaw("$chartGroupBy as date, SUM(point_amount) as total")
+                    ->selectRaw("$format as date, SUM(point_amount) as total")
                     ->where('wallet_id', $wallet->id)
                     ->where('type', WalletTransactionType::PAYMENT_FOR_KTV->value)
                     ->whereBetween('created_at', [$fromDate, $toDate])
@@ -1110,12 +1115,12 @@ class BookingService extends BaseService
                 'type_label' => $type
             ];
 
-//            Caching::setCache(
-//                key: CacheKey::CACHE_KEY_TOTAL_INCOME,
-//                value: ['type' => $type, 'content' => $resultData],
-//                uniqueKey: $uniqueKey,
-//                expire: 60 * 5,
-//            );
+            Caching::setCache(
+                key: CacheKey::CACHE_KEY_TOTAL_INCOME,
+                value: ['type' => $type, 'content' => $resultData],
+                uniqueKey: $uniqueKey,
+                expire: 60 * 5,
+            );
             return ServiceReturn::success(data: $resultData);
 
         } catch (\Exception $exception) {
