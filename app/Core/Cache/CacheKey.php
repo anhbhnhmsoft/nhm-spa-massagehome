@@ -54,4 +54,9 @@ enum CacheKey: string
      * Cache lưu số lần sử dụng của Coupon.
      */
     case CACHE_COUPON_USED = 'CACHE_COUPON_USED';
+
+    /**
+     * Lưu cấu hình Affiliate.
+     */
+    case CACHE_KEY_CONFIG_AFFILIATE = 'CACHE_KEY_CONFIG_AFFILIATE';
 }

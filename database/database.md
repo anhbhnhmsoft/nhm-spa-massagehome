@@ -320,6 +320,8 @@
     - latitude (decimal(10,8), nullable) -- vĩ độ
     - longitude (decimal(11,8), nullable) -- kinh độ
     - payment_type (smallint, nullable) -- hình thức thanh toán (trong enum PaymentType), null là khi dịch vụ chưa được xác nhận
+    - reason_cancel (varchar, nullable) -- lý do hủy đặt lịch
+    - overtime_warning_sent (boolean, default false) -- đã gửi thông báo về thời gian vượt quá không
     - softDeletes
     - timestamps
 

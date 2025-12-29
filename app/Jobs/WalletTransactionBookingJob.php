@@ -50,15 +50,25 @@ class WalletTransactionBookingJob implements ShouldQueue
         }
     }
 
-    public function failed($exception, BookingService $bookingService)
+    /**
+     * Xử lý khi job thất bại.
+     */
+    public function failed(\Throwable $exception): void
     {
-        LogHelper::error('WalletTransactionBookingJob failed', $exception->getMessage(), [
+        LogHelper::error('WalletTransactionBookingJob failed', $exception, [
             'booking_id' => $this->bookingId,
             'coupon_id' => $this->couponId,
             'user_id' => $this->userId,
             'service_id' => $this->serviceId,
         ]);
 
-        $bookingService->cancelBooking($this->bookingId, BookingStatus::PAYMENT_FAILED);
+        // Gọi service để cancel booking
+        $bookingService = app(BookingService::class);
+        $bookingService->cancelBooking(
+            $this->bookingId,
+            BookingStatus::PAYMENT_FAILED,
+            $exception->getMessage(),
+            false
+        );
     }
 }

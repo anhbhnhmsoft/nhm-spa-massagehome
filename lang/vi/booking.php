@@ -10,6 +10,13 @@ return [
     'ktv_is_busy_at_this_time' => 'Kỹ thuật viên đã có lịch trong khung giờ này!',
     'status_not_confirmed' => 'Booking chưa được xác nhận',
     'already_started' => 'Booking đã bắt đầu',
+    'not_permission' => 'Bạn không có quyền hủy booking này',
+    'booking_refunded' => 'Booking đã được hoàn tiền',
+    'not_canceled' => 'Booking chưa được hủy',
+    'cancelled' => 'Booking đã được hủy',
+    'completed' => 'Booking đã hoàn thành',
+
+
     'wallet' => [
         'not_active' => 'Tài khoản không hoạt động',
         'not_enough' => 'Số dư không đủ',
@@ -50,9 +57,21 @@ return [
         'wallet_customer_not_found' => 'Không tìm thấy tài khoản ví',
         'wallet_technician_not_found' => 'Không tìm thấy tài khoản ví kĩ thuật viên',
         'booking_not_found' => 'Không tìm thấy booking',
+        'wallet_referred_staff' => 'Trả tiền hoa hồng cho người giới thiệu',
     ],
     'validate' => [
         'required' => 'Booking ID không được để trống',
         'invalid' => 'Booking ID không hợp lệ.',
+        'integer' => 'Booking ID phải là số nguyên.',
+        'reason' => 'Lý do hủy phải là chuỗi ký tự.',
+        'reason_required' => 'Lý do hủy không được để trống',
     ],
+    'cannot_cancel_ongoing_or_completed' => 'Không thể hủy booking đang thực hiện hoặc đã hoàn thành',
+    'status_not_ongoing' => 'Booking không ở trạng thái đang thực hiện',
+    'pay_commission_fee_success' => 'Tính hoa hồng thành công',
+    'started_successfully' => 'Bắt đầu dịch vụ thành công',
+    'refunded' => 'Booking đã được hoàn tiền',
+    'status_not_completed' => 'Booking không ở trạng thái hoàn thành',
+    'not_permission_at_this_time' => 'Bạn không có quyền hoàn thành booking này lúc này',
+    'booking_time_not_yet' => 'Booking chưa đến thời gian bắt đầu',
 ];

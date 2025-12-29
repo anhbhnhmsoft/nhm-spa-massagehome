@@ -9,6 +9,7 @@ use App\Core\Service\BaseService;
 use App\Core\Service\ServiceReturn;
 use App\Enums\ConfigName;
 use App\Enums\ConfigType;
+use App\Enums\UserRole;
 use App\Repositories\AffiliateConfigRepository;
 use App\Repositories\ConfigRepository;
 use Illuminate\Support\Facades\DB;
@@ -232,6 +233,46 @@ class ConfigService extends BaseService
             return ServiceReturn::error(
                 message: $exception->getMessage()
             );
+        }
+    }
+
+    /**
+     * Lấy cấu hình theo key
+     * @param UserRole $role
+     * @return ServiceReturn
+     */
+    public function getConfigAffiliate(UserRole $role): ServiceReturn
+    {
+        $config = Caching::getCache(
+            key: CacheKey::CACHE_KEY_CONFIG_AFFILIATE,
+            uniqueKey: $role->value,
+        );
+        if ($config) {
+            return ServiceReturn::success(data: $config);
+        }
+        try {
+            $config = $this->affiliateConfigRepository->query()
+                ->where('target_role', $role->value)
+                ->select('commission_rate', 'min_commission','max_commission')
+                ->first();
+            if ($config) {
+                $config = $config->toArray();
+                Caching::setCache(
+                    key: CacheKey::CACHE_KEY_CONFIG_AFFILIATE,
+                    value: $config,
+                    uniqueKey: $role->value,
+                    expire: 60 * 24 // Cache for 24 hours
+                );
+                return ServiceReturn::success(data: $config);
+            }else{
+                return ServiceReturn::success();
+            }
+        } catch (\Exception $e) {
+            LogHelper::error(
+                message: "Lỗi ConfigService@getConfig",
+                ex:  $e,
+            );
+            return ServiceReturn::error(message: $e->getMessage());
         }
     }
 }

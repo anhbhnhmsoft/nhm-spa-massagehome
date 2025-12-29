@@ -1,10 +1,15 @@
 <?php
 
 return [
+    'required' => 'Thông tin này là bắt buộc.',
     'password' => [
         'required' => 'Mật khẩu không hợp lệ.',
         'min' => 'Mật khẩu phải có ít nhất :min ký tự.',
         'regex' => 'Mật khẩu phải chứa ít nhất một chữ hoa, một chữ thường và một số.',
+    ],
+    'user' => [
+        'name_required' => 'Vui lòng nhập tên.',
+        'phone_required' => 'Vui lòng nhập số điện thoại.',
     ],
     'name' => [
         'required' => 'Tên không hợp lệ.',
@@ -28,6 +33,7 @@ return [
         'required' => 'Vui lòng chọn thời gian.',
         'date' => 'Thời gian không hợp lệ.',
         'after' => 'Thời gian phải sau thời điểm hiện tại 1 tiếng.',
+        'timestamp' => 'Thời gian không hợp lệ.',
     ],
     'option_id' => [
         'required' => 'Vui lòng chọn gói dịch vụ.',
@@ -177,5 +183,8 @@ return [
             'enum'     => 'Thời lượng dịch vụ không hợp lệ.',
             'invalid' => 'Thời lượng dịch vụ không hợp lệ.',
         ],
+    ],
+    'files' => [
+        'required_with' => 'Vui lòng tải lên ít nhất 1 ảnh.',
     ],
 ];

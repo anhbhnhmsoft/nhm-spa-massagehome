@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Core\Controller\FilterDTO;
+use App\Core\Helper;
 use App\Core\LogHelper;
 use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
@@ -10,7 +11,12 @@ use App\Core\Service\ServiceReturn;
 use App\Enums\BookingStatus;
 use App\Enums\NotificationType;
 use App\Enums\UserRole;
+use App\Enums\WalletTransactionStatus;
+use App\Enums\WalletTransactionType;
+use App\Jobs\PayCommissionFeeJob;
+use App\Jobs\RefundBookingCancelJob;
 use App\Jobs\SendNotificationJob;
+use App\Models\User;
 use App\Repositories\BookingRepository;
 use App\Repositories\CouponRepository;
 use App\Repositories\ServiceRepository;
@@ -22,6 +28,7 @@ use App\Repositories\ServiceOptionRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\WalletRepository;
 use App\Repositories\WalletTransactionRepository;
+use Exception;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -186,7 +193,7 @@ class BookingService extends BaseService
                 $rate = floatval($configModel['config_value']);
 
                 // Chiết khấu nhà cung cấp chịu dựa trên GIÁ TRƯỚC KHI GIẢM (priceBeforeDiscount)
-                $discountTechnician = ($priceBeforeDiscount * $rate) / 100;
+                $discountTechnician = ($priceBeforeDiscount * (100 - $rate)) / 100;
 
                 if ($balanceTechnician < $discountTechnician) {
                     SendNotificationJob::dispatch(
@@ -242,7 +249,7 @@ class BookingService extends BaseService
                 'booking_time' => $currentBookingStartTime,
                 'start_time' => null,
                 'end_time' => null,
-                'status' => BookingStatus::PENDING->value,
+                'status' => BookingStatus::CONFIRMED->value,
                 'price' => $finalPrice,
                 'price_before_discount' => $priceBeforeDiscount,
                 'payment_type' => PaymentType::BY_POINTS->value,
@@ -257,12 +264,22 @@ class BookingService extends BaseService
             // Bắn notif cho người dùng khi đặt lịch thành công
             SendNotificationJob::dispatch(
                 userId: $user->id,
-                type: NotificationType::TECHNICIAN_WALLET_NOT_ENOUGH,
+                type: NotificationType::BOOKING_SUCCESS,
                 data: [
                     'booking_id' => $booking->id,
                     'service_id' => $service->id,
                     'booking_time' => $currentBookingStartTime->format('Y-m-d H:i:s'),
                     'price' => $finalPrice,
+                ]
+            );
+            // Bắn notif cho KTV khi có lịch hẹn mới
+            SendNotificationJob::dispatch(
+                userId: $service->user_id, // KTV
+                type: NotificationType::NEW_BOOKING_REQUEST,
+                data: [
+                    'booking_id' => $booking->id,
+                    'customer_name' => $user->name,
+                    'booking_time' => $currentBookingStartTime->format('Y-m-d H:i:s'),
                 ]
             );
 
@@ -303,30 +320,180 @@ class BookingService extends BaseService
      * Hủy booking, trường hợp khách hàng chủ động hủy hoặc thất bại thanh toán
      * @param string $bookingId
      * @param BookingStatus $status
+     * @param string|null $reason
+     * @param bool $proactive
      * @return ServiceReturn
      */
-    public function cancelBooking(string $bookingId, BookingStatus $status): ServiceReturn
+    public function cancelBooking(string $bookingId, BookingStatus $status, ?string $reason = null, $proactive = true): ServiceReturn
     {
+        DB::beginTransaction();
         try {
+            $userCurrent = Auth::user();
+
             $booking = $this->bookingRepository->query()->find($bookingId);
             if (!$booking) {
                 return ServiceReturn::error(
                     message: __("booking.not_found")
                 );
+            };
+
+            if ($userCurrent->id != $booking->user_id && $userCurrent->id != $booking->ktv_user_id && $userCurrent->role != UserRole::ADMIN->value) {
+                return ServiceReturn::error(
+                    message: __("booking.not_permission")
+                );
+            }
+            if ($booking->status != BookingStatus::PENDING->value && $booking->status != BookingStatus::CONFIRMED->value) {
+                return ServiceReturn::error(
+                    message: __("booking.not_permission")
+                );
             }
             $booking->status = $status->value;
+            $booking->reason_cancel = $reason;
             $booking->save();
+
+            SendNotificationJob::dispatch(
+                userId: $booking->user_id,
+                type: NotificationType::BOOKING_CANCELLED,
+                data: [
+                    'booking_id' => $booking->id,
+                    'reason' => $reason,
+                ]
+            );
+            SendNotificationJob::dispatch(
+                userId: $booking->ktv_user_id,
+                type: NotificationType::BOOKING_CANCELLED,
+                data: [
+                    'booking_id' => $booking->id,
+                    'reason' => $reason,
+                ]
+            );
+
+            if ($proactive) {
+                RefundBookingCancelJob::dispatch($booking->id, $reason);
+            }
+            DB::commit();
             return ServiceReturn::success(
                 message: __("booking.cancelled")
             );
         } catch (\Exception $exception) {
+            DB::rollBack();
             LogHelper::error(
                 message: "Lỗi ServiceService@cancelBooking",
                 ex: $exception
             );
-            return ServiceReturn::error(
-                message: __("common_error.server_error")
+            throw $exception;
+        }
+    }
+
+    /*
+     * Hủy booking, hoàn lại tiền cho khách hàng
+     * @param string $bookingId
+     * @param string|null $reason
+     * @return ServiceReturn
+     */
+    public function refundCancelBooking(string $bookingId, ?string $reason = null): ServiceReturn
+    {
+        DB::beginTransaction();
+        try {
+
+            $booking = $this->bookingRepository->query()->find($bookingId);
+            if (!$booking) {
+                throw new \Exception(__("booking.not_found"));
+            }
+            if ($booking->status != BookingStatus::CANCELED->value) {
+                throw new \Exception(__("booking.not_canceled"));
+            }
+
+            // Lấy transaction gốc để tham khảo (chỉ đọc, không sửa)
+            $transactionOfCustomer = $this->walletTransactionRepository->query()
+                ->where("foreign_key", $booking->id)
+                ->where('type', WalletTransactionType::PAYMENT->value)
+                ->first();
+            // Nếu chưa có transaction PAYMENT (cancel ngay sau khi tạo booking)
+            // thì không cần refund, chỉ cần return success
+            if (!$transactionOfCustomer) {
+                LogHelper::debug("Booking #{$booking->id} chưa có transaction PAYMENT, không cần refund");
+                return ServiceReturn::success(
+                    data: [
+                        'success' => true,
+                        'message' => 'Booking chưa thanh toán, không cần hoàn tiền',
+                    ],
+                    message: __("booking.booking_refunded")
+                );
+            }
+
+            // Kiểm tra đã refund chưa
+            $existingRefund = $this->walletTransactionRepository->query()
+                ->where('foreign_key', $booking->id)
+                ->where('type', WalletTransactionType::REFUND->value)
+                ->exists();
+
+            if ($existingRefund) {
+                throw new \Exception(__("booking.refunded"));
+            }
+
+            // Lấy wallet customer với lock
+            $walletCustomer = $this->walletRepository->query()
+                ->where('user_id', $booking->user_id)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$walletCustomer) {
+                throw new \Exception(__("error.not_found_wallet"));
+            }
+            $currencyExchangeRate = $this->configService->getConfig(ConfigName::CURRENCY_EXCHANGE_RATE);
+            if ($currencyExchangeRate->isError()) {
+                throw new ServiceException(
+                    message: __("error.config_wallet_error")
+                );
+            }
+
+            $exchangeRate = $currencyExchangeRate->getData()['config_value'];
+
+            // Tạo transaction REFUND mới
+            $refundTransaction = $this->walletTransactionRepository->create([
+                'wallet_id' => $walletCustomer->id,
+                'type' => WalletTransactionType::REFUND->value,
+                'point_amount' => $booking->price,
+                'amount' => $booking->price,
+                'balance_after' => $walletCustomer->balance + $booking->price,
+                'money_amount' => $booking->price,
+                'exchange_rate_point' => $exchangeRate,
+                'status' => WalletTransactionStatus::COMPLETED->value,
+                'transaction_code' => Helper::createDescPayment(PaymentType::BY_POINTS),
+                'foreign_key' => $booking->id,
+                'description' => "Hoàn tiền booking #{$booking->id}",
+                'expired_at' => now(),
+                'transaction_id' => null,
+            ]);
+
+            // Cập nhật balance
+            $walletCustomer->balance += $booking->price;
+            $walletCustomer->save();
+
+            $ktv = $booking->ktvUser;
+
+            // Gửi thông báo
+            SendNotificationJob::dispatch(
+                userId: $booking->user_id,
+                type: NotificationType::BOOKING_REFUNDED,
+                data: [
+                    'booking_id' => $booking->id,
+                    'amount' => $booking->price,
+                    'reason' => $reason,
+                ]
             );
+            DB::commit();
+            return ServiceReturn::success(
+                message: __("booking.refunded")
+            );
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            LogHelper::error(
+                message: "Lỗi ServiceService@refundCancelBooking",
+                ex: $exception
+            );
+            throw $exception;
         }
     }
 
@@ -395,7 +562,7 @@ class BookingService extends BaseService
     {
         try {
             $user = Auth::user();
-            if($user->role !== UserRole::CUSTOMER->value && $user->role !== UserRole::KTV->value ){
+            if ($user->role !== UserRole::CUSTOMER->value && $user->role !== UserRole::KTV->value) {
                 return ServiceReturn::error(
                     message: __("common_error.unauthorized")
                 );
@@ -406,12 +573,12 @@ class BookingService extends BaseService
                     message: __("booking.not_found")
                 );
             }
-            if($user->role === UserRole::CUSTOMER->value && $booking->user_id !== $user->id){
+            if ($user->role === UserRole::CUSTOMER->value && $booking->user_id !== $user->id) {
                 return ServiceReturn::error(
                     message: __("common_error.unauthorized")
                 );
             }
-            if($user->role === UserRole::KTV->value && $booking->ktv_user_id !== $user->id){
+            if ($user->role === UserRole::KTV->value && $booking->ktv_user_id !== $user->id) {
                 return ServiceReturn::error(
                     message: __("common_error.unauthorized")
                 );
@@ -436,8 +603,9 @@ class BookingService extends BaseService
      * @param string $booking_id
      * @return ServiceReturn
      */
-    public function startBooking(string $booking_id) : ServiceReturn
+    public function startBooking(string $booking_id): ServiceReturn
     {
+        DB::beginTransaction();
         try {
             $user = Auth::user();
             $booking = $this->bookingRepository->query()->find($booking_id);
@@ -446,14 +614,22 @@ class BookingService extends BaseService
                     message: __("booking.not_found")
                 );
             }
-            if($booking->start_time !== null || $booking->status !== BookingStatus::CONFIRMED->value){
+
+            if (Carbon::parse($booking->booking_time) > Carbon::now()) {
+                return ServiceReturn::error(
+                    message: __("booking.booking_time_not_yet")
+                );
+            }
+
+            if ($booking->start_time !== null || $booking->status !== BookingStatus::CONFIRMED->value) {
                 return ServiceReturn::error(
                     message: __("booking.already_started")
                 );
             }
             if (
-                $user->role != UserRole::KTV->value &&
-                $user->id != $booking->ktv_user_id) {
+                $user->role != UserRole::KTV->value ||
+                $user->id != $booking->ktv_user_id
+            ) {
                 return ServiceReturn::error(
                     message: __("common_error.unauthorized")
                 );
@@ -468,9 +644,17 @@ class BookingService extends BaseService
                     message: __("booking.status_not_confirmed")
                 );
             }
+            SendNotificationJob::dispatch(
+                userId: $booking->user_id,
+                type: NotificationType::BOOKING_START,
+                data: [
+                    'booking_id' => $booking->id,
+                ]);
             $booking->status = BookingStatus::ONGOING->value;
             $booking->start_time = now();
             $booking->save();
+
+            DB::commit();
             return ServiceReturn::success(
                 data: [
                     'status' => BookingStatus::ONGOING->value,
@@ -480,6 +664,7 @@ class BookingService extends BaseService
                 ]
             );
         } catch (\Exception $exception) {
+            DB::rollBack();
             LogHelper::error(
                 message: "Lỗi ServiceService@startBooking",
                 ex: $exception
@@ -490,7 +675,229 @@ class BookingService extends BaseService
         }
     }
 
+    /**
+     * Hoàn thành đơn hàng tiến hành thanh toán cho ktv và  tính phí hoa hồng cho các user khác
+     * @param int $bookingId
+     * @param bool $proactive
+     * @return ServiceReturn
+     */
+    public function finishBooking(int $bookingId, bool $proactive = false)
+    {
+        DB::beginTransaction();
+        try {
+            $userCurrent = Auth::user();
+            $booking = $this->bookingRepository->query()->find($bookingId);
+            if (!$booking) {
+                if ($proactive) {
+                    return ServiceReturn::error(
+                        message: __("error.not_found_booking")
+                    );
+                } else {
+
+                    throw new \Exception(__("error.not_found_booking"));
+                }
+            }
+            if ($booking->status != BookingStatus::ONGOING->value) {
+                if ($proactive) {
+                    return ServiceReturn::error(
+                        message: __("booking.status_not_ongoing")
+                    );
+                } else {
+                    throw new \Exception(__("booking.status_not_ongoing"));
+                }
+            }
+
+            // Kiểm tra quyền (chỉ khi có user - không áp dụng cho cronjob auto-finish)
+            if ($userCurrent && $userCurrent->id != $booking->ktv_user_id && $userCurrent->id != $booking->user_id) {
+                if ($proactive) {
+                    return ServiceReturn::error(
+                        message: __("common_error.unauthorized")
+                    );
+                } else {
+                    throw new \Exception(__("common_error.unauthorized"));
+                }
+            }
+            // Kiểm tra thời gian (chỉ khi user finish thủ công)
+            // Cronjob auto-finish không cần kiểm tra vì đã quá hạn rồi
+            if ($proactive) {
+                $expectedEndTime = Carbon::parse($booking->start_time)->addMinutes($booking->duration);
+                $now = now();
+
+                // Chỉ cho phép finish khi đã đến thời gian dự kiến hoặc đã qua
+                if ($now->lessThan($expectedEndTime)) {
+                    return ServiceReturn::error(
+                        message: __("booking.not_permission_at_this_time")
+                    );
+                }
+            }
+            $booking->status = BookingStatus::COMPLETED->value;
+            $booking->end_time = now();
+            $booking->save();
+            // lấy ví của ktv
+            $wallet = $booking->ktvUser->wallet;
+            if (!$wallet) {
+                if ($proactive) {
+                    return ServiceReturn::error(
+                        message: __("error.not_found_wallet")
+                    );
+                } else {
+                    throw new \Exception(__("error.not_found_wallet"));
+                }
+            }
+            // lấy giao dịch được khởi tạo cho ktv khi khách hàng đặt lịch
+            $walletTransaction = $this->walletTransactionRepository->query()->where('wallet_id', $wallet->id)->where('foreign_key', $booking->id)->first();
+            if (!$walletTransaction) {
+                if ($proactive) {
+                    return ServiceReturn::error(
+                        message: __("error.not_found_wallet_transaction")
+                    );
+                } else {
+                    throw new \Exception(__("error.not_found_wallet_transaction"));
+                }
+            }
+            $walletTransaction->status = WalletTransactionStatus::COMPLETED->value;
+            $walletTransaction->save();
+            // tính toán số tiền và trả cho ktv
+            $wallet->balance = $walletTransaction->balance_after;
+            $wallet->save();
+            // tính toán phí hoa hồng và gửi tới các user khác
+            PayCommissionFeeJob::dispatch($bookingId);
+            // gửi thông báo cho ktv và khách hàng
+            SendNotificationJob::dispatch(
+                userId: $booking->ktv_user_id,
+                type: NotificationType::BOOKING_COMPLETED,
+                data: [
+                    'booking_id' => $booking->id,
+                ]
+            );
+
+            SendNotificationJob::dispatch(
+                userId: $booking->user_id,
+                type: NotificationType::BOOKING_COMPLETED,
+                data: [
+                    'booking_id' => $booking->id,
+                ]
+            );
+            DB::commit();
+            return ServiceReturn::success(
+                message: __("booking.completed")
+            );
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            LogHelper::error(
+                message: "Lỗi BookingService@finishBooking",
+                ex: $exception
+            );
+            if ($proactive) {
+                return ServiceReturn::error(
+                    message: $exception->getMessage()
+                );
+            }
+            throw $exception;
+        }
+    }
+
+    /**
+     * Tính toán phí hoa hồng và gửi tới các user khác
+     * @param int $bookingId
+     * @return Exception
+     */
+    public function payCommissionFee(int $bookingId): void
+    {
+        DB::beginTransaction();
+        try {
+            $booking = $this->bookingRepository->find($bookingId);
+            if (!$booking) {
+                throw new \Exception(__("error.not_found_booking"));
+            }
+            if ($booking->status != BookingStatus::COMPLETED->value) {
+                throw new \Exception(__("booking.status_not_completed"));
+            }
+
+            $resConfig = $this->configService->getConfig(ConfigName::DISCOUNT_RATE);
+            if ($resConfig->isError()) {
+                throw new ServiceException(
+                    message: __("error.config_wallet_error")
+                );
+            }
+            $discountRate = $resConfig->getData()['config_value'];
+            /**
+             * @var User $customer
+             * @var User $staff
+             */
+            $customer = $booking->user;
+            $staff = $booking->ktvUser;
+
+            // chiết khấu thực tế = (giá trị gốc dịch vụ * %chiết khấu cho nhà cung cấp  )/ 100
+            $commissionFee = ($booking->price_before_discount * ( 100 - $discountRate)) / 100;
+
+            // Load configs
+            $configs = [
+                UserRole::AGENCY->value => $this->configService->getConfigAffiliate(UserRole::AGENCY),
+                UserRole::KTV->value    => $this->configService->getConfigAffiliate(UserRole::KTV),
+                UserRole::CUSTOMER->value => $this->configService->getConfigAffiliate(UserRole::CUSTOMER),
+            ];
+
+            foreach ($configs as $config) {
+                if ($config->isError()) {
+                    throw new ServiceException(__("error.config_wallet_error"));
+                }
+            }
+
+            // Process Customer Referrer
+            if ($customer->referrer) {
+                $this->processReferralCommission($customer->referrer, $commissionFee, $bookingId, $configs);
+            }
+
+            // Process Staff Referrer
+            if ($staff->referrer) {
+                $this->processReferralCommission($staff->referrer, $commissionFee, $bookingId, $configs);
+            }
+
+            DB::commit();
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            LogHelper::error(
+                message: "Lỗi BookingService@payCommissionFee",
+                ex: $exception
+            );
+            throw $exception;
+        }
+    }
+
+
     //-------- private method --------
+
+    protected function processReferralCommission(User $referrer, float $commissionFee, int $bookingId, array $configs): void
+    {
+        $role = $referrer->role;
+        $config = $configs[$role] ?? null;
+
+        if (!$config) {
+            return;
+        }
+
+        $data = $config->getData();
+        $amount = $this->calculateCommissionFee(
+            $commissionFee,
+            $data['commission_rate'],
+            $data['max_commission'],
+            $data['min_commission']
+        );
+        $this->walletService->paymentCommissionFeeForRefferal($amount, $referrer->id, $bookingId);
+    }
+
+    protected function calculateCommissionFee(float $amountSystemReceive, float $commissionPercent, $maxCommission, $minCommission): int
+    {
+        $amount = $amountSystemReceive * (100 - $commissionPercent) / 100;
+        if ($amount > $maxCommission) {
+            return $maxCommission;
+        }
+        if ($amount < $minCommission) {
+            return $minCommission;
+        }
+        return round($amount, 3);
+    }
 
     private function checkKtvAvailability(int $ktvId, Carbon $startTime, int $duration, int $breakTimeGap): bool
     {

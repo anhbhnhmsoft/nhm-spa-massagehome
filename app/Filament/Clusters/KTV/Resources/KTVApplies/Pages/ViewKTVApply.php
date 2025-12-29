@@ -4,6 +4,7 @@ namespace App\Filament\Clusters\KTV\Resources\KTVApplies\Pages;
 
 use App\Enums\ReviewApplicationStatus;
 use App\Filament\Clusters\KTV\Resources\KTVApplies\KTVApplyResource;
+use App\Services\UserService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
@@ -25,21 +26,22 @@ class ViewKTVApply extends ViewRecord
                 ->modalDescription(__('admin.ktv_apply.actions.approve.description'))
                 ->visible(fn() => $this->record->reviewApplication?->status === ReviewApplicationStatus::PENDING || $this->record->reviewApplication?->status === ReviewApplicationStatus::REJECTED)
                 ->action(function () {
-                    $this->record->is_active = true;
-                    $this->record->save();
+                    $userService = app(UserService::class);
+                    $result = $userService->activeStaffApply($this->record->id);
 
-                    if ($this->record->reviewApplication) {
-                        $this->record->reviewApplication->status = ReviewApplicationStatus::APPROVED;
-                        $this->record->reviewApplication->effective_date = now();
-                        $this->record->reviewApplication->save();
+                    if ($result->isSuccess()) {
+                        Notification::make()
+                            ->success()
+                            ->title(__('admin.ktv_apply.actions.approve.success_title'))
+                            ->body(__('admin.ktv_apply.actions.approve.success_body'))
+                            ->send();
+                    } else {
+                        Notification::make()
+                            ->danger()
+                            ->title(__('common.error.title'))
+                            ->body($result->getMessage())
+                            ->send();
                     }
-
-                    Notification::make()
-                        ->success()
-                        ->title(__('admin.ktv_apply.actions.approve.success_title'))
-                        ->body(__('admin.ktv_apply.actions.approve.success_body'))
-                        ->send();
-
                     return redirect()->to(KTVApplyResource::getUrl('index'));
                 }),
 
@@ -63,18 +65,22 @@ class ViewKTVApply extends ViewRecord
                 ])
                 ->visible(fn() => $this->record->reviewApplication?->status === ReviewApplicationStatus::PENDING)
                 ->action(function (array $data) {
-                    if ($this->record->reviewApplication) {
-                        $this->record->reviewApplication->status = ReviewApplicationStatus::REJECTED;
-                        $this->record->reviewApplication->note = $data['note'] ?? null;
-                        $this->record->reviewApplication->save();
+                    $userService = app(UserService::class);
+                    $result = $userService->rejectStaffApply($this->record->id, $data['note']);
+
+                    if ($result->isSuccess()) {
+                        Notification::make()
+                            ->warning()
+                            ->title(__('admin.ktv_apply.actions.reject.success_title'))
+                            ->body(__('admin.ktv_apply.actions.reject.success_body'))
+                            ->send();
+                    } else {
+                        Notification::make()
+                            ->danger()
+                            ->title(__('common.error.title'))
+                            ->body($result->getMessage())
+                            ->send();
                     }
-
-                    Notification::make()
-                        ->warning()
-                        ->title(__('admin.ktv_apply.actions.reject.success_title'))
-                        ->body(__('admin.ktv_apply.actions.reject.success_body'))
-                        ->send();
-
                     return redirect()->to(KTVApplyResource::getUrl('index'));
                 }),
         ];

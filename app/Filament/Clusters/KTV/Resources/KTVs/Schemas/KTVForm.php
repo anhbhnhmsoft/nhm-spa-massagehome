@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\KTV\Resources\KTVs\Schemas;
 
+use App\Core\Helper;
 use App\Enums\DirectFile;
 use App\Enums\Gender;
 use App\Enums\ReviewApplicationStatus;
@@ -23,7 +24,9 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Storage;
 
 class KTVForm
 {
@@ -202,13 +205,14 @@ class KTVForm
                                     ->dehydrated(true),
                                 FileUpload::make('file_path')
                                     ->label(__('admin.ktv_apply.file_type.identity_card_front'))
-                                    ->directory(DirectFile::KTVA->value)
+                                    ->directory(fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
                                     ->disk('private')
                                     ->required()
                                     ->image()
                                     ->maxSize(102400)
                                     ->downloadable()
-                                    ->columnSpanFull(),
+                                    ->columnSpanFull()
+                                    ->deletable(),
                                 Hidden::make('role')
                                     ->default(fn($record) => $record?->role ?? UserRole::KTV->value)
                                     ->dehydrateStateUsing(fn() => UserRole::KTV->value)
@@ -223,7 +227,7 @@ class KTVForm
                                     ->dehydrated(true),
                                 FileUpload::make('file_path')
                                     ->label(__('admin.ktv_apply.file_type.identity_card_back'))
-                                    ->directory(DirectFile::KTVA->value)
+                                    ->directory(fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
                                     ->disk('private')
                                     ->required()
                                     ->image()
@@ -241,20 +245,21 @@ class KTVForm
                             ->schema([
                                 Hidden::make('type')
                                     ->default(UserFileType::LICENSE)
-                                    ->dehydrated(true),
+                                    ->dehydrated(fn(Get $get) => filled($get('file_path'))),
                                 FileUpload::make('file_path')
                                     ->label(__('admin.ktv_apply.file_type.license'))
-                                    ->directory(DirectFile::KTVA->value)
+                                    ->directory(fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
                                     ->disk('private')
                                     ->nullable()
                                     ->image()
                                     ->maxSize(102400)
                                     ->downloadable()
+                                    ->dehydrated(fn($state) => filled($state))
                                     ->columnSpanFull(),
                                 Hidden::make('role')
                                     ->default(fn($record) => $record?->role ?? UserRole::KTV->value)
                                     ->dehydrateStateUsing(fn() => UserRole::KTV->value)
-                                    ->dehydrated(true),
+                                    ->dehydrated(fn(Get $get) => filled($get('file_path'))),
                             ])->columnSpanFull(),
 
                         Repeater::make('gallery')
@@ -267,13 +272,14 @@ class KTVForm
                                     ->dehydrated(true),
                                 FileUpload::make('file_path')
                                     ->label(__('admin.ktv_apply.file_type.ktv_image_display'))
-                                    ->directory(DirectFile::KTVA->value)
+                                    ->directory(fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
                                     ->disk('private')
                                     ->required()
                                     ->image()
                                     ->maxSize(102400)
                                     ->downloadable()
-                                    ->columnSpanFull(),
+                                    ->columnSpanFull()
+                                    ->deletable(),
                                 Hidden::make('role')
                                     ->default(fn($record) => $record?->role ?? UserRole::KTV->value)
                                     ->dehydrateStateUsing(fn() => UserRole::KTV->value)
@@ -286,6 +292,7 @@ class KTVForm
                                 'min' => __('common.error.min_items', ['min' => 3]),
                                 'max' => __('common.error.max_items', ['max' => 5]),
                             ])
+                            ->helperText(__('common.notice.image_gallery'))
                             ->columnSpanFull(),
                     ])->columns(2),
 

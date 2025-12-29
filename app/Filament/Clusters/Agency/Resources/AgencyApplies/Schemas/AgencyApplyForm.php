@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\Agency\Resources\AgencyApplies\Schemas;
 
+use App\Core\Helper;
 use App\Enums\DirectFile;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserFileType;
@@ -82,7 +83,7 @@ class AgencyApplyForm
                                             ->dehydrated(true),
                                         FileUpload::make('file_path')
                                             ->label(__('admin.ktv_apply.file_type.identity_card_front'))
-                                            ->directory(DirectFile::AGENCY->value)
+                                            ->directory( fn($record) => DirectFile::makePathById(DirectFile::AGENCY, $record?->id ?? Helper::getTimestampAsId()))
                                             ->disk('private')
                                             ->required()
                                             ->image()
@@ -103,7 +104,7 @@ class AgencyApplyForm
                                             ->dehydrated(true),
                                         FileUpload::make('file_path')
                                             ->label(__('admin.ktv_apply.file_type.identity_card_back'))
-                                            ->directory(DirectFile::AGENCY->value)
+                                            ->directory( fn($record) => DirectFile::makePathById(DirectFile::AGENCY, $record?->id ?? Helper::getTimestampAsId()))
                                             ->disk('private')
                                             ->required()
                                             ->image()

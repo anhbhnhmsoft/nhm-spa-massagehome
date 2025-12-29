@@ -11,11 +11,13 @@ use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
 use App\Enums\BookingStatus;
 use App\Enums\ConfigName;
+use App\Enums\NotificationType;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserFileType;
 use App\Enums\UserRole;
 use App\Enums\WalletTransactionStatus;
 use App\Enums\WalletTransactionType;
+use App\Jobs\SendNotificationJob;
 use App\Repositories\BookingRepository;
 use App\Repositories\CouponUserRepository;
 use App\Repositories\ReviewRepository;
@@ -441,7 +443,7 @@ class UserService extends BaseService
         }
     }
 
-    public function activeKTVapply(int $id)
+    public function activeStaffApply(int $id)
     {
         DB::beginTransaction();
         try {
@@ -452,14 +454,23 @@ class UserService extends BaseService
                 );
             }
             $user->is_active = true;
-            $user->save();
-
-            if ($user->reviewApplication) {
-                $user->reviewApplication->status = ReviewApplicationStatus::APPROVED;
-                $user->reviewApplication->effective_date = now();
-                $user->reviewApplication->save();
+            $apply = $user->reviewApplication;
+            if ($apply) {
+                $apply->status = ReviewApplicationStatus::APPROVED;
+                $apply->effective_date = now();
+                $user->role = $apply->role;
+                $apply->save();
+                $user->save();
             }
 
+            SendNotificationJob::dispatch(
+                userId: $user->id,
+                type: NotificationType::STAFF_APPLY_SUCCESS,
+                data: [
+                    'user_id' => $user->id,
+                    'role' => $user->role,
+                ]
+            );
             if ($user->wallet) {
                 $user->wallet->is_active = true;
                 $user->wallet->save();
@@ -486,6 +497,47 @@ class UserService extends BaseService
         }
     }
 
+    public function rejectStaffApply(int $id, string $note)
+    {
+        DB::beginTransaction();
+        try {
+            $user = $this->userRepository->query()->where('id', $id)->first();
+            if (!$user) {
+                throw new ServiceException(
+                    message: __("common_error.data_not_found")
+                );
+            }
+            $apply = $user->reviewApplication;
+            if ($apply) {
+                $apply->status = ReviewApplicationStatus::REJECTED;
+                $apply->note = $note;
+                $apply->effective_date = now();
+                $apply->save();
+            }
+
+            SendNotificationJob::dispatch(
+                userId: $user->id,
+                type: NotificationType::STAFF_APPLY_REJECTED,
+                data: [
+                    'user_id' => $user->id,
+                    'role' => $user->role,
+                ]
+            );
+            DB::commit();
+            return ServiceReturn::success(
+                message: __("common.success.data_updated")
+            );
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            LogHelper::error(
+                message: "Lỗi UserService@rejectKTVapply",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        }
+    }
     /**
      * Đăng ký làm đối tác cho user hiện tại (không tạo user mới).
      * - Tạo hoặc cập nhật bản ghi review_application với trạng thái CHỜ DUYỆT.

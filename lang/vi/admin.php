@@ -134,7 +134,7 @@ return
                 "system_info" => "Thông tin hệ thống",
                 "registration_info" => "Thông tin đăng ký",
                 "personal_info" => "Thông tin cá nhân",
-                'agency' => 'Cơ sở làm việc',
+                'agency' => 'Thuộc đối tác',
                 'latitude' => 'Vĩ độ',
                 'longitude' => 'Kinh độ',
             ],
@@ -281,7 +281,9 @@ return
                 'qr_banking' => 'Thanh toán qua mã QR',
                 'zalo_pay' => 'Thanh toán qua Zalo Pay',
                 'momo_pay' => 'Thanh toán qua Momo Pay',
+                'withdrawal' => 'Rút tiền',
                 'by_points' => 'Thanh toán qua điểm',
+                'refund' => 'Hoàn tiền',
             ],
             'actions' => [
                 'view' => [
