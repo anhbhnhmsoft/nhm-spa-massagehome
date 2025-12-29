@@ -11,6 +11,7 @@ enum WalletTransactionType: int
     case PAYMENT = 5; // Thanh toán (Booking)
     case AFFILIATE = 6; // Nhận hoa hồng
     case PAYMENT_FOR_KTV = 7; // Thanh toán cho KTV
+    case REFUND = 8; // Hoàn tiền cho customer
 
 
     // Lấy danh sách trạng thái giao dịch nạp vào ví
@@ -22,6 +23,7 @@ enum WalletTransactionType: int
             self::DEPOSIT_MOMO_PAY->value,
             self::AFFILIATE->value,
             self::PAYMENT_FOR_KTV->value,
+            self::REFUND->value,
         ];
     }
 

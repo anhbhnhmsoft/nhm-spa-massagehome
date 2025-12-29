@@ -170,8 +170,8 @@ class ServiceController extends BaseController
             'coupon_id.exists' => __('validation.coupon_id.exists'),
             'note.max' => __('validation.note.max'),
             'note_address.max' => __('validation.note_address.max'),
-            'latitude.required' => __('validation.latitude.required'),
-            'longitude.required' => __('validation.longitude.required'),
+            'latitude.required' => __('validation.location.latitude_required'),
+            'longitude.required' => __('validation.location.longitude_required'),
         ]);
         $resultService = $this->bookingService->bookService(
             serviceId: $validate['service_id'],

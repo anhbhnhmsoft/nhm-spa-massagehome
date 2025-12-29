@@ -151,6 +151,8 @@ Route::middleware('set-api-locale')->group(function () {
             Route::get('{bookingId}', [BookingController::class, 'checkBooking']);
             // Lấy thông tin chi tiết lịch đặt
             Route::get('detail/{id}', [BookingController::class, 'detailBooking'])->where('id', '[0-9]+');
+            Route::post('cancel', [BookingController::class, 'cancelBooking']);
+            Route::post('finish', [BookingController::class, 'finishBooking']);
         });
     });
 
@@ -264,5 +266,4 @@ Route::middleware('set-api-locale')->group(function () {
         // Bắt đầu dịch vụ
         Route::post('start-booking', [BookingController::class, 'startBooking']);
     });
-
 });

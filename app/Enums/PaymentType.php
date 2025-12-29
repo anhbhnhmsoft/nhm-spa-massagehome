@@ -9,6 +9,7 @@ enum PaymentType: int
     case MOMO_PAY = 3; // Thanh toán qua Momo Pay
     case BY_POINTS = 4; // Thanh toán qua điểm wallet_transactions
     case WITHDRAWAL = 5; // Rút tiềnwallets
+    case REFUND = 6; // Hoàn tiền
 
     public function label(): string
     {
@@ -18,6 +19,7 @@ enum PaymentType: int
             self::MOMO_PAY => __('admin.booking.payment_type.momo_pay'),
             self::BY_POINTS => __('admin.booking.payment_type.by_points'),
             self::WITHDRAWAL => __('admin.booking.payment_type.withdrawal'),
+            self::REFUND => __('admin.booking.payment_type.refund'),
         };
     }
 

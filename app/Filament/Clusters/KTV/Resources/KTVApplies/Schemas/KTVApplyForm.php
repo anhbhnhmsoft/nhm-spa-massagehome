@@ -22,6 +22,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Resources\Pages\CreateRecord;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 
 class KTVApplyForm
@@ -182,7 +183,7 @@ class KTVApplyForm
                                     ->dehydrated(true),
                                 FileUpload::make('file_path')
                                     ->label(__('admin.ktv_apply.file_type.identity_card_front'))
-                                    ->directory( fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
+                                    ->directory(fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
                                     ->disk('private')
                                     ->required()
                                     ->image()
@@ -203,7 +204,7 @@ class KTVApplyForm
                                     ->dehydrated(true),
                                 FileUpload::make('file_path')
                                     ->label(__('admin.ktv_apply.file_type.identity_card_back'))
-                                    ->directory( fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
+                                    ->directory(fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
                                     ->disk('private')
                                     ->required()
                                     ->image()
@@ -221,20 +222,22 @@ class KTVApplyForm
                             ->schema([
                                 Hidden::make('type')
                                     ->default(UserFileType::LICENSE)
-                                    ->dehydrated(true),
+                                    ->dehydrated(fn(Get $get) => filled($get('file_path'))),
                                 FileUpload::make('file_path')
                                     ->label(__('admin.ktv_apply.file_type.license'))
-                                    ->directory( fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
+                                    ->directory(fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
                                     ->disk('private')
                                     ->nullable()
                                     ->image()
                                     ->maxSize(102400)
                                     ->downloadable()
-                                    ->columnSpanFull(),
+                                    ->dehydrated(fn($state) => filled($state))
+                                    ->columnSpanFull()
+                                    ->deletable(),
                                 Hidden::make('role')
                                     ->default(fn($record) => $record?->role ?? UserRole::KTV->value)
                                     ->dehydrateStateUsing(fn() => UserRole::KTV->value)
-                                    ->dehydrated(true),
+                                    ->dehydrated(fn(Get $get) => filled($get('file_path'))),
                             ])->columnSpanFull(),
 
                         Repeater::make('gallery')
@@ -247,7 +250,7 @@ class KTVApplyForm
                                     ->dehydrated(true),
                                 FileUpload::make('file_path')
                                     ->label(__('admin.ktv_apply.file_type.ktv_image_display'))
-                                    ->directory( fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
+                                    ->directory(fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
                                     ->disk('private')
                                     ->required()
                                     ->image()

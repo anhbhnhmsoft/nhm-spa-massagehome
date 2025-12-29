@@ -26,4 +26,10 @@ return [
     "invalid_image" => "Hình ảnh không hợp lệ",
     'service_not_authorized' => 'Bạn không có quyền cập nhật dịch vụ này',
     'service_have_booking' => 'Dịch vụ này đã có đặt lịch, không thể xóa',
+    'not_found_transaction' => 'Lịch sử giao dịch không tồn tại',
+    'not_found_wallet' => 'Hệ thống không tìm thấy ví tiền của người dùng',
+    'not_found_booking' => 'Booking không tồn tại',
+    'not_found_wallet_transaction' => 'Lịch sử giao dịch không tồn tại',
+    'not_found_referred_customer' => 'Không tìm thấy người giới thiệu khách hàng',
+    'not_found_referred_staff' => 'Không tìm thấy người giới thiệu nhân viên',
 ];

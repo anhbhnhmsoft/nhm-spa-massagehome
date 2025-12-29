@@ -33,6 +33,7 @@ return [
         'required' => 'Vui lòng chọn thời gian.',
         'date' => 'Thời gian không hợp lệ.',
         'after' => 'Thời gian phải sau thời điểm hiện tại 1 tiếng.',
+        'timestamp' => 'Thời gian không hợp lệ.',
     ],
     'option_id' => [
         'required' => 'Vui lòng chọn gói dịch vụ.',

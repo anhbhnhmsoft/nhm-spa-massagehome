@@ -27,7 +27,9 @@ class ServiceBooking extends Model
         'address',
         'latitude',
         'longitude',
-        'note_address'
+        'note_address',
+        'reason_cancel',
+        'overtime_warning_sent',
     ];
 
     protected $casts = [
@@ -45,6 +47,7 @@ class ServiceBooking extends Model
         'payment_type' => 'integer',
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
+        'overtime_warning_sent' => 'boolean',
     ];
 
     // Lấy thông tin khách hàng đặt

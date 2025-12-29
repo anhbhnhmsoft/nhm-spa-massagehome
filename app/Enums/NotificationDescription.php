@@ -20,6 +20,13 @@ enum NotificationDescription: int
     case TECHNICIAN_WALLET_NOT_ENOUGH = 8;
     case STAFF_APPLY_SUCCESS = 9;
     case STAFF_APPLY_REJECTED = 10;
+    case BOOKING_REFUNDED = 11;
+    case BOOKING_COMPLETED = 12;
+    case BOOKING_SUCCESS = 13;
+    case NEW_BOOKING_REQUEST = 14;
+    case BOOKING_AUTO_FINISHED = 15;
+    case BOOKING_OVERTIME_WARNING = 16;
+    case BOOKING_START = 17;
 
     /**
      * Convert từ NotificationType sang NotificationDescription
@@ -74,8 +81,7 @@ enum NotificationDescription: int
                 'vi' => 'Ví của bạn không đủ số dư để nhận lịch hẹn',
                 'en' => 'Your wallet is not enough to receive the appointment',
                 'cn' => '您的钱包余额不足，无法接收预约',
-            ]
-            ,
+            ],
             self::STAFF_APPLY_SUCCESS => [
                 'vi' => 'Đơn ứng tuyển của bạn đã được chấp nhận bởi hệ thống, bạn có thể tiến hành thực hiện dịch vụ ',
                 'en' => 'Your staff apply has been accepted by the system, you can now proceed with the service',
@@ -85,6 +91,42 @@ enum NotificationDescription: int
                 'vi' => 'Đơn ứng tuyển của bạn đã bị từ chối bởi hệ thống',
                 'en' => 'Your staff apply has been rejected by the system',
                 'cn' => '员工申请被拒绝',
+            ],
+
+            self::BOOKING_REFUNDED => [
+                'vi' => 'Đơn đặt lịch đã được hoàn tiền',
+                'en' => 'Booking refunded',
+                'cn' => '预约已成功退款',
+            ],
+            self::BOOKING_COMPLETED => [
+                'vi' => 'Dịch vụ đã hoàn thành',
+                'en' => 'Booking completed',
+                'cn' => '预约已完成',
+            ],
+            self::BOOKING_SUCCESS => [
+                'vi' => 'Đặt lịch thành công',
+                'en' => 'Booking success',
+                'cn' => '预约成功',
+            ],
+            self::NEW_BOOKING_REQUEST => [
+                'vi' => 'Có yêu cầu đặt lịch mới',
+                'en' => 'New booking request',
+                'cn' => '有新的预约请求',
+            ],
+            self::BOOKING_AUTO_FINISHED => [
+                'vi' => 'Booking đã được tự động hoàn thành do quá thời gian',
+                'en' => 'Booking has been auto-finished due to overtime',
+                'cn' => '预约已因超时自动完成',
+            ],
+            self::BOOKING_OVERTIME_WARNING => [
+                'vi' => 'Cảnh báo: Booking đang quá thời gian dự kiến',
+                'en' => 'Warning: Booking is overtime',
+                'cn' => '警告：预约已超时',
+            ],
+            self::BOOKING_START => [
+                'vi' => 'Chúc bạn có 1 trải nghiệm tuyệt vời',
+                'en' => 'Welcome to your appointment',
+                'cn' => '祝您旅途愉快',
             ],
         };
     }
@@ -154,6 +196,42 @@ enum NotificationDescription: int
                 'en' => 'Your staff apply has been rejected',
                 'cn' => '员工申请被拒绝',
             ],
+
+            self::BOOKING_REFUNDED => [
+                'vi' => 'Đơn đặt lịch đã được hoàn tiền thành công ',
+                'en' => 'Booking refunded successfully',
+                'cn' => '预约已成功退款',
+            ],
+            self::BOOKING_COMPLETED => [
+                'vi' => 'Dịch vụ đã hoàn thành',
+                'en' => 'Booking completed',
+                'cn' => '预约已完成',
+            ],
+            self::BOOKING_SUCCESS => [
+                'vi' => 'Đặt lịch thành công',
+                'en' => 'Booking success',
+                'cn' => '预约成功',
+            ],
+            self::NEW_BOOKING_REQUEST => [
+                'vi' => 'Có yêu cầu đặt lịch mới',
+                'en' => 'New booking request',
+                'cn' => '有新的预约请求',
+            ],
+            self::BOOKING_AUTO_FINISHED => [
+                'vi' => 'Hệ thống đã tự động hoàn thành booking',
+                'en' => 'System auto-finished booking',
+                'cn' => '系统已自动完成预约',
+            ],
+            self::BOOKING_OVERTIME_WARNING => [
+                'vi' => 'Cảnh báo quá thời gian',
+                'en' => 'Overtime Warning',
+                'cn' => '超时警告',
+            ],
+            self::BOOKING_START => [
+                'vi' => 'Bắt đầu dịch vụ',
+                'en' => 'Start service',
+                'cn' => '开始服务',
+            ],
         };
     }
 
@@ -166,4 +244,3 @@ enum NotificationDescription: int
         return $titles[$lang->value] ?? $titles['vi'];
     }
 }
-

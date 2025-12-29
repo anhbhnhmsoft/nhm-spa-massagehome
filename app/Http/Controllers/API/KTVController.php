@@ -69,8 +69,8 @@ class KTVController extends BaseController
     public function listBooking(ListRequest $request): JsonResponse
     {
         $dto = $request->getFilterOptions();
-        $dto->addFilter('ktv_user_id', $request->user()->id);
-        $dto->setSortBy('booking_time');
+        $dto->addFilter('user_id', $request->user()->id);
+        $dto->setSortBy('created_at');
         $dto->setDirection('desc');
         $result = $this->bookingService->bookingPaginate($dto);
         if ($result->isError()) {

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Core\Controller\BaseController;
 use App\Core\Controller\ListRequest;
+use App\Enums\BookingStatus;
 use App\Http\Resources\Booking\BookingItemResource;
 use App\Services\BookingService;
 use Illuminate\Http\JsonResponse;
@@ -72,13 +73,15 @@ class BookingController extends BaseController
      */
     public function startBooking(Request $request): JsonResponse
     {
-        $data = $request->validate([
-            'booking_id' => 'required|numeric',
-        ],
+        $data = $request->validate(
+            [
+                'booking_id' => 'required|numeric',
+            ],
             [
                 'booking_id.required' => __('booking.validate.required'),
                 'booking_id.numeric' => __('booking.validate.invalid'),
-            ]);
+            ]
+        );
         $result = $this->bookingService->startBooking($data['booking_id']);
         if ($result->isError()) {
             return $this->sendError(
@@ -86,13 +89,88 @@ class BookingController extends BaseController
             );
         }
         $data = $result->getData();
+        $booking = $data['booking'];
         return $this->sendSuccess(
             data: [
+                'booking_id' => $booking->id,
                 'status' => $data['status'],
+                'status_label' => BookingStatus::getLabel($data['status']),
                 'start_time' => $data['start_time'],
+                'expected_end_time' => \Carbon\Carbon::parse($data['start_time'])->addMinutes($data['duration'])->format('Y-m-d H:i:s'),
                 'duration' => $data['duration'],
-                'booking' => BookingItemResource::make($result->getData())->response()->getData(),
+                'booking' => new BookingItemResource($booking),
+            ],
+            message: __('booking.started_successfully')
+        );
+    }
+
+    /**
+     * Kết thúc booking
+     * @param int $bookingId
+     */
+    public function finishBooking(Request $request): JsonResponse
+    {
+        $data = $request->validate(
+            [
+                'booking_id' => 'required|integer',
+            ],
+            [
+                'booking_id.required' => __('booking.validate.required'),
+                'booking_id.integer' => __('booking.validate.integer'),
             ]
+        );
+        $result = $this->bookingService->finishBooking((int) $data['booking_id'], true);
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage()
+            );
+        }
+        return $this->sendSuccess(
+            data: [
+                'booking_id' => (int)$data['booking_id'],
+                'status' => BookingStatus::COMPLETED->value,
+                'status_label' => BookingStatus::COMPLETED->label(),
+                'completed_at' => now()->format('Y-m-d H:i:s'),
+                'can_review' => true,
+            ],
+            message: $result->getMessage()
+        );
+    }
+
+    /**
+     * Hủy booking
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function cancelBooking(Request $request): JsonResponse
+    {
+        $data = $request->validate(
+            [
+                'booking_id' => 'required|numeric',
+                'reason' => 'required|string',
+            ],
+            [
+                'booking_id.required' => __('booking.validate.required'),
+                'booking_id.numeric' => __('booking.validate.invalid'),
+                'reason.string' => __('booking.validate.reason'),
+                'reason.required' => __('booking.validate.reason_required'),
+            ]
+        );
+        $result = $this->bookingService->cancelBooking((int)$data['booking_id'], BookingStatus::CANCELED, $data['reason'], true);
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage()
+            );
+        }
+        return $this->sendSuccess(
+            data: [
+                'booking_id' => (int)$data['booking_id'],
+                'status' => BookingStatus::CANCELED->value,
+                'status_label' => BookingStatus::CANCELED->label(),
+                'canceled_at' => now()->format('Y-m-d H:i:s'),
+                'reason' => $data['reason'] ?? null,
+            ],
+            message: $result->getMessage()
         );
     }
 }

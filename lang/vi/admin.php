@@ -281,7 +281,9 @@ return
                 'qr_banking' => 'Thanh toán qua mã QR',
                 'zalo_pay' => 'Thanh toán qua Zalo Pay',
                 'momo_pay' => 'Thanh toán qua Momo Pay',
+                'withdrawal' => 'Rút tiền',
                 'by_points' => 'Thanh toán qua điểm',
+                'refund' => 'Hoàn tiền',
             ],
             'actions' => [
                 'view' => [
