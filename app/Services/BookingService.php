@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Core\Cache\CacheKey;
+use App\Core\Cache\Caching;
 use App\Core\Controller\FilterDTO;
 use App\Core\Helper;
 use App\Core\LogHelper;
@@ -709,106 +711,106 @@ class BookingService extends BaseService
     {
         DB::beginTransaction();
         try {
-                $userCurrent = Auth::user();
-                // Lock Booking Row
-                $booking = $this->bookingRepository->query()
-                    ->lockForUpdate()
-                    ->find($bookingId);
-                if (!$booking) {
-                    if ($proactive) {
-                        return ServiceReturn::error(
-                            message: __("error.not_found_booking")
-                        );
-                    } else {
-                        throw new \Exception(__("error.not_found_booking"));
-                    }
-                }
-                if ($booking->status != BookingStatus::ONGOING->value) {
-                    if ($proactive) {
-                        return ServiceReturn::error(
-                            message: __("booking.status_not_ongoing")
-                        );
-                    } else {
-                        throw new \Exception(__("booking.status_not_ongoing"));
-                    }
-                }
-                // Kiểm tra quyền (chỉ khi có user - không áp dụng cho cronjob auto-finish)
-                if ($userCurrent && $userCurrent->id != $booking->ktv_user_id && $userCurrent->id != $booking->user_id) {
-                    if ($proactive) {
-                        return ServiceReturn::error(
-                            message: __("common_error.unauthorized")
-                        );
-                    } else {
-                        throw new \Exception(__("common_error.unauthorized"));
-                    }
-                }
-                // Kiểm tra thời gian (chỉ khi user finish thủ công)
-                // Cronjob auto-finish không cần kiểm tra vì đã quá hạn rồi
+            $userCurrent = Auth::user();
+            // Lock Booking Row
+            $booking = $this->bookingRepository->query()
+                ->lockForUpdate()
+                ->find($bookingId);
+            if (!$booking) {
                 if ($proactive) {
-                    $expectedEndTime = Carbon::parse($booking->start_time)->addMinutes($booking->duration);
-                    $now = now();
-                    // Chỉ cho phép finish khi đã đến thời gian dự kiến hoặc đã qua
-                    if ($now->lessThan($expectedEndTime)) {
-                        return ServiceReturn::error(
-                            message: __("booking.not_permission_at_this_time")
-                        );
-                    }
+                    return ServiceReturn::error(
+                        message: __("error.not_found_booking")
+                    );
+                } else {
+                    throw new \Exception(__("error.not_found_booking"));
                 }
-                $booking->status = BookingStatus::COMPLETED->value;
-                $booking->end_time = now();
-                $booking->save();
-                // lấy ví của ktv
-                $wallet = $this->walletRepository->query()
-                    ->where('user_id', $booking->ktv_user_id)
-                    ->lockForUpdate()
-                    ->first();
-                if (!$wallet) {
-                    if ($proactive) {
-                        return ServiceReturn::error(
-                            message: __("error.not_found_wallet")
-                        );
-                    } else {
-                        throw new \Exception(__("error.not_found_wallet"));
-                    }
+            }
+            if ($booking->status != BookingStatus::ONGOING->value) {
+                if ($proactive) {
+                    return ServiceReturn::error(
+                        message: __("booking.status_not_ongoing")
+                    );
+                } else {
+                    throw new \Exception(__("booking.status_not_ongoing"));
                 }
-                // lấy giao dịch được khởi tạo cho ktv khi khách hàng đặt lịch
-                $walletTransaction = $this->walletTransactionRepository->query()->where('wallet_id', $wallet->id)->where('foreign_key', $booking->id)->first();
-                if (!$walletTransaction) {
-                    if ($proactive) {
-                        return ServiceReturn::error(
-                            message: __("error.not_found_wallet_transaction")
-                        );
-                    } else {
-                        throw new \Exception(__("error.not_found_wallet_transaction"));
-                    }
+            }
+            // Kiểm tra quyền (chỉ khi có user - không áp dụng cho cronjob auto-finish)
+            if ($userCurrent && $userCurrent->id != $booking->ktv_user_id && $userCurrent->id != $booking->user_id) {
+                if ($proactive) {
+                    return ServiceReturn::error(
+                        message: __("common_error.unauthorized")
+                    );
+                } else {
+                    throw new \Exception(__("common_error.unauthorized"));
                 }
-                $walletTransaction->status = WalletTransactionStatus::COMPLETED->value;
-                $walletTransaction->save();
-                // tính toán số tiền và trả cho ktv
-                $wallet->balance = $walletTransaction->balance_after;
-                $wallet->save();
-                // tính toán phí hoa hồng và gửi tới các user khác
-                PayCommissionFeeJob::dispatch($bookingId);
-                // gửi thông báo cho ktv và khách hàng
-                SendNotificationJob::dispatch(
-                    userId: $booking->ktv_user_id,
-                    type: NotificationType::BOOKING_COMPLETED,
-                    data: [
-                        'booking_id' => $booking->id,
-                    ]
-                );
+            }
+            // Kiểm tra thời gian (chỉ khi user finish thủ công)
+            // Cronjob auto-finish không cần kiểm tra vì đã quá hạn rồi
+            if ($proactive) {
+                $expectedEndTime = Carbon::parse($booking->start_time)->addMinutes($booking->duration);
+                $now = now();
+                // Chỉ cho phép finish khi đã đến thời gian dự kiến hoặc đã qua
+                if ($now->lessThan($expectedEndTime)) {
+                    return ServiceReturn::error(
+                        message: __("booking.not_permission_at_this_time")
+                    );
+                }
+            }
+            $booking->status = BookingStatus::COMPLETED->value;
+            $booking->end_time = now();
+            $booking->save();
+            // lấy ví của ktv
+            $wallet = $this->walletRepository->query()
+                ->where('user_id', $booking->ktv_user_id)
+                ->lockForUpdate()
+                ->first();
+            if (!$wallet) {
+                if ($proactive) {
+                    return ServiceReturn::error(
+                        message: __("error.not_found_wallet")
+                    );
+                } else {
+                    throw new \Exception(__("error.not_found_wallet"));
+                }
+            }
+            // lấy giao dịch được khởi tạo cho ktv khi khách hàng đặt lịch
+            $walletTransaction = $this->walletTransactionRepository->query()->where('wallet_id', $wallet->id)->where('foreign_key', $booking->id)->first();
+            if (!$walletTransaction) {
+                if ($proactive) {
+                    return ServiceReturn::error(
+                        message: __("error.not_found_wallet_transaction")
+                    );
+                } else {
+                    throw new \Exception(__("error.not_found_wallet_transaction"));
+                }
+            }
+            $walletTransaction->status = WalletTransactionStatus::COMPLETED->value;
+            $walletTransaction->save();
+            // tính toán số tiền và trả cho ktv
+            $wallet->balance = $walletTransaction->balance_after;
+            $wallet->save();
+            // tính toán phí hoa hồng và gửi tới các user khác
+            PayCommissionFeeJob::dispatch($bookingId);
+            // gửi thông báo cho ktv và khách hàng
+            SendNotificationJob::dispatch(
+                userId: $booking->ktv_user_id,
+                type: NotificationType::BOOKING_COMPLETED,
+                data: [
+                    'booking_id' => $booking->id,
+                ]
+            );
 
-                SendNotificationJob::dispatch(
-                    userId: $booking->user_id,
-                    type: NotificationType::BOOKING_COMPLETED,
-                    data: [
-                        'booking_id' => $booking->id,
-                    ]
-                );
+            SendNotificationJob::dispatch(
+                userId: $booking->user_id,
+                type: NotificationType::BOOKING_COMPLETED,
+                data: [
+                    'booking_id' => $booking->id,
+                ]
+            );
             DB::commit();
-                return ServiceReturn::success(
-                    message: __("booking.completed")
-                );
+            return ServiceReturn::success(
+                message: __("booking.completed")
+            );
         } catch (\Exception $exception) {
             DB::rollBack();
             LogHelper::error(
@@ -1006,6 +1008,14 @@ class BookingService extends BaseService
     public function totalIncome(User $user, string $fromDate, string $toDate, string $direction = 'asc'): ServiceReturn
     {
         try {
+            $uniqueKey = 'user_' . $user->id;
+            $cachedData = Caching::getCache(CacheKey::CACHE_KEY_TOTAL_INCOME, $uniqueKey);
+
+            // Nếu có cache và đúng khoảng ngày khách đang yêu cầu thì trả về luôn
+            if ($cachedData && $cachedData['from_date'] === $fromDate && $cachedData['to_date'] === $toDate) {
+                return ServiceReturn::success(data: $cachedData['content']);
+            }
+
             $currentFrom = Carbon::parse($fromDate)->startOfDay();
             $currentTo = Carbon::parse($toDate)->endOfDay();
 
@@ -1062,15 +1072,28 @@ class BookingService extends BaseService
                 ->orderBy('date', $direction)
                 ->get();
 
+            $resultData = [
+                'total_income'     => $totalIncome,
+                'received_income'  => $receivedIncome,
+                'total_customers'  => $totalCustomers,
+                'affiliate_income' => $affiliateIncome,
+                'total_reviews'    => $totalReviews,
+                'chart_data'       => $chartData,
+            ];
+
+            Caching::setCache(
+                key: CacheKey::CACHE_KEY_TOTAL_INCOME,
+                value: [
+                    'from_date' => $fromDate,
+                    'to_date' => $toDate,
+                    'content' => $resultData
+                ],
+                uniqueKey: $uniqueKey, // Chỉ dùng User ID
+                expire: 60 * 5,
+            );
+
             return ServiceReturn::success(
-                data: [
-                    'total_income'     => $totalIncome,
-                    'received_income'  => $receivedIncome,
-                    'total_customers'  => $totalCustomers,
-                    'affiliate_income' => $affiliateIncome,
-                    'total_reviews'    => $totalReviews,
-                    'chart_data'       => $chartData,
-                ]
+                data: $resultData
             );
         } catch (\Exception $exception) {
             LogHelper::error("Lỗi BookingService@totalIncome", $exception);

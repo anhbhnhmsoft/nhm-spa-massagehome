@@ -239,12 +239,6 @@ class KTVController extends BaseController
         }
 
         $validatedData = $validator->validated();
-        $uniqueKey = 'user_' . $request->user()->id;
-        $cachedData = Caching::getCache(CacheKey::CACHE_KEY_TOTAL_INCOME, $uniqueKey);
-
-        if ($cachedData && $cachedData['from_date'] === $validatedData['from_date'] && $cachedData['to_date'] === $validatedData['to_date']) {
-            return $this->sendSuccess(data: $cachedData['content']);
-        }
 
         $result = $this->bookingService->totalIncome($request->user(), $validatedData['from_date'], $validatedData['to_date'], $validatedData['direction'] ?? 'asc');
 
@@ -254,16 +248,6 @@ class KTVController extends BaseController
 
         $incomeData = $result->getData();
 
-        Caching::setCache(
-            key: CacheKey::CACHE_KEY_TOTAL_INCOME,
-            value: [
-                'from_date' => $validatedData['from_date'],
-                'to_date' => $validatedData['to_date'],
-                'content' => $incomeData
-            ],
-            uniqueKey: $uniqueKey,
-            expire: 60 * 5,
-        );
         return $this->sendSuccess(data: new TotalIncomeResource($incomeData));
     }
 }
