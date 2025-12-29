@@ -16,8 +16,7 @@ class MessageRepository extends BaseRepository
     public function queryByRoom(string|int $roomId): Builder
     {
         return $this->query()
-            ->where('room_id', $roomId)
-            ->orderBy('created_at', 'asc');
+            ->where('room_id', $roomId);
     }
 
     public function filterQuery(Builder $query, array $filters): Builder

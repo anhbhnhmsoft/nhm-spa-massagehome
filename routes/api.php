@@ -231,7 +231,7 @@ Route::middleware('set-api-locale')->group(function () {
 
         Route::middleware(['check-ktv'])->group(function () {
             // Lấy danh sách phòng chat KTV
-            Route::get('ktv-conversation', [ChatController::class, 'listKtvConversation']);
+            Route::get('ktv-conversations', [ChatController::class, 'listKtvConversation']);
         });
     });
 

@@ -277,7 +277,6 @@ class AuthController extends BaseController
             token: $data['token'],
             deviceId: $data['device_id'],
             platform: $data['platform'] ?? null,
-            deviceName: $data['device_name'] ?? null,
         );
         if ($resService->isError()) {
             return $this->sendError(
