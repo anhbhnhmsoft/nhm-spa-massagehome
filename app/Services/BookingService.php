@@ -1000,41 +1000,48 @@ class BookingService extends BaseService
     /**
      * Lấy tổng thu nhập trong khoảng thời gian
      * @param User $user
-     * @param string from_date
-     * @param string to_date
-     * @param string direction
+     * @param string type
      * @return ServiceReturn
      */
-    public function totalIncome(User $user, string $fromDate, string $toDate, string $direction = 'asc'): ServiceReturn
+    public function totalIncome(User $user, string $type = 'day'): ServiceReturn
     {
         try {
-            $uniqueKey = 'user_' . $user->id;
-            $cachedData = Caching::getCache(CacheKey::CACHE_KEY_TOTAL_INCOME, $uniqueKey);
+//            $uniqueKey = 'user_' . $user->id;
+//            $cachedData = Caching::getCache(CacheKey::CACHE_KEY_TOTAL_INCOME, $uniqueKey);
 
-            // Nếu có cache và đúng khoảng ngày khách đang yêu cầu thì trả về luôn
-            if ($cachedData && $cachedData['from_date'] === $fromDate && $cachedData['to_date'] === $toDate) {
-                return ServiceReturn::success(data: $cachedData['content']);
-            }
+            // Kiểm tra cache theo type
+//            if ($cachedData && $cachedData['type'] === $type) {
+//                return ServiceReturn::success(data: $cachedData['content']);
+//            }
 
-            $currentFrom = Carbon::parse($fromDate)->startOfDay();
-            $currentTo = Carbon::parse($toDate)->endOfDay();
-
-            // Tính toán kỳ trước (Previous Period)
-            $daysCount = $currentFrom->diffInDays($currentTo) + 1;
-            $lastFrom = $currentFrom->copy()->subDays($daysCount);
-            $lastTo = $currentTo->copy()->subDays($daysCount);
-            // Lấy ví của người dùng
             $wallet = $user->wallet;
             if (!$wallet) return ServiceReturn::error(__("error.wallet_not_found"));
+    
+            $now = Carbon::now();
+            $fromDate = match ($type) {
+                'day' => $now->copy()->startOfDay(),
+                'week' => $now->copy()->subDays(7)->startOfDay(),
+                'month' => $now->copy()->subMonth()->startOfDay(),
+                'quarter' => $now->copy()->subMonths(3)->startOfDay(),
+                'year' => $now->copy()->startOfYear(),
+                default => $now->copy()->startOfDay(),
+            };
+            $toDate = $now->copy()->endOfDay();
 
-            // 1. Tổng thu nhập (Tính cả PENDING và COMPLETED để làm con số Tổng)
+            $chartGroupBy = match ($type) {
+                'day' => "to_char(created_at, 'HH24:00')", // Theo giờ
+                'week', 'year', 'month' => "to_char(created_at, 'YYYY-MM-DD')", // Theo ngày
+                default => "to_char(created_at, 'YYYY-MM-DD')",
+            };
+
+            // 1. Tổng thu nhập (Kỳ này)
             $totalIncome = $this->walletTransactionRepository->query()
                 ->where('wallet_id', $wallet->id)
                 ->where('type', WalletTransactionType::PAYMENT_FOR_KTV->value)
                 ->whereBetween('created_at', [$fromDate, $toDate])
                 ->sum('point_amount');
 
-            // 2. Doanh thu thực nhận (Chỉ lấy COMPLETED - tiền đã vào ví thật)
+            // 2. Doanh thu thực nhận (Status: COMPLETED)
             $receivedIncome = $this->walletTransactionRepository->query()
                 ->where('wallet_id', $wallet->id)
                 ->where('type', WalletTransactionType::PAYMENT_FOR_KTV->value)
@@ -1042,7 +1049,7 @@ class BookingService extends BaseService
                 ->whereBetween('created_at', [$fromDate, $toDate])
                 ->sum('point_amount');
 
-            // 3. Số khách (Số lượng booking FINISHED)
+            // 3. Số khách
             $totalCustomers = $this->bookingRepository->query()
                 ->where('ktv_user_id', $user->id)
                 ->where('status', BookingStatus::COMPLETED->value)
@@ -1063,38 +1070,54 @@ class BookingService extends BaseService
                 ->count();
 
             // 6. Dữ liệu biểu đồ
-            $chartData = $this->walletTransactionRepository->query()
-                ->selectRaw('DATE(created_at) as date, SUM(point_amount) as total')
-                ->where('wallet_id', $wallet->id)
-                ->where('type', WalletTransactionType::PAYMENT_FOR_KTV->value)
-                ->whereBetween('created_at', [$fromDate, $toDate])
-                ->groupBy('date')
-                ->orderBy('date', $direction)
-                ->get();
+            if ($type === 'day') {
+                // Logic chia 4 múi giờ cho PostgreSQL
+                $chartData = $this->walletTransactionRepository->query()
+                    ->selectRaw("
+            CASE
+                WHEN CAST(to_char(created_at, 'HH24') AS INTEGER) < 6 THEN '00:00-06:00'
+                WHEN CAST(to_char(created_at, 'HH24') AS INTEGER) < 12 THEN '06:00-12:00'
+                WHEN CAST(to_char(created_at, 'HH24') AS INTEGER) < 18 THEN '12:00-18:00'
+                ELSE '18:00-00:00'
+            END as date,
+            SUM(point_amount) as total
+        ")
+                    ->where('wallet_id', $wallet->id)
+                    ->where('type', WalletTransactionType::PAYMENT_FOR_KTV->value)
+                    ->whereBetween('created_at', [$fromDate, $toDate])
+                    ->groupByRaw("date")
+                    ->orderByRaw("MIN(created_at) ASC") // Sắp xếp theo thời gian thực tế để đúng thứ tự múi giờ
+                    ->get();
+            } else {
+                // Giữ nguyên logic cho week, month, year
+                $chartData = $this->walletTransactionRepository->query()
+                    ->selectRaw("$chartGroupBy as date, SUM(point_amount) as total")
+                    ->where('wallet_id', $wallet->id)
+                    ->where('type', WalletTransactionType::PAYMENT_FOR_KTV->value)
+                    ->whereBetween('created_at', [$fromDate, $toDate])
+                    ->groupByRaw("date")
+                    ->orderBy('date', 'asc')
+                    ->get();
+            }
 
             $resultData = [
-                'total_income'     => $totalIncome,
-                'received_income'  => $receivedIncome,
-                'total_customers'  => $totalCustomers,
-                'affiliate_income' => $affiliateIncome,
-                'total_reviews'    => $totalReviews,
-                'chart_data'       => $chartData,
+                'total_income' => (float)$totalIncome,
+                'received_income' => (float)$receivedIncome,
+                'total_customers' => $totalCustomers,
+                'affiliate_income' => (float)$affiliateIncome,
+                'total_reviews' => $totalReviews,
+                'chart_data' => $chartData,
+                'type_label' => $type
             ];
 
-            Caching::setCache(
-                key: CacheKey::CACHE_KEY_TOTAL_INCOME,
-                value: [
-                    'from_date' => $fromDate,
-                    'to_date' => $toDate,
-                    'content' => $resultData
-                ],
-                uniqueKey: $uniqueKey, // Chỉ dùng User ID
-                expire: 60 * 5,
-            );
+//            Caching::setCache(
+//                key: CacheKey::CACHE_KEY_TOTAL_INCOME,
+//                value: ['type' => $type, 'content' => $resultData],
+//                uniqueKey: $uniqueKey,
+//                expire: 60 * 5,
+//            );
+            return ServiceReturn::success(data: $resultData);
 
-            return ServiceReturn::success(
-                data: $resultData
-            );
         } catch (\Exception $exception) {
             LogHelper::error("Lỗi BookingService@totalIncome", $exception);
             return ServiceReturn::error(message: $exception->getMessage());

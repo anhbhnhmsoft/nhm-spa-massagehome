@@ -216,18 +216,9 @@ class KTVController extends BaseController
     public function totalIncome(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'from_date' => 'required|date|date_format:Y-m-d',
-            'to_date'   => 'required|date|date_format:Y-m-d|after_or_equal:from_date',
-            'direction' => 'nullable|in:asc,desc',
+            'type'      => 'required|in:day,week,month,quarter,year',
         ], [
-            'from_date.required' => __('validation.from_date.required'),
-            'to_date.required'   => __('validation.to_date.required'),
-            'from_date.date'     => __('validation.from_date.date'),
-            'to_date.date'       => __('validation.to_date.date'),
-            'direction.in'       => __('validation.direction.in'),
-            'from_date.date_format' => __('validation.from_date.date_format'),
-            'to_date.date_format'   => __('validation.to_date.date_format'),
-            'to_date.after_or_equal' => __('validation.to_date.after_or_equal'),
+            'type.in' => __('validation.type.in'),
         ]);
 
         if ($validator->fails()) {
@@ -238,7 +229,7 @@ class KTVController extends BaseController
 
         $validatedData = $validator->validated();
 
-        $result = $this->bookingService->totalIncome($request->user(), $validatedData['from_date'], $validatedData['to_date'], $validatedData['direction'] ?? 'asc');
+        $result = $this->bookingService->totalIncome($request->user(), $validatedData['type']);
 
         if ($result->isError()) {
             return $this->sendError(message: $result->getMessage());

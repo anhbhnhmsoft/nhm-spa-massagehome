@@ -201,4 +201,7 @@ return [
     'direction' => [
         'in' => 'Hướng sắp xếp không hợp lệ.',
     ],
+    'type' => [
+        'in' => 'Loại thống kê không hợp lệ.',
+    ],
 ];
