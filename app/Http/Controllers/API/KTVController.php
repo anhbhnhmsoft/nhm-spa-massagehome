@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Core\Cache\CacheKey;
+use App\Core\Cache\Caching;
 use App\Core\Controller\BaseController;
 use App\Core\Controller\ListRequest;
 use App\Http\Requests\FormServiceRequest;
@@ -10,11 +12,13 @@ use App\Http\Resources\Review\ReviewResource;
 use App\Http\Resources\Service\CategoryResource;
 use App\Http\Resources\Service\DetailServiceResource;
 use App\Http\Resources\Service\ServiceResource;
+use App\Http\Resources\TotalIncome\TotalIncomeResource;
 use App\Services\BookingService;
 use App\Services\ServiceService;
 use App\Services\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Validator;
 
 class KTVController extends BaseController
 {
@@ -205,5 +209,61 @@ class KTVController extends BaseController
         return $this->sendSuccess(
             data: new DetailServiceResource($data),
         );
+    }
+    /**
+     * Lấy tổng thu nhập
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function totalIncome(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'from_date' => 'required|date|date_format:Y-m-d',
+            'to_date'   => 'required|date|date_format:Y-m-d|after_or_equal:from_date',
+            'direction' => 'nullable|in:asc,desc',
+        ], [
+            'from_date.required' => __('validation.from_date.required'),
+            'to_date.required'   => __('validation.to_date.required'),
+            'from_date.date'     => __('validation.from_date.date'),
+            'to_date.date'       => __('validation.to_date.date'),
+            'direction.in'       => __('validation.direction.in'),
+            'from_date.date_format' => __('validation.from_date.date_format'),
+            'to_date.date_format'   => __('validation.to_date.date_format'),
+            'to_date.after_or_equal' => __('validation.to_date.after_or_equal'),
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendValidation(
+                errors: $validator->errors()->toArray(),
+            );
+        }
+
+        $validatedData = $validator->validated();
+        $uniqueKey = 'user_' . $request->user()->id;
+        $cachedData = Caching::getCache(CacheKey::CACHE_KEY_TOTAL_INCOME, $uniqueKey);
+
+        if ($cachedData && $cachedData['from_date'] === $validatedData['from_date'] && $cachedData['to_date'] === $validatedData['to_date']) {
+            return $this->sendSuccess(data: $cachedData['content']);
+        }
+
+        $result = $this->bookingService->totalIncome($request->user(), $validatedData['from_date'], $validatedData['to_date'], $validatedData['direction'] ?? 'asc');
+
+        if ($result->isError()) {
+            return $this->sendError(message: $result->getMessage());
+        }
+
+        $incomeData = $result->getData();
+
+        Caching::setCache(
+            key: CacheKey::CACHE_KEY_TOTAL_INCOME,
+            value: [
+                'from_date' => $validatedData['from_date'],
+                'to_date' => $validatedData['to_date'],
+                'content' => $incomeData
+            ],
+            uniqueKey: $uniqueKey,
+            expire: 60 * 5,
+        );
+        return $this->sendSuccess(data: new TotalIncomeResource($incomeData));
     }
 }

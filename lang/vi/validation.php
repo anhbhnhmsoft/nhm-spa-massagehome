@@ -187,4 +187,18 @@ return [
     'files' => [
         'required_with' => 'Vui lòng tải lên ít nhất 1 ảnh.',
     ],
+    'from_date' => [
+        'required' => 'Vui lòng nhập ngày bắt đầu.',
+        'date' => 'Ngày bắt đầu không hợp lệ.',
+        'date_format' => 'Ngày bắt đầu phải có định dạng yyyy-MM-dd.',
+    ],
+    'to_date' => [
+        'required' => 'Vui lòng nhập ngày kết thúc.',
+        'date' => 'Ngày kết thúc không hợp lệ.',
+        'date_format' => 'Ngày kết thúc phải có định dạng yyyy-MM-dd.',
+        'after_or_equal' => 'Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.',
+    ],
+    'direction' => [
+        'in' => 'Hướng sắp xếp không hợp lệ.',
+    ],
 ];

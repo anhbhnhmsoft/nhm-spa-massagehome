@@ -265,5 +265,7 @@ Route::middleware('set-api-locale')->group(function () {
         Route::delete('delete-service/{id}', [KTVController::class, 'deleteService'])->where('id', '[0-9]+');
         // Bắt đầu dịch vụ
         Route::post('start-booking', [BookingController::class, 'startBooking']);
+        // tổng hợp thu nhập
+        Route::post('total-income', [KTVController::class, 'totalIncome']);
     });
 });
