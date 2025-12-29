@@ -112,11 +112,11 @@ class BookingController extends BaseController
     {
         $data = $request->validate(
             [
-                'booking_id' => 'required|integer',
+                'booking_id' => 'required|numeric',
             ],
             [
                 'booking_id.required' => __('booking.validate.required'),
-                'booking_id.integer' => __('booking.validate.integer'),
+                'booking_id.numeric' => __('booking.validate.invalid'),
             ]
         );
         $result = $this->bookingService->finishBooking((int) $data['booking_id'], true);
