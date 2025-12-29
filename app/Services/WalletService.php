@@ -37,8 +37,8 @@ class WalletService extends BaseService
         try {
             $booking = $this->bookingRepository->query()->find($bookingId);
             if (!$booking) {
-                throw new ServiceException(
-                    message: __("booking.payment.booking_not_found")." $bookingId"
+                return ServiceReturn::error(
+                    message: __("booking.payment.booking_not_found") . " $bookingId"
                 );
             }
 
@@ -49,14 +49,17 @@ class WalletService extends BaseService
                 ->exists();
 
             if ($existingPayment) {
-                throw new ServiceException(
+                return ServiceReturn::error(
                     message: __("booking.payment.success")
                 );
             }
 
-            $walletCustomer = $this->walletRepository->query()->where('user_id', $booking->user_id)->first();
+            $walletCustomer = $this->walletRepository->query()
+                ->where('user_id', $booking->user_id)
+                ->lockForUpdate()
+                ->first();
             if (!$walletCustomer || $walletCustomer->is_active == false) {
-                throw new ServiceException(
+                return ServiceReturn::error(
                     message: __("booking.payment.wallet_customer_not_found")
                 );
             }
@@ -66,7 +69,7 @@ class WalletService extends BaseService
                 // tiến hành hủy booking
                 $booking->status = BookingStatus::CANCELED->value;
                 $booking->save();
-                throw new ServiceException(
+                return ServiceReturn::error(
                     message: __("booking.payment.wallet_customer_not_enough")
                 );
             }
@@ -179,9 +182,11 @@ class WalletService extends BaseService
      */
     public function paymentCommissionFeeForRefferal($amount, int $userId, $bookingId): ServiceReturn
     {
-        DB::beginTransaction();
         try {
-            $wallet = $this->walletRepository->query()->where('user_id', $userId)->first();
+            $wallet = $this->walletRepository->query()
+                ->where('user_id', $userId)
+                ->lockForUpdate()
+                ->first();
             if (!$wallet) {
                 return ServiceReturn::error(
                     message: __("wallet.not_found")
@@ -228,12 +233,10 @@ class WalletService extends BaseService
 
             $wallet->balance += $amount;
             $wallet->save();
-            DB::commit();
             return ServiceReturn::success(
                 message: __("booking.pay_commission_fee_success")
             );
         } catch (\Exception $exception) {
-            DB::rollBack();
             LogHelper::error(
                 message: "Lỗi WalletService@paymentCommissionFeeForRefferal",
                 ex: $exception

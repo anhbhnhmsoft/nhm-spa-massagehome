@@ -291,7 +291,7 @@ class CouponService extends BaseService
         } catch (\Exception $e) {
             DB::rollBack();
             LogHelper::error("Lỗi useCouponAndSyncCache", $e);
-            return ServiceReturn::error(message: __("common_error.server_error"));
+            throw $e;
         }
     }
 }
