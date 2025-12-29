@@ -10,6 +10,7 @@ use App\Http\Resources\Chat\MessageResource;
 use App\Services\ChatService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use function Pest\Laravel\json;
 
 class ChatController extends BaseController
 {
@@ -51,7 +52,8 @@ class ChatController extends BaseController
     public function listMessages(ListRequest $request, string $roomId): JsonResponse
     {
         $dto = $request->getFilterOptions();
-
+        $dto->setSortBy('created_at');
+        $dto->setDirection('desc');
         $result = $this->chatService->messagePagination($dto, $roomId);
 
         if ($result->isError()) {

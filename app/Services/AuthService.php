@@ -269,6 +269,9 @@ class AuthService extends BaseService
             $user->save();
             // Tạo token đăng nhập
             $token = $this->createTokenAuth($user);
+            // Lưu token vào Redis
+            $this->setRedisAuthChatToken($token, $user);
+
             return ServiceReturn::success(data: [
                 'token' => $token,
                 'user' => $user,
@@ -408,17 +411,8 @@ class AuthService extends BaseService
 
             // --- TẦNG 3: REDIS CHAT AUTH ---
             // Lưu token vào Redis
-            $key = config('services.node_server.channel_chat_auth') . ":{$token}";
-            $redisPayload = [
-                'id' => (string)$user->id,
-                'name' => $user->name,
-                'role' => $user->role,
-            ];
-            RedisFacade::connection()->setex(
-                $key,
-                60 * 60 * 1, // 1 giờ
-                json_encode($redisPayload)
-            );
+            $this->setRedisAuthChatToken($token, $user);
+
             return ServiceReturn::success();
         } catch (Exception $exception) {
             LogHelper::error(
@@ -441,7 +435,6 @@ class AuthService extends BaseService
         string  $token,
         string  $deviceId,
         ?string $platform = null,
-        ?string $deviceName = null,
     ): ServiceReturn {
         try {
             $user = Auth::user();
@@ -698,6 +691,27 @@ class AuthService extends BaseService
             ],
             uniqueKey: $phone,
             expire: $this->otpTtl
+        );
+    }
+
+    /**
+     * Lưu token vào Redis cho việc xác thực chat.
+     * @param string $token
+     * @param User $user
+     * @return void
+     */
+    protected function setRedisAuthChatToken(string $token, $user): void
+    {
+        $key = config('services.node_server.channel_chat_auth') . ":{$token}";
+        $redisPayload = [
+            'id' => (string)$user->id,
+            'name' => $user->name,
+            'role' => $user->role,
+        ];
+        RedisFacade::connection()->setex(
+            $key,
+            60 * 60 * 1, // 1 giờ
+            json_encode($redisPayload)
         );
     }
 }

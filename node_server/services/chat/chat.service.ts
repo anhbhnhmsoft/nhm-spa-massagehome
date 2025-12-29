@@ -71,8 +71,10 @@ export class ChatService {
     protected handleConnection(socket: Socket) {
         const user = socket.data.user as UserSession;
         const userPrivateRoom = this.getPrivateUserRoom(user.id);
+
+        // Tự động join phòng cá nhân (để nhận noti riêng)
         socket.join(userPrivateRoom);
-        // Tự động join phòng cá nhân (để nhận noti riêng sau này)
+
         // --- JOIN ROOM CÓ CALLBACK ---
         this.updateUserOnlineStatus(user?.id || '', true);
 

@@ -204,6 +204,9 @@ class ChatService extends BaseService
                 'temp_id' => $tempId ?? null,
             ]);
 
+            // Cập nhật tin nhắn đã đọc trong phòng chat
+            $this->updateSeenAt($roomId, $user->id);
+
             // Cập nhật thời gian tin nhắn mới nhất trong phòng chat
             $room->touch();
 
@@ -214,6 +217,7 @@ class ChatService extends BaseService
             $receiverId = (string)$room->customer_id === (string)$user->id
                 ? (string)$room->ktv_id
                 : (string)$room->customer_id;
+
             $isReceiverOnline = Caching::hasCache(
                 key: CacheKey::CACHE_USER_HEARTBEAT,
                 uniqueKey: $receiverId
@@ -279,18 +283,16 @@ class ChatService extends BaseService
                 throw new ServiceException(message: __('common_error.data_not_found'));
             }
             // Update last_seen_at của user trong room
-            $this->messageRepository->query()
-                ->where('room_id', $roomId)
-                ->where('sender_by', '<>', $user->id)
-                ->whereNull('seen_at')
-                ->update(['seen_at' => now()]);
-             // Cập nhật thời gian tin nhắn mới nhất trong phòng chat
-             $room->touch();
-             return ServiceReturn::success();
+            $this->updateSeenAt($roomId, $user->id);
+            // Cập nhật thời gian tin nhắn mới nhất trong phòng chat
+            $room->touch();
+            DB::commit();
+            return ServiceReturn::success();
         } catch (ServiceException $exception) {
+            DB::rollBack();
             return ServiceReturn::error(message: $exception->getMessage());
-        }
-        catch (\Throwable $exception) {
+        } catch (\Throwable $exception) {
+            DB::rollBack();
             LogHelper::error(
                 message: 'Lỗi ChatService@seenMessage',
                 ex: $exception
@@ -299,6 +301,26 @@ class ChatService extends BaseService
                 message: __('common_error.server_error')
             );
         }
+    }
+
+    /**
+     * --------- Protected Methods ---------
+     */
+
+
+    /**
+     * Cập nhật tin nhắn đã đọc trong phòng chat
+     * @param int $roomId
+     * @param int $userId
+     * @return int
+     */
+    protected function updateSeenAt(int $roomId, int $userId)
+    {
+        return $this->messageRepository->query()
+            ->where('room_id', $roomId)
+            ->where('sender_by', '<>', $userId)
+            ->whereNull('seen_at')
+            ->update(['seen_at' => now()]);
     }
 }
 
