@@ -107,6 +107,7 @@ class ServicesTable
                         ->modalDescription(__('admin.common.modal.force_delete_confirm'))
                         ->modalSubmitActionLabel(__('admin.common.action.confirm_delete')),
                 ]),
-            ]);
+            ])
+            ->poll('3s');
     }
 }

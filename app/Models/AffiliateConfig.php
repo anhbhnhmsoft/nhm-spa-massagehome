@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class AffiliateConfig extends Model
 {
-    use HasFactory, SoftDeletes, HasBigIntId;
+    use SoftDeletes, HasBigIntId;
 
     /**
      * The table associated with the model.

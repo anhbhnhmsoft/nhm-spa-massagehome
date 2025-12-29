@@ -8,7 +8,7 @@ use App\Enums\BookingStatus;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\WalletTransactionType;
 use App\Enums\WalletTransactionStatus;
-use App\Repositories\AffiliateEarningRepository;
+//        use App\Repositories\AffiliateEarningRepository;
 use App\Repositories\BookingRepository;
 use App\Repositories\ReviewRepository;
 use App\Repositories\UserRepository;
@@ -25,7 +25,7 @@ class DashboardService extends BaseService
         protected UserReviewApplicationRepository $userReviewApplicationRepository,
         protected WalletTransactionRepository $walletTransactionRepository,
         protected ReviewRepository $reviewRepository,
-        protected AffiliateEarningRepository $affiliateEarningRepository,
+//        protected AffiliateEarningRepository $affiliateEarningRepository,
     ) {
         parent::__construct();
     }
