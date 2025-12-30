@@ -4,10 +4,12 @@ namespace App\Http\Controllers\API;
 
 use App\Core\Controller\BaseController;
 use App\Core\Controller\ListRequest;
+use App\Enums\UserRole;
 use App\Http\Resources\Review\ReviewResource;
 use App\Services\ReviewService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ReviewController extends BaseController
 {
@@ -56,6 +58,12 @@ class ReviewController extends BaseController
     public function listReview(ListRequest $request): JsonResponse
     {
         $dto = $request->getFilterOptions();
+        $user = Auth::user();
+
+        // Nếu là KTV, chỉ hiển thị đánh giá của KTV đó
+        if ($user && $user->role === UserRole::KTV->value){
+            $dto->addFilter('user_id', $user->id);
+        }
         $result = $this->reviewService->reviewPaginate($dto);
         $data = $result->getData();
         return $this->sendSuccess(data: ReviewResource::collection($data)->response()->getData());

@@ -189,7 +189,43 @@ class ConfigService extends BaseService
                 ex: $exception
             );
             return ServiceReturn::error(
-                message: $exception->getMessage()
+                message: __('common_error.server_error')
+            );
+        }
+    }
+
+    /**
+     * Lấy affiliate config theo role
+     * @param UserRole $role
+     * @return ServiceReturn
+     */
+    public function getAffiliateConfigByRole(UserRole $role): ServiceReturn
+    {
+        try {
+            $config = $this->affiliateConfigRepository->query()
+                ->where('target_role', $role->value)
+                ->where('is_active', true)
+                ->first();
+            if (!$config) {
+                return ServiceReturn::error(
+                    message: __('error.config_not_found')
+                );
+            }
+            return ServiceReturn::success(
+                data: [
+                    'target_role' => $config->target_role,
+                    'commission_rate' => $config->commission_rate,
+                    'min_commission' => $config->min_commission,
+                    'max_commission' => $config->max_commission,
+                ]
+            );
+        } catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi SettingService@getAffiliateConfigByRole",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: __('common_error.server_error')
             );
         }
     }
