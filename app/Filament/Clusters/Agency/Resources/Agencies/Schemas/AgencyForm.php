@@ -94,6 +94,9 @@ class AgencyForm
                                             ->default(fn($record) => $record?->role ?? UserRole::AGENCY->value)
                                             ->dehydrateStateUsing(fn() => UserRole::AGENCY->value)
                                             ->dehydrated(true),
+                                        Hidden::make('is_public')
+                                            ->default(false)
+                                            ->dehydrated(true),
                                     ])->columnSpan(1),
 
                                 Section::make(__('admin.ktv_apply.file_type.identity_card_back'))
@@ -114,6 +117,9 @@ class AgencyForm
                                         Hidden::make('role')
                                             ->default(fn($record) => $record?->role ?? UserRole::AGENCY->value)
                                             ->dehydrateStateUsing(fn() => UserRole::AGENCY->value)
+                                            ->dehydrated(true),
+                                        Hidden::make('is_public')
+                                            ->default(false)
                                             ->dehydrated(true),
                                     ])->columnSpan(1),
                             ])

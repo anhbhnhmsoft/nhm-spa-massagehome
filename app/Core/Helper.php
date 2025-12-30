@@ -136,4 +136,41 @@ final class Helper
             Language::CHINESE->value    => !empty($data[Language::CHINESE->value]) ? $data[Language::CHINESE->value] : $fallback,
         ];
     }
+
+    /**
+     * Helper xóa file. Hỗ trợ string, JSON string, hoặc array.
+     * @param string|array|null $path
+     * @param string $disk
+     * @return void
+     */
+    public static function deleteFile(string|array|null $path, string $disk = 'public'): void
+    {
+        if (empty($path)) {
+            return;
+        }
+
+        // Nếu là array, duyệt đệ quy
+        if (is_array($path)) {
+            foreach ($path as $p) {
+                self::deleteFile($p, $disk);
+            }
+            return;
+        }
+
+        // Nếu là chuỗi JSON, log decode và gọi đệ quy
+        if (is_string($path) && Str::isJson($path)) {
+            $decoded = json_decode($path, true);
+            if (is_array($decoded)) {
+                self::deleteFile($decoded, $disk);
+                return;
+            }
+        }
+
+        // Xóa file (xử lý xóa storage)
+        if (is_string($path)) {
+            if (Storage::disk($disk)->exists($path)) {
+                Storage::disk($disk)->delete($path);
+            }
+        }
+    }
 }

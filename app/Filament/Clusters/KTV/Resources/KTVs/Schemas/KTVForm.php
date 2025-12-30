@@ -217,6 +217,9 @@ class KTVForm
                                     ->default(fn($record) => $record?->role ?? UserRole::KTV->value)
                                     ->dehydrateStateUsing(fn() => UserRole::KTV->value)
                                     ->dehydrated(true),
+                                Hidden::make('is_public')
+                                    ->default(false)
+                                    ->dehydrated(true),
                             ])->columnSpan(1),
 
                         Section::make(__('admin.ktv_apply.file_type.identity_card_back'))
@@ -237,6 +240,9 @@ class KTVForm
                                 Hidden::make('role')
                                     ->default(fn($record) => $record?->role ?? UserRole::KTV->value)
                                     ->dehydrateStateUsing(fn() => UserRole::KTV->value)
+                                    ->dehydrated(true),
+                                Hidden::make('is_public')
+                                    ->default(false)
                                     ->dehydrated(true),
                             ])->columnSpan(1),
 
@@ -260,6 +266,9 @@ class KTVForm
                                     ->default(fn($record) => $record?->role ?? UserRole::KTV->value)
                                     ->dehydrateStateUsing(fn() => UserRole::KTV->value)
                                     ->dehydrated(fn(Get $get) => filled($get('file_path'))),
+                                Hidden::make('is_public')
+                                    ->default(false)
+                                    ->dehydrated(true),
                             ])->columnSpanFull(),
 
                         Repeater::make('gallery')
@@ -273,7 +282,7 @@ class KTVForm
                                 FileUpload::make('file_path')
                                     ->label(__('admin.ktv_apply.file_type.ktv_image_display'))
                                     ->directory(fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
-                                    ->disk('private')
+                                    ->disk('public')
                                     ->required()
                                     ->image()
                                     ->maxSize(102400)
@@ -283,6 +292,9 @@ class KTVForm
                                 Hidden::make('role')
                                     ->default(fn($record) => $record?->role ?? UserRole::KTV->value)
                                     ->dehydrateStateUsing(fn() => UserRole::KTV->value)
+                                    ->dehydrated(true),
+                                Hidden::make('is_public')
+                                    ->default(true)
                                     ->dehydrated(true),
                             ])
                             ->minItems(3)

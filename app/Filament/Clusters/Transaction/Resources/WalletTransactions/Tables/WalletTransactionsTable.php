@@ -87,6 +87,7 @@ class WalletTransactionsTable
                         })
                         ->requiresConfirmation(),
                 ])
-            ]);
+            ])
+            ->poll('1s');
     }
 }

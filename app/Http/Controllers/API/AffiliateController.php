@@ -5,7 +5,6 @@ namespace App\Http\Controllers\API;
 use App\Core\Controller\BaseController;
 use App\Core\Controller\ListRequest;
 use App\Http\Resources\Auth\AffiliateUserResource;
-use App\Jobs\SigninAffiliateHandleJob; // Vẫn cần dùng Job cho Match
 use App\Services\AffiliateService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
