@@ -33,4 +33,5 @@ return [
     'not_found_referred_customer' => 'Không tìm thấy người giới thiệu khách hàng',
     'not_found_referred_staff' => 'Không tìm thấy người giới thiệu nhân viên',
     'config_not_found' => 'Cấu hình không tồn tại',
+    'contract_not_found' => 'Hợp đồng không tồn tại',
 ];

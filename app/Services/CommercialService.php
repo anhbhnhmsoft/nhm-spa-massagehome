@@ -8,6 +8,7 @@ use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
 use App\Repositories\BannerRepository;
 use App\Repositories\CouponRepository;
+use App\Repositories\StaticContractRepository;
 use Illuminate\Support\Facades\App;
 
 class CommercialService extends BaseService
@@ -16,6 +17,7 @@ class CommercialService extends BaseService
         protected BannerRepository $bannerRepository,
         protected CouponRepository $couponRepository,
         protected CouponService $couponService,
+        protected StaticContractRepository $staticContractRepository,
     ) {
         parent::__construct();
     }
@@ -126,6 +128,38 @@ class CommercialService extends BaseService
         catch (\Exception $exception) {
             LogHelper::error(
                 message: "Lỗi CommercialService@collectCoupon",
+                ex: $exception,
+            );
+            return ServiceReturn::error(
+                message: __("common_error.server_error")
+            );
+        }
+    }
+    /**
+     * Lấy thông tin hợp đồng
+     * @param string $slug
+     * @return ServiceReturn
+     */
+    public function getContract(string $slug): ServiceReturn
+    {
+        try {
+            $contract = $this->staticContractRepository->query()->where('slug', $slug)->first();
+            if (!$contract) {
+                return ServiceReturn::error(
+                    message: __("error.contract_not_found")
+                );
+            }
+            return ServiceReturn::success(
+                data: $contract
+            );
+        } catch (ServiceException $exception) {
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        }
+        catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi CommercialService@getContract",
                 ex: $exception,
             );
             return ServiceReturn::error(

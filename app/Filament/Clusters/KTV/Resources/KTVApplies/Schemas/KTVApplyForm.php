@@ -22,7 +22,6 @@ use Filament\Forms\Components\TextInput;
 use Filament\Resources\Pages\CreateRecord;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 
 class KTVApplyForm
@@ -176,12 +175,8 @@ class KTVApplyForm
                 Section::make(__('admin.ktv_apply.fields.files'))
                     ->schema([
                         Section::make(__('admin.ktv_apply.file_type.identity_card_front'))
-                            ->relationship('cccdFront')
                             ->schema([
-                                Hidden::make('type')
-                                    ->default(UserFileType::IDENTITY_CARD_FRONT)
-                                    ->dehydrated(true),
-                                FileUpload::make('file_path')
+                                FileUpload::make('cccd_front_path')
                                     ->label(__('admin.ktv_apply.file_type.identity_card_front'))
                                     ->directory(fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
                                     ->disk('private')
@@ -189,23 +184,13 @@ class KTVApplyForm
                                     ->image()
                                     ->maxSize(102400)
                                     ->downloadable()
-                                    ->columnSpanFull(),
-                                Hidden::make('role')
-                                    ->default(fn($record) => $record?->role ?? UserRole::KTV->value)
-                                    ->dehydrateStateUsing(fn() => UserRole::KTV->value)
-                                    ->dehydrated(true),
-                                Hidden::make('is_public')
-                                    ->default(false)
-                                    ->dehydrated(true),
+                                    ->columnSpanFull()
+                                    ->afterStateHydrated(fn($component, $record) => $component->state($record?->cccdFront()->first()?->file_path)),
                             ])->columnSpan(1),
 
                         Section::make(__('admin.ktv_apply.file_type.identity_card_back'))
-                            ->relationship('cccdBack')
                             ->schema([
-                                Hidden::make('type')
-                                    ->default(UserFileType::IDENTITY_CARD_BACK)
-                                    ->dehydrated(true),
-                                FileUpload::make('file_path')
+                                FileUpload::make('cccd_back_path')
                                     ->label(__('admin.ktv_apply.file_type.identity_card_back'))
                                     ->directory(fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
                                     ->disk('private')
@@ -213,23 +198,13 @@ class KTVApplyForm
                                     ->image()
                                     ->maxSize(102400)
                                     ->downloadable()
-                                    ->columnSpanFull(),
-                                Hidden::make('role')
-                                    ->default(fn($record) => $record?->role ?? UserRole::KTV->value)
-                                    ->dehydrateStateUsing(fn() => UserRole::KTV->value)
-                                    ->dehydrated(true),
-                                Hidden::make('is_public')
-                                    ->default(false)
-                                    ->dehydrated(true),
+                                    ->columnSpanFull()
+                                    ->afterStateHydrated(fn($component, $record) => $component->state($record?->cccdBack()->first()?->file_path)),
                             ])->columnSpan(1),
 
                         Section::make(__('admin.ktv_apply.file_type.license'))
-                            ->relationship('certificate')
                             ->schema([
-                                Hidden::make('type')
-                                    ->default(UserFileType::LICENSE)
-                                    ->dehydrated(fn(Get $get) => filled($get('file_path'))),
-                                FileUpload::make('file_path')
+                                FileUpload::make('certificate_path')
                                     ->label(__('admin.ktv_apply.file_type.license'))
                                     ->directory(fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
                                     ->disk('private')
@@ -237,16 +212,9 @@ class KTVApplyForm
                                     ->image()
                                     ->maxSize(102400)
                                     ->downloadable()
-                                    ->dehydrated(fn($state) => filled($state))
                                     ->columnSpanFull()
-                                    ->deletable(),
-                                Hidden::make('role')
-                                    ->default(fn($record) => $record?->role ?? UserRole::KTV->value)
-                                    ->dehydrateStateUsing(fn() => UserRole::KTV->value)
-                                    ->dehydrated(fn(Get $get) => filled($get('file_path'))),
-                                Hidden::make('is_public')
-                                    ->default(false)
-                                    ->dehydrated(true),
+                                    ->deletable()
+                                    ->afterStateHydrated(fn($component, $record) => $component->state($record?->certificate()->first()?->file_path)),
                             ])->columnSpanFull(),
 
                         Repeater::make('gallery')
@@ -255,8 +223,7 @@ class KTVApplyForm
                             ->grid(2)
                             ->schema([
                                 Hidden::make('type')
-                                    ->default(UserFileType::KTV_IMAGE_DISPLAY)
-                                    ->dehydrated(true),
+                                    ->default(UserFileType::KTV_IMAGE_DISPLAY),
                                 FileUpload::make('file_path')
                                     ->label(__('admin.ktv_apply.file_type.ktv_image_display'))
                                     ->directory(fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
@@ -267,12 +234,9 @@ class KTVApplyForm
                                     ->downloadable()
                                     ->columnSpanFull(),
                                 Hidden::make('role')
-                                    ->default(fn($record) => $record?->role ?? UserRole::KTV->value)
-                                    ->dehydrateStateUsing(fn() => UserRole::KTV->value)
-                                    ->dehydrated(true),
+                                    ->default(fn($record) => $record?->role ?? UserRole::KTV->value),
                                 Hidden::make('is_public')
-                                    ->default(true)
-                                    ->dehydrated(true),
+                                    ->default(true),
                             ])
                             ->minItems(3)
                             ->maxItems(5)

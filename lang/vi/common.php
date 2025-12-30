@@ -17,6 +17,7 @@ return [
         'max_items' => 'Giá trị này phải có tối đa :max mục',
         'max_length' => 'Giá trị này không được vượt quá :max ký tự',
         'title' => 'Có lỗi xảy ra, vui lòng thử lại sau!',
+        'forbidden' => 'Bạn không có quyền thực hiện hành động này',
     ],
     'unit' => [
         'minute' => 'phút',

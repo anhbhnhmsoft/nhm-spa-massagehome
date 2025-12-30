@@ -28,6 +28,7 @@ use App\Repositories\NotificationRepository;
 use App\Repositories\ProvinceRepository;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
+use App\Repositories\StaticContractRepository;
 use App\Repositories\UserFileRepository;
 use App\Repositories\UserProfileRepository;
 use App\Repositories\UserRepository;
@@ -52,6 +53,7 @@ use App\Services\UserWithdrawInfoService;
 use App\Services\WalletService;
 use App\Services\AffiliateService;
 use App\Services\ReviewService;
+use App\Services\UserFileService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -101,6 +103,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(ChatRoomRepository::class);
         $this->app->singleton(MessageRepository::class);
         $this->app->singleton(UserWithdrawInfoRepository::class);
+        $this->app->singleton(StaticContractRepository::class);
     }
 
     /**
@@ -127,6 +130,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(ProvinceService::class);
         $this->app->singleton(ReviewService::class);
         $this->app->singleton(UserWithdrawInfoService::class);
+        $this->app->singleton(UserFileService::class);
     }
 
     /**

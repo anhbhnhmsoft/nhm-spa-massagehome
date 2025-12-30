@@ -5,14 +5,12 @@ namespace App\Filament\Clusters\Agency\Resources\Agencies\Schemas;
 use App\Core\Helper;
 use App\Enums\DirectFile;
 use App\Enums\ReviewApplicationStatus;
-use App\Enums\UserFileType;
 use App\Enums\UserRole;
 use App\Models\Province;
 use App\Services\LocationService;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Placeholder;
-use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -76,51 +74,31 @@ class AgencyForm
                         Section::make(__('admin.agency_apply.fields.files'))
                             ->schema([
                                 Section::make(__('admin.ktv_apply.file_type.identity_card_front'))
-                                    ->relationship('cccdFront')
                                     ->schema([
-                                        Hidden::make('type')
-                                            ->default(UserFileType::IDENTITY_CARD_FRONT)
-                                            ->dehydrated(true),
-                                        FileUpload::make('file_path')
+                                        FileUpload::make('cccd_front_path')
                                             ->label(__('admin.ktv_apply.file_type.identity_card_front'))
-                                            ->directory( fn($record) => DirectFile::makePathById(DirectFile::AGENCY, $record?->id ?? Helper::getTimestampAsId()))
+                                            ->directory(fn($record) => DirectFile::makePathById(DirectFile::AGENCY, $record?->id ?? Helper::getTimestampAsId()))
                                             ->disk('private')
                                             ->required()
                                             ->image()
                                             ->maxSize(102400)
                                             ->downloadable()
-                                            ->columnSpanFull(),
-                                        Hidden::make('role')
-                                            ->default(fn($record) => $record?->role ?? UserRole::AGENCY->value)
-                                            ->dehydrateStateUsing(fn() => UserRole::AGENCY->value)
-                                            ->dehydrated(true),
-                                        Hidden::make('is_public')
-                                            ->default(false)
-                                            ->dehydrated(true),
+                                            ->columnSpanFull()
+                                            ->afterStateHydrated(fn($component, $record) => $component->state($record?->cccdFront()->first()?->file_path)),
                                     ])->columnSpan(1),
 
                                 Section::make(__('admin.ktv_apply.file_type.identity_card_back'))
-                                    ->relationship('cccdBack')
                                     ->schema([
-                                        Hidden::make('type')
-                                            ->default(UserFileType::IDENTITY_CARD_BACK)
-                                            ->dehydrated(true),
-                                        FileUpload::make('file_path')
+                                        FileUpload::make('cccd_back_path')
                                             ->label(__('admin.ktv_apply.file_type.identity_card_back'))
-                                            ->directory( fn($record) => DirectFile::makePathById(DirectFile::AGENCY, $record?->id ?? Helper::getTimestampAsId()))
+                                            ->directory(fn($record) => DirectFile::makePathById(DirectFile::AGENCY, $record?->id ?? Helper::getTimestampAsId()))
                                             ->disk('private')
                                             ->required()
                                             ->image()
                                             ->maxSize(102400)
                                             ->downloadable()
-                                            ->columnSpanFull(),
-                                        Hidden::make('role')
-                                            ->default(fn($record) => $record?->role ?? UserRole::AGENCY->value)
-                                            ->dehydrateStateUsing(fn() => UserRole::AGENCY->value)
-                                            ->dehydrated(true),
-                                        Hidden::make('is_public')
-                                            ->default(false)
-                                            ->dehydrated(true),
+                                            ->columnSpanFull()
+                                            ->afterStateHydrated(fn($component, $record) => $component->state($record?->cccdBack()->first()?->file_path)),
                                     ])->columnSpan(1),
                             ])
                             ->columns(2)

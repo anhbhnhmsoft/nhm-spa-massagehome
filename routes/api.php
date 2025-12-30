@@ -216,6 +216,7 @@ Route::middleware('set-api-locale')->group(function () {
     });
 
     Route::prefix('commercial')->group(function () {
+        Route::get('contract/{slug}', [CommercialController::class, 'getContract']);
         // Lấy danh sách banner cho homepage
         Route::get('banners', [CommercialController::class, 'getBanner']);
         // Lấy danh sách coupon ads cho homepage
@@ -274,5 +275,11 @@ Route::middleware('set-api-locale')->group(function () {
         Route::get('total-income', [KTVController::class, 'totalIncome']);
         // lấy profile ktv ( hình ảnh )
         Route::get('profile', [KTVController::class, 'profile']);
+        // cập nhật profile ktv
+        Route::post('edit-profile-ktv', [KTVController::class, 'editProfileKtv']);
+        // upload ảnh ktv
+        Route::post('upload-ktv-images', [KTVController::class, 'uploadKtvImages']);
+        // xóa ảnh ktv
+        Route::delete('delete-ktv-image/{id}', [KTVController::class, 'deleteKtvImage'])->where('id', '[0-9]+');
     });
 });
