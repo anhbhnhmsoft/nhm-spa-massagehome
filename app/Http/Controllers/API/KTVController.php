@@ -11,11 +11,15 @@ use App\Http\Resources\Service\CategoryResource;
 use App\Http\Resources\Service\DetailServiceResource;
 use App\Http\Resources\Service\ServiceResource;
 use App\Http\Resources\TotalIncome\TotalIncomeResource;
+use App\Http\Resources\User\ProfileKTVResource;
+use App\Http\Resources\User\UserFileResource;
 use App\Services\BookingService;
 use App\Services\ServiceService;
+use App\Services\UserFileService;
 use App\Services\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 class KTVController extends BaseController
@@ -24,6 +28,7 @@ class KTVController extends BaseController
         protected UserService    $userService,
         protected BookingService $bookingService,
         protected ServiceService $serviceService,
+        protected UserFileService $userFileService,
     ) {
         /**
          * Tất cả các endpoint trong controller này đều yêu cầu quyền KTV, qua validate middleware CheckKtv
@@ -219,6 +224,7 @@ class KTVController extends BaseController
             'type'      => 'required|in:day,week,month,quarter,year',
         ], [
             'type.in' => __('validation.type.in'),
+            'type.required' => __('validation.type.required'),
         ]);
 
         if ($validator->fails()) {
@@ -238,5 +244,130 @@ class KTVController extends BaseController
         $incomeData = $result->getData();
 
         return $this->sendSuccess(data: new TotalIncomeResource($incomeData));
+    }
+
+    /**
+     * Lấy profile KTV
+     * @return JsonResponse
+     */
+    public function profile(Request $request): JsonResponse
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        return $this->sendSuccess(data: new ProfileKTVResource($user));
+    }
+
+    /**
+     * Update profile KTV
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function editProfileKtv(Request $request): JsonResponse
+    {
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'bio.vi' => 'nullable|string',
+                'bio.en' => 'nullable|string',
+                'bio.cn' => 'nullable|string',
+                'experience' => 'nullable|integer',
+                'old_pass' => 'nullable|string',
+                'new_pass' => 'required_with:old_pass|string|min:6',
+                'lat' => 'nullable|numeric',
+                'lng' => 'nullable|numeric',
+                'address' => 'nullable|string',
+                'gender' => 'nullable|integer',
+                'date_of_birth' => 'nullable|date',
+            ],
+            [
+                'bio.vi.required' => __('validation.bio.vi.required'),
+                'bio.en.required' => __('validation.bio.en.required'),
+                'bio.cn.required' => __('validation.bio.cn.required'),
+                'old_pass.required' => __('validation.old_pass.required'),
+                'new_pass.required' => __('validation.new_pass.required'),
+                'lat.required' => __('validation.lat.required'),
+                'lng.required' => __('validation.lng.required'),
+                'address.required' => __('validation.address.required'),
+                'gender.required' => __('validation.gender.required'),
+                'date_of_birth.required' => __('validation.date_of_birth.required'),
+                'date_of_birth.date' => __('validation.date_of_birth.date'),
+                'date_of_birth.date_format' => __('validation.date_of_birth.date_format'),
+            ]
+        );
+
+        if ($validator->fails()) {
+            return $this->sendValidation(
+                errors: $validator->errors()->toArray(),
+            );
+        }
+
+        $data = $validator->validated();
+        $res = $this->userService->updateKtvProfile($data);
+        if ($res->isError()) {
+            return $this->sendError($res->getMessage());
+        }
+        return $this->sendSuccess(
+            data: new ProfileKTVResource($res->getData()),
+            message: __('admin.notification.success.update_success')
+        );
+    }
+
+    /**
+     * Upload KTV images (Display)
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function uploadKtvImages(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'images' => 'required|array|min:1',
+            'images.*' => 'required|file|image|mimes:jpeg,png,jpg,gif,svg|max:10240',
+        ], [
+            'images.required' => __('validation.images.required'),
+            'images.array' => __('validation.images.array'),
+            'images.min' => __('validation.images.min', ['min' => 1]),
+            'images.*.required' => __('validation.images.required'),
+            'images.*.image' => __('validation.images.image'),
+            'images.*.mimes' => __('validation.images.mimes'),
+            'images.*.max' => __('validation.images.max', ['max' => '10mb']),
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendValidation(
+                errors: $validator->errors()->toArray(),
+            );
+        }
+        $images = $request->file('images');
+        $result = $this->userFileService->uploadKtvImages($images);
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage());
+        }
+
+        return $this->sendSuccess(
+            data: UserFileResource::collection($result->getData()),
+            message: __('admin.ktv.messages.upload_success')
+        );
+    }
+
+    /**
+     * Delete KTV image
+     *
+     * @param int $id
+     * @return JsonResponse
+     */
+    public function deleteKtvImage(int $id): JsonResponse
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $result = $this->userFileService->deleteUserFile($id, $user->id);
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage());
+        }
+
+        return $this->sendSuccess(message: __('admin.ktv.messages.delete_success'));
     }
 }

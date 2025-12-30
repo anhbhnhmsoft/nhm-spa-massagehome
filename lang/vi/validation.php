@@ -203,5 +203,42 @@ return [
     ],
     'type' => [
         'in' => 'Loại thống kê không hợp lệ.',
+        'required' => 'Vui lòng chọn loại thống kê.',
     ],
+    'images' => [
+        'required' => 'Vui lòng tải lên ít nhất 1 ảnh.',
+        'array' => 'Danh sách ảnh phải là mảng.',
+        'min' => 'Danh sách ảnh phải có ít nhất 1 phần tử.',
+        'string' => 'Đường dẫn ảnh phải là chuỗi.',
+        'mimes' => 'File phải là hình ảnh',
+        'image' => 'File phải là hình ảnh',
+        'max' => 'Dung lượng hình ảnh tối đa :max',
+    ],
+    'date_of_birth' => [
+        'required' => 'Vui lòng nhập ngày sinh.',
+        'date' => 'Ngày sinh không hợp lệ.',
+        'date_format' => 'Ngày sinh phải có định dạng yyyy-MM-dd.',
+    ],
+    'old_pass' => [
+        'required' => 'Vui lòng nhập mật khẩu cũ.',
+        'string' => 'Mật khẩu cũ phải là chuỗi.',
+    ],
+    'new_pass' => [
+        'required' => 'Vui lòng nhập mật khẩu mới.',
+        'string' => 'Mật khẩu mới phải là chuỗi.',
+    ],
+    'bio' => [
+        'vi' => [
+            'required' => 'Vui lòng nhập mô tả tiếng Việt.',
+            'string' => 'Mô tả tiếng Việt phải là chuỗi.',
+        ],
+        'cn' => [
+            'required' => 'Vui lòng nhập mô tả tiếng Trung.',
+            'string' => 'Mô tả tiếng Trung phải là chuỗi.',
+        ],
+        'en' => [
+            'required' => 'Vui lòng nhập mô tả tiếng Anh.',
+            'string' => 'Mô tả tiếng Anh phải là chuỗi.',
+        ],
+    ]
 ];

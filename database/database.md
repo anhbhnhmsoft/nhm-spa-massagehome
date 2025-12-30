@@ -485,3 +485,36 @@
     - content (text) -- Nội dung tin nhắn
     - seen_at (timestamp, nullable) -- Thời gian đã đọc tin nhắn
     - timestamps
+
+# pages
+    # note
+    - Bảng pages lưu trữ nội dung trang tĩnh ở web.
+
+    # relations
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - title (json) -- Tiêu đề trang tĩnh (lưu trữ dưới dạng JSON đa ngôn ngữ)
+    - slug (string, unique) -- Đường dẫn trang tĩnh
+    - content (json, nullable) -- Nội dung trang tĩnh (lưu trữ dưới dạng JSON đa ngôn ngữ)
+    - meta_title (json, nullable) -- Tiêu đề meta (lưu trữ dưới dạng JSON đa ngôn ngữ)
+    - meta_description (json, nullable) -- Mô tả meta (lưu trữ dưới dạng JSON đa ngôn ngữ)
+    - meta_keywords (json, nullable) -- Từ khóa meta (lưu trữ dưới dạng JSON đa ngôn ngữ)
+    - og_image (string, nullable) -- Hình ảnh meta (lưu trữ dưới dạng JSON đa ngôn ngữ)
+    - is_active (boolean, default true) -- Trạng thái kích hoạt
+    - softDeletes
+    - timestamps
+# static contract 
+    # note
+    - Bảng static_contracts lưu trữ thông tin hợp đồng tĩnh.
+
+    # relations
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - title (json) -- Tiêu đề hợp đồng (lưu trữ dưới dạng JSON đa ngôn ngữ)
+    - path (string) -- Đường dẫn file hợp đồng
+    - note (json, nullable) -- Ghi chú (lưu trữ dưới dạng JSON đa ngôn ngữ)
+    - slug (string, unique) -- Đường dẫn hợp đồng
+    - softDeletes
+    - timestamps

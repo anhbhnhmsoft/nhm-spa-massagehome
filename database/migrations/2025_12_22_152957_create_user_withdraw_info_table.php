@@ -11,14 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('user_withdraw_info', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->smallInteger('type')->nullable()->comment('Loại tài khoản xem trong UserWithdrawInfo');
-            $table->json('config')->nullable()->comment('Cấu hình tài khoản rút tiền');
-            $table->timestamps();
-            $table->softDeletes();
-        });
+//        Schema::create('user_withdraw_info', function (Blueprint $table) {
+//            $table->id();
+//            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+//            $table->smallInteger('type')->nullable()->comment('Loại tài khoản xem trong UserWithdrawInfo');
+//            $table->json('config')->nullable()->comment('Cấu hình tài khoản rút tiền');
+//            $table->timestamps();
+//            $table->softDeletes();
+//        });
     }
 
     /**

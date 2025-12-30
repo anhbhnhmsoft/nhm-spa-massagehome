@@ -36,6 +36,7 @@ class AffiliateConfigForm extends Component implements HasForms
             ->schema([
                 Repeater::make('configs')
                     ->label(__('admin.setting.section.affiliate_config'))
+                    ->columns(3)
                     ->schema([
                         TextInput::make('name')
                             ->label(__('admin.common.table.name'))

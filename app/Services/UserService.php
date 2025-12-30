@@ -49,8 +49,7 @@ class UserService extends BaseService
         protected ConfigService                   $configService,
         protected WalletTransactionRepository     $walletTransactionRepository,
         protected ReviewRepository                $reviewRepository,
-    )
-    {
+    ) {
         parent::__construct();
     }
 
@@ -127,7 +126,6 @@ class UserService extends BaseService
                     'review_today' => $reviewToday,
                 ]
             );
-
         } catch (ServiceException $e) {
             return ServiceReturn::error($e->getMessage());
         } catch (\Exception $e) {
@@ -957,6 +955,71 @@ class UserService extends BaseService
                     perPage: $dto->perPage,
                     currentPage: $dto->page
                 )
+            );
+        }
+    }
+
+    public function updateKtvProfile(array $data): ServiceReturn
+    {
+        try {
+            /** @var \App\Models\User $user */
+            $user = Auth::user();
+            // 1. Update Password if old_pass provided
+            if (!empty($data['old_pass'])) {
+                if (!\Illuminate\Support\Facades\Hash::check($data['old_pass'], $user->password)) {
+                    // Fix: return ServiceReturn object directly
+                    return ServiceReturn::error(__('auth.password'));
+                }
+                $user->update(['password' => $data['new_pass']]);
+            }
+
+            // 2. Update UserReviewApplication
+            $reviewApp = $user->getStaffReviewsAttribute()->first();
+            if ($reviewApp) {
+                $updateData = [];
+                if (isset($data['bio'])) $updateData['bio'] = $data['bio'];
+                if (isset($data['experience'])) $updateData['experience'] = $data['experience'];
+                if (isset($data['lat'])) $updateData['latitude'] = $data['lat'];
+                if (isset($data['lng'])) $updateData['longitude'] = $data['lng'];
+                if (isset($data['address'])) $updateData['address'] = $data['address'];
+
+                if (!empty($updateData)) {
+                    $reviewApp->update($updateData);
+                    $reviewApp->save();
+                }
+            }
+
+            // 3. Update UserProfile
+            $profile = $user->profile;
+            if ($profile) {
+                $updateProfile = [];
+                if (isset($data['gender'])) $updateProfile['gender'] = $data['gender'];
+                if (isset($data['date_of_birth'])) $updateProfile['date_of_birth'] = $data['date_of_birth'];
+
+                if (!empty($updateProfile)) {
+                    $profile->update($updateProfile);
+                    $profile->save();
+                }
+            }
+            $user->save();
+            // Reload user with relations to return fresh data
+            $user->load(['profile', 'reviewApplication']);
+
+            return ServiceReturn::success(
+                data: $user,
+                message: __("common.success.data_updated")
+            );
+        } catch (ServiceException $exception) {
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        } catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi UserService@updateKtvProfile",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: $exception->getMessage()
             );
         }
     }

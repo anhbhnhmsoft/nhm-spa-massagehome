@@ -203,23 +203,7 @@ return new class extends Migration
             $table->unique(['code', 'created_by']);
         });
 
-        Schema::create('coupon_used', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('coupon_id')->comment('ID mã giảm giá');
-            $table->unsignedBigInteger('user_id')->comment('ID người dùng sử dụng');
-            $table->unsignedBigInteger('service_id')->comment('ID dịch vụ');
-            $table->unsignedBigInteger('booking_id')->unique()->comment('ID đơn đặt lịch/giao dịch');
 
-            $table->foreign('coupon_id')->references('id')->on('coupons')->onDelete('cascade');
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->foreign('service_id')->references('id')->on('services')->onDelete('cascade');
-            $table->foreign('booking_id')->references('id')->on('service_bookings')->onDelete('cascade');
-
-            $table->timestamps();
-            $table->softDeletes();
-
-            $table->unique(['booking_id', 'coupon_id']);
-        });
 
         Schema::create('coupon_users', function (Blueprint $table) {
             $table->id();
@@ -261,7 +245,23 @@ return new class extends Migration
             $table->foreign('service_id')->references('id')->on('services')->onDelete('cascade');
             $table->foreign('coupon_id')->references('id')->on('coupons')->onDelete('set null');
         });
+        Schema::create('coupon_used', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('coupon_id')->comment('ID mã giảm giá');
+            $table->unsignedBigInteger('user_id')->comment('ID người dùng sử dụng');
+            $table->unsignedBigInteger('service_id')->comment('ID dịch vụ');
+            $table->unsignedBigInteger('booking_id')->unique()->comment('ID đơn đặt lịch/giao dịch');
 
+            $table->foreign('coupon_id')->references('id')->on('coupons')->onDelete('cascade');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('service_id')->references('id')->on('services')->onDelete('cascade');
+            $table->foreign('booking_id')->references('id')->on('service_bookings')->onDelete('cascade');
+
+            $table->timestamps();
+            $table->softDeletes();
+
+            $table->unique(['booking_id', 'coupon_id']);
+        });
         Schema::create('wallets', function (Blueprint $table) {
             $table->comment('Bảng wallets lưu trữ thông tin ví tiền của người dùng');
             $table->id();

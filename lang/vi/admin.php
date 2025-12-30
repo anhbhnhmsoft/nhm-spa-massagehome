@@ -100,7 +100,12 @@ return
             'error' => [
                 'required' => 'Trường này là bắt buộc',
                 'numeric' => 'Vui lòng chỉ nhập số',
-            ]
+            ],
+            'contract_file_type' => [
+                'term_of_use' => 'Hợp đồng sử dụng',
+                'policy_register' => 'Hợp đồng đăng ký',
+                'policy_privacy' => 'Hợp đồng quyền riêng tư',
+            ],
 
         ],
         "ktv_apply" => [
@@ -170,7 +175,12 @@ return
                 "services_title" => "Danh sách dịch vụ của :name",
                 "services_created" => "Dịch vụ đã tạo",
                 "services_booked" => "Dịch vụ đang được đặt"
-            ]
+            ],
+            'messages' => [
+                'max_images_limit' => 'Tối đa :max ảnh. Bạn hiện có :current và đang thêm :new.',
+                'upload_success' => 'Tải lên ảnh thành công.',
+                'delete_success' => 'Xóa ảnh thành công.',
+            ],
         ],
         "user_role" => [
             "customer" => "Khách hàng",
@@ -511,6 +521,41 @@ return
                     'en' => 'Banner tiếng Anh',
                     'cn' => 'Banner tiếng Trung',
                 ],
+            ],
+        ],
+        'static_contract' => [
+            'label' => 'Hợp đồng tĩnh',
+            'navigation_label' => 'Quản lý hợp đồng tĩnh',
+            'label_plural' => 'Hợp đồng tĩnh',
+            'fields' => [
+                'contract' => 'Hợp đồng',
+                'note' => [
+                    'vi' => 'Ghi chú tiếng Việt',
+                    'en' => 'Ghi chú tiếng Anh',
+                    'cn' => 'Ghi chú tiếng Trung',
+                    'label' => 'Ghi chú',
+                ],
+                'created_at' => 'Ngày tạo',
+                'title' => 'Tiêu đề',
+                'slug' => 'Đường dẫn',
+                'path' => [
+                    'vi' => 'File tiếng Việt',
+                    'en' => 'File tiếng Anh',
+                    'cn' => 'File tiếng Trung',
+                ],
+                'type' => 'Loại',
+            ],
+            'errors' => [
+                'title_unique' => 'Tiêu đề đã tồn tại',
+                'title_max' => 'Tiêu đề tối đa 255 ký tự',
+                'note_max' => 'Ghi chú tối đa 255 ký tự',
+                'slug_unique' => 'Đường dẫn đã tồn tại',
+                'slug_max' => 'Đường dẫn tối đa 255 ký tự',
+                'path_required' => 'Vui lòng chọn tệp tin',
+                'path_max' => 'Tệp tin tối đa 10MB',
+                'type_required' => 'Vui lòng chọn loại',
+                'type_unique' => 'Loại đã tồn tại',
+                'path_pdf_only' => 'Chỉ chấp nhận định dạng PDF.',
             ],
         ],
     ];

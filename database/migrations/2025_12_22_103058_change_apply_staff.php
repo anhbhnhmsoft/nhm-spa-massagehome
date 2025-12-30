@@ -11,13 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('user_review_application', function (Blueprint $table) {
-            $table->smallInteger('role')->nullable()->comment('Vai trò muốn apply (trong enum UserRole)');
-        });
-
-        Schema::table('user_files', function (Blueprint $table) {
-            $table->smallInteger('role')->nullable()->comment('Vai trò muốn apply (trong enum UserRole)');
-        });
+//        Schema::table('user_review_application', function (Blueprint $table) {
+//            $table->smallInteger('role')->nullable()->comment('Vai trò muốn apply (trong enum UserRole)');
+//        });
+//
+//        Schema::table('user_files', function (Blueprint $table) {
+//            $table->smallInteger('role')->nullable()->comment('Vai trò muốn apply (trong enum UserRole)');
+//        });
     }
 
     /**

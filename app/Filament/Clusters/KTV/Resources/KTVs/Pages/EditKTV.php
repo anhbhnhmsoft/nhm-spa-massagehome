@@ -4,7 +4,8 @@ namespace App\Filament\Clusters\KTV\Resources\KTVs\Pages;
 
 use App\Filament\Clusters\KTV\Resources\KTVs\KTVResource;
 use App\Enums\UserRole;
-use Illuminate\Support\Facades\Log;
+use App\Enums\UserFileType;
+use App\Models\UserFile;
 use Illuminate\Database\Eloquent\Model;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ForceDeleteAction;
@@ -14,6 +15,8 @@ use Filament\Resources\Pages\EditRecord;
 class EditKTV extends EditRecord
 {
     protected static string $resource = KTVResource::class;
+
+    protected array $tempFiles = [];
 
     protected function getHeaderActions(): array
     {
@@ -58,7 +61,51 @@ class EditKTV extends EditRecord
                 }
             }
         }
+
+        if (array_key_exists('cccd_front_path', $data)) {
+            $this->tempFiles['cccd_front_path'] = $data['cccd_front_path'];
+            unset($data['cccd_front_path']);
+        }
+        if (array_key_exists('cccd_back_path', $data)) {
+            $this->tempFiles['cccd_back_path'] = $data['cccd_back_path'];
+            unset($data['cccd_back_path']);
+        }
+        if (array_key_exists('certificate_path', $data)) {
+            $this->tempFiles['certificate_path'] = $data['certificate_path'];
+            unset($data['certificate_path']);
+        }
+
         return $data;
+    }
+
+    protected function afterSave(): void
+    {
+        $record = $this->getRecord();
+
+        if (array_key_exists('cccd_front_path', $this->tempFiles)) {
+            UserFile::updateOrCreate(
+                ['user_id' => $record->id, 'type' => UserFileType::IDENTITY_CARD_FRONT],
+                ['file_path' => $this->tempFiles['cccd_front_path'], 'role' => UserRole::KTV->value, 'is_public' => false]
+            );
+        }
+        if (array_key_exists('cccd_back_path', $this->tempFiles)) {
+            UserFile::updateOrCreate(
+                ['user_id' => $record->id, 'type' => UserFileType::IDENTITY_CARD_BACK],
+                ['file_path' => $this->tempFiles['cccd_back_path'], 'role' => UserRole::KTV->value, 'is_public' => false]
+            );
+        }
+        if (array_key_exists('certificate_path', $this->tempFiles)) {
+            if ($this->tempFiles['certificate_path'] === null) {
+                UserFile::where('user_id', $record->id)
+                    ->where('type', UserFileType::LICENSE)
+                    ->delete();
+            } else {
+                UserFile::updateOrCreate(
+                    ['user_id' => $record->id, 'type' => UserFileType::LICENSE],
+                    ['file_path' => $this->tempFiles['certificate_path'], 'role' => UserRole::KTV->value, 'is_public' => false]
+                );
+            }
+        }
     }
 
     protected function mutateFormDataBeforeValidate(array $data): array
