@@ -207,7 +207,12 @@ Route::middleware('set-api-locale')->group(function () {
 
     Route::prefix('affiliate')->group(function () {
         Route::get('match', [AffiliateController::class, 'matchAffiliate']);
-        Route::middleware('auth:sanctum')->get('list-reffered', [AffiliateController::class, 'listReffered']);
+        Route::middleware(['auth:sanctum'])->group(function () {
+            // Lấy thông tin cấu hình affiliate
+            Route::get('config', [ConfigController::class, 'getConfigAffiliate']);
+            // Lấy danh sách người dùng được giới thiệu
+            Route::get('list-referred', [AffiliateController::class, 'listReferred']);
+        });
     });
 
     Route::prefix('commercial')->group(function () {

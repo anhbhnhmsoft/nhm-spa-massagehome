@@ -139,7 +139,7 @@ class AffiliateService extends BaseService
      * @param FilterDTO $dto
      * @return ServiceReturn
      */
-    public function listAffiliateReffered(FilterDTO $dto): ServiceReturn
+    public function listAffiliateReferred(FilterDTO $dto): ServiceReturn
     {
 
         try {
@@ -158,7 +158,7 @@ class AffiliateService extends BaseService
             );
         } catch (Exception $e) {
             LogHelper::error(
-                message: "Lỗi AffiliateService@listAffiliateReffered",
+                message: "Lỗi AffiliateService@listAffiliateReferred",
                 ex: $e
             );
             return ServiceReturn::error(

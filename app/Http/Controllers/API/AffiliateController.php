@@ -57,12 +57,16 @@ class AffiliateController extends BaseController
         );
     }
 
-    public function listReffered(ListRequest $request): JsonResponse
+    /**
+     * Lấy danh sách người giới thiệu
+     * @param ListRequest $request
+     * @return JsonResponse
+     */
+    public function listReferred(ListRequest $request): JsonResponse
     {
-
         $dto = $request->getFilterOptions();
         $dto->addFilter('user_id', Auth::user()->id);
-        $result = $this->affiliateService->listAffiliateReffered($dto);
+        $result = $this->affiliateService->listAffiliateReferred($dto);
         if (!$result->isSuccess()) {
             return $this->sendError(
                 message: $result->getMessage()

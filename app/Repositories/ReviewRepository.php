@@ -33,8 +33,10 @@ class ReviewRepository extends BaseRepository
         if (isset($filters['service_booking_id'])) {
             $query->where('service_booking_id', $filters['service_booking_id']);
         }
-        if (isset($filters['user_id'])) {
-            $query->where('user_id', $filters['user_id']);
+        if (isset($filters['service_id'])) {
+            $query->whereHas('serviceBooking', function (Builder $query) use ($filters) {
+                $query->where('service_id', $filters['service_id']);
+            });
         }
         if (isset($filters['review_by'])) {
             $query->where('review_by', $filters['review_by']);

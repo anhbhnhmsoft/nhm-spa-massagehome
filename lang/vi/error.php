@@ -32,4 +32,5 @@ return [
     'not_found_wallet_transaction' => 'Lịch sử giao dịch không tồn tại',
     'not_found_referred_customer' => 'Không tìm thấy người giới thiệu khách hàng',
     'not_found_referred_staff' => 'Không tìm thấy người giới thiệu nhân viên',
+    'config_not_found' => 'Cấu hình không tồn tại',
 ];
