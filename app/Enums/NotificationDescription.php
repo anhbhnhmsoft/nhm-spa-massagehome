@@ -2,9 +2,6 @@
 
 namespace App\Enums;
 
-use App\Enums\Language;
-use App\Enums\NotificationType;
-
 /**
  * Enum cho description của các loại thông báo.
  */
@@ -27,6 +24,7 @@ enum NotificationDescription: int
     case BOOKING_AUTO_FINISHED = 15;
     case BOOKING_OVERTIME_WARNING = 16;
     case BOOKING_START = 17;
+    case WALLET_TRANSACTION_CANCELLED = 18;
 
     /**
      * Convert từ NotificationType sang NotificationDescription
@@ -127,6 +125,11 @@ enum NotificationDescription: int
                 'vi' => 'Chúc bạn có 1 trải nghiệm tuyệt vời',
                 'en' => 'Welcome to your appointment',
                 'cn' => '祝您旅途愉快',
+            ],
+            self::WALLET_TRANSACTION_CANCELLED => [
+                'vi' => 'Giao dịch ví đã bị hủy',
+                'en' => 'Wallet transaction cancelled',
+                'cn' => '钱包交易已取消',
             ],
         };
     }
@@ -231,6 +234,11 @@ enum NotificationDescription: int
                 'vi' => 'Bắt đầu dịch vụ',
                 'en' => 'Start service',
                 'cn' => '开始服务',
+            ],
+            self::WALLET_TRANSACTION_CANCELLED => [
+                'vi' => 'Giao dịch ví đã bị hủy',
+                'en' => 'Wallet transaction cancelled',
+                'cn' => '钱包交易已取消',
             ],
         };
     }

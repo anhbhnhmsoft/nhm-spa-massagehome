@@ -6,6 +6,7 @@ use App\Http\Controllers\API\FileController;
 use App\Http\Controllers\API\BookingController;
 use App\Http\Controllers\API\KTVController;
 use App\Http\Controllers\API\LocationController;
+use App\Http\Controllers\API\AgencyController;
 use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\API\PaymentController;
 use App\Http\Controllers\API\ServiceController;
@@ -53,6 +54,8 @@ Route::middleware('set-api-locale')->group(function () {
             Route::post('edit-profile', [AuthController::class, 'editProfile']);
             // Đăng xuất khỏi hệ thống.
             Route::post('logout', [AuthController::class, 'logout']);
+            // Khóa tài khoản
+            Route::post('lock-account', [AuthController::class, 'lockAccount']);
         });
     });
 
@@ -281,5 +284,10 @@ Route::middleware('set-api-locale')->group(function () {
         Route::post('upload-ktv-images', [KTVController::class, 'uploadKtvImages']);
         // xóa ảnh ktv
         Route::delete('delete-ktv-image/{id}', [KTVController::class, 'deleteKtvImage'])->where('id', '[0-9]+');
+    });
+    // Dành cho agency
+    Route::prefix('agency')->middleware(['auth:sanctum'])->group(function () {
+        // Lấy thông tin dashboard profile của user hiện tại
+        Route::get('manage-ktv', [AgencyController::class, 'listKtv']);
     });
 });

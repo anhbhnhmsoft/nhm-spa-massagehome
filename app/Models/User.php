@@ -219,4 +219,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(AffiliateLink::class, 'referred_user_id');
     }
+
+    /**
+     * Lấy danh sách KTV mà User này ĐÃ ĐĂNG KÍ với
+     */
+    public function ktvsUnderAgency()
+    {
+        return $this->hasMany(UserReviewApplication::class, 'agency_id', 'id');
+    }
 }

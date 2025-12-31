@@ -45,12 +45,15 @@ return [
     ],
     'address' => [
         'required' => 'Vui lòng nhập địa chỉ.',
+        'string' => 'Địa chỉ phải là chuỗi ký tự.',
     ],
     'lat' => [
         'required' => 'Vui lòng nhập tọa độ latitude.',
+        'numeric' => 'Tọa độ latitude phải là số.',
     ],
     'lng' => [
         'required' => 'Vui lòng nhập tọa độ longitude.',
+        'numeric' => 'Tọa độ longitude phải là số.',
     ],
     'agency_not_found' => 'Không tìm thấy mã Agency này hoặc Agency không hoạt động.',
     'duration' => [
@@ -240,5 +243,9 @@ return [
             'required' => 'Vui lòng nhập mô tả tiếng Anh.',
             'string' => 'Mô tả tiếng Anh phải là chuỗi.',
         ],
-    ]
+    ],
+    'experience' => [
+        'required' => 'Vui lòng nhập kinh nghiệm.',
+        'integer' => 'Kinh nghiệm phải là số nguyên.',
+    ],
 ];

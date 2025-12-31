@@ -3,7 +3,7 @@
     "private": true,
     "type": "module",
     "imports": {
-        "#/*": "./dist/*.js"
+        "#/*": "./node_server/*.ts"
     },
     "scripts": {
         "build": "vite build",

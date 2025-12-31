@@ -35,10 +35,10 @@ class NotificationService extends BaseService
         try {
             $user = Auth::user();
             $query = $this->notificationRepository->queryNotification();
-            
+
             // Lọc theo user_id
             $dto->addFilter('user_id', $user->id);
-            
+
             $query = $this->notificationRepository->filterQuery(
                 query: $query,
                 filters: $dto->filters
@@ -48,12 +48,12 @@ class NotificationService extends BaseService
                 sortBy: $dto->sortBy,
                 direction: $dto->direction
             );
-            
+
             $paginate = $query->paginate(
                 perPage: $dto->perPage,
                 page: $dto->page
             );
-            
+
             return ServiceReturn::success(data: $paginate);
         } catch (\Exception $exception) {
             LogHelper::error(
@@ -82,13 +82,13 @@ class NotificationService extends BaseService
                 ->where('id', $notificationId)
                 ->where('user_id', $user->id)
                 ->first();
-            
+
             if (!$notification) {
                 throw new ServiceException(
                     message: __("error.notification_not_found")
                 );
             }
-            
+
             return ServiceReturn::success(data: $notification);
         } catch (ServiceException $exception) {
             return ServiceReturn::error(
@@ -116,15 +116,15 @@ class NotificationService extends BaseService
                 ->where('id', $notificationId)
                 ->where('user_id', $user->id)
                 ->first();
-            
+
             if (!$notification) {
                 throw new ServiceException(
                     message: __("error.notification_not_found")
                 );
             }
-            
+
             $notification->markAsRead();
-            
+
             return ServiceReturn::success(data: $notification);
         } catch (ServiceException $exception) {
             return ServiceReturn::error(
@@ -152,7 +152,7 @@ class NotificationService extends BaseService
                 ->where('user_id', $user->id)
                 ->where('status', '!=', NotificationStatus::READ->value)
                 ->count();
-            
+
             return ServiceReturn::success(data: ['count' => $count]);
         } catch (\Exception $exception) {
             LogHelper::error(
@@ -198,7 +198,7 @@ class NotificationService extends BaseService
         try {
             // Lấy device tokens của user để gửi push notification
             $tokens = $user->routeNotificationForExpo();
-            
+
             // Nếu user không có device tokens thì không gửi push notification
             if (empty($tokens)) {
                 // Vẫn đánh dấu đã gửi vì đã lưu vào database

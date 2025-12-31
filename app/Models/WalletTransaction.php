@@ -3,13 +3,12 @@
 namespace App\Models;
 
 use App\Core\GenerateId\HasBigIntId;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class WalletTransaction extends Model
 {
-    use HasFactory, SoftDeletes, HasBigIntId;
+    use  SoftDeletes, HasBigIntId;
 
     /**
      * The table associated with the model.
@@ -56,5 +55,9 @@ class WalletTransaction extends Model
     public function wallet()
     {
         return $this->belongsTo(Wallet::class, 'wallet_id', 'id');
+    }
+
+    public function drawInfo() {
+        return $this->belongsTo(UserWithdrawInfo::class, 'foreign_key', 'id');
     }
 }
