@@ -968,7 +968,7 @@ class UserService extends BaseService
             if (!empty($data['old_pass'])) {
                 if (!\Illuminate\Support\Facades\Hash::check($data['old_pass'], $user->password)) {
                     // Fix: return ServiceReturn object directly
-                    return ServiceReturn::error(__('auth.password'));
+                    return ServiceReturn::error(__('auth.error.wrong_password'));
                 }
                 $user->update(['password' => $data['new_pass']]);
             }
