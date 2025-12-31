@@ -1,0 +1,27 @@
+<?php
+
+return [
+    'account_disabled' => 'Your account has been disabled',
+    'server_error' => 'A server error occurred, please contact administrator for support.',
+    'request_error' => 'No response from server, please contact administrator for support.',
+    'program_error' => 'A program error occurred, please contact administrator for support.',
+    'unknown_error' => 'An error occurred, please contact administrator for support.',
+    'invalid_or_expired_token' => 'Your account has expired or is invalid. Please login again.',
+    'api_not_found' => 'Unknown source, please contact administrator for support.',
+    'method_not_allowed' => 'Invalid API format, please contact administrator for support.',
+    'permission_error' => 'You do not have permission to perform this task, please contact administrator for support.',
+    'permission_denied' => 'You do not have permission to access this resource.',
+    'authorization_header_not_found' => 'Authorization header not found, please contact administrator for support.',
+    'refresh_token_fail' => 'Your account has expired or is invalid. Please login again.',
+    'data_not_found' => 'Data is empty, please try again later.',
+    'data_not_found_fields' => 'Some data is missing, please try again.',
+    'data_exists' => 'Data already exists, please try again.',
+    'validation_failed' => 'Invalid data.',
+    'inappropriate_language' => 'Content is inappropriate matching system policy.',
+    'payment_error' => 'An error occurred during payment, please try again later.',
+    'unauthorized' => 'You do not have permission to access this resource.',
+    'goong_error' => 'An error occurred while searching for address, please try again later.',
+    'empty_config' => 'Invalid configuration',
+    'address_exists' => 'Address already exists',
+
+];

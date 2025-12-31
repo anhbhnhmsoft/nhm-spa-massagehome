@@ -21,6 +21,7 @@ class ProfileKTVResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'phone' => $this->phone,
             'avatar_url' => $profile->avatar_url ? Helper::getPublicUrl($profile->avatar_url) : null,
             'bio' => $applycation?->getTranslations('bio'),
             'experience' => $applycation?->experience,
