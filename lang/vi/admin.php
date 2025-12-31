@@ -59,6 +59,7 @@ return
                 'cancel' => 'Hủy',
                 'book' => 'Lên lịch',
                 'close' => 'Đóng',
+                'create' => 'Tạo mới',
             ],
             'tooltip' => [
                 'view' => 'Xem chi tiết ',
@@ -487,6 +488,7 @@ return
                     'daily_tracking' => [
                         'count' => 'Số lượng đã dùng trong ngày',
                     ],
+                    'collected_day' => 'Số mã đã thu thập hôm nay',
                 ],
             ],
             'is_percentage' => [

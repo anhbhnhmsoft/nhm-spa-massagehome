@@ -99,4 +99,10 @@ class CouponRepository extends BaseRepository
         $query->orderBy($column, $direction);
         return $query;
     }
+    public function incrementDailyCollectCountAtomic( $couponId): void
+    {
+        DB::table($this->model->getTable())
+            ->where('id', $couponId)
+            ->increment('config->daily_collect_count');
+    }
 }

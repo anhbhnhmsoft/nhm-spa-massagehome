@@ -59,6 +59,7 @@ return
                 'cancel' => '取消',
                 'book' => '预订',
                 'close' => '关闭',
+                'create' => '创建新',
             ],
             'tooltip' => [
                 'view' => '查看详情 ',
@@ -487,6 +488,7 @@ return
                     'daily_tracking' => [
                         'count' => '今日使用次数',
                     ],
+                    'collected_day' => '今日已收集',
                 ],
             ],
             'is_percentage' => [

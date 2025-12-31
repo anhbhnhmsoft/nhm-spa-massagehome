@@ -13,9 +13,8 @@ class ListKTVApplies extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-//            CreateAction::make()
-//                ->url(static::getResource()::getUrl('create'))
-//                ->modal(false),
+            CreateAction::make()
+                ->label(__('admin.common.action.create')),
         ];
     }
 }
