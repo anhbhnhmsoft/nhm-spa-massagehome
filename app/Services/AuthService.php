@@ -261,7 +261,7 @@ class AuthService extends BaseService
                 return ServiceReturn::error(message: __('auth.error.invalid_login'));
             }
             // Kiểm tra user có bị khóa không
-            if ($user->disabled) {
+            if (!$user->is_active) {
                 return ServiceReturn::error(message: __('auth.error.disabled'));
             }
             // Cập nhật last login time
@@ -713,5 +713,31 @@ class AuthService extends BaseService
             60 * 60 * 1, // 1 giờ
             json_encode($redisPayload)
         );
+    }
+
+    /**
+     * Khóa tài khoản.
+     * @return ServiceReturn
+     */
+    public function lockAccount(): ServiceReturn
+    {
+        try {
+            $user = Auth::user();
+            if (!$user) {
+                return ServiceReturn::error(message: __('error.unauthorized'));
+            }
+            $user->is_active = false;
+            $user->save();
+            $user->currentAccessToken()->delete();
+            return ServiceReturn::success(
+                message: __('auth.success.lock_account'),
+            );
+        } catch (Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi AuthService@lockAccount",
+                ex: $exception
+            );
+            return ServiceReturn::error(message: __('common_error.server_error'));
+        }
     }
 }

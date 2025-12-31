@@ -11,6 +11,7 @@ return [
         'set_language' => 'Ngôn ngữ đã được cập nhật.',
         'update_success' => 'Cập nhật thông tin thành công.',
         'logout' => 'Bạn đã đăng xuất thành công.',
+        'lock_account' => 'Tài khoản đã bị khóa.',
     ],
     'error' => [
         'phone_verified' => 'Số điện thoại này đã được đăng ký.',

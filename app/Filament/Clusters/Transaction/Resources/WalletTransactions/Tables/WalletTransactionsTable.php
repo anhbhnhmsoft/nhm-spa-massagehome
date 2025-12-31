@@ -2,11 +2,16 @@
 
 namespace App\Filament\Clusters\Transaction\Resources\WalletTransactions\Tables;
 
+use App\Enums\ConfigName;
+use App\Enums\NotificationType;
 use App\Enums\WalletTransactionStatus;
 use App\Enums\WalletTransactionType;
+use App\Jobs\SendNotificationJob;
+use App\Services\ConfigService;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
-use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\ViewField;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
@@ -68,10 +73,11 @@ class WalletTransactionsTable
                                 $record->type === WalletTransactionType::DEPOSIT_ZALO_PAY->value ||
                                 $record->type === WalletTransactionType::DEPOSIT_MOMO_PAY->value
                             ) {
-                                $record->wallet()->increment('balance', (float) $record->point_amount);
+                                $record->wallet()->increment('balance', (float)$record->point_amount);
                             }
                         })
-                        ->requiresConfirmation(),
+                        ->requiresConfirmation()
+                        ->hidden(fn($record) => $record->type === WalletTransactionType::WITHDRAWAL->value),
                     Action::make('cancel')
                         ->label(__('admin.transaction.actions.cancel'))
                         ->icon('heroicon-o-x-mark')
@@ -80,14 +86,58 @@ class WalletTransactionsTable
                         ->action(function ($record) {
                             // Nếu là giao dịch rút tiền, hoàn tiền về ví khi hủy
                             if ($record->type === WalletTransactionType::WITHDRAWAL->value) {
-                                $record->wallet()->increment('balance', (float) $record->point_amount);
+                                $record->wallet()->increment('balance', (float)$record->point_amount);
                             }
-
+                            SendNotificationJob::dispatch(
+                                userId: $record->wallet->user_id,
+                                type: NotificationType::WALLET_TRANSACTION_CANCELLED,
+                                data: [
+                                    'transaction_code' => $record->transaction_code,
+                                ]
+                            );
                             $record->update(['status' => WalletTransactionStatus::FAILED->value]);
+                        })
+                        ->requiresConfirmation(),
+                    Action::make('transfer')
+                        ->label(__('admin.transaction.actions.transfer'))
+                        ->icon('heroicon-o-arrow-right-on-rectangle')
+                        ->color('info')
+                        ->visible(fn($record) => $record->type === WalletTransactionType::WITHDRAWAL->value)
+                        ->action(function ($record) {
+                            $record->update(['status' => WalletTransactionStatus::COMPLETED]);
+                        })
+                        ->hidden(fn($record) => $record->status !== WalletTransactionStatus::PENDING->value)
+                        ->modal(true)
+                        ->schema(function ($record) {
+                            try {
+                                $service = app(ConfigService::class);
+                                $res = $service->getConfig(ConfigName::CURRENCY_EXCHANGE_RATE);
+                                if ($res->isError()) {
+                                    throw new \Exception($res->getMessage());
+                                }
+                                $rate = $res->getData()['config_value'];
+
+                                $info = $record->drawInfo->config ?? [];
+                                $info['amount'] = $record->point_amount * $rate;
+                            } catch (\Throwable $th) {
+                                return [
+                                    Placeholder::make('error')
+                                        ->content($th->getMessage())
+                                ];
+                            }
+                            return [
+                                ViewField::make('transfer_info')
+                                    ->view('filament.modal.transfer-money')
+                                    ->viewData([
+                                        'info' => $info,
+                                        'record' => $record
+                                    ])
+                                    ->columnSpanFull()];
                         })
                         ->requiresConfirmation(),
                 ])
             ])
+            ->defaultSort('created_at', 'desc')
             ->poll('1s');
     }
 }

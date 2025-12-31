@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Core\Controller\BaseController;
 use App\Core\Controller\ListRequest;
+use App\Core\LogHelper;
 use App\Http\Requests\FormServiceRequest;
 use App\Http\Resources\Booking\BookingItemResource;
 use App\Http\Resources\Review\ReviewResource;
@@ -277,22 +278,22 @@ class KTVController extends BaseController
                 'lat' => 'nullable|numeric',
                 'lng' => 'nullable|numeric',
                 'address' => 'nullable|string',
-                'gender' => 'nullable|integer',
+                'gender' => 'nullable|in:1,2',
                 'date_of_birth' => 'nullable|date',
             ],
             [
-                'bio.vi.required' => __('validation.bio.vi.required'),
-                'bio.en.required' => __('validation.bio.en.required'),
-                'bio.cn.required' => __('validation.bio.cn.required'),
-                'old_pass.required' => __('validation.old_pass.required'),
-                'new_pass.required' => __('validation.new_pass.required'),
-                'lat.required' => __('validation.lat.required'),
-                'lng.required' => __('validation.lng.required'),
-                'address.required' => __('validation.address.required'),
-                'gender.required' => __('validation.gender.required'),
-                'date_of_birth.required' => __('validation.date_of_birth.required'),
                 'date_of_birth.date' => __('validation.date_of_birth.date'),
                 'date_of_birth.date_format' => __('validation.date_of_birth.date_format'),
+                'experience.integer' => __('validation.experience.integer'),
+                'old_pass.string' => __('validation.old_pass.string'),
+                'new_pass.string' => __('validation.new_pass.string'),
+                'lat.numeric' => __('validation.lat.numeric'),
+                'lng.numeric' => __('validation.lng.numeric'),
+                'address.string' => __('validation.address.string'),
+                'gender.in' => __('validation.gender.in'),
+                'bio.vi.string' => __('validation.bio.vi.string'),
+                'bio.en.string' => __('validation.bio.en.string'),
+                'bio.cn.string' => __('validation.bio.cn.string'),
             ]
         );
 
@@ -303,6 +304,10 @@ class KTVController extends BaseController
         }
 
         $data = $validator->validated();
+        LogHelper::debug(
+            message: "KTVController@editProfileKtv",
+            context: $data,
+        );
         $res = $this->userService->updateKtvProfile($data);
         if ($res->isError()) {
             return $this->sendError($res->getMessage());

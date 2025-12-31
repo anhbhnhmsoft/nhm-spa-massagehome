@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Auth;
 
+use App\Core\Helper;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -26,14 +27,14 @@ class UserResource extends JsonResource
             'referred_by_user_id' => $this->referred_by_user_id,
             'affiliate_link' => route('affiliate.link', $this->id) ?? null,
             'profile' => [
-                'avatar_url' => $profile->avatar_url_full,
-                'date_of_birth' => $profile->date_of_birth,
-                'gender' => $profile->gender,
-                'address' => $profile->address,
-                'province_code' => $profile->province_code?->name ?? null,
-                'district_code' => $profile->district_code?->name ?? null,
-                'ward_code' => $profile->ward_code?->name ?? null,
-                'bio' => $profile->bio,
+                'avatar_url' => $profile->avatar_url ? Helper::getPublicUrl($profile->avatar_url) : null,
+                'date_of_birth' => (string) $profile?->date_of_birth,
+                'gender' => $profile?->gender,
+                'address' => $profile?->address,
+                'province_code' => $profile?->province_code?->name ?? null,
+                'district_code' => $profile?->district_code?->name ?? null,
+                'ward_code' => $profile?->ward_code?->name ?? null,
+                'bio' => $profile?->bio,
             ],
             'primary_location' => $primary_location ? [
                 'address' => $primary_location->address,

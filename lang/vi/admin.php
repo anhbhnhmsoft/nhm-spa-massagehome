@@ -355,6 +355,7 @@ return
             'actions' => [
                 'approve' => 'Duyệt',
                 'cancel' => 'Hủy bỏ',
+                'transfer' => 'Chuyển tiền ',
             ],
         ],
         'customer' => [

@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\Coupon;
 use App\Models\Page;
 use App\Models\Service;
+use App\Models\StaticContract;
 use App\Models\UserFile;
 use App\Models\UserProfile;
 use App\Observers\BannerObserver;
@@ -15,6 +16,7 @@ use App\Observers\CategoryObserver;
 use App\Observers\CouponObserver;
 use App\Observers\PageObserver;
 use App\Observers\ServiceObserver;
+use App\Observers\StaticContractObserver;
 use App\Observers\UserFileObserver;
 use App\Observers\UserProfileObserver;
 use App\Repositories\AffiliateConfigRepository;
@@ -38,6 +40,7 @@ use App\Repositories\WalletRepository;
 use App\Repositories\WalletTransactionRepository;
 use App\Repositories\ChatRoomRepository;
 use App\Repositories\MessageRepository;
+use App\Services\AgencyService;
 use App\Services\AuthService;
 use App\Services\BookingService;
 use App\Services\ChatService;
@@ -131,6 +134,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(ReviewService::class);
         $this->app->singleton(UserWithdrawInfoService::class);
         $this->app->singleton(UserFileService::class);
+        $this->app->singleton(AgencyService::class);
     }
 
     /**
@@ -145,5 +149,6 @@ class AppServiceProvider extends ServiceProvider
         Page::observe(PageObserver::class);
         UserFile::observe(UserFileObserver::class);
         UserProfile::observe(UserProfileObserver::class);
+        StaticContract::observe(StaticContractObserver::class);
     }
 }

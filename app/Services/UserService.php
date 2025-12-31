@@ -979,13 +979,25 @@ class UserService extends BaseService
                 $updateData = [];
                 if (isset($data['bio'])) $updateData['bio'] = $data['bio'];
                 if (isset($data['experience'])) $updateData['experience'] = $data['experience'];
-                if (isset($data['lat'])) $updateData['latitude'] = $data['lat'];
-                if (isset($data['lng'])) $updateData['longitude'] = $data['lng'];
+                if (isset($data['lat'])) $updateData['latitude'] = (float) $data['lat'];
+                if (isset($data['lng'])) $updateData['longitude'] = (float) $data['lng'];
                 if (isset($data['address'])) $updateData['address'] = $data['address'];
 
                 if (!empty($updateData)) {
-                    $reviewApp->update($updateData);
-                    $reviewApp->save();
+                    $this->userReviewApplicationRepository->update($reviewApp->id, $updateData);
+                }
+            }else {
+                $updateData = [];
+                if (isset($data['bio'])) $updateData['bio'] = $data['bio'];
+                if (isset($data['experience'])) $updateData['experience'] = $data['experience'];
+                if (isset($data['lat'])) $updateData['latitude'] = (float) $data['lat'];
+                if (isset($data['lng'])) $updateData['longitude'] = (float) $data['lng'];
+                if (isset($data['address'])) $updateData['address'] = $data['address'];
+                if (!empty($updateData)) {
+                    $updateData['user_id'] = $user->id;
+                    $updateData['status'] = ReviewApplicationStatus::PENDING->value;
+                    $updateData['role'] = UserRole::KTV->value;
+                    $this->userReviewApplicationRepository->create($updateData);
                 }
             }
 
@@ -1000,6 +1012,16 @@ class UserService extends BaseService
                     $profile->update($updateProfile);
                     $profile->save();
                 }
+            }else {
+                $updateProfile = [];
+                if (isset($data['gender'])) $updateProfile['gender'] = $data['gender'];
+                if (isset($data['date_of_birth'])) $updateProfile['date_of_birth'] = $data['date_of_birth'];
+
+                if (!empty($updateProfile)) {
+                    $updateProfile['user_id'] = $user->id;
+                    $this->userProfileRepository->create($updateProfile);
+                }
+                $profile = $this->userProfileRepository->find($user->id);
             }
             $user->save();
             // Reload user with relations to return fresh data

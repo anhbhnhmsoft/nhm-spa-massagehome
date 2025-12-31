@@ -14,7 +14,6 @@ use App\Services\AuthService;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\JsonResponse;
 use App\Core\Controller\BaseController;
-use Illuminate\Support\Facades\Validator;
 
 class AuthController extends BaseController
 {
@@ -399,6 +398,30 @@ class AuthController extends BaseController
         }
         return $this->sendSuccess(
             message: __('auth.success.logout'),
+        );
+    }
+
+    /**
+     * Khóa tài khoản.
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function lockAccount(Request $request): JsonResponse
+    {
+        $result = $this->authService->lockAccount();
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage(),
+            );
+        }
+        $res = $this->authService->lockAccount();
+        if ($res->isError()) {
+            return $this->sendError(
+                message: $res->getMessage(),
+            );
+        }
+        return $this->sendSuccess(
+            message: __('auth.success.lock_account'),
         );
     }
 }

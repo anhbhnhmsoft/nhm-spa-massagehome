@@ -24,4 +24,5 @@ enum NotificationType: int
     case BOOKING_AUTO_FINISHED = 15;
     case BOOKING_OVERTIME_WARNING = 16;
     case BOOKING_START = 17;
+    case WALLET_TRANSACTION_CANCELLED = 18;
 }

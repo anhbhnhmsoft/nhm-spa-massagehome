@@ -5,7 +5,6 @@ namespace App\Http\Resources\User;
 use App\Core\Helper;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Storage;
 
 class ProfileKTVResource extends JsonResource
 {
@@ -19,11 +18,10 @@ class ProfileKTVResource extends JsonResource
         $applycation = $this->getStaffReviewsAttribute()->first();
         $profile = $this->profile;
         $gallery = $this->gallery;
-
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'avatar_url' => $this->avatar_url ? Helper::getPublicUrl($this->avatar_url) : null,
+            'avatar_url' => $profile->avatar_url ? Helper::getPublicUrl($profile->avatar_url) : null,
             'bio' => $applycation?->getTranslations('bio'),
             'experience' => $applycation?->experience,
             'gender' => $profile?->gender,
