@@ -13,8 +13,8 @@ class ListBookings extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            // CreateAction::make()
-            //     ->label(__('admin.common.action.book')),
+            CreateAction::make()
+                ->label(__('admin.common.action.create')),
         ];
     }
 }

@@ -27,7 +27,7 @@ class UserResource extends JsonResource
             'referred_by_user_id' => $this->referred_by_user_id,
             'affiliate_link' => route('affiliate.link', $this->id) ?? null,
             'profile' => [
-                'avatar_url' => $profile->avatar_url ? Helper::getPublicUrl($profile->avatar_url) : null,
+                'avatar_url' => $profile?->avatar_url ? Helper::getPublicUrl($profile->avatar_url) : null,
                 'date_of_birth' => (string) $profile?->date_of_birth,
                 'gender' => $profile?->gender,
                 'address' => $profile?->address,

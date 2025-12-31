@@ -59,6 +59,7 @@ return
                 'cancel' => 'Cancel',
                 'book' => 'Book',
                 'close' => 'Close',
+                'create' => 'Create New',
             ],
             'tooltip' => [
                 'view' => 'View Details ',
@@ -487,6 +488,7 @@ return
                     'daily_tracking' => [
                         'count' => 'Usage Count Today',
                     ],
+                    'collected_day' => 'Collected Today',
                 ],
             ],
             'is_percentage' => [

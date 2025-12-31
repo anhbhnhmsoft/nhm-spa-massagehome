@@ -251,7 +251,7 @@ class CouponService extends BaseService
             // Trường hợp TH1: CHƯA sở hữu (Khách dùng trực tiếp từ coupon gợi ý)
             if (!$userPivot) {
                 // Tăng số lượng thu thập trong ngày (vì họ vừa dùng vừa "nhặt")
-                $this->couponRepository->incrementDailyCollectCountAtomic($coupon->id);
+                $this->incrementCollectCount($coupon->id);
 
                 // Thêm vào ví và đánh dấu đã dùng
                 $user->collectionCoupons()->syncWithoutDetaching([
