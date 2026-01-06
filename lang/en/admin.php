@@ -106,6 +106,8 @@ return
                 'term_of_use' => 'Terms of Use',
                 'policy_register' => 'Registration Policy',
                 'policy_privacy' => 'Privacy Policy',
+                'policy_for_ktv' => "Technician's Operating Policy",
+                'policy_for_agency' => "Partner's Operating Policy"
             ],
 
         ],

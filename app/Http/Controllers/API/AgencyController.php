@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Core\Controller\BaseController;
-use App\Http\Requests\ListKtvRequest;
+use App\Http\Requests\API\Agency\ListKtvRequest;
 use App\Http\Resources\Auth\UserResource;
 use App\Services\AgencyService;
 use Illuminate\Http\JsonResponse;
@@ -24,6 +24,7 @@ class AgencyController extends BaseController
         if ($result->isError()) {
             return $this->sendError($result->getMessage());
         }
-        return $this->sendSuccess(data: UserResource::collection($result->getData())->toArray($request));
+        return $this->sendSuccess(data: UserResource::collection($result->getData())->response()->getData(true));
     }
 }
+    

@@ -14,9 +14,7 @@ class AgencyService extends BaseService
 {
     public function __construct(
         protected UserRepository $userRepository,
-    )
-    {
-    }
+    ) {}
 
     /**
      * Danh sách KTV của đại lý đang quản lý
@@ -26,9 +24,14 @@ class AgencyService extends BaseService
         try {
             /** @var User $user */
             $user = Auth::user();
-            $query = $this->userRepository->query()->whereHas('ktvsUnderAgency', function ($query) use ($user) {
-                $query->where('agency_id', $user->id);
-            });
+
+            // Sử dụng queryKTV để lấy đầy đủ thông tin (stats, profile,...)
+            $query = $this->userRepository->queryKTV();
+
+            // Lọc theo Agency
+            $query->whereHas('reviewApplication', function ($q) use ($user) {
+                $q->where('agency_id', $user->id);
+            }); 
 
             // Filter
             $this->userRepository->filterQuery($query, $filterDTO->filters);
@@ -41,7 +44,7 @@ class AgencyService extends BaseService
             return ServiceReturn::success($ktvs);
         } catch (\Exception $exception) {
             LogHelper::error(
-                message: 'AgencyService@manageKtv'.$exception->getMessage(),
+                message: 'AgencyService@manageKtv' . $exception->getMessage(),
                 ex: $exception,
             );
             return ServiceReturn::error($exception->getMessage());

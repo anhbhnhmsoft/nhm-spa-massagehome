@@ -225,6 +225,13 @@ class User extends Authenticatable
      */
     public function ktvsUnderAgency()
     {
-        return $this->hasMany(UserReviewApplication::class, 'agency_id', 'id');
+        return $this->hasManyThrough(
+            User::class,
+            UserReviewApplication::class,
+            'agency_id',
+            'id',
+            'id',
+            'user_id'
+        );
     }
 }

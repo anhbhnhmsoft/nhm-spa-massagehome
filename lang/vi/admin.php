@@ -106,6 +106,8 @@ return
                 'term_of_use' => 'Hợp đồng sử dụng',
                 'policy_register' => 'Hợp đồng đăng ký',
                 'policy_privacy' => 'Hợp đồng quyền riêng tư',
+                'policy_for_ktv' => 'Chính sách hoạt động của kỹ thuật viên',
+                'policy_for_agency' => 'Chính sách hoạt động của đối tác'
             ],
 
         ],

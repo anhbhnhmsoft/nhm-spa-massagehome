@@ -40,7 +40,7 @@ class ItemKTVResource extends ListKTVResource
         $data['display_image'] = $files->map(function ($file) {;
             return [
                 'id' => $file->id,
-                'url' => Helper::FileUrl($file->file_path),
+                'url' => $file->file_path?  Helper::getPublicUrl($file->file_path) : null,
             ];
         })->toArray();
         $data['first_review'] = $review ? [

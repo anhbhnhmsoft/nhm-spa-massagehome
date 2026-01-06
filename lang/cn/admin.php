@@ -106,6 +106,9 @@ return
                 'term_of_use' => '使用条款',
                 'policy_register' => '注册政策',
                 'policy_privacy' => '隐私政策',
+                'policy_for_ktv' => '技术人员操作规程',
+                'policy_for_agency' => '合作伙伴操作规程'
+
             ],
 
         ],
