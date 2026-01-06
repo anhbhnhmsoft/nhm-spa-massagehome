@@ -40,4 +40,10 @@ class Category extends Model
     {
         return $this->hasMany(Service::class, 'category_id');
     }
+
+    // Quan hệ 1-n với bảng category_prices.
+    public function prices()
+    {
+        return $this->hasMany(CategoryPrice::class, 'category_id');
+    }
 }

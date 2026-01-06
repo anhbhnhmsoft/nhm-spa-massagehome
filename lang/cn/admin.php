@@ -15,6 +15,7 @@ return
             "label" => "技师"
         ],
         "common" => [
+            'minute' => '分钟',
             'table' => [
                 'name' => '姓名',
                 'email' => '电子邮件',
@@ -94,6 +95,9 @@ return
                 'image' => '图片',
                 'is_featured' => '推荐',
                 'is_active' => '激活',
+                'duration' => '持续时间',
+                'price' => '价格',
+                'add_price' => '添加价格',
             ],
             'currency' => '积分',
             'from' => '从',
@@ -193,7 +197,10 @@ return
             "admin" => "管理员",
         ],
         'category' => [
-            'label' => '分类'
+            'label' => '分类',
+            'basic_info' => '基本信息',
+            'price_config' => '价格配置',
+            'price_list' => '价格列表',
         ],
         'notification' => [
             'success' => [

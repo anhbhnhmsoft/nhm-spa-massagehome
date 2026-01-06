@@ -15,6 +15,7 @@ return
             "label" => "Kỹ thuật viên"
         ],
         "common" => [
+            'minute' => 'phút',
             'table' => [
                 'name' => 'Tên',
                 'email' => 'Email',
@@ -94,6 +95,9 @@ return
                 'image' => 'Hình ảnh',
                 'is_featured' => 'Nổi bật',
                 'is_active' => 'Kích hoạt',
+                'duration' => 'Thời lượng',
+                'price' => 'Giá tiền',
+                'add_price' => 'Thêm mức giá',
             ],
             'currency' => 'Điểm',
             'from' => 'Từ',
@@ -192,7 +196,10 @@ return
             "admin" => "Quản trị viên",
         ],
         'category' => [
-            'label' => 'Danh mục'
+            'label' => 'Danh mục',
+            'basic_info' => 'Thông tin cơ bản',
+            'price_config' => 'Cấu hình giá',
+            'price_list' => 'Danh sách giá',
         ],
         'notification' => [
             'success' => [

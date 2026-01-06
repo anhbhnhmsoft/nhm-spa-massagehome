@@ -15,6 +15,7 @@ return
             "label" => "Technician"
         ],
         "common" => [
+            'minute' => 'minute',
             'table' => [
                 'name' => 'Name',
                 'email' => 'Email',
@@ -94,6 +95,9 @@ return
                 'image' => 'Image',
                 'is_featured' => 'Featured',
                 'is_active' => 'Active',
+                'duration' => 'Duration',
+                'price' => 'Price',
+                'add_price' => 'Add Price',
             ],
             'currency' => 'Points',
             'from' => 'From',
@@ -192,7 +196,10 @@ return
             "admin" => "Admin",
         ],
         'category' => [
-            'label' => 'Category'
+            'label' => 'Category',
+            'basic_info' => 'Basic Info',
+            'price_config' => 'Price Config',
+            'price_list' => 'Price List',
         ],
         'notification' => [
             'success' => [

@@ -14,11 +14,13 @@ class ServiceOption extends Model
 
     protected $fillable = [
         'service_id',
+        'category_price_id',
         'duration',
         'price',
     ];
     protected $casts = [
         'id' => 'string',
+        'category_price_id' => 'string',
         'service_id' => 'string',
         'price' => 'decimal:2',
     ];

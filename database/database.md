@@ -261,6 +261,20 @@
     - softDeletes
     - timestamps
 
+# category_prices
+    # note
+    - Bảng category_prices lưu trữ thông tin giá của từng loại dịch vụ.
+
+    # relations
+    - Quan hệ 1-n với bảng categories.
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - category_id (bigint, foreign key to categories.id) -- id danh mục dịch vụ
+    - price (decimal(15,2)) -- giá dịch vụ
+    - duration (smallint) -- thời gian dịch vụ (phút)
+    - timestamps
+
 # services
     # note
     - Bảng services lưu trữ thông tin dịch vụ.
@@ -288,7 +302,8 @@
     # cấu trúc
     - id (bigint, primary key, auto-increment)
     - service_id (bigint, foreign key to services.id) -- id dịch vụ
-    - duration (smallint) -- thời gian thực hiện dịch vụ (dạng enum ServiceDuration - minutes)
+    - category_price_id (bigint, nullable, foreign key to category_prices.id) -- id tùy chọn danh mục
+    - duration (smallint) -- thời gian thực hiện dịch vụ
     - price (decimal(15,2)) -- giá tùy chọn
     - softDeletes
     - timestamps
