@@ -95,6 +95,11 @@ class User extends Authenticatable
         return $this->hasOne(UserFile::class)->where('type', UserFileType::LICENSE);
     }
 
+    public function faceWithIdentityCard()
+    {
+        return $this->hasOne(UserFile::class)->where('type', UserFileType::FACE_WITH_IDENTITY_CARD);
+    }
+
     public function gallery()
     {
         return $this->hasMany(UserFile::class)->where('type', UserFileType::KTV_IMAGE_DISPLAY);

@@ -27,6 +27,8 @@ class AgencyResource extends Resource
 
     protected static ?string $cluster = AgencyCluster::class;
 
+    protected static string | \UnitEnum | null $navigationGroup = 'agency';
+
     protected static ?string $recordTitleAttribute = 'User';
 
     public static function form(Schema $schema): Schema

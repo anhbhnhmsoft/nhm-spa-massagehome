@@ -23,5 +23,7 @@ return [
     'goong_error' => 'Có lỗi xảy ra trong quá trình tìm kiếm địa chỉ, vui lòng thử lại sau.',
     'empty_config' => 'Cấu hình không hợp lệ',
     'address_exists' => 'Địa chỉ đã tồn tại',
-    
+    'unauthenticated' => 'Bạn không có quyền truy cập tài nguyên này.',
+    'invalid_role' => 'Vai trò không hợp lệ',
+    'cannot_link_self' => 'Bạn không thể liên kết với chính mình',
 ];

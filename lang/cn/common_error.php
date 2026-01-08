@@ -23,5 +23,7 @@ return [
     'goong_error' => '搜索地址时发生错误，请稍后再试。',
     'empty_config' => '配置无效',
     'address_exists' => '地址已存在',
-
+    'unauthenticated' => '您没有权限访问此资源。',
+    'invalid_role' => '角色无效',
+    'cannot_link_self' => '您不能链接到您自己',
 ];

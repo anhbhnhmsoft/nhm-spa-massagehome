@@ -34,4 +34,5 @@ return [
     'not_found_referred_staff' => 'Staff referrer not found',
     'config_not_found' => 'Configuration does not exist',
     'contract_not_found' => 'Contract does not exist',
+    'verify_agency' => 'You have not yet verified your agency',
 ];

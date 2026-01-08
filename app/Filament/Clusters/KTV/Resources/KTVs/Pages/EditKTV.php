@@ -74,6 +74,10 @@ class EditKTV extends EditRecord
             $this->tempFiles['certificate_path'] = $data['certificate_path'];
             unset($data['certificate_path']);
         }
+        if (array_key_exists('face_with_identity_card_path', $data)) {
+            $this->tempFiles['face_with_identity_card_path'] = $data['face_with_identity_card_path'];
+            unset($data['face_with_identity_card_path']);
+        }
 
         return $data;
     }
@@ -103,6 +107,18 @@ class EditKTV extends EditRecord
                 UserFile::updateOrCreate(
                     ['user_id' => $record->id, 'type' => UserFileType::LICENSE],
                     ['file_path' => $this->tempFiles['certificate_path'], 'role' => UserRole::KTV->value, 'is_public' => false]
+                );
+            }
+        }
+        if (array_key_exists('face_with_identity_card_path', $this->tempFiles)) {
+            if ($this->tempFiles['face_with_identity_card_path'] === null) {
+                UserFile::where('user_id', $record->id)
+                    ->where('type', UserFileType::FACE_WITH_IDENTITY_CARD)
+                    ->delete();
+            } else {
+                UserFile::updateOrCreate(
+                    ['user_id' => $record->id, 'type' => UserFileType::FACE_WITH_IDENTITY_CARD],
+                    ['file_path' => $this->tempFiles['face_with_identity_card_path'], 'role' => UserRole::KTV->value, 'is_public' => false]
                 );
             }
         }

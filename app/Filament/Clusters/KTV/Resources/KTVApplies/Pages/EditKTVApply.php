@@ -40,6 +40,10 @@ class EditKTVApply extends EditRecord
             $this->tempFiles['certificate_path'] = $data['certificate_path'];
             unset($data['certificate_path']);
         }
+        if (array_key_exists('face_with_identity_card_path', $data)) {
+            $this->tempFiles['face_with_identity_card_path'] = $data['face_with_identity_card_path'];
+            unset($data['face_with_identity_card_path']);
+        }
         return $data;
     }
 
@@ -57,6 +61,9 @@ class EditKTVApply extends EditRecord
         }
         if (array_key_exists('certificate_path', $this->tempFiles)) {
             $service->syncUserFile($record->id, UserFileType::LICENSE, $this->tempFiles['certificate_path'], UserRole::KTV);
+        }
+        if (array_key_exists('face_with_identity_card_path', $this->tempFiles)) {
+            $service->syncUserFile($record->id, UserFileType::FACE_WITH_IDENTITY_CARD, $this->tempFiles['face_with_identity_card_path'], UserRole::KTV);
         }
     }
 }

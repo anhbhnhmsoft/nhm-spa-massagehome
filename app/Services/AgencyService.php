@@ -30,8 +30,8 @@ class AgencyService extends BaseService
 
             // Lọc theo Agency
             $query->whereHas('reviewApplication', function ($q) use ($user) {
-                $q->where('agency_id', $user->id);
-            }); 
+                $q->where('referred_by_user_id', $user->id);
+            });
 
             // Filter
             $this->userRepository->filterQuery($query, $filterDTO->filters);

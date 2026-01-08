@@ -23,5 +23,7 @@ return [
     'goong_error' => 'An error occurred while searching for address, please try again later.',
     'empty_config' => 'Invalid configuration',
     'address_exists' => 'Address already exists',
-
+    'unauthenticated' => 'You do not have permission to access this resource.',
+    'invalid_role' => 'Invalid role',
+    'cannot_link_self' => 'You cannot link with yourself',
 ];

@@ -20,4 +20,6 @@ class AgencyCluster extends Cluster
     {
         return __('admin.nav.agency');
     }
+
+    protected static string | \UnitEnum | null $navigationGroup = 'agency';
 }
