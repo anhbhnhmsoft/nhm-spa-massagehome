@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Storage;
 
 class UserProfile extends Model
 {
-    use HasFactory, HasBigIntId;
+    use HasBigIntId;
 
     protected $table = 'user_profiles';
     protected $primaryKey = 'user_id';

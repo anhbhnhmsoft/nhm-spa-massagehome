@@ -32,6 +32,7 @@ use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
 use App\Repositories\StaticContractRepository;
 use App\Repositories\UserFileRepository;
+use App\Repositories\UserKtvScheduleRepository;
 use App\Repositories\UserProfileRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\UserReviewApplicationRepository;
@@ -107,6 +108,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(MessageRepository::class);
         $this->app->singleton(UserWithdrawInfoRepository::class);
         $this->app->singleton(StaticContractRepository::class);
+        $this->app->singleton(UserKtvScheduleRepository::class);
     }
 
     /**

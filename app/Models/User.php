@@ -239,4 +239,9 @@ class User extends Authenticatable
             'user_id'
         );
     }
+
+    public function schedule()
+    {
+        return $this->hasOne(UserKtvSchedule::class, 'ktv_id');
+    }
 }

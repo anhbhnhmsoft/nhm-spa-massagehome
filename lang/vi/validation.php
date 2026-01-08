@@ -46,14 +46,18 @@ return [
     'address' => [
         'required' => 'Vui lòng nhập địa chỉ.',
         'string' => 'Địa chỉ phải là chuỗi ký tự.',
+        'max' => 'Địa chỉ phải có ít nhất :max ký tự.',
+        'invalid' => 'Địa chỉ không hợp lệ.',
     ],
     'lat' => [
         'required' => 'Vui lòng nhập tọa độ latitude.',
         'numeric' => 'Tọa độ latitude phải là số.',
+        'invalid' => 'Tọa độ latitude phải trong khoảng -90 đến 90.',
     ],
     'lng' => [
         'required' => 'Vui lòng nhập tọa độ longitude.',
         'numeric' => 'Tọa độ longitude phải là số.',
+        'invalid' => 'Tọa độ longitude phải trong khoảng -180 đến 180.',
     ],
     'agency_not_found' => 'Không tìm thấy mã Agency này hoặc Agency không hoạt động.',
     'duration' => [
@@ -143,6 +147,17 @@ return [
     'role' => [
         'required' => 'Vui lòng chọn vai trò.',
         'in' => 'Vai trò không hợp lệ.',
+        'invalid' => 'Vai trò không hợp lệ.',
+    ],
+    'agency_id' => [
+        'required' => 'Vui lòng chọn Agency.',
+        'numeric' => 'ID Agency phải là số.',
+        'exists' => 'ID Agency không tồn tại.',
+    ],
+    'province_code' => [
+        'required' => 'Vui lòng chọn tỉnh/thành phố.',
+        'string' => 'Tỉnh/thành phố phải là chuỗi.',
+        'max' => 'Tỉnh/thành phố không được vượt quá 10 ký tự.',
     ],
     'type_withdraw_info' => [
         'required' => 'Vui lòng chọn loại rút tiền.',
@@ -231,21 +246,40 @@ return [
         'string' => 'Mật khẩu mới phải là chuỗi.',
     ],
     'bio' => [
+        'required' => 'Vui lòng nhập mô tả ít nhất bằng 1 ngôn ngữ.',
+        'invalid' => 'Dữ liệu mô tả không đúng định dạng.',
         'vi' => [
             'required' => 'Vui lòng nhập mô tả tiếng Việt.',
             'string' => 'Mô tả tiếng Việt phải là chuỗi.',
+            'max' => 'Mô tả tiếng Việt quá dài (tối đa 1000 ký tự).',
+            'invalid' => 'Mô tả tiếng Việt không hợp lệ.',
         ],
         'cn' => [
             'required' => 'Vui lòng nhập mô tả tiếng Trung.',
             'string' => 'Mô tả tiếng Trung phải là chuỗi.',
+            'max' => 'Mô tả tiếng Trung quá dài (tối đa 1000 ký tự).',
+            'invalid' => 'Mô tả tiếng Trung không hợp lệ.',
         ],
         'en' => [
             'required' => 'Vui lòng nhập mô tả tiếng Anh.',
             'string' => 'Mô tả tiếng Anh phải là chuỗi.',
+            'max' => 'Mô tả tiếng Anh quá dài (tối đa 1000 ký tự).',
+            'invalid' => 'Mô tả tiếng Anh không hợp lệ.',
         ],
     ],
     'experience' => [
         'required' => 'Vui lòng nhập kinh nghiệm.',
         'integer' => 'Kinh nghiệm phải là số nguyên.',
     ],
+    'file_apply_partner_uploads' => [
+        'required' => 'Vui lòng tải lên ít nhất 1 ảnh.',
+        'array' => 'Danh sách ảnh phải là mảng.',
+        'invalid' => 'Dữ liệu ảnh không đúng định dạng và tối đa 10MB mỗi ảnh.',
+        'invalid_type' => 'Loại ảnh không hợp lệ.',
+        'invalid_type_for_role' => 'Loại ảnh không hợp lệ cho vai trò này.',
+        'duplicate_type' => 'Chỉ có thể tải lên 1 ảnh cho mỗi loại.',
+        'invalid_type_count' => 'Số lượng ảnh cho loại này không hợp lệ.',
+        'missing_type' => 'Vui lòng tải lên ảnh cho loại :type.',
+    ],
+
 ];

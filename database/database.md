@@ -150,6 +150,20 @@
     - softDeletes
     - timestamps
 
+# user_ktv_schedules
+    #note
+    - Bảng user_ktv_schedules lưu trữ thông tin lịch làm việc của KTV.
+
+    # relations
+    - Quan hệ 1-1 với bảng users.
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - ktv_id (bigint, foreign key to users.id) -- id KTV
+    - working_schedule (jsonb) -- lịch làm việc (dạng json mô tả thông tin làm việc từ thứ 2 đến CN)
+    - is_working (boolean, default false) -- nút bật/tắt làm việc hằng ngày
+    - timestamps
+
 # wallets
     # note
     - Bảng wallets lưu trữ thông tin ví tiền của người dùng.

@@ -35,4 +35,5 @@ return [
     'config_not_found' => 'Cấu hình không tồn tại',
     'contract_not_found' => 'Hợp đồng không tồn tại',
     'verify_agency' => 'Bạn chưa xác thực đại lý',
+    'agency_not_found' => 'Đại lý không tồn tại',
 ];

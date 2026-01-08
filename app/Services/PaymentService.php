@@ -247,16 +247,6 @@ class PaymentService extends BaseService
                         'metadata' => json_encode($payosResponse),
                     ]);
 
-                    // Bắn notif cho người dùng khi tạo transaction
-                    SendNotificationJob::dispatch(
-                        userId: $user->id,
-                        type: NotificationType::WALLET_DEPOSIT,
-                        data: [
-                            'transaction_id' => $transaction->id,
-                            'amount' => $amount,
-                            'point_amount' => $pointAmount,
-                        ]
-                    );
 
                     // Lấy dữ liệu QR Banking từ PayOS
                     $payosData = $payosResponse['data'];
@@ -331,7 +321,7 @@ class PaymentService extends BaseService
             }
 
             return ServiceReturn::success(
-                data: $transaction->status === WalletTransactionStatus::COMPLETED->value
+                data: $transaction->status == WalletTransactionStatus::COMPLETED->value
             );
         } catch (ServiceException $exception) {
             return ServiceReturn::error(
@@ -433,7 +423,7 @@ class PaymentService extends BaseService
             // Bắn notif cho người dùng khi thanh toán thành công
             SendNotificationJob::dispatch(
                 userId: $wallet->user_id,
-                type: NotificationType::PAYMENT_COMPLETE,
+                type: NotificationType::WALLET_DEPOSIT,
                 data: [
                     'transaction_id' => $transaction->id,
                     'amount' => $dataPayOs['amount'],

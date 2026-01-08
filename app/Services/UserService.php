@@ -5,12 +5,14 @@ namespace App\Services;
 use App\Core\Cache\CacheKey;
 use App\Core\Cache\Caching;
 use App\Core\Controller\FilterDTO;
+use App\Core\Helper;
 use App\Core\LogHelper;
 use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
 use App\Enums\BookingStatus;
 use App\Enums\ConfigName;
+use App\Enums\DirectFile;
 use App\Enums\NotificationType;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserFileType;
@@ -23,6 +25,7 @@ use App\Repositories\CouponUserRepository;
 use App\Repositories\ReviewRepository;
 use App\Repositories\UserAddressRepository;
 use App\Repositories\UserFileRepository;
+use App\Repositories\UserKtvScheduleRepository;
 use App\Repositories\UserProfileRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\UserReviewApplicationRepository;
@@ -49,6 +52,7 @@ class UserService extends BaseService
         protected ConfigService                   $configService,
         protected WalletTransactionRepository     $walletTransactionRepository,
         protected ReviewRepository                $reviewRepository,
+        protected UserKtvScheduleRepository       $userKtvScheduleRepository,
     ) {
         parent::__construct();
     }
@@ -546,10 +550,9 @@ class UserService extends BaseService
      */
     public function applyPartnerForCurrentUser(array $data): ServiceReturn
     {
+        $tempFiles = [];
         try {
             DB::beginTransaction();
-
-            /** @var \App\Models\User $user */
             $user = Auth::user();
             if (!$user) {
                 throw new ServiceException(
@@ -557,31 +560,35 @@ class UserService extends BaseService
                 );
             }
 
-            // Cập nhật tên nếu có truyền lên
-            if (!empty($data['name'])) {
-                $user->name = $data['name'];
-                $user->save();
+            // Kiểm tra agency_id có tồn tại và có phải là đối tác không
+            if (!empty($data['agency_id'])) {
+                $agency = $this->userRepository
+                    ->query()
+                    ->where('id', $data['agency_id'])
+                    ->where('role', UserRole::AGENCY->value)
+                    ->where('is_active', true)
+                    ->first();
+                if (!$agency) {
+                    throw new ServiceException(
+                        message: __("error.agency_not_found")
+                    );
+                }
             }
 
-            $applyRole = !empty($data['role']) ? (int)$data['role'] : null;
-            if (!$applyRole || !in_array($applyRole, [UserRole::KTV->value, UserRole::AGENCY->value])) {
-                throw new ServiceException(
-                    message: __("common_error.invalid_data")
-                );
-            }
+
 
             $reviewData = [
                 'user_id' => $user->id,
-                'agency_id' => optional($data['reviewApplication'])['agency_id'] ?? null,
+                'agency_id' => $data['agency_id'] ?? null,
                 'status' => ReviewApplicationStatus::PENDING->value,
-                'province_code' => optional($data['reviewApplication'])['province_code'] ?? null,
-                'address' => optional($data['reviewApplication'])['address'] ?? null,
-                'latitude' => optional($data['reviewApplication'])['latitude'] ?? null,
-                'longitude' => optional($data['reviewApplication'])['longitude'] ?? null,
+                'province_code' => $data['province_code'],
+                'address' => $data['address'],
+                'latitude' => $data['latitude'],
+                'longitude' => $data['longitude'],
                 'application_date' => now(),
-                'bio' => optional($data['reviewApplication'])['bio'] ?? null,
-                'role' => $applyRole,
+                'role' => $data['role'],
             ];
+            $reviewData['bio'] = Helper::multilingualPayload($data, 'bio');
 
             $existingReview = $this->userReviewApplicationRepository
                 ->query()
@@ -594,31 +601,58 @@ class UserService extends BaseService
                 $this->userReviewApplicationRepository->create($reviewData);
             }
 
-            if (!empty($data['files']) && is_array($data['files'])) {
-                foreach ($data['files'] as $file) {
-                    $this->userFileRepository->create([
-                        'user_id' => $user->id,
-                        'type' => optional($file)['type'] ?? null,
-                        'file_path' => optional($file)['file_path'] ?? null,
-                        'is_public' => (bool)(optional($file)['is_public'] ?? false),
-                        'role' => $applyRole,
-                    ]);
+            foreach ($data['file_uploads'] as $fileUpload) {
+                $typeUpload = $data['type_upload'];
+                $file = $fileUpload['file'];
+                // Kiểm tra file có phải là instance của UploadedFile không
+                if (!$file instanceof UploadedFile) {
+                    throw new ServiceException(
+                        message: __("common_error.invalid_data")
+                    );
                 }
-            }
+                $isPublic = !in_array($typeUpload, UserFileType::getTypeUploadToPrivateDisk());
 
+                $path = $file->store(DirectFile::makePathById(
+                    type: DirectFile::USER_FILE_UPLOAD,
+                    id: $user->id
+                ), $isPublic ? 'public' : 'private');
+                $tempFiles[] = [
+                    'disk' => $isPublic ? 'public' : 'private',
+                    'path' => $path,
+                ];
+                $this->userFileRepository->create([
+                    'user_id' => $user->id,
+                    'type' => $typeUpload,
+                    'file_path' => $path,
+                    'is_public' => $isPublic,
+                    'role' => $data['role'],
+                ]);
+            }
             DB::commit();
 
             return ServiceReturn::success(
                 data: $user->load('reviewApplication', 'files'),
                 message: __("common.success.data_created")
             );
-        } catch (\Exception $exception) {
+        }
+        catch (ServiceException $exception) {
             DB::rollBack();
+            foreach ($tempFiles as $file) {
+                Storage::disk($file['disk'])->delete($file['path']);
+            }
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        }
+        catch (\Exception $exception) {
+            DB::rollBack();
+            foreach ($tempFiles as $file) {
+                Storage::disk($file['disk'])->delete($file['path']);
+            }
             LogHelper::error(
                 message: "Lỗi UserService@applyPartnerForCurrentUser",
                 ex: $exception
             );
-
             return ServiceReturn::error(
                 message: $exception->getMessage()
             );
@@ -1089,6 +1123,34 @@ class UserService extends BaseService
             );
         } catch (\Exception $e) {
             LogHelper::error('Lỗi UserService@linkKtvToAgency', $e);
+            return ServiceReturn::error(__('common_error.server_error'));
+        }
+    }
+
+    public function handleGetScheduleKtv(int $ktvId): ServiceReturn
+    {
+        try {
+            $ktv = $this->userRepository->query()->find($ktvId);
+
+            if (!$ktv || $ktv->role !== UserRole::KTV->value) {
+                throw new ServiceException(__('common_error.data_not_found'));
+            }
+
+            $schedules = $this->userKtvScheduleRepository->query()
+                ->where('ktv_id', $ktvId)
+                ->get();
+
+            return ServiceReturn::success(
+                data: $schedules,
+                message: __('common.success.data_retrieved')
+            );
+        }catch (ServiceException $exception) {
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        }
+        catch (\Exception $e) {
+            LogHelper::error('Lỗi UserService@handleGetScheduleKtv', $e);
             return ServiceReturn::error(__('common_error.server_error'));
         }
     }

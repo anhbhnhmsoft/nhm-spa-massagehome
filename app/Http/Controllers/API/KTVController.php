@@ -375,4 +375,19 @@ class KTVController extends BaseController
 
         return $this->sendSuccess(message: __('admin.ktv.messages.delete_success'));
     }
+
+    public function getSchedule(): JsonResponse
+    {
+        $user = Auth::user();
+        $result = $this->userService->handleGetScheduleKtv($user->id);
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage());
+        }
+
+        return $this->sendSuccess(
+            data: new KtvScheduleResource($result->getData()),
+            message: __('admin.notification.success.get_success')
+        );
+    }
 }

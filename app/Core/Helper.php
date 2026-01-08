@@ -123,7 +123,7 @@ final class Helper
     {
         $data = $source[$field] ?? [];
         // Tìm giá trị fallback (lấy giá trị đầu tiên không rỗng trong mảng)
-        $fallback = null;
+        $fallback = '';
         foreach ($data as $val) {
             if (!empty($val)) {
                 $fallback = $val;

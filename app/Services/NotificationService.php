@@ -8,7 +8,6 @@ use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
 use App\Enums\Language;
-use App\Enums\NotificationDescription;
 use App\Enums\NotificationStatus;
 use App\Enums\NotificationType;
 use App\Models\Notification;
@@ -179,11 +178,10 @@ class NotificationService extends BaseService
         // Lấy ngôn ngữ của user
         $userLang = Language::tryFrom($user->language) ?? Language::VIETNAMESE;
 
-        $notificationDesc = NotificationDescription::fromNotificationType($type);
 
         // Lấy title và description theo ngôn ngữ của user
-        $title = $notificationDesc->getTitleByLang($userLang);
-        $description = $notificationDesc->getDescByLang($userLang);
+        $title = $type->getTitleByLang($userLang);
+        $description = $type->getDescByLang($userLang);
 
         // Tạo notification trong database
         $notification = Notification::create([
@@ -220,7 +218,7 @@ class NotificationService extends BaseService
 
             // Gửi thông báo qua Redis pub/sub để Node server xử lý
             $redis = RedisFacade::connection('pubsub');
-            $channel = env('REDIS_CHANNEL_NOTIFICATION', 'expo_notifications');
+            $channel = config('services.node_server.channel_notification');
             $redis->publish($channel, json_encode($payload));
 
             // Đánh dấu đã gửi

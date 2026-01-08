@@ -69,7 +69,7 @@ class CategoryForm
                                     ->required()
                                     ->numeric()
                                     ->minValue(1)
-                                    ->suffix(__('admin.common.minute')),
+                                    ->suffix(__('admin.minute')),
 
                                 TextInput::make('price')
                                     ->label(__('admin.common.form.price'))

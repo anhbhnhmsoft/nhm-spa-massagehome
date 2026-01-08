@@ -166,7 +166,7 @@ Route::middleware('set-api-locale')->group(function () {
             Route::post('payos', [PaymentController::class, 'handleWebhookPayOs']);
         });
 
-        // Lấy danh sách dịch vụ
+        // router cần auth
         Route::middleware(['auth:sanctum'])->group(function () {
             // Lấy danh sách giao dịch
             Route::get('transactions', [PaymentController::class, 'listTransaction']);
@@ -284,7 +284,12 @@ Route::middleware('set-api-locale')->group(function () {
         Route::post('upload-ktv-images', [KTVController::class, 'uploadKtvImages']);
         // xóa ảnh ktv
         Route::delete('delete-ktv-image/{id}', [KTVController::class, 'deleteKtvImage'])->where('id', '[0-9]+');
+        // Lấy thông tin lịch làm việc của KTV
+        Route::get('schedule', [KTVController::class, 'getSchedule']);
+
+        Route::post('schedule', [KTVController::class, 'updateSchedule']);
     });
+
     // Dành cho agency
     Route::prefix('agency')->middleware(['auth:sanctum'])->group(function () {
         // Lấy thông tin dashboard profile của user hiện tại
