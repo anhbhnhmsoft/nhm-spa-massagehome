@@ -1045,4 +1045,51 @@ class UserService extends BaseService
             );
         }
     }
+
+    /**
+     * Link KTV to Agency via QR
+     * @param int $ktvId
+     * @param int $agencyId
+     * @return ServiceReturn
+     */
+    public function linkKtvToAgency(int $ktvId, int $agencyId): ServiceReturn
+    {
+        try {
+            $ktv = $this->userRepository->query()->find($ktvId);
+            $agency = $this->userRepository->query()->find($agencyId);
+
+            if (!$ktv || !$agency) {
+                return ServiceReturn::error(__('common_error.data_not_found'));
+            }
+
+            // Check roles
+            if ($ktv->role !== UserRole::KTV->value) {
+                return ServiceReturn::success( data: ['is_ktv' => false], message:  __('common_error.invalid_role'));
+            }
+
+            if ($agency->role !== UserRole::AGENCY->value) {
+                return ServiceReturn::error(__('common_error.invalid_role'));
+            }
+
+            // Prevent self-linking
+            if ($ktv->id === $agency->id) {
+                return ServiceReturn::error(__('common_error.cannot_link_self'));
+            }
+
+            // Update link
+            $ktv->referred_by_user_id = $agency->id;
+            $ktv->save();
+
+            return ServiceReturn::success(
+                data: [
+                    'ktv' => $ktv,
+                    'is_ktv' => true,
+                ],
+                message: __('common.success.data_updated')
+            );
+        } catch (\Exception $e) {
+            LogHelper::error('Lỗi UserService@linkKtvToAgency', $e);
+            return ServiceReturn::error(__('common_error.server_error'));
+        }
+    }
 }

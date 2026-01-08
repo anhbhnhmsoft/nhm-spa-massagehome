@@ -289,5 +289,7 @@ Route::middleware('set-api-locale')->group(function () {
     Route::prefix('agency')->middleware(['auth:sanctum'])->group(function () {
         // Lấy thông tin dashboard profile của user hiện tại
         Route::get('manage-ktv', [AgencyController::class, 'listKtv']);
+        // Link KTV to Agency via QR
+        Route::post('link-qr', [AgencyController::class, 'linkQr']);
     });
 });

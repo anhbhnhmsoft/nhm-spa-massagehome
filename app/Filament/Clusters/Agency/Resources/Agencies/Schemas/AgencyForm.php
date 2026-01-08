@@ -100,6 +100,21 @@ class AgencyForm
                                             ->columnSpanFull()
                                             ->afterStateHydrated(fn($component, $record) => $component->state($record?->cccdBack()->first()?->file_path)),
                                     ])->columnSpan(1),
+
+                                Section::make(__('admin.ktv_apply.file_type.face_with_identity_card'))
+                                    ->schema([
+                                        FileUpload::make('face_with_identity_card_path')
+                                            ->label(__('admin.ktv_apply.file_type.face_with_identity_card'))
+                                            ->directory(fn($record) => DirectFile::makePathById(DirectFile::AGENCY, $record?->id ?? Helper::getTimestampAsId()))
+                                            ->disk('private')
+                                            ->required()
+                                            ->image()
+                                            ->maxSize(102400)
+                                            ->downloadable()
+                                            ->columnSpanFull()
+                                            ->deletable()
+                                            ->afterStateHydrated(fn($component, $record) => $component->state($record?->faceWithIdentityCard()->first()?->file_path)),
+                                    ])->columnSpanFull(),
                             ])
                             ->columns(2)
                             ->columnSpanFull(),

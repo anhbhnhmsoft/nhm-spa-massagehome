@@ -51,6 +51,10 @@ class CreateKTV extends CreateRecord
             $this->tempFiles['certificate_path'] = $data['certificate_path'];
             unset($data['certificate_path']);
         }
+        if (isset($data['face_with_identity_card_path'])) {
+            $this->tempFiles['face_with_identity_card_path'] = $data['face_with_identity_card_path'];
+            unset($data['face_with_identity_card_path']);
+        }
 
         return $data;
     }
@@ -87,6 +91,15 @@ class CreateKTV extends CreateRecord
                     'user_id' => $record->id,
                     'type' => UserFileType::LICENSE,
                     'file_path' => $this->tempFiles['certificate_path'],
+                    'role' => UserRole::KTV->value,
+                    'is_public' => false,
+                ]);
+            }
+            if (isset($this->tempFiles['face_with_identity_card_path'])) {
+                UserFile::create([
+                    'user_id' => $record->id,
+                    'type' => UserFileType::FACE_WITH_IDENTITY_CARD,
+                    'file_path' => $this->tempFiles['face_with_identity_card_path'],
                     'role' => UserRole::KTV->value,
                     'is_public' => false,
                 ]);

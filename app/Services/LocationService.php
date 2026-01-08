@@ -126,11 +126,11 @@ class LocationService  extends BaseService
             $response = Http::timeout(10)->get(
                 $this->createLink(self::ENDPOINT_DETAIL . '?' . http_build_query($params))
             );
-
             $data = $response->json();
-
-            if ($response->failed() || $data['status'] !== 'OK') {
-                $errorMessage = __('error.goong_error');
+            if ($response->failed() || ($data['status'] ?? 'OK') !== 'OK') {
+                $status = $data['status'] ?? $response->status();
+                LogHelper::error("Goong API Error: " . $response->body() . " | Place ID: " . $placeId);
+                $errorMessage = __('error.goong_error', ['status' => $status . " - ID: " . $placeId]);
                 throw new ServiceException($errorMessage);
             }
 
@@ -143,9 +143,13 @@ class LocationService  extends BaseService
             $result = $data['result'];
             $locationData = $result['geometry']['location'] ?? [];
 
+            $name = $result['name'] ?? null;
+            $address = $result['formatted_address'] ?? null;
+            $formattedAddress = implode(', ', array_filter([$name, $address]));
+
             $dataToCache = [
                 'place_id'          => $result['place_id'] ?? $placeId,
-                'formatted_address' => $result['name'] . ', ' . $result['formatted_address'] ?? '',
+                'formatted_address' => $formattedAddress,
                 'latitude'          => $locationData['lat'] ?? null,
                 'longitude'         => $locationData['lng'] ?? null,
                 'raw_data'          => json_encode($result),
@@ -159,7 +163,7 @@ class LocationService  extends BaseService
             /** 4. Trả output chuẩn hoá */
             return ServiceReturn::success([
                 'place_id'          => $result['place_id'] ?? $placeId,
-                'formatted_address' => $result['name'] . ', ' . $result['formatted_address'] ?? '',
+                'formatted_address' => $formattedAddress,
                 'latitude'          => $locationData['lat'] ?? null,
                 'longitude'         => $locationData['lng'] ?? null,
             ]);

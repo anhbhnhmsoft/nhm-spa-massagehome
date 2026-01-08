@@ -111,7 +111,8 @@ return
                 'policy_register' => 'Registration Policy',
                 'policy_privacy' => 'Privacy Policy',
                 'policy_for_ktv' => "Technician's Operating Policy",
-                'policy_for_agency' => "Partner's Operating Policy"
+                'policy_for_agency' => "Partner's Operating Policy",
+                'face_with_identity_card' => 'Front and Back of Identity Card',
             ],
 
         ],
@@ -130,6 +131,7 @@ return
                 "health_insurance" => "Health Insurance",
                 "business_image" => "Business Image",
                 "ktv_image_display" => "Displayed Image",
+                "face_with_identity_card" => "Face with Identity Card",
             ],
             "fields" => [
                 "experience" => "Experience",

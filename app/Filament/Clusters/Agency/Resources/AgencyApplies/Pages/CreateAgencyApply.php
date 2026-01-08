@@ -30,6 +30,10 @@ class CreateAgencyApply extends CreateRecord
             $this->tempFiles['cccd_back_path'] = $data['cccd_back_path'];
             unset($data['cccd_back_path']);
         }
+        if (array_key_exists('face_with_identity_card_path', $data)) {
+            $this->tempFiles['face_with_identity_card_path'] = $data['face_with_identity_card_path'];
+            unset($data['face_with_identity_card_path']);
+        }
 
         return $data;
     }
@@ -46,6 +50,9 @@ class CreateAgencyApply extends CreateRecord
         }
         if (array_key_exists('cccd_back_path', $this->tempFiles)) {
             $service->syncUserFile($record->id, UserFileType::IDENTITY_CARD_BACK, $this->tempFiles['cccd_back_path'], UserRole::AGENCY);
+        }
+        if (array_key_exists('face_with_identity_card_path', $this->tempFiles)) {
+            $service->syncUserFile($record->id, UserFileType::FACE_WITH_IDENTITY_CARD, $this->tempFiles['face_with_identity_card_path'], UserRole::AGENCY);
         }
 
         return $record;

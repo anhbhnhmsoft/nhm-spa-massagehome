@@ -111,8 +111,8 @@ return
                 'policy_register' => '注册政策',
                 'policy_privacy' => '隐私政策',
                 'policy_for_ktv' => '技术人员操作规程',
-                'policy_for_agency' => '合作伙伴操作规程'
-
+                'policy_for_agency' => '合作伙伴操作规程',
+                'face_with_identity_card' => '身份证正面和背面',
             ],
 
         ],
@@ -131,6 +131,7 @@ return
                 "health_insurance" => "健康保险",
                 "business_image" => "商业图片",
                 "ktv_image_display" => "展示图片",
+                "face_with_identity_card" => "身份证正面和背面",
             ],
             "fields" => [
                 "experience" => "经验",

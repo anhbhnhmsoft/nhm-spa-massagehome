@@ -34,4 +34,5 @@ return [
     'not_found_referred_staff' => '未找到员工推荐人',
     'config_not_found' => '配置不存在',
     'contract_not_found' => '合同不存在',
+    'verify_agency' => '您还没有验证您的代理商',
 ];

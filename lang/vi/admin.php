@@ -111,7 +111,8 @@ return
                 'policy_register' => 'Hợp đồng đăng ký',
                 'policy_privacy' => 'Hợp đồng quyền riêng tư',
                 'policy_for_ktv' => 'Chính sách hoạt động của kỹ thuật viên',
-                'policy_for_agency' => 'Chính sách hoạt động của đối tác'
+                'policy_for_agency' => 'Chính sách hoạt động của đối tác',
+                'face_with_identity_card' => 'Hình ảnh chụp cùng CMND/CCCD',
             ],
 
         ],
@@ -130,6 +131,7 @@ return
                 "health_insurance" => "Bảo hiểm y tế",
                 "business_image" => "Hình ảnh doanh nghiệp",
                 "ktv_image_display" => "Hình ảnh hiển thị cho khách hàng",
+                "face_with_identity_card" => "Hình ảnh chụp cùng CMND/CCCD",
             ],
             "fields" => [
                 "experience" => "Kinh nghiệm",
