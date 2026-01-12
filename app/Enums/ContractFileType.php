@@ -4,11 +4,12 @@ namespace App\Enums;
 
 enum ContractFileType: int
 {
-    case TERM_OF_USE = 1;
-    case POLICY_REGISTER = 2;
-    case POLICY_PRIVACY = 3;
-    case POLICY_FOR_KTV = 4;
-    case POLICY_FOR_AGENCY = 5;
+    case TERM_OF_USE = 1; // Hợp đồng sử dụng
+    case POLICY_REGISTER = 2;    // Hợp đồng đăng ký
+    case POLICY_PRIVACY = 3;    // Hợp đồng quyền riêng tư
+    case POLICY_FOR_KTV = 4;    // Hợp đồng cho KTV
+    case POLICY_FOR_AGENCY = 5;    // Hợp đồng cho đại lý
+
     public static function getSlug(int $case): string
     {
         return match ($case) {
@@ -44,5 +45,10 @@ enum ContractFileType: int
     public static function getLabel(int $value): string
     {
         return self::tryFrom($value)?->label() ?? '';
+    }
+
+    public static function values(): array
+    {
+        return array_column(self::cases(), 'value');
     }
 }

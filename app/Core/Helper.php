@@ -173,4 +173,36 @@ final class Helper
             }
         }
     }
+
+
+    /**
+     * Tính toán số tiền hệ thống phải trừ đi.
+     * @param float $price
+     * @param float $discountRate
+     * @param int $precision
+     * @return float
+     */
+    public static function calculateSystemMinus(float $price, float $discountRate = 0, int $precision = 0): float
+    {
+        // Đảm bảo tỷ lệ chiết khấu hợp lệ
+        $discountRate = max(0, min(100, $discountRate));
+
+        return round($price * ($discountRate / 100), $precision);
+    }
+
+    /**
+     * Tính toán số tiền KTV thực nhận.
+     * * @param float $price Giá dịch vụ (sau khi trừ giảm giá của KTV).
+     * @param float $discountRate Tỷ lệ chiết khấu hệ thống (ví dụ: 10, 20...).
+     * @param int $precision Độ chính xác làm tròn (mặc định là 0 để lấy số nguyên).
+     * @return float
+     */
+    public static function calculatePriceDiscountForKTV(float $price, float $discountRate, int $precision = 0): float
+    {
+        // Tính số tiền Hệ thống thu (Commission) và làm tròn trước
+        $systemMinus = self::calculateSystemMinus($price, $discountRate, $precision);
+
+        // KTV thực nhận = Tổng tiền - Phí sàn
+        return $price - $systemMinus;
+    }
 }

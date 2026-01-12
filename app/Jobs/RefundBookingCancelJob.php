@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Core\LogHelper;
 use App\Enums\QueueKey;
 use App\Services\BookingService;
+use App\Services\WalletService;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -29,9 +30,9 @@ class RefundBookingCancelJob implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(BookingService $bookingService): void
+    public function handle(WalletService $walletService): void
     {
-        $bookingService->refundCancelBooking($this->bookingId, $this->reason);
+        $walletService->refundCancelBooking($this->bookingId, $this->reason);
     }
 
     public function failed(\Exception $exception): void

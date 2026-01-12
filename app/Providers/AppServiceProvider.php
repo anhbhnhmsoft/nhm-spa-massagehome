@@ -126,12 +126,12 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(ServiceService::class);
         $this->app->singleton(UserService::class);
         $this->app->singleton(BookingService::class);
+        $this->app->singleton(WalletService::class);
         $this->app->singleton(PaymentService::class);
         $this->app->singleton(NotificationService::class);
         $this->app->singleton(ChatService::class);
         $this->app->singleton(Dashboard::class);
         $this->app->singleton(PayOsService::class);
-        $this->app->singleton(WalletService::class);
         $this->app->singleton(CouponService::class);
         $this->app->singleton(AffiliateService::class);
         $this->app->singleton(ProvinceService::class);

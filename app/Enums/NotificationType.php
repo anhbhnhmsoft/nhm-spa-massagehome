@@ -25,6 +25,7 @@ enum NotificationType: int
     case BOOKING_OVERTIME_WARNING = 16; // Thông báo vượt quá thời gian hẹn
     case BOOKING_START = 17; // Thông báo bắt đầu lịch hẹn
     case WALLET_TRANSACTION_CANCELLED = 18; // Thông báo hủy giao dịch ví
+    case PAYMENT_SERVICE_FOR_TECHNICIAN = 19; // Thông báo thanh toán cho kỹ thuật viên
 
     /**
      * Lấy title đa ngôn ngữ
@@ -122,6 +123,11 @@ enum NotificationType: int
                 'vi' => 'Giao dịch ví đã bị hủy',
                 'en' => 'Wallet transaction cancelled',
                 'cn' => '钱包交易已取消',
+            ],
+            self::PAYMENT_SERVICE_FOR_TECHNICIAN => [
+                'vi' => 'Thanh toán cho kỹ thuật viên thành công',
+                'en' => 'Payment for technician successful',
+                'cn' => '为技术人员支付成功',
             ],
         };
     }
@@ -222,6 +228,11 @@ enum NotificationType: int
                 'vi' => 'Giao dịch ví đã bị hủy',
                 'en' => 'Wallet transaction cancelled',
                 'cn' => '钱包交易已取消',
+            ],
+            self::PAYMENT_SERVICE_FOR_TECHNICIAN => [
+                'vi' => 'Khách hàng đã đặt lịch hẹn với kỹ thuật viên, và đã thanh toán thành công vào ví của bạn',
+                'en' => 'Customer has booked an appointment with the technician and successfully paid into your wallet',
+                'cn' => '客户已为技术人员支付成功，已将款项存入您的钱包',
             ],
         };
     }

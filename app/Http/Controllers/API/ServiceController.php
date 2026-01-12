@@ -138,7 +138,7 @@ class ServiceController extends BaseController
     {
         $validate = $request->validate([
             'service_id' => ['required', 'numeric', 'exists:services,id'],
-            'option_id' => ['required', 'numeric', 'exists:service_options,id'],
+            'option_id' => ['required', 'numeric', 'exists:category_prices,id'],
             // Rule: Phải là định dạng ngày & Phải sau thời điểm hiện tại 1 tiếng
             'book_time' => [
                 'required',

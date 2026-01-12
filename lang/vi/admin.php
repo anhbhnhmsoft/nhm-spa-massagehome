@@ -355,7 +355,8 @@ return
                 'target_role' => 'Vai trò áp dụng',
                 'is_active' => 'Kích hoạt',
                 'break_time_gap' => 'Khoảng cách giữa các ca',
-                'discount_rate' => 'Tỷ lệ chiết khấu',
+                'discount_rate' => 'Tỷ lệ chiết khấu dành cho KTV %',
+                'discount_rate_helper' => 'Công thức: P(ktv) = P(giaodich) - (P(giaodich) * (R(chietkhau) / 100))',
             ],
             'actions' => [
                 'save' => 'Lưu thay đổi',

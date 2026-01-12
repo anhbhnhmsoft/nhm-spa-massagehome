@@ -3,11 +3,17 @@
 return [
     'service' => [
         'not_active' => 'Dịch vụ dừng phục vụ',
-        'not_found'  => 'Dịch vụ không tồn tại',
+        'not_found' => 'Dịch vụ không tồn tại',
     ],
-    'not_found' => 'Booking không tồn tại',
-    'book_time_not_valid' => 'Thời gian đặt không hợp lệ, cần phải lớn hơn thời gian hiện tại!',
-    'ktv_is_busy_at_this_time' => 'Kỹ thuật viên đã có lịch trong khung giờ này!',
+    'ktv' => [
+        'not_found' => 'Không tìm thấy kỹ thuật viên',
+        'not_working' => 'Kỹ thuật viên hiện tại không làm việc, vui lòng chọn kỹ thuật viên khác để đặt lịch!',
+    ],
+    'book_time' => [
+        'break_time_gap_not_found' => 'Có lỗi xảy ra khi lấy khoảng thời gian nghỉ, vui lòng liên hệ quản trị viên, cảm ơn!',
+        'book_time_not_valid' => 'Thời gian đặt không hợp lệ, cần phải lớn hơn thời gian hiện tại ít nhất :break_time phút!',
+        'overlapping' => 'Đang có người khác đặt lịch trong khoảng thời gian này. Vui lòng chọn thời gian khác! Thời gian sớm nhất bạn có thể đặt là :time',
+    ],
     'status_not_confirmed' => 'Booking chưa được xác nhận',
     'already_started' => 'Booking đã bắt đầu',
     'not_permission' => 'Bạn không có quyền hủy booking này',
@@ -15,29 +21,26 @@ return [
     'not_canceled' => 'Booking chưa được hủy',
     'cancelled' => 'Booking đã được hủy',
     'completed' => 'Booking đã hoàn thành',
-
+    'not_paid' => 'Booking chưa thanh toán',
+    'not_paid_for_ktv' => 'Booking chưa thanh toán cho KTV',
+    'refunded_for_ktv' => 'Booking đã được hoàn tiền cho KTV',
 
     'wallet' => [
         'not_active' => 'Tài khoản không hoạt động',
         'not_enough' => 'Số dư không đủ',
-        'tech_not_enough' => 'Số dư kĩ thuật viên không đủ',
-        'tech_not_active' => 'Tài khoản kĩ thuật viên không hoạt động'
-
+        'tech_not_active' => 'Kĩ thuật viên này hiện đang không hoạt động, vui lòng chọn kỹ thuật viên khác!',
     ],
     'service_option' => [
-        'not_found'  => 'Tùy chọn dịch vụ không tồn tại',
-        'not_match'  => 'Tùy chọn dịch vụ không khớp',
+        'not_found' => 'Tùy chọn dịch vụ không tồn tại',
+        'not_match' => 'Tùy chọn dịch vụ không khớp với dịch vụ này',
     ],
     'discount_rate' => [
-        'not_found' => 'tỉ lệ chuyển đổi không tồn tại',
-    ],
-    'break_time_gap' => [
-        'not_found' => 'không tìm thấy khoảng thời gian nghỉ',
+        'not_found' => 'Có lỗi xảy ra khi lấy thông tin đặt lịch, vui lòng liên hệ quản trị viên, cảm ơn!',
     ],
     'time_slot_not_available' => 'Kỹ thuật viên đã lên lịch phục vụ trong khoảng thời gian này, vui lòng chọn thời gian khác',
     'coupon' => [
         'used' => 'Bạn đã sử dụng mã giảm giá này',
-        'not_found' => 'Mã giảm giá không tồn tại',
+        'not_found' => 'Mã giảm giá hiện tại không khả dụng',
         'not_active' => 'Mã giảm giá không hoạt động',
         'not_yet_started' => 'Mã giảm giá chưa bắt đầu',
         'expired' => 'Mã giảm giá đã hết hạn',
@@ -50,13 +53,14 @@ return [
     ],
     'payment' => [
         'wallet_customer' => 'Thanh toán đặt dịch vụ bằng ví',
+        'exchange_rate_not_found' => 'Tỉ lệ đổi tiền không tồn tại',
         'wallet_technician' => 'Thanh toán trả tiền cho kĩ thuật viên qua ví',
         'success' => 'Thanh toán thành công',
-        'wallet_customer_not_enough' => 'Số dư ví không đủ',
+        'wallet_customer_not_enough' => 'Số dư ví của quý khách không đủ để thanh toán dịch vụ này',
         'wallet_technician_not_enough' => 'Số dư ví kĩ thuật viên không đủ',
         'wallet_customer_not_found' => 'Không tìm thấy tài khoản ví',
         'wallet_technician_not_found' => 'Không tìm thấy tài khoản ví kĩ thuật viên',
-        'booking_not_found' => 'Không tìm thấy booking',
+        'booking_not_found' => 'Không tìm thấy lịch đặt hẹn này',
         'wallet_referred_staff' => 'Trả tiền hoa hồng cho người giới thiệu',
     ],
     'validate' => [

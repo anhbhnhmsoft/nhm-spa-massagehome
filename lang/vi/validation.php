@@ -299,4 +299,9 @@ return [
             'after' => 'Giờ kết thúc phải sau giờ bắt đầu.',
         ],
     ],
+    'type_contract' => [
+        'required' => 'Vui lòng chọn loại hợp đồng.',
+        'integer' => 'Loại hợp đồng phải không hợp lệ.',
+        'in' => 'Loại hợp đồng không hợp lệ.',
+    ],
 ];

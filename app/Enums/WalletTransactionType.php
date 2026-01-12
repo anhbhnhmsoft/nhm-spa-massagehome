@@ -12,7 +12,7 @@ enum WalletTransactionType: int
     case AFFILIATE = 6; // Nhận hoa hồng
     case PAYMENT_FOR_KTV = 7; // Thanh toán cho KTV
     case REFUND = 8; // Hoàn tiền cho customer
-
+    case RETRIEVE_PAYMENT_REFUND_KTV = 9; // thu hồi tiền thanh toán cho KTV khi hủy booking
 
     // Lấy danh sách trạng thái giao dịch nạp vào ví
     public static function statusIn()

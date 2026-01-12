@@ -58,18 +58,4 @@ class CommercialController extends BaseController
         $data = $result->getData();
         return $this->sendSuccess(data: $data);
     }
-    /**
-     * Lấy thông tin hợp đồng
-     * @param string $slug
-     * @return JsonResponse
-     */
-    public function getContract(string $slug)
-    {
-        $result = $this->commercialService->getContract($slug);
-        if ($result->isError()) {
-            return $this->sendError($result->getMessage());
-        }
-        $data = $result->getData();
-        return $this->sendSuccess(data: new ContractResource($data));
-    }
 }

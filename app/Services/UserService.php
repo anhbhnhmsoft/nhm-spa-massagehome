@@ -12,6 +12,7 @@ use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
 use App\Enums\BookingStatus;
 use App\Enums\ConfigName;
+use App\Enums\ContractFileType;
 use App\Enums\DirectFile;
 use App\Enums\KTVConfigSchedules;
 use App\Enums\NotificationType;
@@ -24,6 +25,7 @@ use App\Jobs\SendNotificationJob;
 use App\Repositories\BookingRepository;
 use App\Repositories\CouponUserRepository;
 use App\Repositories\ReviewRepository;
+use App\Repositories\StaticContractRepository;
 use App\Repositories\UserAddressRepository;
 use App\Repositories\UserFileRepository;
 use App\Repositories\UserKtvScheduleRepository;
@@ -54,6 +56,7 @@ class UserService extends BaseService
         protected WalletTransactionRepository     $walletTransactionRepository,
         protected ReviewRepository                $reviewRepository,
         protected UserKtvScheduleRepository       $userKtvScheduleRepository,
+        protected StaticContractRepository        $staticContractRepository
     ) {
         parent::__construct();
     }
@@ -565,75 +568,6 @@ class UserService extends BaseService
         }
     }
 
-    public function makeNewApplyAgency(array $data)
-    {
-        DB::beginTransaction();
-        try {
-            $userCheck = $this->userRepository->query()->where('phone', $data['phone'])->first();
-            if ($userCheck) {
-                throw new ServiceException(
-                    message: __("common_error.data_exists")
-                );
-            }
-
-            $userInitial = $this->userRepository->create([
-                'name' => $data['name'],
-                'phone' => $data['phone'],
-                'password' => $data['password'],
-                'role' => UserRole::AGENCY->value,
-                'phone_verified_at' => now(),
-                'is_active' => false,
-            ]);
-
-            $userReviewApplication = $this->userReviewApplicationRepository->create([
-                'user_id' => $userInitial->id,
-                'status' => ReviewApplicationStatus::PENDING->value,
-                'province_code' => optional($data['reviewApplication'])['province_code'] ?? null,
-                'address' => optional($data['reviewApplication'])['address'] ?? null,
-                'application_date' => now(),
-                'bio' => optional($data['reviewApplication'])['bio'] ?? null
-            ]);
-
-            // $userProfile = $this->userProfileRepository->create([
-            //     'avatar_url' => optional($data['profile'])['avatar_url'] ?? null,
-            //     'user_id' => $userInitial->id,
-            //     'gender' => optional($data['profile'])['gender'] ?? null,
-            //     'date_of_birth' => optional($data['profile'])['date_of_birth'] ?? null,
-            //     'bio' => optional($data['profile'])['bio'] ?? null
-            // ]);
-
-            // $wallet = $this->walletRepository->create([
-            //     'user_id' => $userInitial->id,
-            //     'balance' => 0,
-            //     'is_active' => false
-            // ]);
-
-            foreach ($data['files'] as $file) {
-                $this->userFileRepository->create([
-                    'user_id' => $userInitial->id,
-                    'type' => optional($file)['type'] ?? null,
-                    'file_path' => optional($file)['file_path'] ?? null
-                ]);
-            }
-
-            DB::commit();
-            return ServiceReturn::success(
-                data: $userInitial->load('reviewApplication', 'files'),
-                message: __("common.success.data_created")
-            );
-        } catch (\Exception $exception) {
-            DB::rollBack();
-            LogHelper::error(
-                message: "Lỗi UserService@makeNewApplyAgency",
-                ex: $exception
-            );
-            return ServiceReturn::error(
-                message: $exception->getMessage()
-            );
-        }
-    }
-
-
     /**
      * Save user address
      * @param array $data
@@ -1057,4 +991,32 @@ class UserService extends BaseService
             return ServiceReturn::error(__('common_error.server_error'));
         }
     }
+
+    /**
+     * Lấy file hợp đồng
+     * @param ContractFileType $type
+     * @return ServiceReturn
+     */
+    public function getContractFile(ContractFileType $type): ServiceReturn
+    {
+        try {
+            $file = $this->staticContractRepository->query()
+                ->where('type', $type->value)
+                ->first();
+            if (!$file) {
+                throw new ServiceException(__('common_error.data_not_found'));
+            }
+            return ServiceReturn::success(
+                data: $file,
+            );
+        } catch (ServiceException $exception) {
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        } catch (\Exception $e) {
+            LogHelper::error('Lỗi UserService@getContractFile', $e);
+            return ServiceReturn::error(__('common_error.server_error'));
+        }
+    }
+
 }

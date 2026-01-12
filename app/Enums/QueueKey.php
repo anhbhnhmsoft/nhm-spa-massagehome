@@ -4,11 +4,10 @@ namespace App\Enums;
 
 final class QueueKey
 {
-    const string LOCATIONS = 'locations';
-    const string TRANSACTIONS_PAYMENT = 'transactions-payment';
-    const string NOTIFICATIONS = 'notifications';
-    const string REFUND_BOOKING_CANCEL = 'refund-booking-cancel';
-
-    const string PAY_COMMISSION_FEE = 'pay-commission-fee';
+    const  LOCATIONS = 'locations';
+    const  TRANSACTIONS_PAYMENT = 'transactions-payment';
+    const  NOTIFICATIONS = 'notifications';
+    const  REFUND_BOOKING_CANCEL = 'refund-booking-cancel';
+    const  PAY_COMMISSION_FEE = 'pay-commission-fee';
 }
 

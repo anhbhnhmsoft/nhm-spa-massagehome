@@ -39,7 +39,9 @@ class WalletTransactionBookingJob implements ShouldQueue
      */
     public function handle(WalletService $walletService, CouponService $couponService): void
     {
+        // Gọi service để thanh toán booking
         $walletService->paymentInitBooking($this->bookingId);
+        // Gọi service để áp dụng coupon (nếu có)
         if (isset($this->couponId)) {
             $couponService->useCoupon(
                 $this->couponId,

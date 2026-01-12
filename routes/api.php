@@ -149,8 +149,14 @@ Route::middleware('set-api-locale')->group(function () {
             Route::get('{bookingId}', [BookingController::class, 'checkBooking']);
             // Lấy thông tin chi tiết lịch đặt
             Route::get('detail/{id}', [BookingController::class, 'detailBooking'])->where('id', '[0-9]+');
-            Route::post('cancel', [BookingController::class, 'cancelBooking']);
-            Route::post('finish', [BookingController::class, 'finishBooking']);
+
+            // KTV mới có thể hủy và hoàn thành booking
+            Route::middleware(['check-ktv'])->group(function () {
+                // Hủy lịch đặt
+                Route::post('cancel', [BookingController::class, 'cancelBooking']);
+                // Xác nhận hoàn thành lịch đặt
+                Route::post('finish', [BookingController::class, 'finishBooking']);
+            });
         });
     });
 
@@ -187,9 +193,7 @@ Route::middleware('set-api-locale')->group(function () {
     });
 
     Route::prefix('file')->group(function () {
-        Route::get('user/{path}', [FileController::class, 'getUserFile'])->name('file_url_render')->where('path', '.*');
-        Route::post('upload', [FileController::class, 'upload']);
-        Route::get('commercial/{path}', [FileController::class, 'getCommercialFile'])->where('path', '.*')->name('file.commercial');
+        Route::get('contract', [FileController::class, 'getContract']);
     });
 
     Route::prefix('notification')->middleware(['auth:sanctum'])->group(function () {
@@ -214,7 +218,6 @@ Route::middleware('set-api-locale')->group(function () {
     });
 
     Route::prefix('commercial')->group(function () {
-        Route::get('contract/{slug}', [CommercialController::class, 'getContract']);
         // Lấy danh sách banner cho homepage
         Route::get('banners', [CommercialController::class, 'getBanner']);
         // Lấy danh sách coupon ads cho homepage
