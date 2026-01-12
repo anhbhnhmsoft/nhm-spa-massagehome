@@ -16,6 +16,7 @@ use App\Enums\UserRole;
 use App\Models\Coupon;
 use App\Models\User;
 use App\Repositories\BookingRepository;
+use App\Repositories\CategoryPriceRepository;
 use App\Repositories\CategoryRepository;
 use App\Repositories\CouponRepository;
 use App\Repositories\CouponUserRepository;
@@ -35,6 +36,7 @@ class ServiceService extends BaseService
         protected BookingRepository  $bookingRepository,
         protected CouponUserRepository $couponUserRepository,
         protected CouponService $couponService,
+        protected CategoryPriceRepository $categoryPriceRepository,
     ) {
         parent::__construct();
     }
@@ -101,6 +103,37 @@ class ServiceService extends BaseService
             );
         }
     }
+
+        /**
+         * Lấy giá của từng category
+         * @param int $id - id của category
+         * @return ServiceReturn
+         */
+        public function getCategoryPrice(int $id): ServiceReturn
+        {
+            try {
+                $categories = $this->categoryPriceRepository->query()
+                    ->where('category_id', $id)->get();
+                if (!$categories) {
+                    throw new ServiceException(
+                        message: __("error.category_not_found")
+                    );
+                }
+                return ServiceReturn::success(
+                    data: $categories
+                );
+            } catch (\Exception $exception) {
+                LogHelper::error(
+                    message: "Lỗi ServiceService@getCategoryPrice",
+                    ex: $exception
+                );
+                return ServiceReturn::error(
+                    message: __("common_error.server_error")
+                );
+            }
+        }
+
+
 
     /**
      * Lấy danh sách dịch vụ
@@ -301,6 +334,7 @@ class ServiceService extends BaseService
         $uploadedPath = null;
         DB::beginTransaction();
         try {
+            // 1. Xử lý ảnh
             $image = $data['image'];
             if (!($image instanceof \Illuminate\Http\UploadedFile)) {
                 throw new ServiceException(
@@ -312,9 +346,9 @@ class ServiceService extends BaseService
                 id: $data['user_id']
             ), 'public');
 
+            // 2. Xử lý tên và mô tả dịch vụ đa ngôn ngữ
             $name = Helper::multilingualPayload($data, 'name');
             $description = Helper::multilingualPayload($data, 'description');
-
             $service = $this->serviceRepository->create([
                 'name' => $name,
                 'description' => $description,
@@ -323,8 +357,14 @@ class ServiceService extends BaseService
                 'is_active' => $data['is_active'],
                 'user_id' => $data['user_id'],
             ]);
-            $service->options()->createMany($data['options']);
-
+            // 3. Xử lý các option (bỏ qua bước này - theo nghiệp vụ mới)
+            // Nghiệp vụ mới ko cần option giá mà lấy trực tiếp từ category_price
+//            $optionQuery = $service->options();
+//            foreach ($data['options'] as $optionCategoryPriceId) {
+//                $optionQuery->create([
+//                    'category_price_id' => $optionCategoryPriceId,
+//                ]);
+//            }
             DB::commit();
             return ServiceReturn::success(
                 data: $service
@@ -352,7 +392,7 @@ class ServiceService extends BaseService
         }
     }
 
-    /*
+    /**
      * Cập nhật dịch vụ
      * @param string $id
      * @param array $data
@@ -375,6 +415,7 @@ class ServiceService extends BaseService
                 );
             }
 
+            // 1. Xử lý ảnh (nếu có)
             if (isset($data['image']) && $data['image'] instanceof \Illuminate\Http\UploadedFile) {
                 if ($service->image_url && Storage::disk('public')->exists($service->image_url)) {
                     Storage::disk('public')->delete($service->image_url);
@@ -386,21 +427,30 @@ class ServiceService extends BaseService
                 $data['image_url'] = $uploadedPath;
             }
 
+            // 2. Xử lý tên và mô tả dịch vụ đa ngôn ngữ
             if (isset($data['name'])) {
                 $data['name'] = Helper::multilingualPayload($data, 'name');
             }
             if (isset($data['description'])) {
                 $data['description'] = Helper::multilingualPayload($data, 'description');
             }
-
             $service->update($data);
 
-            if (isset($data['options'])) {
-                $service->options()->delete();
-                $service->options()->createMany($data['options']);
-            }
+//            // Xóa các option cũ và tạo mới (bỏ qua bước này - theo nghiệp vụ mới)
+              // Nghiệp vụ mới ko cần option giá mà lấy trực tiếp từ category_price
+//            if (isset($data['options'])) {
+//                $optionQuery = $service->options();
+//                $optionQuery->delete();
+//                foreach ($data['options'] as $optionCategoryPriceId) {
+//                    $optionQuery->create([
+//                        'category_price_id' => $optionCategoryPriceId,
+//                    ]);
+//                }
+//            }
 
             DB::commit();
+            // Query lại để lấy dữ liệu mới nhất
+            $service = $this->serviceRepository->queryService()->find($id);
             return ServiceReturn::success(
                 data: $service
             );
@@ -460,15 +510,16 @@ class ServiceService extends BaseService
             );
         }
     }
-        /**
-         * Lấy thông tin chi tiết dịch vụ
-         * @param string $id
-         * @return ServiceReturn
-         */
+
+    /**
+     * Lấy thông tin chi tiết dịch vụ
+     * @param string $id
+     * @return ServiceReturn
+     */
     public function detailService(string $id): ServiceReturn
     {
         try {
-            $service = $this->serviceRepository->query()->find($id);
+            $service = $this->serviceRepository->queryService()->find($id);
             if (!$service) {
                 return ServiceReturn::error(
                     message: __("error.service_not_found")
@@ -490,7 +541,7 @@ class ServiceService extends BaseService
                 ex: $exception
             );
             return ServiceReturn::error(
-                message: __("error.service_not_authorized")
+                message: __("common_error.server_error")
             );
         }
 

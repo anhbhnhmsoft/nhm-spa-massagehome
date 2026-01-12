@@ -40,16 +40,21 @@ class FormServiceRequest extends FormRequest
             }],
             'description.*' => ['nullable', 'string', 'max:1000'],
 
-            // 4. Các gói tùy chọn (Options)
-            'options' => ['required', 'array', 'min:1'],
-
-            // Validate chi tiết từng item trong mảng options
-            'options.*.price' => ['required', 'numeric', 'min:15'],
-            'options.*.duration' => [
-                'required',
-                'integer',
-                Rule::enum(ServiceDuration::class),
-            ],
+//            // 4. Các gói tùy chọn (Options)
+//            'options' => ['required', 'array', 'min:1'],
+//
+//            // 5. Kiểm tra từng phần tử trong mảng options
+//            'options.*' => [
+//                'required',
+//                'numeric',
+//                // Đảm bảo không gửi trùng ID trong mảng
+//                'distinct',
+//                // Kiểm tra ID có tồn tại trong bảng 'category_prices' cột 'id'
+//                Rule::exists('category_prices', 'id')->where(function ($query) {
+//                    // Bằng với giá trị 'category_id' gửi lên từ request
+//                    return $query->where('category_id', $this->input('category_id'));
+//                }),
+//            ]
         ];
     }
 
@@ -107,16 +112,15 @@ class FormServiceRequest extends FormRequest
             'description.array' => __('validation.description_service.invalid'),
             'description.*.max' => __('validation.description_service.max'),
 
-            // Options
-            'options.required' => __('validation.option_service.required'),
-            'options.min' => __('validation.option_service.required'),
-
-            // Option Details
-            'options.*.price.required' => __('validation.option_service.price.required'),
-            'options.*.price.min' => __('validation.option_service.price.min'),
-
-            'options.*.duration.required' => __('validation.option_service.duration.required'),
-            'options.*.duration.enum' => __('validation.option_service.duration.invalid'),
+//            // Options
+//            'options.required' => __('validation.option_service.required'),
+//            'options.min' => __('validation.option_service.required'),
+//
+//            // Option Details
+//            'options.*.required' => __('validation.option_service.required'),
+//            'options.*.numeric' => __('validation.option_service.invalid'),
+//            'options.*.exists' => __('validation.option_service.invalid'),
+//            'options.*.distinct' => __('validation.option_service.distinct'),
         ];
     }
 }

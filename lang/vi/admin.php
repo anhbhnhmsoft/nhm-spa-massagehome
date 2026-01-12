@@ -1,7 +1,7 @@
 <?php
 return
     [
-        'point' => 'Điểm',
+        'currency' => 'Point',
         "nav" => [
             "ktv" => "Quản lý kỹ thuật viên",
             "category" => "Quản lý danh mục",
@@ -15,6 +15,7 @@ return
             "label" => "Kỹ thuật viên"
         ],
         "common" => [
+            'back' => 'Quay lại',
             'minute' => 'phút',
             'table' => [
                 'name' => 'Tên',
@@ -43,6 +44,7 @@ return
                 'effective_date' => 'Ngày hiệu lực',
                 'application_date' => 'Ngày đăng ký',
                 'creator' => 'Tạo bởi',
+                'password_desc_ktv' => 'Mật khẩu phải có ít nhất 8 kí tự, bao gồm chữ hoa, chữ thường, số và kí tự đặc biệt, 1 khi thay đổi mật khẩu mới, KTV sẽ không được sử dụng mật khẩu cũ.',
             ],
             'action' => [
                 'view' => 'Xem',
@@ -151,6 +153,20 @@ return
                 'agency' => 'Thuộc đối tác',
                 'latitude' => 'Vĩ độ',
                 'longitude' => 'Kinh độ',
+                'schedule' => 'Lịch làm việc',
+                'is_working' => 'Sẵn sàng làm việc',
+                'is_working_helper' => 'Nút bật/tắt trạng thái online nhanh',
+                'working_schedule' => 'Cấu hình lịch tuần',
+                'day_key' => 'Thứ',
+                'monday' => 'Thứ Hai',
+                'tuesday' => 'Thứ Ba',
+                'wednesday' => 'Thứ Tư',
+                'thursday' => 'Thứ Năm',
+                'friday' => 'Thứ Sáu',
+                'saturday' => 'Thứ Bảy',
+                'sunday' => 'Chủ Nhật',
+                'start_time' => 'Giờ bắt đầu',
+                'end_time' => 'Giờ kết thúc',
             ],
             "actions" => [
                 "approve" => [
@@ -268,6 +284,11 @@ return
                 'options_avg_price' => 'Giá trung bình',
                 'created_at' => 'Ngày tạo',
                 'updated_at' => 'Ngày cập nhật',
+                'option_category_prices' => 'Các gói dịch vụ (Giá & Thời gian)',
+                'no_option_category_prices' => 'Không có gói giá nào cho danh mục này.',
+            ],
+            'error' => [
+                'option_category_prices' => 'Vui lòng chọn ít nhất 1 gói dịch vụ.',
             ],
         ],
         'booking' => [

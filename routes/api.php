@@ -97,19 +97,14 @@ Route::middleware('set-api-locale')->group(function () {
         // Lấy danh sách KTV
         Route::get('list-ktv', [UserController::class, 'listKtv']);
 
-        // Lấy thông tin chi tiết KTV
-        Route::get('ktv/{id}', [UserController::class, 'detailKtv'])->where('id', '[0-9]+');
-
-        // Đăng ký cộng tác viên/đối tác
-        Route::post('register-agency', [UserController::class, 'registerAgency'])->middleware(['throttle:5,1']);
-
         /**
          * router cần auth
          */
         Route::middleware(['auth:sanctum'])->group(function () {
             // Lấy thông tin chi tiết hồ sơ người dùng
             Route::get('dashboard-profile', [UserController::class, 'dashboardProfile']);
-
+            // Lấy thông tin chi tiết KTV
+            Route::get('ktv/{id}', [UserController::class, 'detailKtv'])->where('id', '[0-9]+');
             // User hiện tại đăng ký làm đối tác
             Route::post('apply-partner', [UserController::class, 'applyPartner'])->middleware(['throttle:5,1']);
         });
@@ -262,6 +257,8 @@ Route::middleware('set-api-locale')->group(function () {
         Route::get('list-booking', [KTVController::class, 'listBooking']);
         // Lấy tất cả categories
         Route::get('all-categories', [KTVController::class, 'allCategories']);
+        // Lấy giá của từng category
+        Route::get('category-price/{id}', [KTVController::class, 'categoryPrice'])->where('id', '[0-9]+');
         // Lấy danh sách service của KTV
         Route::get('list-service', [KTVController::class, 'listService']);
         // Thêm service mới
@@ -285,9 +282,10 @@ Route::middleware('set-api-locale')->group(function () {
         // xóa ảnh ktv
         Route::delete('delete-ktv-image/{id}', [KTVController::class, 'deleteKtvImage'])->where('id', '[0-9]+');
         // Lấy thông tin lịch làm việc của KTV
-        Route::get('schedule', [KTVController::class, 'getSchedule']);
+        Route::get('config-schedule', [KTVController::class, 'getConfigSchedule']);
+        // Cập nhật thông tin lịch làm việc của KTV
+        Route::post('config-schedule', [KTVController::class, 'editConfigSchedule']);
 
-        Route::post('schedule', [KTVController::class, 'updateSchedule']);
     });
 
     // Dành cho agency

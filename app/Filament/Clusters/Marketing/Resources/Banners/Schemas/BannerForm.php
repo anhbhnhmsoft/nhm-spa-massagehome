@@ -37,28 +37,37 @@ class BannerForm
                                 Grid::make()
                                     ->columns(3)
                                     ->schema([
-                                        FileUpload::make('image_url.' . Language::VIETNAMESE->value)
-                                            ->label(__('admin.banner.fields.image_url.' . Language::VIETNAMESE->value))
+                                        FileUpload::make('image_url.vi')
+                                            ->label(__('admin.banner.fields.image_url.vi'))
                                             ->image()
                                             ->disk('public')
                                             ->directory(DirectFile::BANNER->value)
                                             ->required()
+                                            ->maxSize(10240) // 10MB
+                                            ->imageEditor()
+                                            ->visibility('public')
                                             ->validationMessages([
                                                 'required' => __("common.error.required"),
                                             ]),
-                                        FileUpload::make('image_url.' . Language::ENGLISH->value)
-                                            ->label(__('admin.banner.fields.image_url.' . Language::ENGLISH->value))
+                                        FileUpload::make('image_url.en')
+                                            ->label(__('admin.banner.fields.image_url.en'))
                                             ->image()
                                             ->disk('public')
                                             ->directory(DirectFile::BANNER->value)
                                             ->required()
+                                            ->maxSize(10240) // 10MB
+                                            ->imageEditor()
+                                            ->visibility('public')
                                             ->validationMessages([
                                                 'required' => __("common.error.required"),
                                             ]),
-                                        FileUpload::make('image_url.' . Language::CHINESE->value)
-                                            ->label(__('admin.banner.fields.image_url.' . Language::CHINESE->value))
+                                        FileUpload::make('image_url.cn')
+                                            ->label(__('admin.banner.fields.image_url.cn'))
                                             ->image()
                                             ->disk('public')
+                                            ->visibility('public')
+                                            ->maxSize(10240) // 10MB
+                                            ->imageEditor()
                                             ->directory(DirectFile::BANNER->value)
                                             ->required()
                                             ->validationMessages([

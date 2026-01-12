@@ -21,6 +21,7 @@ use App\Observers\UserFileObserver;
 use App\Observers\UserProfileObserver;
 use App\Repositories\AffiliateConfigRepository;
 use App\Repositories\BookingRepository;
+use App\Repositories\CategoryPriceRepository;
 use App\Repositories\CategoryRepository;
 use App\Repositories\ConfigRepository;
 use App\Repositories\CouponRepository;
@@ -109,6 +110,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(UserWithdrawInfoRepository::class);
         $this->app->singleton(StaticContractRepository::class);
         $this->app->singleton(UserKtvScheduleRepository::class);
+        $this->app->singleton(CategoryPriceRepository::class);
     }
 
     /**

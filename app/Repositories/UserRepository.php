@@ -43,7 +43,7 @@ class UserRepository extends BaseRepository
             ->whereHas('reviewApplication', function ($q) {
                 $q->where('status', ReviewApplicationStatus::APPROVED->value);
             })
-            ->with(['profile', 'reviewApplication', 'services']);
+            ->with(['profile', 'reviewApplication', 'services','schedule']);
 
         // Tính Trung bình Rating và Đếm Reviews
         $query->leftJoinSub(

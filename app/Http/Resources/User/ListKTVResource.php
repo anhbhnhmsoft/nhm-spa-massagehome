@@ -17,6 +17,7 @@ class ListKTVResource extends JsonResource
     {
         $profile = $this->profile;
         $reviewApplication = $this->reviewApplication;
+        $workingSchedule = $this->schedule ?? null;
         return [
             'id' => $this->id,
             'name' => $this->name,
@@ -41,6 +42,10 @@ class ListKTVResource extends JsonResource
                 'longitude' => (float) $reviewApplication->longitude,
                 'bio' => $reviewApplication->bio,
             ],
+            'schedule' => [
+                'is_working' => $workingSchedule?->is_working ?? false,
+                'schedule_time' => $workingSchedule?->working_schedule ?? null,
+            ]
         ];
     }
 }

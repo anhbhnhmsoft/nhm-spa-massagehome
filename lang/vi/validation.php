@@ -192,15 +192,8 @@ return [
     ],
     'option_service' => [
         'required' => 'Vui lòng thêm ít nhất 1 lựa chọn dịch vụ.',
-        'price' => [
-            'required' => 'Vui lòng nhập giá tiền cho gói dịch vụ.',
-            'min'      => 'Giá tiền không được nhỏ hơn 0.',
-        ],
-        'duration' => [
-            'required' => 'Vui lòng chọn thời lượng.',
-            'enum'     => 'Thời lượng dịch vụ không hợp lệ.',
-            'invalid' => 'Thời lượng dịch vụ không hợp lệ.',
-        ],
+        'invalid' => 'Dữ liệu lựa chọn giá dịch vụ không đúng với danh mục của gói.',
+        'distinct' => 'Dữ liệu lựa chọn giá dịch vụ không được trùng lặp.',
     ],
     'files' => [
         'required_with' => 'Vui lòng tải lên ít nhất 1 ảnh.',
@@ -270,6 +263,7 @@ return [
     'experience' => [
         'required' => 'Vui lòng nhập kinh nghiệm.',
         'integer' => 'Kinh nghiệm phải là số nguyên.',
+        'min' => 'Kinh nghiệm phải lớn hơn hoặc bằng 0.',
     ],
     'file_apply_partner_uploads' => [
         'required' => 'Vui lòng tải lên ít nhất 1 ảnh.',
@@ -281,5 +275,28 @@ return [
         'invalid_type_count' => 'Số lượng ảnh cho loại này không hợp lệ.',
         'missing_type' => 'Vui lòng tải lên ảnh cho loại :type.',
     ],
-
+     'is_working' => [
+        'required' => 'Vui lòng chọn trạng thái.',
+        'invalid' => 'Trạng thái không hợp lệ.',
+    ],
+    'working_schedule' => [
+        'required' => 'Vui lòng nhập lịch làm việc.',
+        'array' => 'Danh sách lịch làm việc phải là mảng.',
+        'size' => 'Danh sách lịch làm việc phải có 7 phần tử.',
+        'day_key' => [
+            'required' => 'Vui lòng chọn ngày.',
+        ],
+        'active' => [
+            'required' => 'Vui lòng chọn trạng thái.',
+        ],
+        'start_time' => [
+            'required_if' => 'Vui lòng nhập giờ bắt đầu.',
+            'date_format' => 'Giờ bắt đầu không hợp lệ.',
+        ],
+        'end_time' => [
+            'required_if' => 'Vui lòng nhập giờ kết thúc.',
+            'date_format' => 'Giờ kết thúc không hợp lệ.',
+            'after' => 'Giờ kết thúc phải sau giờ bắt đầu.',
+        ],
+    ],
 ];

@@ -24,7 +24,7 @@ class ServiceRepository extends BaseRepository
                 'provider' => function ($query) {
                     $query->select(['id', 'name']);
                 },
-                'options',
+                'category.prices',
             ])
             ->withAvg('reviews', 'rating')
             ->withCount([

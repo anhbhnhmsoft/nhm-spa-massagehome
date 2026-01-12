@@ -5,15 +5,18 @@ namespace App\Http\Controllers\API;
 use App\Core\Controller\BaseController;
 use App\Core\Controller\ListRequest;
 use App\Core\LogHelper;
+use App\Http\Requests\EditConfigScheduleRequest;
 use App\Http\Requests\FormServiceRequest;
 use App\Http\Resources\Booking\BookingItemResource;
 use App\Http\Resources\Review\ReviewResource;
+use App\Http\Resources\Service\CategoryPriceResource;
 use App\Http\Resources\Service\CategoryResource;
 use App\Http\Resources\Service\DetailServiceResource;
 use App\Http\Resources\Service\ServiceResource;
 use App\Http\Resources\TotalIncome\TotalIncomeResource;
 use App\Http\Resources\User\ProfileKTVResource;
 use App\Http\Resources\User\UserFileResource;
+use App\Http\Resources\User\UserKTVScheduleItemResource;
 use App\Services\BookingService;
 use App\Services\ServiceService;
 use App\Services\UserFileService;
@@ -26,11 +29,12 @@ use Illuminate\Support\Facades\Validator;
 class KTVController extends BaseController
 {
     public function __construct(
-        protected UserService    $userService,
-        protected BookingService $bookingService,
-        protected ServiceService $serviceService,
+        protected UserService     $userService,
+        protected BookingService  $bookingService,
+        protected ServiceService  $serviceService,
         protected UserFileService $userFileService,
-    ) {
+    )
+    {
         /**
          * Tất cả các endpoint trong controller này đều yêu cầu quyền KTV, qua validate middleware CheckKtv
          */
@@ -135,6 +139,27 @@ class KTVController extends BaseController
     }
 
     /**
+     * Lấy giá của từng category
+     * @param Request $request
+     * @param int $id
+     * @return JsonResponse
+     */
+    public function categoryPrice(Request $request, int $id): JsonResponse
+    {
+        $result = $this->serviceService->getCategoryPrice($id);
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage(),
+            );
+        }
+        $data = $result->getData();
+        return $this->sendSuccess(
+            data: CategoryPriceResource::collection($data)->toArray($request),
+        );
+    }
+
+
+    /**
      * Thêm dịch vụ mới
      * @param FormServiceRequest $request
      * @return JsonResponse
@@ -150,10 +175,7 @@ class KTVController extends BaseController
                 message: $result->getMessage(),
             );
         }
-        $data = $result->getData();
-        return $this->sendSuccess(
-            data: new ServiceResource($data),
-        );
+        return $this->sendSuccess();
     }
 
     /**
@@ -214,6 +236,7 @@ class KTVController extends BaseController
             data: new DetailServiceResource($data),
         );
     }
+
     /**
      * Lấy tổng thu nhập
      * @param Request $request
@@ -222,7 +245,7 @@ class KTVController extends BaseController
     public function totalIncome(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'type'      => 'required|in:day,week,month,quarter,year',
+            'type' => 'required|in:day,week,month,quarter,year',
         ], [
             'type.in' => __('validation.type.in'),
             'type.required' => __('validation.type.required'),
@@ -376,7 +399,11 @@ class KTVController extends BaseController
         return $this->sendSuccess(message: __('admin.ktv.messages.delete_success'));
     }
 
-    public function getSchedule(): JsonResponse
+    /**
+     * Lấy thông tin cấu hình lịch làm việc của KTV
+     * @return JsonResponse
+     */
+    public function getConfigSchedule(): JsonResponse
     {
         $user = Auth::user();
         $result = $this->userService->handleGetScheduleKtv($user->id);
@@ -384,10 +411,27 @@ class KTVController extends BaseController
         if ($result->isError()) {
             return $this->sendError($result->getMessage());
         }
-
+        $data = $result->getData();
         return $this->sendSuccess(
-            data: new KtvScheduleResource($result->getData()),
-            message: __('admin.notification.success.get_success')
+            data: new UserKTVScheduleItemResource($data),
+        );
+    }
+
+    /**
+     * Cập nhật thông tin cấu hình lịch làm việc của KTV
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function editConfigSchedule(EditConfigScheduleRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+        $res = $this->userService->handleUpdateScheduleKtv($data);
+        if ($res->isError()) {
+            return $this->sendError($res->getMessage());
+        }
+        return $this->sendSuccess(
+            data: new UserKTVScheduleItemResource($res->getData()),
+            message: __('admin.notification.success.update_success')
         );
     }
 }

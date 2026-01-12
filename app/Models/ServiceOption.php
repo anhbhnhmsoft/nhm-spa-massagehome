@@ -15,14 +15,11 @@ class ServiceOption extends Model
     protected $fillable = [
         'service_id',
         'category_price_id',
-        'duration',
-        'price',
     ];
     protected $casts = [
         'id' => 'string',
         'category_price_id' => 'string',
         'service_id' => 'string',
-        'price' => 'decimal:2',
     ];
 
     /**
@@ -32,5 +29,13 @@ class ServiceOption extends Model
     public function service()
     {
         return $this->belongsTo(Service::class);
+    }
+    /**
+     * Mối quan hệ với CategoryPrice
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function categoryPrice()
+    {
+        return $this->belongsTo(CategoryPrice::class);
     }
 }

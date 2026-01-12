@@ -24,10 +24,10 @@ class ApplyPartnerRequest extends FormRequest
             ])],
             'agency_id' => ['nullable', 'numeric', 'exists:users,id'],
             'province_code' => ['required', 'string', 'max:10'],
+            'experience' => ['nullable', 'integer'],
             'address' => ['required', 'string', 'max:255'],
             'latitude' => ['required', 'numeric', 'between:-90,90'],
             'longitude' => ['required', 'numeric', 'between:-180,180'],
-
             // bio đa ngôn ngữ
             'bio.vi' => ['required', 'string'],
             'bio.en' => ['nullable', 'string'],
@@ -62,6 +62,11 @@ class ApplyPartnerRequest extends FormRequest
                     $this->validateKtvFiles($value, $fail);
                 }
             }],
+            'file_uploads.*.type_upload' => [
+                'required',
+                'integer',
+                Rule::in(UserFileType::values()),
+            ],
             'file_uploads.*.file' => ['required', 'file', 'mimes:jpg,jpeg,png', 'max:10240'],
         ];
     }
@@ -97,7 +102,9 @@ class ApplyPartnerRequest extends FormRequest
             'file_uploads.*.file.file' => __('validation.file_apply_partner_uploads.invalid'),
             'file_uploads.*.file.mimes' => __('validation.file_apply_partner_uploads.invalid'),
             'file_uploads.*.file.max' => __('validation.file_apply_partner_uploads.invalid'),
-
+            'experience.required' => __('validation.experience.required'),
+            'experience.integer' => __('validation.experience.integer'),
+            'experience.min' => __('validation.experience.min'),
         ];
     }
 

@@ -83,9 +83,6 @@ class KTVAppliesTable
             ])
             ->recordActions([
                 ActionGroup::make([
-                    EditAction::make()
-                        ->url(fn($record) => KTVResource::getUrl('edit', ['record' => $record]))
-                        ->openUrlInNewTab(),
                     ViewAction::make(),
                 ]),
             ])

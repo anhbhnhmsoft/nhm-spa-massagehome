@@ -36,4 +36,5 @@ return [
     'contract_not_found' => 'Hợp đồng không tồn tại',
     'verify_agency' => 'Bạn chưa xác thực đại lý',
     'agency_not_found' => 'Đại lý không tồn tại',
+    'user_have_review_application' => 'Người dùng đã có đơn ứng tuyển review',
 ];

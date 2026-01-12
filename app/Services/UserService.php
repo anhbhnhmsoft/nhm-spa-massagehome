@@ -13,6 +13,7 @@ use App\Core\Service\ServiceReturn;
 use App\Enums\BookingStatus;
 use App\Enums\ConfigName;
 use App\Enums\DirectFile;
+use App\Enums\KTVConfigSchedules;
 use App\Enums\NotificationType;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserFileType;
@@ -239,6 +240,7 @@ class UserService extends BaseService
     public function getKtvById(int $id): ServiceReturn
     {
         try {
+            // Lấy config khoảng thời gian nghỉ giữa 2 buổi
             $breakTimeGapReturn = $this->configService->getConfig(ConfigName::BREAK_TIME_GAP);
             if ($breakTimeGapReturn->isError()) {
                 return ServiceReturn::error(
@@ -246,6 +248,7 @@ class UserService extends BaseService
                 );
             }
             $breakTimeGap = $breakTimeGapReturn->getData();
+
             $ktv = $this->userRepository->queryKTV()
                 ->with([
                     'files' => function ($query) {
@@ -262,7 +265,7 @@ class UserService extends BaseService
                         $query->whereIn('status', [BookingStatus::CONFIRMED->value, BookingStatus::ONGOING->value])
                             ->latest('booking_time')
                             ->limit(1);
-                    }
+                    },
                 ])
                 ->find($id);
             if (!$ktv) {
@@ -283,118 +286,6 @@ class UserService extends BaseService
             );
             return ServiceReturn::error(
                 message: __("common_error.server_error")
-            );
-        }
-    }
-
-    /**
-     * Upload file và trả về đường dẫn lưu trên storage.
-     */
-    public function uploadTempFile(UploadedFile $file, ?int $type = null, bool $isPublic = false): ServiceReturn
-    {
-        try {
-            $disk = $isPublic ? 'public' : 'private';
-            $path = Storage::disk($disk)->put('uploads', $file);
-
-            return ServiceReturn::success(data: [
-                'file_path' => $path,
-                'disk' => $disk,
-                'is_public' => $isPublic,
-                'type' => $type,
-            ]);
-        } catch (\Throwable $exception) {
-            LogHelper::error(
-                message: "Lỗi UserService@uploadTempFile",
-                ex: $exception
-            );
-
-            return ServiceReturn::error(
-                message: __("common_error.server_error")
-            );
-        }
-    }
-
-    public function makeNewApplyKTV(array $data)
-    {
-        DB::beginTransaction();
-        try {
-            $userCheck = $this->userRepository->query()->where('phone', $data['phone'])->first();
-            if ($userCheck) {
-                throw new ServiceException(
-                    message: __("common_error.data_exists")
-                );
-            }
-
-            $userInitial = $this->userRepository->create([
-                'name' => $data['name'],
-                'phone' => $data['phone'],
-                'password' => $data['password'],
-                'role' => UserRole::KTV->value,
-                'phone_verified_at' => now(),
-                'is_active' => false,
-            ]);
-
-            $userReviewApplication = $this->userReviewApplicationRepository->create([
-                'user_id' => $userInitial->id,
-                'agency_id' => optional($data['reviewApplication'])['agency_id'] ?? null,
-                'status' => ReviewApplicationStatus::PENDING->value,
-                'province_code' => optional($data['reviewApplication'])['province']['name'] ?? null,
-                'address' => optional($data['reviewApplication'])['address'] ?? null,
-                'experience' => optional($data['reviewApplication'])['experience'] ?? null,
-                'application_date' => now(),
-                'bio' => optional($data['reviewApplication'])['bio'] ?? null
-            ]);
-
-            $userProfile = $this->userProfileRepository->create([
-                'avatar_url' => optional($data['profile'])['avatar_url'] ?? null,
-                'user_id' => $userInitial->id,
-                'gender' => optional($data['profile'])['gender'] ?? null,
-                'date_of_birth' => optional($data['profile'])['date_of_birth'] ?? null,
-                'bio' => optional($data['profile'])['bio'] ?? null
-            ]);
-
-            $wallet = $this->walletRepository->create([
-                'user_id' => $userInitial->id,
-                'balance' => 0,
-                'is_active' => false
-            ]);
-
-            foreach ($data['files'] as $file) {
-                $this->userFileRepository->create([
-                    'user_id' => $userInitial->id,
-                    'type' => optional($file)['type'] ?? null,
-                    'file_path' => optional($file)['file_path'] ?? null
-                ]);
-            }
-            DB::commit();
-            return ServiceReturn::success(
-                data: $userInitial->load('reviewApplication', 'profile', 'files')
-            );
-        } catch (ServiceException $exception) {
-            DB::rollBack();
-            LogHelper::error(
-                message: "Lỗi UserService@makeNewApplyKTV",
-                ex: $exception
-            );
-            foreach ($data['files'] as $file) {
-                Storage::delete($file['file_path']);
-            }
-            Storage::delete($data['profile']['avatar_url']);
-            return ServiceReturn::error(
-                message: $exception->getMessage()
-            );
-        } catch (\Exception $exception) {
-            DB::rollBack();
-            LogHelper::error(
-                message: "Lỗi UserService@makeNewApplyKTV",
-                ex: $exception
-            );
-            foreach ($data['files'] as $file) {
-                Storage::delete($file['file_path']);
-            }
-            Storage::delete($data['profile']['avatar_url']);
-            return ServiceReturn::error(
-                message: $exception->getMessage()
             );
         }
     }
@@ -445,7 +336,13 @@ class UserService extends BaseService
         }
     }
 
-    public function activeStaffApply(int $id)
+    /**
+     * Duyệt hồ sơ KTV
+     * @param int $id
+     * @return ServiceReturn
+     * @throws \Throwable
+     */
+    public function activeStaffApply(int $id): ServiceReturn
     {
         DB::beginTransaction();
         try {
@@ -464,6 +361,14 @@ class UserService extends BaseService
                 $apply->save();
                 $user->save();
             }
+            // Tạo lịch làm việc mặc định cho KTV
+             if ($user->role === UserRole::KTV) {
+                $user->schedule()->create([
+                    'is_working' => true,
+                    'working_schedule' => KTVConfigSchedules::getDefaultSchema(),
+                ]);
+            }
+
 
             SendNotificationJob::dispatch(
                 userId: $user->id,
@@ -540,11 +445,10 @@ class UserService extends BaseService
             );
         }
     }
+
+
     /**
-     * Đăng ký làm đối tác cho user hiện tại (không tạo user mới).
-     * - Tạo hoặc cập nhật bản ghi review_application với trạng thái CHỜ DUYỆT.
-     * - Gắn các file hồ sơ vào user hiện tại.
-     *
+     * Đăng ký làm đối tác cho user hiện tại
      * @param array $data
      * @return ServiceReturn
      */
@@ -557,6 +461,17 @@ class UserService extends BaseService
             if (!$user) {
                 throw new ServiceException(
                     message: __("common_error.unauthenticated")
+                );
+            }
+
+            // Kiểm tra xem user đã có review application chưa
+            $existingReview = $this->userReviewApplicationRepository
+                ->query()
+                ->where('user_id', $user->id)
+                ->first();
+            if ($existingReview) {
+                throw new ServiceException(
+                    message: __("error.user_have_review_application")
                 );
             }
 
@@ -575,34 +490,25 @@ class UserService extends BaseService
                 }
             }
 
-
-
             $reviewData = [
                 'user_id' => $user->id,
                 'agency_id' => $data['agency_id'] ?? null,
                 'status' => ReviewApplicationStatus::PENDING->value,
                 'province_code' => $data['province_code'],
                 'address' => $data['address'],
+                'experience' => $data['experience'] ?? 0,
                 'latitude' => $data['latitude'],
                 'longitude' => $data['longitude'],
                 'application_date' => now(),
                 'role' => $data['role'],
             ];
             $reviewData['bio'] = Helper::multilingualPayload($data, 'bio');
+            // Lưu review application
+            $this->userReviewApplicationRepository->create($reviewData);
 
-            $existingReview = $this->userReviewApplicationRepository
-                ->query()
-                ->where('user_id', $user->id)
-                ->first();
-
-            if ($existingReview) {
-                $existingReview->update($reviewData);
-            } else {
-                $this->userReviewApplicationRepository->create($reviewData);
-            }
-
+            // Lưu file uploads
             foreach ($data['file_uploads'] as $fileUpload) {
-                $typeUpload = $data['type_upload'];
+                $typeUpload = $fileUpload['type_upload'];
                 $file = $fileUpload['file'];
                 // Kiểm tra file có phải là instance của UploadedFile không
                 if (!$file instanceof UploadedFile) {
@@ -644,7 +550,7 @@ class UserService extends BaseService
                 message: $exception->getMessage()
             );
         }
-        catch (\Exception $exception) {
+        catch (\Throwable $exception) {
             DB::rollBack();
             foreach ($tempFiles as $file) {
                 Storage::disk($file['disk'])->delete($file['path']);
@@ -654,7 +560,7 @@ class UserService extends BaseService
                 ex: $exception
             );
             return ServiceReturn::error(
-                message: $exception->getMessage()
+                message: __("common_error.server_error")
             );
         }
     }
@@ -727,71 +633,6 @@ class UserService extends BaseService
         }
     }
 
-    public function updateUser(array $data)
-    {
-        DB::beginTransaction();
-        try {
-            $user = $this->userRepository->query()->where('id', $data['id'])->first();
-            if (!$user) {
-                throw new ServiceException(
-                    message: __("common_error.data_not_found")
-                );
-            }
-            $dataUpdate = [];
-            if (isset($data['name']) && $data['name']) {
-                $dataUpdate['name'] = $data['name'];
-            }
-            if (isset($data['phone']) && $data['phone']) {
-                $dataUpdate['phone'] = $data['phone'];
-            }
-            if (isset($data['password']) && $data['password']) {
-                $dataUpdate['password'] = $data['password'];
-            }
-            if (isset($data['role']) && $data['role']) {
-                $dataUpdate['role'] = $data['role'];
-            }
-            if (isset($data['is_active']) && $data['is_active']) {
-                $dataUpdate['is_active'] = $data['is_active'];
-            }
-            $user->update($dataUpdate);
-
-            if (isset($data['profile'])) {
-                $user->profile()->updateOrCreate(
-                    ['user_id' => $user->id],
-                    $data['profile']
-                );
-            }
-
-            if (isset($data['files'])) {
-                foreach ($data['files'] as $file) {
-                    $this->userFileRepository->create([
-                        'user_id' => $user->id,
-                        'type' => optional($file)['type'] ?? null,
-                        'file_path' => optional($file)['file_path'] ?? null
-                    ]);
-                }
-            }
-
-            $user->reviewApplication()->updateOrCreate(
-                ['user_id' => $user->id],
-                $data['reviewApplication']
-            );
-            DB::commit();
-            return ServiceReturn::success(
-                data: $user->load('reviewApplication', 'files', 'profile'),
-                message: __("common.success.data_updated")
-            );
-        } catch (\Exception $exception) {
-            DB::rollBack();
-            LogHelper::error(
-                message: "Lỗi UserService@updateUser",
-                ex: $exception
-            );
-            return ServiceReturn::error(
-                message: $exception->getMessage()
-            );
-        }
-    }
 
     /**
      * Save user address
@@ -993,6 +834,11 @@ class UserService extends BaseService
         }
     }
 
+    /**
+     * Cập nhật hồ sơ KTV
+     * @param array $data
+     * @return ServiceReturn
+     */
     public function updateKtvProfile(array $data): ServiceReturn
     {
         try {
@@ -1127,6 +973,11 @@ class UserService extends BaseService
         }
     }
 
+    /**
+     * Lấy config lịch làm việc của KTV
+     * @param int $ktvId
+     * @return ServiceReturn
+     */
     public function handleGetScheduleKtv(int $ktvId): ServiceReturn
     {
         try {
@@ -1136,13 +987,21 @@ class UserService extends BaseService
                 throw new ServiceException(__('common_error.data_not_found'));
             }
 
+            // Lấy config lịch làm việc của KTV
             $schedules = $this->userKtvScheduleRepository->query()
                 ->where('ktv_id', $ktvId)
-                ->get();
+                ->first();
+            // Nếu không có config, tạo config mặc định
+             if (!$schedules) {
+                $schedules = $this->userKtvScheduleRepository->create([
+                    'ktv_id' => $ktvId,
+                    'working_schedule' => KTVConfigSchedules::getDefaultSchema(),
+                    'is_working' => true,
+                ]);
+            }
 
             return ServiceReturn::success(
                 data: $schedules,
-                message: __('common.success.data_retrieved')
             );
         }catch (ServiceException $exception) {
             return ServiceReturn::error(
@@ -1151,6 +1010,50 @@ class UserService extends BaseService
         }
         catch (\Exception $e) {
             LogHelper::error('Lỗi UserService@handleGetScheduleKtv', $e);
+            return ServiceReturn::error(__('common_error.server_error'));
+        }
+    }
+
+    /**
+     * Cập nhật config lịch làm việc của KTV
+     * @param array $data
+     * @return ServiceReturn
+     */
+    public function handleUpdateScheduleKtv(array $data): ServiceReturn
+    {
+        try {
+            $user = Auth::user();
+            $resSchedule = $this->handleGetScheduleKtv($user->id);
+            if ($resSchedule->isError()) {
+                throw new ServiceException($resSchedule->getMessage());
+            }
+            $schedules = $resSchedule->getData();
+
+            // Xử lý dữ liệu config lịch làm việc
+            $workingSchedules = $data['working_schedule'];
+            foreach ($workingSchedules as $key => $workingSchedule) {
+                $workingSchedules[$key] = [
+                    'active' => $workingSchedule['active'],
+                    'start_time' => $workingSchedule['start_time'] ?? "08:00",
+                    'end_time' => $workingSchedule['end_time'] ?? "16:00",
+                    'day_key' => $workingSchedule['day_key'],
+                ];
+            }
+            // Cập nhật config lịch làm việc
+            $schedules->update([
+                'working_schedule' => $workingSchedules,
+                'is_working' => $data['is_working'],
+            ]);
+            return ServiceReturn::success(
+                data: $schedules,
+            );
+        }catch (ServiceException $exception) {
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        }
+        catch (\Exception $e) {
+            LogHelper::error('Lỗi UserService@handleUpdateScheduleKtv', $e);
             return ServiceReturn::error(__('common_error.server_error'));
         }
     }

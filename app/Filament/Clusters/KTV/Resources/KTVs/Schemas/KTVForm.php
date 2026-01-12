@@ -5,6 +5,7 @@ namespace App\Filament\Clusters\KTV\Resources\KTVs\Schemas;
 use App\Core\Helper;
 use App\Enums\DirectFile;
 use App\Enums\Gender;
+use App\Enums\KTVConfigSchedules;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserFileType;
 use App\Enums\UserRole;
@@ -13,6 +14,7 @@ use App\Models\User;
 use App\Services\LocationService;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\TimePicker;
 use Filament\Resources\Pages\CreateRecord;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
@@ -23,6 +25,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
@@ -45,7 +48,19 @@ class KTVForm
                                         'required' => __('common.error.required'),
                                         'max' => __('common.error.max_length', ['max' => 255])
                                     ]),
-
+                                TextInput::make('phone')
+                                    ->label(__('admin.common.table.phone'))
+                                    ->tel()
+                                    ->maxLength(20)
+                                    ->required()
+                                    ->unique()
+                                    ->disabled()
+                                    ->validationMessages([
+                                        'max' => __('common.error.max_length', ['max' => 20]),
+                                        'max_digits' => __('common.error.max_digits', ['max' => 20]),
+                                        'required' => __('common.error.required'),
+                                        'unique' => __('common.error.unique'),
+                                    ]),
                                 TextInput::make('password')
                                     ->label(__('admin.common.table.password'))
                                     ->password()
@@ -54,21 +69,10 @@ class KTVForm
                                     ->dehydrated(fn($state) => filled($state))
                                     ->revealable()
                                     ->maxLength(255)
+                                    ->helperText(__('admin.common.table.password_desc_ktv'))
                                     ->validationMessages([
                                         'required' => __('common.error.required'),
                                         'max' => __('common.error.max_length', ['max' => 255])
-                                    ]),
-                                TextInput::make('phone')
-                                    ->label(__('admin.common.table.phone'))
-                                    ->tel()
-                                    ->maxLength(20)
-                                    ->required()
-                                    ->unique()
-                                    ->validationMessages([
-                                        'max' => __('common.error.max_length', ['max' => 20]),
-                                        'max_digits' => __('common.error.max_digits', ['max' => 20]),
-                                        'required' => __('common.error.required'),
-                                        'unique' => __('common.error.unique'),
                                     ]),
                             ]),
 
@@ -193,6 +197,89 @@ class KTVForm
                     ])
                     ->columns(2),
 
+                // Thông tin hệ thống
+                Section::make(__('admin.ktv_apply.fields.system_info'))
+                    ->schema([
+                        Select::make('role')
+                            ->label(__('admin.common.table.role'))
+                            ->options(UserRole::toOptions())
+                            ->default(UserRole::KTV->value)
+                            ->disabled(),
+                        DateTimePicker::make('last_login_at')
+                            ->label(__('admin.common.table.last_login'))
+                            ->disabled(),
+                        Toggle::make('is_active')
+                            ->label(__('admin.common.table.status'))
+                            ->columnSpanFull()
+                            ->default(true),
+
+                    ])
+                    ->columnSpanFull(),
+
+                // Lịch làm việc Kỹ thuật viên
+                Section::make(__('admin.ktv_apply.fields.schedule'))
+                    ->relationship('schedule') // Tên hàm quan hệ trong Model User
+                    ->schema([
+                        Toggle::make('is_working')
+                            ->label(__('admin.ktv_apply.fields.is_working'))
+                            ->helperText(__('admin.ktv_apply.fields.is_working_helper'))
+                            ->columnSpanFull(),
+
+                        Repeater::make('working_schedule')
+                            ->label(__('admin.ktv_apply.fields.working_schedule'))
+                            ->addable(false)
+                            ->deletable(false)
+                            ->reorderable(false)
+                            ->grid(1) // Hiển thị mỗi ngày một dòng cho dễ nhìn
+                            ->schema([
+                                Grid::make(4)
+                                    ->schema([
+                                        Select::make('day_key')
+                                            ->label(__('admin.ktv_apply.fields.day_key'))
+                                            ->options([
+                                                KTVConfigSchedules::MONDAY->value => __('admin.ktv_apply.fields.monday'),
+                                                KTVConfigSchedules::TUESDAY->value => __('admin.ktv_apply.fields.tuesday'),
+                                                KTVConfigSchedules::WEDNESDAY->value => __('admin.ktv_apply.fields.wednesday'),
+                                                KTVConfigSchedules::THURSDAY->value => __('admin.ktv_apply.fields.thursday'),
+                                                KTVConfigSchedules::FRIDAY->value => __('admin.ktv_apply.fields.friday'),
+                                                KTVConfigSchedules::SATURDAY->value => __('admin.ktv_apply.fields.saturday'),
+                                                KTVConfigSchedules::SUNDAY->value => __('admin.ktv_apply.fields.sunday'),
+                                            ])
+                                            ->disabled()       // Người dùng không sửa được
+                                            ->dehydrated()     // Vẫn gửi dữ liệu về Backend để lưu vào JSON
+                                            ->columnSpan(1),
+
+                                        Toggle::make('active')
+                                            ->label(__('admin.ktv_apply.fields.is_working'))
+                                            ->inline(false)
+                                            ->reactive() // Để ẩn/hiện giờ ngay lập tức
+                                            ->columnSpan(1),
+
+                                        TimePicker::make('start_time')
+                                            ->label(__('admin.ktv_apply.fields.start_time'))
+                                            ->format('H:i')
+                                            ->displayFormat('H:i')
+                                            ->seconds(false)
+                                            ->hidden(fn ( $get) => !$get('active'))
+                                            ->required(fn ( $get) => $get('active'))
+                                            ->columnSpan(1),
+
+                                        TimePicker::make('end_time')
+                                            ->label(__('admin.ktv_apply.fields.end_time'))
+                                            ->format('H:i')
+                                            ->displayFormat('H:i')
+                                            ->seconds(false)
+                                            ->hidden(fn ( $get) => !$get('active'))
+                                            ->required(fn ( $get) => $get('active'))
+                                            ->after('start_time')
+                                            ->columnSpan(1),
+                                    ]),
+                            ])
+                            ->columnSpanFull(),
+                    ])
+                    ->columnSpanFull()
+                    ->compact(),
+
                 Section::make(__('admin.ktv_apply.fields.files'))
                     ->schema([
                         Section::make(__('admin.ktv_apply.file_type.identity_card_front'))
@@ -284,32 +371,9 @@ class KTVForm
                             ])
                             ->helperText(__('common.notice.image_gallery'))
                             ->columnSpanFull(),
-                    ])->columns(2),
+                    ])->columnSpanFull(),
 
-                Section::make(__('admin.ktv_apply.fields.system_info'))
-                    ->schema([
-                        Placeholder::make('created_at')
-                            ->label(__('admin.common.table.created_at'))
-                            ->content(fn($record) => $record?->created_at?->format('d/m/Y H:i:s')),
 
-                        Placeholder::make('updated_at')
-                            ->label(__('admin.common.table.updated_at'))
-                            ->content(fn($record) => $record?->updated_at?->format('d/m/Y H:i:s')),
-                        Select::make('role')
-                            ->label(__('admin.common.table.role'))
-                            ->options(UserRole::toOptions())
-                            ->default(UserRole::KTV->value)
-                            ->disabled(),
-
-                        Toggle::make('is_active')
-                            ->label(__('admin.common.table.status'))
-                            ->default(true),
-                        DateTimePicker::make('last_login_at')
-                            ->label(__('admin.common.table.last_login'))
-                            ->disabled(),
-
-                    ])
-                    ->columns(2),
 
             ]);
     }

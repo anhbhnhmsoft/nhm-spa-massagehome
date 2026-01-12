@@ -69,14 +69,14 @@ class CategoryForm
                                     ->required()
                                     ->numeric()
                                     ->minValue(1)
-                                    ->suffix(__('admin.minute')),
+                                    ->suffix(__('admin.common.minute')),
 
                                 TextInput::make('price')
                                     ->label(__('admin.common.form.price'))
                                     ->required()
                                     ->numeric()
                                     ->minValue(0)
-                                    ->suffix(__('admin.point'))
+                                    ->suffix(__('admin.currency'))
                                     ->formatStateUsing(fn($state) => number_format($state, 0, '.', '')),
                             ])
                             ->columns(2)

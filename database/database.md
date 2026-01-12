@@ -313,12 +313,11 @@
 
     #relations
     - Quan hệ 1-n với bảng services.
+    - Quan hệ 1-n với bảng category_prices.
     # cấu trúc
     - id (bigint, primary key, auto-increment)
     - service_id (bigint, foreign key to services.id) -- id dịch vụ
     - category_price_id (bigint, nullable, foreign key to category_prices.id) -- id tùy chọn danh mục
-    - duration (smallint) -- thời gian thực hiện dịch vụ
-    - price (decimal(15,2)) -- giá tùy chọn
     - softDeletes
     - timestamps
 

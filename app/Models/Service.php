@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Core\GenerateId\HasBigIntId;
+use Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Translatable\HasTranslations;
@@ -31,6 +32,8 @@ class Service extends Model
         'category_id' => 'string',
         'is_active' => 'boolean',
     ];
+
+
 
     /**
      * Mối quan hệ với User (Provider) - là người làm massage
@@ -66,6 +69,21 @@ class Service extends Model
     public function options()
     {
         return $this->hasMany(ServiceOption::class);
+    }
+
+    /**
+     * Mối quan hệ n-n với bảng category_prices thông qua bảng service_options
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function optionCategoryPrices()
+    {
+        // Tham số thứ 2 là tên bảng trung gian: 'service_options'
+        return $this->belongsToMany(
+            CategoryPrice::class,
+            'service_options',
+            'service_id',
+            'category_price_id'
+        )->withTimestamps();
     }
 
     public function reviews()
