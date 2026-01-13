@@ -36,4 +36,13 @@ enum BookingStatus: int
     {
         return self::tryFrom($value)?->label() ?? '';
     }
+
+    public static function caseCanCancel(): array
+    {
+        return [
+            self::PENDING->value,
+            self::CONFIRMED->value,
+
+        ];
+    }
 }

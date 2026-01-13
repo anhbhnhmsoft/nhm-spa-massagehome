@@ -78,7 +78,7 @@
     # cấu trúc
     - id (bigint, primary key, auto-increment)
     - user_id (bigint, foreign key to users.id) -- id người dùng
-    - agency_id (bigint, nullable, foreign key to agencies.id) -- id Agency
+    - referrer_id (bigint, nullable, foreign key to users.id) -- id người giới thiệu
     - status (smallint) -- trạng thái ứng dụng (trong enum ReviewApplicationStatus)
 
     - province_code (varchar, nullable, foreign key to provinces.code) -- mã tỉnh thành

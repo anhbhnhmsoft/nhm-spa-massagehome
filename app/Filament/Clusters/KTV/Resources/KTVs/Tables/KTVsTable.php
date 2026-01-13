@@ -45,10 +45,6 @@ class KTVsTable
                 TextColumn::make('phone')
                     ->searchable()
                     ->label(__('admin.common.table.phone')),
-                TextColumn::make('address')
-                    ->searchable()
-                    ->limit(100)
-                    ->label(__('admin.common.table.address')),
                 TextColumn::make('profile.date_of_birth')
                     ->searchable()
                     ->label(__('admin.common.table.date_of_birth'))
@@ -56,9 +52,6 @@ class KTVsTable
                 TextColumn::make('profile.gender')
                     ->label(__('admin.common.table.gender'))
                     ->formatStateUsing(fn($state) => Gender::getLabel($state)),
-                IconColumn::make('is_online')
-                    ->boolean()
-                    ->label(__('admin.common.table.is_online')),
                 TextColumn::make('created_at')
                     ->label(__('admin.common.table.created_at'))
                     ->dateTime(),

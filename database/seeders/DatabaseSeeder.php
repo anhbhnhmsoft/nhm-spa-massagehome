@@ -342,12 +342,35 @@ class DatabaseSeeder extends Seeder
             Config::query()->updateOrCreate(
                 ['config_key' => ConfigName::DISCOUNT_RATE->value],
                 [
-                    'config_value' => '80',
+                    'config_value' => '20',
                     'config_type' => ConfigType::NUMBER->value,
                     'description' => 'Tỷ lệ chiết khấu ứng dụng nhận được',
                 ]
             );
-
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::DISCOUNT_RATE_REFERRER_AGENCY->value],
+                [
+                    'config_value' => '15',
+                    'config_type' => ConfigType::NUMBER->value,
+                    'description' => 'Tỷ lệ chiết khấu dành cho đại lý đối với 1 đơn hoàn thành của 1 KTV mà mình giới thiệu %',
+                ]
+            );
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::DISCOUNT_RATE_REFERRER_KTV->value],
+                [
+                    'config_value' => '5',
+                    'config_type' => ConfigType::NUMBER->value,
+                    'description' => 'Tỷ lệ chiết khấu dành cho kỹ thuật viên đối với 1 đơn hoàn thành của 1 KTV mà mình giới thiệu %',
+                ]
+            );
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::DISCOUNT_RATE_REFERRER_KTV_LEADER->value],
+                [
+                    'config_value' => '10',
+                    'config_type' => ConfigType::NUMBER->value,
+                    'description' => 'Tỷ lệ chiết khấu dành cho kỹ thuật viên trưởng đối với 1 đơn hoàn thành của 1 KTV mà mình giới thiệu %',
+                ]
+            );
             Config::query()->updateOrCreate(
                 ['config_key' => ConfigName::SP_PHONE->value],
                 [

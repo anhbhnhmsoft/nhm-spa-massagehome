@@ -120,6 +120,12 @@ class UserRepository extends BaseRepository
                 $q->where('category_id', $filters['category_id']);
             });
         }
+        if (isset($filters['referrer_id'])) {
+            $referrer_id = $filters['referrer_id'];
+            $query->whereHas('reviewApplication', function ($q) use ($referrer_id) {
+                $q->where('referrer_id', $referrer_id);
+            });
+        }
 
         // Lọc và Sắp xếp theo Vị trí
         if (isset($filters['lat'], $filters['lng']) && is_numeric($filters['lat']) && is_numeric($filters['lng'])) {

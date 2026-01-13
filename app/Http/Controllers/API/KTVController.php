@@ -7,6 +7,7 @@ use App\Core\Controller\ListRequest;
 use App\Core\LogHelper;
 use App\Http\Requests\EditConfigScheduleRequest;
 use App\Http\Requests\FormServiceRequest;
+use App\Http\Resources\Auth\UserResource;
 use App\Http\Resources\Booking\BookingItemResource;
 use App\Http\Resources\Review\ReviewResource;
 use App\Http\Resources\Service\CategoryPriceResource;
@@ -433,5 +434,35 @@ class KTVController extends BaseController
             data: new UserKTVScheduleItemResource($res->getData()),
             message: __('admin.notification.success.update_success')
         );
+    }
+
+    /**
+     * Link mã giới thiệu để KTV áp dụng
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function linkReferrer(Request $request): JsonResponse
+    {
+        $data = $request->validate(
+            [
+                'referrer_id' => 'required|integer|exists:users,id'
+            ],
+            [
+                'referrer_id.required' => __('error.verify_referrer'),
+                'referrer_id.integer' => __('error.verify_referrer'),
+                'referrer_id.exists' => __('error.verify_referrer'),
+            ]
+        );
+
+        $user = $request->user();
+        $result = $this->userService->linkKtvToReferrer(
+            ktvId: $user->id,
+            referrerId: $data['referrer_id']
+        );
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage());
+        }
+
+        return $this->sendSuccess();
     }
 }

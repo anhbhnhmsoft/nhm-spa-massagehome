@@ -107,6 +107,9 @@ Route::middleware('set-api-locale')->group(function () {
             Route::get('ktv/{id}', [UserController::class, 'detailKtv'])->where('id', '[0-9]+');
             // User hiện tại đăng ký làm đối tác
             Route::post('apply-partner', [UserController::class, 'applyPartner'])->middleware(['throttle:5,1']);
+            // Lấy danh sách KTV được quản lý bởi Agency hoặc KTV
+            Route::get('list-manage-ktv', [UserController::class, 'listKtvManager'])
+                ->middleware(['check-role:agency,ktv']); // Chỉ cho phép Agency hoặc KTV quản lý
         });
     });
 
@@ -126,7 +129,8 @@ Route::middleware('set-api-locale')->group(function () {
             // Lấy thông tin chi tiết dịch vụ
             Route::get('detail/{id}', [ServiceController::class, 'detailService'])->where('id', '[0-9]+');
             // Đặt lịch dịch vụ
-            Route::post('booking', [ServiceController::class, 'booking']);
+            Route::post('booking', [ServiceController::class, 'booking'])
+                ->middleware(['check-role:customer']); // Chỉ cho phép Customer đặt lịch
             // Lấy danh sách lịch đã đặt hôm nay
             Route::get('today-booked/{id}', [ServiceController::class, 'getTodayBookedCustomers'])->where('id', '[0-9]+');
             // Lấy danh sách mã giảm giá
@@ -151,7 +155,7 @@ Route::middleware('set-api-locale')->group(function () {
             Route::get('detail/{id}', [BookingController::class, 'detailBooking'])->where('id', '[0-9]+');
 
             // KTV mới có thể hủy và hoàn thành booking
-            Route::middleware(['check-ktv'])->group(function () {
+            Route::middleware(['check-role:ktv'])->group(function () {
                 // Hủy lịch đặt
                 Route::post('cancel', [BookingController::class, 'cancelBooking']);
                 // Xác nhận hoàn thành lịch đặt
@@ -236,7 +240,7 @@ Route::middleware('set-api-locale')->group(function () {
         // Đánh dấu xem tin nhắn đã đọc
         Route::post('seen', [ChatController::class, 'seenMessage']);
 
-        Route::middleware(['check-ktv'])->group(function () {
+        Route::middleware(['check-role:ktv'])->group(function () {
             // Lấy danh sách phòng chat KTV
             Route::get('ktv-conversations', [ChatController::class, 'listKtvConversation']);
         });
@@ -253,7 +257,7 @@ Route::middleware('set-api-locale')->group(function () {
     });
 
     // Chỉ dành cho KTV
-    Route::prefix('ktv')->middleware(['auth:sanctum', 'check-ktv'])->group(function () {
+    Route::prefix('ktv')->middleware(['auth:sanctum', 'check-role:ktv'])->group(function () {
         // Lấy thông tin dashboard profile của user hiện tại
         Route::get('dashboard', [KTVController::class, 'dashboard']);
         // Lấy danh sách booking của KTV
@@ -288,14 +292,13 @@ Route::middleware('set-api-locale')->group(function () {
         Route::get('config-schedule', [KTVController::class, 'getConfigSchedule']);
         // Cập nhật thông tin lịch làm việc của KTV
         Route::post('config-schedule', [KTVController::class, 'editConfigSchedule']);
-
+        // Link KTV to Referrer via QR
+        Route::post('link-referrer', [KTVController::class, 'linkReferrer']);
     });
 
     // Dành cho agency
     Route::prefix('agency')->middleware(['auth:sanctum'])->group(function () {
         // Lấy thông tin dashboard profile của user hiện tại
         Route::get('manage-ktv', [AgencyController::class, 'listKtv']);
-        // Link KTV to Agency via QR
-        Route::post('link-qr', [AgencyController::class, 'linkQr']);
     });
 });

@@ -205,4 +205,27 @@ final class Helper
         // KTV thực nhận = Tổng tiền - Phí sàn
         return $price - $systemMinus;
     }
+
+    /**
+     * Tính toán số tiền mà người giới thiệu sẽ nhận được.
+     * @param float $price
+     * @param float $discountRate
+     * @param int $precision
+     * @return float
+     */
+    public static function calculatePriceReferrer(float $price, float $discountRate, int $precision = 0): float
+    {
+        $discountRate = max(0, min(100, $discountRate));
+
+        return round($price * ($discountRate / 100), $precision);
+    }
+
+     /**
+     * Lấy số lượng tối thiểu mà KTV phải có để trở thành trưởng KTV.
+     * @return int
+     */
+    public static function getConditionToBeLeaderKtv(): int
+    {
+        return 10;
+    }
 }

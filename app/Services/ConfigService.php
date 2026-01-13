@@ -6,6 +6,7 @@ use App\Core\Cache\CacheKey;
 use App\Core\Cache\Caching;
 use App\Core\LogHelper;
 use App\Core\Service\BaseService;
+use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
 use App\Enums\ConfigName;
 use App\Enums\ConfigType;
@@ -311,4 +312,22 @@ class ConfigService extends BaseService
             return ServiceReturn::error(message: $e->getMessage());
         }
     }
+
+    /**
+     * Lấy giá trị cấu hình theo key
+     * @param ConfigName $configName
+     * @return ServiceReturn
+     * @throws ServiceException
+     */
+    public function getConfigValue(ConfigName $configName): ServiceReturn
+    {
+        $config = $this->getConfig($configName);
+        if ($config->isError()) {
+            throw new ServiceException(
+                message: __("error.config_not_found")
+            );
+        }
+        return $config->getData()['config_value'];
+    }
+
 }

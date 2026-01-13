@@ -18,7 +18,7 @@ class UserReviewApplication extends Model
 
     protected $fillable = [
         'user_id',
-        'agency_id',
+        'referrer_id',
         'status', // Cast Enum
         'province_code',
         'address',
@@ -35,7 +35,7 @@ class UserReviewApplication extends Model
     protected $casts = [
         'id' => 'string',
         'user_id' => 'string',
-        'agency_id' => 'string',
+        'referrer_id' => 'string',
         'latitude' => 'float',
         'longitude' => 'float',
         'status' => ReviewApplicationStatus::class,
@@ -45,19 +45,24 @@ class UserReviewApplication extends Model
     ];
 
     /**
-     * Lấy thông tin về đại lý.
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * Lấy thông tin về người giới thiệu.
      */
-    public function agency()
+    public function referrer()
     {
-        return $this->belongsTo(User::class, 'agency_id');
+        return $this->belongsTo(User::class, 'referrer_id');
     }
 
+    /**
+     * Lấy thông tin về người được review.
+     */
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    /**
+     * Lấy thông tin về tỉnh/thành phố.
+     */
     public function province()
     {
         return $this->hasOne(Province::class, 'code', 'province_code');
