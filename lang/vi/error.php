@@ -34,7 +34,10 @@ return [
     'not_found_referred_staff' => 'Không tìm thấy người giới thiệu nhân viên',
     'config_not_found' => 'Cấu hình không tồn tại',
     'contract_not_found' => 'Hợp đồng không tồn tại',
-    'verify_agency' => 'Bạn chưa xác thực đại lý',
+    'verify_referrer' => 'Mã xác thực người giới thiệu không hợp lệ',
     'agency_not_found' => 'Đại lý không tồn tại',
     'user_have_review_application' => 'Người dùng đã có đơn ứng tuyển review',
+    'cannot_change_referrer' => 'Bạn đã có người giới thiệu, không thể thay đổi',
+    'exchange_rate_not_found' => 'Tỉ lệ đổi tiền không tồn tại',
+    'discount_rate_not_found' => 'Tỉ lệ chiết khấu không tồn tại',
 ];

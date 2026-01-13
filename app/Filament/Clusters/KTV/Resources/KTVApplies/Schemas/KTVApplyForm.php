@@ -104,10 +104,18 @@ class KTVApplyForm
                             ->label(__('admin.common.table.status'))
                             ->options(ReviewApplicationStatus::toOptions())
                             ->default(ReviewApplicationStatus::PENDING),
-                        Select::make('agency_id')
+                        Select::make('referrer_id')
                             ->label(__('admin.ktv_apply.fields.agency'))
-                            ->searchable()
-                            ->options(fn() => User::where('role', UserRole::AGENCY->value)->where('is_active', true)->pluck('name', 'id'))
+                            ->relationship(
+                                name: 'referrer', // Tên function quan hệ trong Model
+                                titleAttribute: 'name', // Cột dùng để hiển thị và tìm kiếm
+                                modifyQueryUsing: fn ($query) => $query
+                                    ->whereIn('role', [UserRole::AGENCY->value, UserRole::KTV->value])
+                                    ->where('is_active', true)
+                            )
+                            ->searchable() // Filament sẽ tự động search theo titleAttribute (name)
+                            ->preload() // Load trước một ít dữ liệu để chọn nhanh
+                            ->disabled(fn($livewire) => $livewire instanceof ViewRecord)
                             ->columnSpan(1),
                         Select::make('province_code')
                             ->label(__('admin.ktv_apply.fields.province'))

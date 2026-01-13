@@ -22,7 +22,7 @@ class ApplyPartnerRequest extends FormRequest
                 UserRole::AGENCY->value,
                 UserRole::KTV->value,
             ])],
-            'agency_id' => ['nullable', 'numeric', 'exists:users,id'],
+            'referrer_id' => ['nullable', 'numeric', 'exists:users,id'],
             'province_code' => ['required', 'string', 'max:10'],
             'experience' => ['nullable', 'integer'],
             'address' => ['required', 'string', 'max:255'],

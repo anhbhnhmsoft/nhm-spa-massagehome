@@ -861,47 +861,60 @@ class UserService extends BaseService
     }
 
     /**
-     * Link KTV to Agency via QR
+     * Link KTV to Referrer via QR
      * @param int $ktvId
-     * @param int $agencyId
+     * @param int $referrerId
      * @return ServiceReturn
      */
-    public function linkKtvToAgency(int $ktvId, int $agencyId): ServiceReturn
+    public function linkKtvToReferrer(int $ktvId, int $referrerId): ServiceReturn
     {
         try {
-            $ktv = $this->userRepository->query()->find($ktvId);
-            $agency = $this->userRepository->query()->find($agencyId);
+            $ktv = $this->userRepository
+                ->queryUser()
+                ->where('id', $ktvId)
+                ->where('role', UserRole::KTV->value)
+                ->first();
 
-            if (!$ktv || !$agency) {
-                return ServiceReturn::error(__('common_error.data_not_found'));
-            }
+            // Người giới thiệu phải là KTV hoặc Agency
+            $referrer = $this->userRepository
+                ->queryUser()
+                ->where('id', $referrerId)
+                ->whereIn('role', [UserRole::AGENCY->value, UserRole::KTV->value])
+                ->first();
 
-            // Check roles
-            if ($ktv->role !== UserRole::KTV->value) {
-                return ServiceReturn::success( data: ['is_ktv' => false], message:  __('common_error.invalid_role'));
-            }
-
-            if ($agency->role !== UserRole::AGENCY->value) {
-                return ServiceReturn::error(__('common_error.invalid_role'));
+            if (!$ktv || !$referrer) {
+                throw new ServiceException(__('common_error.data_not_found'));
             }
 
             // Prevent self-linking
-            if ($ktv->id === $agency->id) {
-                return ServiceReturn::error(__('common_error.cannot_link_self'));
+            if ($ktv->id === $referrer->id) {
+                throw new ServiceException(__('common_error.cannot_link_self'));
             }
 
-            // Update link
-            $ktv->referred_by_user_id = $agency->id;
-            $ktv->save();
+            $reviewApplication = $ktv->reviewApplication;
+            // KTV phải có review application
+            if (!$reviewApplication) {
+                throw new ServiceException(__('common_error.data_not_found'));
+            }
+            // Nếu KTV đã có referrer_id, không thể thay đổi
+            if ($reviewApplication->referrer_id) {
+                throw new ServiceException(__('error.cannot_change_referrer'));
+            }
+
+            // update review application
+            $ktv->reviewApplication()->update([
+                'referrer_id' => $referrer->id,
+            ]);
 
             return ServiceReturn::success(
-                data: [
-                    'ktv' => $ktv,
-                    'is_ktv' => true,
-                ],
                 message: __('common.success.data_updated')
             );
-        } catch (\Exception $e) {
+        } catch (ServiceException $exception) {
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        }
+        catch (\Exception $e) {
             LogHelper::error('Lỗi UserService@linkKtvToAgency', $e);
             return ServiceReturn::error(__('common_error.server_error'));
         }

@@ -339,6 +339,8 @@ return
         ],
         'setting' => [
             'label' => 'Cài đặt hệ thống',
+            'label_setting' => 'Hệ thống',
+            'label_config_discount_rate' => 'Chiết khấu',
             'section' => [
                 'system_config' => 'Cấu hình hệ thống',
                 'affiliate_config' => 'Cấu hình Affiliate',
@@ -357,6 +359,12 @@ return
                 'break_time_gap' => 'Khoảng cách giữa các ca',
                 'discount_rate' => 'Tỷ lệ chiết khấu dành cho KTV %',
                 'discount_rate_helper' => 'Công thức: P(ktv) = P(giaodich) - (P(giaodich) * (R(chietkhau) / 100))',
+                'discount_rate_referrer_agency' => 'Tỷ lệ chiết khấu dành cho đại lý %',
+                'discount_rate_referrer_agency_helper' => 'Tỷ lệ chiết khấu dành cho đại lý đối với 1 đơn hoàn thành của 1 KTV mà mình giới thiệu %',
+                'discount_rate_referrer_ktv' => 'Tỷ lệ chiết khấu dành cho kỹ thuật viên %',
+                'discount_rate_referrer_ktv_helper' => 'Tỷ lệ chiết khấu dành cho kỹ thuật viên đối với 1 đơn hoàn thành của 1 KTV mà mình giới thiệu %',
+                'discount_rate_referrer_ktv_leader' => 'Tỷ lệ chiết khấu dành cho kỹ thuật viên trưởng %',
+                'discount_rate_referrer_ktv_leader_helper' => 'Tỷ lệ chiết khấu dành cho kỹ thuật viên trưởng đối với 1 đơn hoàn thành của 1 KTV mà mình giới thiệu %',
             ],
             'actions' => [
                 'save' => 'Lưu thay đổi',
