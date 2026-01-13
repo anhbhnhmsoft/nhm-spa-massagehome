@@ -1,7 +1,7 @@
 <?php
 return
     [
-        'currency' => 'Point',
+        'currency' => 'VND',
         "nav" => [
             "ktv" => "Quản lý kỹ thuật viên",
             "category" => "Quản lý danh mục",
