@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Filament\Pages\Dashboard;
 use App\Models\Banner;
 use App\Models\Category;
+use App\Models\Config;
 use App\Models\Coupon;
 use App\Models\Page;
 use App\Models\Service;
@@ -13,6 +14,7 @@ use App\Models\UserFile;
 use App\Models\UserProfile;
 use App\Observers\BannerObserver;
 use App\Observers\CategoryObserver;
+use App\Observers\ConfigObserver;
 use App\Observers\CouponObserver;
 use App\Observers\PageObserver;
 use App\Observers\ServiceObserver;
@@ -154,5 +156,6 @@ class AppServiceProvider extends ServiceProvider
         UserFile::observe(UserFileObserver::class);
         UserProfile::observe(UserProfileObserver::class);
         StaticContract::observe(StaticContractObserver::class);
+        Config::observe(ConfigObserver::class);
     }
 }

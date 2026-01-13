@@ -365,6 +365,10 @@ return
                 'discount_rate_referrer_ktv_helper' => 'Tỷ lệ chiết khấu dành cho kỹ thuật viên đối với 1 đơn hoàn thành của 1 KTV mà mình giới thiệu %',
                 'discount_rate_referrer_ktv_leader' => 'Tỷ lệ chiết khấu dành cho kỹ thuật viên trưởng %',
                 'discount_rate_referrer_ktv_leader_helper' => 'Tỷ lệ chiết khấu dành cho kỹ thuật viên trưởng đối với 1 đơn hoàn thành của 1 KTV mà mình giới thiệu %',
+                'sp_zalo' => 'Trang Zalo hỗ trợ',
+                'sp_facebook' => 'Trang Facebook hỗ trợ',
+                'sp_phone' => 'Số điện thoại hỗ trợ',
+                'sp_wechat' => 'Link Wechat hỗ trợ',
             ],
             'actions' => [
                 'save' => 'Lưu thay đổi',

@@ -335,6 +335,13 @@ return
                 'is_active' => 'Active',
                 'break_time_gap' => 'Gap Between Shifts',
                 'discount_rate' => 'Discount Rate',
+                'discount_rate_referrer_agency' => 'Discount Rate for Referral Agencies',
+                'discount_rate_referrer_ktv' => 'Discount Rate for Referral KTVs',
+                'discount_rate_referrer_ktv_leader' => 'Discount Rate for Referral KTV Leaders',
+                'sp_zalo' => 'Zalo Support',
+                'sp_facebook' => 'Facebook Support',
+                'sp_phone' => 'Customer Service Phone',
+                'sp_wechat' => 'Wechat Support',
             ],
             'actions' => [
                 'save' => 'Save Changes',

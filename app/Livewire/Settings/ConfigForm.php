@@ -114,6 +114,50 @@ class ConfigForm extends Component implements HasSchemas
                                             'numeric' => __('common.error.numeric'),
                                             'min' => __('common.error.min', ['min' => 0]),
                                         ]),
+                                    TextInput::make((string)ConfigName::SP_ZALO->value)
+                                        ->label(__('admin.setting.fields.sp_zalo'))
+                                        ->required()
+                                        ->rules([
+                                            'required',
+                                            'string',
+                                        ])
+                                        ->validationMessages([
+                                            'required' => __('common.error.required'),
+                                            'string' => __('common.error.string'),
+                                        ]),
+                                    TextInput::make((string)ConfigName::SP_FACEBOOK->value)
+                                        ->label(__('admin.setting.fields.sp_facebook'))
+                                        ->required()
+                                        ->rules([
+                                            'required',
+                                            'string',
+                                        ])
+                                        ->validationMessages([
+                                            'required' => __('common.error.required'),
+                                            'string' => __('common.error.string'),
+                                        ]),
+                                    TextInput::make((string)ConfigName::SP_PHONE->value)
+                                        ->label(__('admin.setting.fields.sp_phone'))
+                                        ->required()
+                                        ->rules([
+                                            'required',
+                                            'string',
+                                        ])
+                                        ->validationMessages([
+                                            'required' => __('common.error.required'),
+                                            'string' => __('common.error.string'),
+                                        ]),
+                                    TextInput::make((string)ConfigName::SP_WECHAT->value)
+                                            ->label(__('admin.setting.fields.sp_wechat'))
+                                        ->required()
+                                        ->rules([
+                                            'required',
+                                            'string',
+                                        ])
+                                        ->validationMessages([
+                                            'required' => __('common.error.required'),
+                                            'string' => __('common.error.string'),
+                                        ]),
                                 ]),
                             Section::make(__('admin.setting.label_config_discount_rate'))
                                 ->schema([
