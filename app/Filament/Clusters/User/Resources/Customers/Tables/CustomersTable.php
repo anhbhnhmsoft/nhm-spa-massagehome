@@ -52,6 +52,7 @@ class CustomersTable
                     ForceDeleteBulkAction::make(),
                     RestoreBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->poll('2s');
     }
 }

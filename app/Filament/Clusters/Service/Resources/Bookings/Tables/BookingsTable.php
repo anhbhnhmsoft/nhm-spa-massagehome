@@ -131,6 +131,6 @@ class BookingsTable
                 ],
                 position: RecordActionsPosition::BeforeCells
             )
-            ->poll(5);
+            ->poll('2s');
     }
 }

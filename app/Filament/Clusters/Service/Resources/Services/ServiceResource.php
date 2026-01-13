@@ -59,7 +59,6 @@ class ServiceResource extends Resource
         $query = parent::getEloquentQuery();
 
         return $query->with('category', 'provider')
-            ->withAvg('options', 'price')
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

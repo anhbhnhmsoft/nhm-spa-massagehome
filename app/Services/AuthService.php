@@ -13,7 +13,6 @@ use App\Enums\DirectFile;
 use App\Enums\Gender;
 use App\Enums\Language;
 use App\Enums\UserRole;
-use App\Models\Service;
 use App\Models\User;
 use App\Repositories\UserProfileRepository;
 use App\Repositories\UserRepository;
@@ -24,6 +23,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Redis as RedisFacade;
 use Illuminate\Support\Facades\Storage;
 
 
@@ -170,7 +170,6 @@ class AuthService extends BaseService
      * @param $token -- Token dùng để đăng ký tài khoản.
      * @param string $password -- Mật khẩu tài khoản.
      * @param string $name -- Tên người dùng.
-     * @param ?string $referralCode -- Mã giới thiệu.
      * @param ?Gender $gender -- Giới tính.
      * @param ?Language $language -- Ngôn ngữ.
      * @return ServiceReturn
@@ -179,7 +178,6 @@ class AuthService extends BaseService
         string    $token,
         string    $password,
         string    $name,
-        ?string   $referralCode,
         ?Gender   $gender,
         ?Language $language
     ): ServiceReturn
@@ -204,7 +202,6 @@ class AuthService extends BaseService
                 'language' => $language?->value ?? Language::VIETNAMESE->value,
                 // Ban đầu user là customer
                 'role' => UserRole::CUSTOMER->value,
-                'referral_code' => Helper::generateReferCodeUser(UserRole::CUSTOMER),
                 'last_login_at' => now(),
             ]);
 
@@ -213,19 +210,6 @@ class AuthService extends BaseService
                 'user_id' => $user->id,
                 'gender' => $gender?->value ?? Gender::MALE->value,
             ]);
-
-            // Kiểm tra referral code
-            if (!empty($referralCode)) {
-                $userReferral = $this->userRepository->findByReferralCode($referralCode);
-                if (!$userReferral) {
-                    throw new ServiceException(message: __('auth.error.invalid_referral_code'));
-                }
-                // Cập nhật user referral
-                $user->update([
-                    'referred_by_user_id' => $userReferral->id,
-                ]);
-                // Xử lý affiliate sau ở đoạn này
-            }
 
             // Tạo wallet cho user
             $this->walletRepository->create([
@@ -277,7 +261,7 @@ class AuthService extends BaseService
                 return ServiceReturn::error(message: __('auth.error.invalid_login'));
             }
             // Kiểm tra user có bị khóa không
-            if ($user->disabled) {
+            if (!$user->is_active) {
                 return ServiceReturn::error(message: __('auth.error.disabled'));
             }
             // Cập nhật last login time
@@ -285,6 +269,9 @@ class AuthService extends BaseService
             $user->save();
             // Tạo token đăng nhập
             $token = $this->createTokenAuth($user);
+            // Lưu token vào Redis
+            $this->setRedisAuthChatToken($token, $user);
+
             return ServiceReturn::success(data: [
                 'token' => $token,
                 'user' => $user,
@@ -392,60 +379,6 @@ class AuthService extends BaseService
     }
 
     /**
-     * -------- Private methods --------
-     */
-
-    /**
-     * Tạo token đăng nhập cho user.
-     * @param User $user
-     * @return string
-     */
-    protected function createTokenAuth(User $user): string
-    {
-        return $user->createToken(
-            name: 'api-token',
-            abilities: ['*'],
-            expiresAt: now()->addDays(30),
-        )->plainTextToken;
-    }
-
-    /**
-     * Tạo OTP đăng ký và lưu vào cache.
-     * @param string $phone
-     * @throws ServiceException
-     */
-    protected function createCacheRegisterOtp(string $phone): void
-    {
-        //        $otp = rand(100000, 999999);
-        $otp = 123456; // Test
-        // Set OTP limit số lần gửi lại
-        if (!Caching::hasCache(key: CacheKey::CACHE_KEY_RESEND_REGISTER_OTP, uniqueKey: $phone)) {
-            Caching::setCache(
-                key: CacheKey::CACHE_KEY_RESEND_REGISTER_OTP,
-                value: 0,
-                uniqueKey: request()->ip() || request()->userAgent() || $phone,
-                expire: $this->blockTime
-            );
-        }
-        $attempts = Caching::incrementCache(key: CacheKey::CACHE_KEY_RESEND_REGISTER_OTP, uniqueKey: $phone);
-
-        // Kiểm tra số lần gửi lại OTP
-        if ($attempts > $this->maxResendOtp) {
-            throw new ServiceException(__('auth.error.resend_otp', ['minutes' => $this->blockTime]));
-        }
-        // Lưu OTP vào cache
-        Caching::setCache(
-            key: CacheKey::CACHE_KEY_OTP_REGISTER,
-            value: [
-                'otp' => $otp,
-                'phone' => $phone,
-            ],
-            uniqueKey: $phone,
-            expire: $this->otpTtl
-        );
-    }
-
-    /**
      * Cập nhật heartbeat cho user.
      * @return ServiceReturn
      */
@@ -456,7 +389,10 @@ class AuthService extends BaseService
             if (!$user) {
                 return ServiceReturn::error(message: __('auth.error.unauthorized'));
             }
-
+            $token = request()->bearerToken();
+            if (!$token || !$user) {
+                throw new ServiceException(message: __('common_error.unauthorized'));
+            }
             Caching::setCache(
                 key: CacheKey::CACHE_USER_HEARTBEAT,
                 value: true,
@@ -472,6 +408,11 @@ class AuthService extends BaseService
                 $user->last_login_at = $now;
                 $user->save();
             }
+
+            // --- TẦNG 3: REDIS CHAT AUTH ---
+            // Lưu token vào Redis
+            $this->setRedisAuthChatToken($token, $user);
+
             return ServiceReturn::success();
         } catch (Exception $exception) {
             LogHelper::error(
@@ -494,7 +435,6 @@ class AuthService extends BaseService
         string  $token,
         string  $deviceId,
         ?string $platform = null,
-        ?string $deviceName = null,
     ): ServiceReturn {
         try {
             $user = Auth::user();
@@ -508,7 +448,7 @@ class AuthService extends BaseService
                 [
                     'token' => $token,
                     'device_type' => $platform ?? 'unknown',
-                    'device_name' => $deviceName ?? 'Unknown Device',
+                    // 'device_name' => $deviceName ?? 'Unknown Device',
                     'updated_at' => now(),
                 ]
             );
@@ -672,6 +612,132 @@ class AuthService extends BaseService
             );
 
             return ServiceReturn::error(__('common_error.server_error'));
+        }
+    }
+
+    /**
+     * Đăng xuất tài khoản.
+     * @return ServiceReturn
+     */
+    public function logout(): ServiceReturn
+    {
+        try {
+            $user = Auth::user();
+            if (!$user) {
+                return ServiceReturn::error(message: __('error.unauthorized'));
+            }
+            $user->currentAccessToken()->delete();
+            return ServiceReturn::success(
+                message: __('auth.success.logout'),
+            );
+        } catch (Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi AuthService@logout",
+                ex: $exception
+            );
+            return ServiceReturn::error(message: __('common_error.server_error'));
+        }
+    }
+
+
+    /**
+     * -------- Private methods --------
+     */
+
+    /**
+     * Tạo token đăng nhập cho user.
+     * @param User $user
+     * @return string
+     */
+    protected function createTokenAuth(User $user): string
+    {
+        return $user->createToken(
+            name: 'api-token',
+            abilities: ['*'],
+            expiresAt: now()->addDays(30),
+        )->plainTextToken;
+    }
+
+    /**
+     * Tạo OTP đăng ký và lưu vào cache.
+     * @param string $phone
+     * @throws ServiceException
+     */
+    protected function createCacheRegisterOtp(string $phone): void
+    {
+        //        $otp = rand(100000, 999999);
+        $otp = 123456; // Test
+        // Set OTP limit số lần gửi lại
+        if (!Caching::hasCache(key: CacheKey::CACHE_KEY_RESEND_REGISTER_OTP, uniqueKey: $phone)) {
+            Caching::setCache(
+                key: CacheKey::CACHE_KEY_RESEND_REGISTER_OTP,
+                value: 0,
+                uniqueKey: request()->ip() || request()->userAgent() || $phone,
+                expire: $this->blockTime
+            );
+        }
+        $attempts = Caching::incrementCache(key: CacheKey::CACHE_KEY_RESEND_REGISTER_OTP, uniqueKey: $phone);
+
+        // Kiểm tra số lần gửi lại OTP
+        if ($attempts > $this->maxResendOtp) {
+            throw new ServiceException(__('auth.error.resend_otp', ['minutes' => $this->blockTime]));
+        }
+        // Lưu OTP vào cache
+        Caching::setCache(
+            key: CacheKey::CACHE_KEY_OTP_REGISTER,
+            value: [
+                'otp' => $otp,
+                'phone' => $phone,
+            ],
+            uniqueKey: $phone,
+            expire: $this->otpTtl
+        );
+    }
+
+    /**
+     * Lưu token vào Redis cho việc xác thực chat.
+     * @param string $token
+     * @param User $user
+     * @return void
+     */
+    protected function setRedisAuthChatToken(string $token, $user): void
+    {
+        $key = config('services.node_server.channel_chat_auth') . ":{$token}";
+        $redisPayload = [
+            'id' => (string)$user->id,
+            'name' => $user->name,
+            'role' => $user->role,
+        ];
+        RedisFacade::connection()->setex(
+            $key,
+            60 * 60 * 1, // 1 giờ
+            json_encode($redisPayload)
+        );
+    }
+
+    /**
+     * Khóa tài khoản.
+     * @return ServiceReturn
+     */
+    public function lockAccount(): ServiceReturn
+    {
+        try {
+            $user = Auth::user();
+            if (!$user) {
+                return ServiceReturn::error(message: __('error.unauthorized'));
+            }
+            $user->is_active = false;
+            $user->save();
+            $user->currentAccessToken()->delete();
+            return ServiceReturn::success(
+                message: __('auth.success.lock_account'),
+            );
+        } catch (Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi AuthService@lockAccount",
+                ex: $exception
+            );
+            return ServiceReturn::error(message: __('common_error.server_error'));
         }
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Service;
 
+use App\Core\Helper;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -22,6 +23,8 @@ class CouponResource extends JsonResource
             'end_at' => $this->end_at,
             'usage_limit' => $this->usage_limit,
             'used_count' => $this->used_count,
+            'display_ads' => $this->display_ads,
+            'banners' => $this->banners ? Helper::getPublicUrl($this->banners) : null,
         ];
     }
 }

@@ -10,6 +10,8 @@ return [
         'user' => 'Thông tin người dùng.',
         'set_language' => 'Ngôn ngữ đã được cập nhật.',
         'update_success' => 'Cập nhật thông tin thành công.',
+        'logout' => 'Bạn đã đăng xuất thành công.',
+        'lock_account' => 'Tài khoản đã bị khóa.',
     ],
     'error' => [
         'phone_verified' => 'Số điện thoại này đã được đăng ký.',
@@ -22,7 +24,6 @@ return [
         'not_sent' => 'Mã OTP không tồn tại.',
         'phone_invalid' => 'Số điện thoại không hợp lệ.',
         'invalid_token_register' => 'Token đăng ký không hợp lệ.',
-        'invalid_referral_code' => 'Mã giới thiệu không hợp lệ.',
         'disabled' => 'Tài khoản này đã bị khóa, vui lòng liên hệ với quản trị viên để được hỗ trợ.',
         'invalid_login' => 'Số điện thoại hoặc mật khẩu không đúng.',
         'language_invalid' => 'Ngôn ngữ không hợp lệ.',

@@ -7,7 +7,9 @@ use App\Core\Controller\ListRequest;
 use App\Enums\ServiceDuration;
 use App\Http\Resources\Service\CategoryResource;
 use App\Http\Resources\Service\CouponResource;
+use App\Http\Resources\Service\CouponUserResource;
 use App\Http\Resources\Service\ServiceResource;
+use App\Http\Resources\User\CustomerBookedTodayResource;
 use App\Services\BookingService;
 use App\Services\ServiceService;
 use Illuminate\Http\JsonResponse;
@@ -21,7 +23,9 @@ class ServiceController extends BaseController
     public function __construct(
         protected ServiceService $serviceService,
         protected BookingService $bookingService,
-    ) {}
+    )
+    {
+    }
 
     /**
      * Lấy danh sách danh mục dịch vụ
@@ -31,13 +35,13 @@ class ServiceController extends BaseController
     public function listCategory(ListRequest $request): JsonResponse
     {
         $dto = $request->getFilterOptions();
-
         $result = $this->serviceService->categoryPaginate($dto);
         $data = $result->getData();
         return $this->sendSuccess(
             data: CategoryResource::collection($data)->response()->getData()
         );
     }
+
     /**
      * Lấy danh sách dịch vụ
      * @param ListRequest $request
@@ -84,6 +88,8 @@ class ServiceController extends BaseController
         $dto->addFilter('is_valid', true);
         // Lấy toàn bộ mã giảm giá (không phân trang)
         $dto->addFilter('get_all', true);
+        // Lọc chỉ lấy mã giảm giá chưa được sử dụng
+        $dto->addFilter('user_id_is_not_used', $request->user()->id);
 
         $result = $this->serviceService->getListCoupon($dto);
         if ($result->isError()) {
@@ -97,8 +103,33 @@ class ServiceController extends BaseController
         );
     }
 
-    
+
+    /**
+     * Lấy danh sách mã giảm giá của người dùng
+     * @param ListRequest $request
+     * @return JsonResponse
+     */
+    public function myListCoupon(ListRequest $request): JsonResponse
+    {
+        $dto = $request->getFilterOptions();
+        // Lọc chỉ lấy mã giảm giá chưa được sử dụng
+        $dto->addFilter('is_used', false);
+        // Lấy toàn bộ mã giảm giá của người dùng
+        $dto->addFilter('user_id', $request->user()->id);
+
+        $result = $this->serviceService->couponUserPaginate($dto);
+
+        $data = $result->getData();
+
+        return $this->sendSuccess(
+            data: CouponUserResource::collection($data)->response()->getData()
+        );
+    }
+
+
+
     // cần queue transactions-payment để ghi nhận giao dịch
+
     /**
      * Đặt lịch hẹn dịch vụ
      * @param Request $request
@@ -107,21 +138,11 @@ class ServiceController extends BaseController
     {
         $validate = $request->validate([
             'service_id' => ['required', 'numeric', 'exists:services,id'],
-            'option_id' => ['required', 'numeric', 'exists:service_options,id'],
+            'option_id' => ['required', 'numeric', 'exists:category_prices,id'],
             // Rule: Phải là định dạng ngày & Phải sau thời điểm hiện tại 1 tiếng
             'book_time' => [
                 'required',
                 'date',
-                function ($attribute, $value, $fail) {
-                    $bookingTime = Carbon::parse($value)->setTimezone(config('app.timezone'));
-                    // Kiểm tra xem thời gian đặt có hợp lệ không
-                    $validateTime = now()->addHour()->setTimezone(config('app.timezone'));
-                    if (
-                        $bookingTime->isBefore($validateTime)
-                    ) {
-                        $fail(__('validation.book_time.after'));
-                    }
-                }
             ],
             // Validate Coupon (Không bắt buộc, nhưng nếu có phải tồn tại)
             'coupon_id' => [
@@ -133,6 +154,7 @@ class ServiceController extends BaseController
             // 4. Validate Địa chỉ & Note
             'address' => ['required', 'string', 'max:255'],
             'note' => ['nullable', 'string', 'max:500'],
+            'note_address' => ['nullable', 'string', 'max:500'],
             // 5. Validate Tọa độ (Lat/Lng)
             'latitude' => ['required', 'numeric', 'between:-90,90'],
             'longitude' => ['required', 'numeric', 'between:-180,180'],
@@ -144,21 +166,23 @@ class ServiceController extends BaseController
             'option_id.numeric' => __('validation.option_id.numeric'),
             'option_id.exists' => __('validation.option_id.exists'),
             'book_time.required' => __('validation.book_time.required'),
-            'book_time.date' => __('validation.book_time.date'),
+            'book_time.timestamp' => __('validation.book_time.timestamp'),
             'coupon_id.exists' => __('validation.coupon_id.exists'),
-            'address.required' => __('validation.address.required'),
-            'latitude.required' => __('validation.latitude.required'),
-            'longitude.required' => __('validation.longitude.required'),
+            'note.max' => __('validation.note.max'),
+            'note_address.max' => __('validation.note_address.max'),
+            'latitude.required' => __('validation.location.latitude_required'),
+            'longitude.required' => __('validation.location.longitude_required'),
         ]);
         $resultService = $this->bookingService->bookService(
             serviceId: $validate['service_id'],
             optionId: $validate['option_id'],
-            couponId: $validate['coupon_id'] ?? null,
             address: $validate['address'],
             latitude: $validate['latitude'],
             longitude: $validate['longitude'],
             bookTime: $validate['book_time'],
             note: $validate['note'] ?? null,
+            noteAddress: $validate['note_address'] ?? null,
+            couponId: $validate['coupon_id'] ?? null,
         );
         if ($resultService->isError()) {
             return $this->sendError(
@@ -167,6 +191,27 @@ class ServiceController extends BaseController
         }
         return $this->sendSuccess(
             data: $resultService->getData()
+        );
+    }
+
+    /**
+     * Lấy danh sách khách hàng đã đặt lịch trong ngày hôm nay
+     * với status COMPLETED hoặc ONGOING
+     * @return JsonResponse
+     */
+    public function getTodayBookedCustomers(string $id): JsonResponse
+    {
+        $result = $this->serviceService->getTodayBookedCustomers($id);
+
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage()
+            );
+        }
+
+        $data = $result->getData();
+        return $this->sendSuccess(
+            data: CustomerBookedTodayResource::collection($data)
         );
     }
 }

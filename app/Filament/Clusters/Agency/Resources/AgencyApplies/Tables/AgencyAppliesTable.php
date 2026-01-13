@@ -47,9 +47,9 @@ class AgencyAppliesTable
                     ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->toggleable(),
-                ToggleColumn::make('is_active')
-                    ->label(__('admin.common.table.status'))
-                    ->toggleable(),
+                // ToggleColumn::make('is_active')
+                //     ->label(__('admin.common.table.status'))
+                //     ->toggleable(),
             ])
             ->defaultSort('created_at', 'desc')
             ->recordActions([
@@ -90,6 +90,7 @@ class AgencyAppliesTable
                         ->modalDescription(__('admin.common.modal.force_delete_confirm'))
                         ->modalSubmitActionLabel(__('admin.common.action.confirm_delete')),
                 ]),
-            ]);
+            ])
+            ->poll('5s');
     }
 }

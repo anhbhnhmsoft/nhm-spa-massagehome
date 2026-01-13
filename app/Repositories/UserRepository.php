@@ -4,7 +4,11 @@ namespace App\Repositories;
 
 use App\Core\BaseRepository;
 use App\Enums\BookingStatus;
+use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserRole;
+use App\Models\Review;
+use App\Models\Service;
+use App\Models\ServiceBooking;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -32,25 +36,64 @@ class UserRepository extends BaseRepository
      */
     public function queryKTV(): Builder
     {
-        return $this->query()
-            ->where('role', UserRole::KTV->value)
-            ->where('is_active', true)
-            ->with(['profile', 'reviewApplication', 'services'])
-            // Tính trung bình Rating (chỉ lấy review không bị ẩn)
-            ->withAvg(['reviewsReceived' => function (Builder $query) {
-                    $query->where('hidden', false); // Quan trọng: Chỉ tính review công khai
-                }], 'rating')
-            ->withCount([
-                // Đếm số lượng review (chỉ đếm review không bị ẩn)
-                'reviewsReceived' => function (Builder $query) {
-                    $query->where('hidden', false);
-                },
-                // Đếm số lượng job (chỉ đếm job đã hoàn thành)
-                'jobsReceived' => function (Builder $query) {
-                    $query->where('status', BookingStatus::COMPLETED->value);
-                },
-                'services'
+        $query = $this->query()
+            ->where('users.role', UserRole::KTV->value)
+            ->where('users.is_active', true)
+            // Chỉ lấy KTV đã được duyệt
+            ->whereHas('reviewApplication', function ($q) {
+                $q->where('status', ReviewApplicationStatus::APPROVED->value);
+            })
+            ->with(['profile', 'reviewApplication', 'services','schedule']);
+
+        // Tính Trung bình Rating và Đếm Reviews
+        $query->leftJoinSub(
+            Review::query()->selectRaw('user_id, AVG(rating) as reviews_received_avg_rating, COUNT(id) as reviews_received_count')
+                ->where('hidden', false)
+                ->groupBy('user_id'),
+            'review_stats',
+            'review_stats.user_id',
+            '=',
+            'users.id'
+        )
+            ->addSelect([
+                'reviews_received_avg_rating' => 'review_stats.reviews_received_avg_rating',
+                'reviews_received_count' => 'review_stats.reviews_received_count',
             ]);
+
+        // Đếm Số lượng Jobs đã hoàn thành
+        $query->leftJoinSub(
+            ServiceBooking::selectRaw('services.user_id, COUNT(service_bookings.id) as jobs_received_count')
+                ->join('services', 'services.id', '=', 'service_bookings.service_id')
+                ->where('service_bookings.status', BookingStatus::COMPLETED->value)
+                ->groupBy('services.user_id'),
+            'job_stats',
+            'job_stats.user_id',
+            '=',
+            'users.id'
+        )
+            ->addSelect([
+                'jobs_received_count' => 'job_stats.jobs_received_count',
+            ]);
+
+
+        // Đếm Số lượng Services (Services)
+        $query->leftJoinSub(
+            Service::selectRaw('user_id, COUNT(id) as services_count')
+                ->groupBy('user_id'),
+            'service_stats',
+            'service_stats.user_id',
+            '=',
+            'users.id'
+        )
+            ->addSelect([
+                'services_count' => 'service_stats.services_count',
+            ]);
+
+
+        // Đảm bảo lấy tất cả các cột của bảng users
+        $query->addSelect('users.*');
+
+        return $query;
     }
 
 
@@ -62,9 +105,54 @@ class UserRepository extends BaseRepository
      */
     public function filterQuery(Builder $query, array $filters): Builder
     {
+        // Lọc theo từ khóa
+        if (isset($filters['keyword']) && !empty(trim($filters['keyword']))) {
+            $keyword = trim($filters['keyword']);
+            $query->whereRaw("unaccent(name) ILIKE unaccent(?)", ["%{$keyword}%"]);
+        }
         // Lọc theo vai trò
         if (isset($filters['role'])) {
             $query->where('role', $filters['role']);
+        }
+
+        if (isset($filters['category_id'])) {
+            $query->whereHas('services', function ($q) use ($filters) {
+                $q->where('category_id', $filters['category_id']);
+            });
+        }
+
+        // Lọc và Sắp xếp theo Vị trí
+        if (isset($filters['lat'], $filters['lng']) && is_numeric($filters['lat']) && is_numeric($filters['lng'])) {
+            $targetLat = (float) $filters['lat'];
+            $targetLng = (float) $filters['lng'];
+            $earthRadiusKm = 6371; // Bán kính Trái Đất tính bằng Km
+
+            // Thêm kiểm tra Join để tránh trùng lặp
+            $query->when(
+                !$query->getQuery()->joins || collect($query->getQuery()->joins)->pluck('table')->search('user_review_application') === false,
+                fn ($q) => $q->leftJoin(
+                    'user_review_application',
+                    'users.id',
+                    '=',
+                    'user_review_application.user_id'
+                )
+            );
+
+            // 2. Định nghĩa công thức tính khoảng cách (Distance)
+            $distanceSelect = sprintf("
+            (%s * acos(
+                cos(radians(%s)) * cos(radians(user_review_application.latitude)) * cos(radians(user_review_application.longitude) - radians(%s))
+                + sin(radians(%s)) * sin(radians(user_review_application.latitude))
+            )) AS distance
+        ", $earthRadiusKm, $targetLat, $targetLng, $targetLat);
+
+            // 3. Thêm cột 'distance' vào kết quả trả về
+            // CHÚ Ý: Phải select các cột chính của users.* để tránh bị trùng tên
+            $query->selectRaw($distanceSelect);
+
+            // 4. Sắp xếp theo cột 'distance' vừa tính được
+            // Những User không có latitude/longitude sẽ có distance là NULL và bị đẩy xuống cuối.
+            $query->orderBy('distance', 'asc');
         }
 
         return $query;
@@ -115,13 +203,5 @@ class UserRepository extends BaseRepository
             ->where('phone', $phone)
             ->whereNotNull('phone_verified_at')
             ->first();
-    }
-
-    /**
-     * Tìm user theo mã giới thiệu
-     */
-    public function findByReferralCode(string $code): ?User
-    {
-        return $this->query()->where('referral_code', $code)->first();
     }
 }

@@ -4,13 +4,20 @@ namespace App\Http\Controllers\API;
 
 use App\Core\Controller\BaseController;
 use App\Core\Controller\ListRequest;
+use App\Core\LogHelper;
+use App\Enums\UserRole;
+use App\Http\Requests\ApplyPartnerRequest;
+use App\Http\Requests\ListKTVRequest;
 use App\Http\Resources\User\AddressResource;
-use App\Http\Resources\User\CustomerBookedTodayResource;
+use App\Http\Resources\User\ItemKTVResource;
 use App\Http\Resources\User\ListAddressResource;
 use App\Http\Resources\User\ListKTVResource;
+use App\Rules\AgencyExistsRule;
 use App\Services\UserService;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class UserController extends BaseController
 {
@@ -19,11 +26,52 @@ class UserController extends BaseController
     ) {}
 
     /**
-     * Lấy danh sách KTV
-     * @param ListRequest $request
+     * Lấy thông tin dashboard profile của user hiện tại
      * @return JsonResponse
      */
-    public function listKtv(ListRequest $request): \Illuminate\Http\JsonResponse
+    public function dashboardProfile()
+    {
+        $result = $this->userService->dashboardProfile();
+
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage(),
+            );
+        }
+
+        return $this->sendSuccess(
+            data: $result->getData(),
+            message: $result->getMessage() ?? __('common.success.data_created')
+        );
+    }
+
+    /**
+     * User hiện tại đăng ký làm đối tác (tạo hồ sơ chờ duyệt).
+     */
+    public function applyPartner(ApplyPartnerRequest $request): JsonResponse
+    {
+
+        $data = $request->validated();
+        $result = $this->userService->applyPartnerForCurrentUser($data);
+
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage(),
+            );
+        }
+
+        return $this->sendSuccess(
+            data: $result->getData(),
+            message: $result->getMessage() ?? __('common.success.data_created')
+        );
+    }
+
+    /**
+     * Lấy danh sách KTV
+     * @param ListKTVRequest $request
+     * @return JsonResponse
+     */
+    public function listKtv(ListKTVRequest $request): \Illuminate\Http\JsonResponse
     {
         $dto = $request->getFilterOptions();
 
@@ -49,7 +97,7 @@ class UserController extends BaseController
         }
         $data = $result->getData();
         return $this->sendSuccess(
-            data: new ListKTVResource($data)
+            data: new ItemKTVResource($data['ktv'], $data['break_time_gap'])
         );
     }
 
@@ -157,7 +205,7 @@ class UserController extends BaseController
             'user_id' => $request->user()->id,
         ]);
         $dto->setSortBy('is_primary');
-        $dto->setDirection('asc');
+        $dto->setDirection('desc');
 
         $result = $this->userService->getPaginateAddress(dto: $dto);
         if ($result->isError()) {
@@ -168,27 +216,6 @@ class UserController extends BaseController
         $data = $result->getData();
         return $this->sendSuccess(
             data: ListAddressResource::collection($data)->response()->getData()
-        );
-    }
-
-    /**
-     * Lấy danh sách khách hàng đã đặt lịch trong ngày hôm nay
-     * với status COMPLETED hoặc ONGOING
-     * @return JsonResponse
-     */
-    public function getTodayBookedCustomers(): JsonResponse
-    {
-        $result = $this->userService->getTodayBookedCustomers();
-
-        if ($result->isError()) {
-            return $this->sendError(
-                message: $result->getMessage()
-            );
-        }
-
-        $data = $result->getData();
-        return $this->sendSuccess(
-            data: CustomerBookedTodayResource::collection($data)
         );
     }
 }

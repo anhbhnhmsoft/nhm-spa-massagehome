@@ -2,7 +2,6 @@
 
 namespace App\Filament\Clusters\User\Resources\Reviews;
 
-use App\Filament\Clusters\User\Resources\Reviews\Pages\CreateReview;
 use App\Filament\Clusters\User\Resources\Reviews\Pages\EditReview;
 use App\Filament\Clusters\User\Resources\Reviews\Pages\ListReviews;
 use App\Filament\Clusters\User\Resources\Reviews\Schemas\ReviewForm;
@@ -58,7 +57,6 @@ class ReviewResource extends Resource
     {
         return [
             'index' => ListReviews::route('/'),
-            'create' => CreateReview::route('/create'),
             'edit' => EditReview::route('/{record}/edit'),
         ];
     }

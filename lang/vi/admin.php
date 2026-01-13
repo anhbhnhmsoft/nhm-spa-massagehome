@@ -1,6 +1,7 @@
 <?php
 return
     [
+        'currency' => 'Point',
         "nav" => [
             "ktv" => "Quản lý kỹ thuật viên",
             "category" => "Quản lý danh mục",
@@ -14,10 +15,11 @@ return
             "label" => "Kỹ thuật viên"
         ],
         "common" => [
+            'back' => 'Quay lại',
+            'minute' => 'phút',
             'table' => [
                 'name' => 'Tên',
                 'email' => 'Email',
-                'phone' => 'Số điện thoại',
                 'address' => 'Địa chỉ',
                 'created_at' => 'Ngày tạo',
                 'updated_at' => 'Ngày cập nhật',
@@ -41,8 +43,8 @@ return
                 'usage_count' => 'Số lần sử dụng',
                 'effective_date' => 'Ngày hiệu lực',
                 'application_date' => 'Ngày đăng ký',
-                'referral_code' => 'Mã giới thiệu',
                 'creator' => 'Tạo bởi',
+                'password_desc_ktv' => 'Mật khẩu phải có ít nhất 8 kí tự, bao gồm chữ hoa, chữ thường, số và kí tự đặc biệt, 1 khi thay đổi mật khẩu mới, KTV sẽ không được sử dụng mật khẩu cũ.',
             ],
             'action' => [
                 'view' => 'Xem',
@@ -58,8 +60,9 @@ return
                 'download_template' => 'Tải mẫu xuống',
                 'save' => 'Lưu',
                 'cancel' => 'Hủy',
-                'add' => 'Thêm',
-                'book' => 'Lên lịch'
+                'book' => 'Lên lịch',
+                'close' => 'Đóng',
+                'create' => 'Tạo mới',
             ],
             'tooltip' => [
                 'view' => 'Xem chi tiết ',
@@ -94,13 +97,30 @@ return
                 'image' => 'Hình ảnh',
                 'is_featured' => 'Nổi bật',
                 'is_active' => 'Kích hoạt',
+                'duration' => 'Thời lượng',
+                'price' => 'Giá tiền',
+                'add_price' => 'Thêm mức giá',
             ],
             'currency' => 'Điểm',
+            'from' => 'Từ',
+            'to' => 'Đến',
+            'error' => [
+                'required' => 'Trường này là bắt buộc',
+                'numeric' => 'Vui lòng chỉ nhập số',
+            ],
+            'contract_file_type' => [
+                'term_of_use' => 'Hợp đồng sử dụng',
+                'policy_register' => 'Hợp đồng đăng ký',
+                'policy_privacy' => 'Hợp đồng quyền riêng tư',
+                'policy_for_ktv' => 'Chính sách hoạt động của kỹ thuật viên',
+                'policy_for_agency' => 'Chính sách hoạt động của đối tác',
+                'face_with_identity_card' => 'Hình ảnh chụp cùng CMND/CCCD',
+            ],
 
         ],
         "ktv_apply" => [
-            "nav" => "Quản lý đăng ký",
-            "label" => "KTV đăng ký",
+            "nav" => "Đơn đăng ký KTV",
+            "label" => "Đơn đăng ký KTV",
             "status" => [
                 "pending" => "Chờ duyệt",
                 "approved" => "Đã duyệt",
@@ -112,6 +132,8 @@ return
                 "license" => "Bằng cấp/Chứng chỉ",
                 "health_insurance" => "Bảo hiểm y tế",
                 "business_image" => "Hình ảnh doanh nghiệp",
+                "ktv_image_display" => "Hình ảnh hiển thị cho khách hàng",
+                "face_with_identity_card" => "Hình ảnh chụp cùng CMND/CCCD",
             ],
             "fields" => [
                 "experience" => "Kinh nghiệm",
@@ -120,6 +142,7 @@ return
                 "experience_desc" => "Mô tả kinh nghiệm",
                 "province" => "Tỉnh/Thành phố",
                 "address" => "Địa chỉ chi tiết",
+                "address_search" => "Tìm kiếm địa chỉ",
                 "files" => "Hồ sơ đính kèm",
                 "file_type" => "Loại file",
                 "file_name" => "Tên file",
@@ -127,7 +150,23 @@ return
                 "system_info" => "Thông tin hệ thống",
                 "registration_info" => "Thông tin đăng ký",
                 "personal_info" => "Thông tin cá nhân",
-                'agency' => 'Cơ sở làm việc',
+                'agency' => 'Thuộc đối tác',
+                'latitude' => 'Vĩ độ',
+                'longitude' => 'Kinh độ',
+                'schedule' => 'Lịch làm việc',
+                'is_working' => 'Sẵn sàng làm việc',
+                'is_working_helper' => 'Nút bật/tắt trạng thái online nhanh',
+                'working_schedule' => 'Cấu hình lịch tuần',
+                'day_key' => 'Thứ',
+                'monday' => 'Thứ Hai',
+                'tuesday' => 'Thứ Ba',
+                'wednesday' => 'Thứ Tư',
+                'thursday' => 'Thứ Năm',
+                'friday' => 'Thứ Sáu',
+                'saturday' => 'Thứ Bảy',
+                'sunday' => 'Chủ Nhật',
+                'start_time' => 'Giờ bắt đầu',
+                'end_time' => 'Giờ kết thúc',
             ],
             "actions" => [
                 "approve" => [
@@ -149,7 +188,24 @@ return
             ],
         ],
         "ktv" => [
-            "label" => "Kỹ thuật viên"
+            "label" => "Quản lý KTV",
+            "model_label" => "Kỹ thuật viên",
+            "action" => [
+                "view_services" => "Xem dịch vụ"
+            ],
+            "tooltip" => [
+                "view_services" => "Xem danh sách dịch vụ của KTV"
+            ],
+            "modal" => [
+                "services_title" => "Danh sách dịch vụ của :name",
+                "services_created" => "Dịch vụ đã tạo",
+                "services_booked" => "Dịch vụ đang được đặt"
+            ],
+            'messages' => [
+                'max_images_limit' => 'Tối đa :max ảnh. Bạn hiện có :current và đang thêm :new.',
+                'upload_success' => 'Tải lên ảnh thành công.',
+                'delete_success' => 'Xóa ảnh thành công.',
+            ],
         ],
         "user_role" => [
             "customer" => "Khách hàng",
@@ -158,7 +214,10 @@ return
             "admin" => "Quản trị viên",
         ],
         'category' => [
-            'label' => 'Danh mục'
+            'label' => 'Danh mục',
+            'basic_info' => 'Thông tin cơ bản',
+            'price_config' => 'Cấu hình giá',
+            'price_list' => 'Danh sách giá',
         ],
         'notification' => [
             'success' => [
@@ -180,6 +239,7 @@ return
                 'email' => 'Email',
                 'phone' => 'Số điện thoại',
                 'address' => 'Địa chỉ',
+                'address_search' => 'Tìm kiếm địa chỉ',
                 'province' => 'Tỉnh/Thành phố',
                 'files' => 'Hồ sơ',
                 'personal_info' => 'Thông tin cá nhân',
@@ -224,6 +284,11 @@ return
                 'options_avg_price' => 'Giá trung bình',
                 'created_at' => 'Ngày tạo',
                 'updated_at' => 'Ngày cập nhật',
+                'option_category_prices' => 'Các gói dịch vụ (Giá & Thời gian)',
+                'no_option_category_prices' => 'Không có gói giá nào cho danh mục này.',
+            ],
+            'error' => [
+                'option_category_prices' => 'Vui lòng chọn ít nhất 1 gói dịch vụ.',
             ],
         ],
         'booking' => [
@@ -253,12 +318,15 @@ return
                 'ongoing' => 'Đang diễn ra',
                 'completed' => 'Đã hoàn thành',
                 'canceled' => 'Đã hủy',
+                'payment_failed' => 'Thanh toán thất bại',
             ],
             'payment_type' => [
                 'qr_banking' => 'Thanh toán qua mã QR',
                 'zalo_pay' => 'Thanh toán qua Zalo Pay',
                 'momo_pay' => 'Thanh toán qua Momo Pay',
+                'withdrawal' => 'Rút tiền',
                 'by_points' => 'Thanh toán qua điểm',
+                'refund' => 'Hoàn tiền',
             ],
             'actions' => [
                 'view' => [
@@ -287,7 +355,8 @@ return
                 'target_role' => 'Vai trò áp dụng',
                 'is_active' => 'Kích hoạt',
                 'break_time_gap' => 'Khoảng cách giữa các ca',
-                'discount_rate' => 'Tỷ lệ chiết khấu',
+                'discount_rate' => 'Tỷ lệ chiết khấu dành cho KTV %',
+                'discount_rate_helper' => 'Công thức: P(ktv) = P(giaodich) - (P(giaodich) * (R(chietkhau) / 100))',
             ],
             'actions' => [
                 'save' => 'Lưu thay đổi',
@@ -301,7 +370,7 @@ return
                 'type' => 'Loại giao dịch',
                 'amount' => 'Số tiền',
                 'status' => 'Trạng thái',
-                'created_at' => 'Ngày tạo',
+                'created_at' => 'Thời điểm giao dịch',
             ],
             'type' => [
                 'DEPOSIT_QR_CODE' => 'Nạp tiền (QR)',
@@ -310,6 +379,7 @@ return
                 'WITHDRAWAL' => 'Rút tiền',
                 'PAYMENT' => 'Thanh toán',
                 'AFFILIATE' => 'Hoa hồng',
+                'PAYMENT_FOR_KTV' => 'Thanh toán cho KTV',
             ],
             'status' => [
                 'PENDING' => 'Chờ xử lý',
@@ -319,6 +389,7 @@ return
             'actions' => [
                 'approve' => 'Duyệt',
                 'cancel' => 'Hủy bỏ',
+                'transfer' => 'Chuyển tiền ',
             ],
         ],
         'customer' => [
@@ -430,6 +501,28 @@ return
                 'usage_limit' => 'Số lần áp dụng tối đa',
                 'used_count' => 'Số lần đã áp dụng',
                 'is_active' => 'Trạng thái',
+                'display_ads' => 'Hiển thị quảng cáo',
+                'banners' => [
+                    'label' => 'Banner',
+                    'vi' => 'Banner tiếng Việt',
+                    'en' => 'Banner tiếng Anh',
+                    'cn' => 'Banner tiếng Trung',
+                ],
+                'config' => [
+                    'label' => 'Cấu hình mã giảm giá',
+                    'per_day_global' => 'Giới hạn thu thập mã/ngày (Hệ thống)',
+                    'min_order_value' => 'Giá trị đơn hàng tối thiểu',
+                    'used_day' => 'Số mã đã dùng hôm nay',
+                    'ao' => 'Số mã được thu thập hôm nay',
+                    'daily_tracking_helper' => 'Hệ thống tự động reset số lượng này khi sang ngày mới.',
+                    'allowed_time_slots' => 'Khung giờ vàng áp dụng',
+                    'time_slots_helper' => 'Để trống nếu muốn áp dụng toàn thời gian trong ngày.',
+                    'add_time_slot' => 'Thêm khung giờ',
+                    'daily_tracking' => [
+                        'count' => 'Số lượng đã dùng trong ngày',
+                    ],
+                    'collected_day' => 'Số mã đã thu thập hôm nay',
+                ],
             ],
             'is_percentage' => [
                 'fixed' => 'Số tiền',
@@ -439,5 +532,66 @@ return
                 'active' => 'Kích hoạt',
                 'inactive' => 'Tắt',
             ],
-        ]
+        ],
+        'page_static' => [
+            'navigation_label' => 'Trang tĩnh',
+            'label' => 'Trang tĩnh',
+            'title' => 'Tiêu đề',
+            'slug' => 'Slug',
+            'content' => 'Nội dung',
+            'og_image' => 'Hình ảnh',
+            'meta_title' => 'Meta title',
+            'meta_description' => 'Meta description',
+            'meta_keywords' => 'Meta keywords',
+            'is_active' => 'Trạng thái',
+        ],
+        'banner' => [
+            'label' => 'Banner',
+            'navigation_label' => 'Quản lý Banner',
+            'fields' => [
+                'order' => 'Thứ tự hiển thị',
+                'is_active' => 'Trạng thái',
+                'image_url' => [
+                    'label' => 'Hình ảnh',
+                    'vi' => 'Banner tiếng Việt',
+                    'en' => 'Banner tiếng Anh',
+                    'cn' => 'Banner tiếng Trung',
+                ],
+            ],
+        ],
+        'static_contract' => [
+            'label' => 'Hợp đồng tĩnh',
+            'navigation_label' => 'Quản lý hợp đồng tĩnh',
+            'label_plural' => 'Hợp đồng tĩnh',
+            'fields' => [
+                'contract' => 'Hợp đồng',
+                'note' => [
+                    'vi' => 'Ghi chú tiếng Việt',
+                    'en' => 'Ghi chú tiếng Anh',
+                    'cn' => 'Ghi chú tiếng Trung',
+                    'label' => 'Ghi chú',
+                ],
+                'created_at' => 'Ngày tạo',
+                'title' => 'Tiêu đề',
+                'slug' => 'Đường dẫn',
+                'path' => [
+                    'vi' => 'File tiếng Việt',
+                    'en' => 'File tiếng Anh',
+                    'cn' => 'File tiếng Trung',
+                ],
+                'type' => 'Loại',
+            ],
+            'errors' => [
+                'title_unique' => 'Tiêu đề đã tồn tại',
+                'title_max' => 'Tiêu đề tối đa 255 ký tự',
+                'note_max' => 'Ghi chú tối đa 255 ký tự',
+                'slug_unique' => 'Đường dẫn đã tồn tại',
+                'slug_max' => 'Đường dẫn tối đa 255 ký tự',
+                'path_required' => 'Vui lòng chọn tệp tin',
+                'path_max' => 'Tệp tin tối đa 10MB',
+                'type_required' => 'Vui lòng chọn loại',
+                'type_unique' => 'Loại đã tồn tại',
+                'path_pdf_only' => 'Chỉ chấp nhận định dạng PDF.',
+            ],
+        ],
     ];

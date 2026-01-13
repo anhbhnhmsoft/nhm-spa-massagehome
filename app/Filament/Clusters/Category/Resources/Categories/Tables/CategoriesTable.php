@@ -30,6 +30,7 @@ class CategoriesTable
                     ->label(__('admin.common.table.name')),
                 ImageColumn::make('image_url')
                     ->label(__('admin.common.table.image'))
+                    ->disk('public')
                     ->default('images/product_default.jpg'),
                 TextColumn::make('description')
                     ->limit(100)
@@ -123,6 +124,7 @@ class CategoriesTable
                         ->modalDescription(__('admin.common.modal.force_delete_confirm'))
                         ->modalSubmitActionLabel(__('admin.common.action.confirm_delete')),
                 ]),
-            ]);
+            ])
+            ->poll('5s');
     }
 }

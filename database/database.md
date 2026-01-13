@@ -48,7 +48,6 @@
     - role (smallint) -- vai trò người dùng (trong enum UserRole)
     - language (varchar, nullable) -- ngôn ngữ (trong enum Language)
     - is_active (boolean) -- trạng thái bị khóa
-    - referral_code (varchar, unique, nullable) -- mã giới thiệu
     - referred_by_user_id (bigint, nullable) -- id người giới thiệu
     - last_login_at (timestamp, nullable) -- thời gian đăng nhập cuối cùng
     - softDeletes
@@ -151,6 +150,20 @@
     - softDeletes
     - timestamps
 
+# user_ktv_schedules
+    #note
+    - Bảng user_ktv_schedules lưu trữ thông tin lịch làm việc của KTV.
+
+    # relations
+    - Quan hệ 1-1 với bảng users.
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - ktv_id (bigint, foreign key to users.id) -- id KTV
+    - working_schedule (jsonb) -- lịch làm việc (dạng json mô tả thông tin làm việc từ thứ 2 đến CN)
+    - is_working (boolean, default false) -- nút bật/tắt làm việc hằng ngày
+    - timestamps
+
 # wallets
     # note
     - Bảng wallets lưu trữ thông tin ví tiền của người dùng.
@@ -192,20 +205,25 @@
     - softDeletes
     - timestamps
 
-# affiliate_registrations
+# user_withdraw_info
     # note
-    - Bảng affiliate_registrations lưu trữ đơn đăng ký tham gia chương trình Affiliate của người dùng.
+    - Lưu cấu hình thông tin rút tiền của user (1 user nhiều cấu hình, ví dụ bank/momo/zalo).
 
     # relations
+    - Quan hệ n-1 với bảng users.
 
     # cấu trúc
-    - id (bigint, primary key, auto-increment)
-    - user_id (bigint, foreign key to users.id) -- id người dùng
-    - status (smallint) -- trạng thái đăng ký (trong enum AffiliateRegistrationStatus)
-    - note (text, nullable) -- ghi chú
-    - processed_at (timestamp, nullable) -- thời gian xử lý duyệt đơn hoặc từ chối
+    - id (bigint, pk)
+    - user_id (bigint, fk -> users.id)
+    - type (smallint, enum UserWithdrawInfo: 1=bank, 2=momo, 3=zalo)
+    - config (json, nullable) -- thông tin chi tiết theo type (bank_code/account_number/account_name hoặc phone/name)
     - softDeletes
     - timestamps
+
+    # lưu ý
+    - Model sử dụng table `user_withdraw_info` (không phải số nhiều).
+    - API withdraw/info trả về record theo user; nếu chưa có -> trả lỗi `error.withdraw_info_not_found`.
+    - API withdraw/request tạo giao dịch trong `wallet_transactions` type WITHDRAWAL, status PENDING để admin duyệt; chưa trừ số dư tại thời điểm tạo.
 
 # affiliate_configs
     # note
@@ -225,21 +243,20 @@
     - softDeletes
     - timestamps
 
-# affiliate_earnings
+# affiliate_links
     # note
-    - Bảng affiliate_earnings lưu trữ thông tin hoa hồng kiếm được từ chương trình Affiliate.
+    - Bảng affiliate_links lưu trữ thông tin liên kết Affiliate.
 
     # relations
 
     # cấu trúc
     - id (bigint, primary key, auto-increment)
-    - affiliate_user_id (bigint, foreign key to users.id) -- id người dùng affiliate
-    - referred_user_id (bigint, foreign key to users.id) -- id người dùng đã phát sinh giao dịch
-    - transaction_id (bigint, foreign key to wallet_transactions.id) -- id giao dịch phát sinh hoa hồng
-    - commission_amount (decimal(15,2)) -- số tiền hoa hồng kiếm được
-    - commission_rate (decimal(5,2)) -- tỷ lệ hoa hồng (%) lúc được áp dụng
-    - status (smallint) -- trạng thái hoa hồng (trong enum AffiliateEarningStatus)
-    - processed_at (timestamp, nullable) -- thời gian xử lý hoa hồng (nhận hoặc từ chối)
+    - client_ip (varchar) -- IP của người dùng
+    - user_agent (varchar) -- User agent của người dùng
+    - referrer_id (bigint, foreign key to users.id) -- id người giới thiệu
+    - referred_user_id (bigint, foreign key to users.id) -- id người được giới thiệu (User mới đăng ký/đăng nhập)
+    - is_matched (boolean) -- trạng thái khớp
+    - expired_at (timestamp, nullable) -- thời gian hết hạn
     - softDeletes
     - timestamps
 
@@ -256,6 +273,20 @@
     - usage_count (bigint, default 0) -- số lần sử dụng
     - is_active (boolean) -- trạng thái kích hoạt
     - softDeletes
+    - timestamps
+
+# category_prices
+    # note
+    - Bảng category_prices lưu trữ thông tin giá của từng loại dịch vụ.
+
+    # relations
+    - Quan hệ 1-n với bảng categories.
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - category_id (bigint, foreign key to categories.id) -- id danh mục dịch vụ
+    - price (decimal(15,2)) -- giá dịch vụ
+    - duration (smallint) -- thời gian dịch vụ (phút)
     - timestamps
 
 # services
@@ -282,11 +313,11 @@
 
     #relations
     - Quan hệ 1-n với bảng services.
+    - Quan hệ 1-n với bảng category_prices.
     # cấu trúc
     - id (bigint, primary key, auto-increment)
     - service_id (bigint, foreign key to services.id) -- id dịch vụ
-    - duration (smallint) -- thời gian thực hiện dịch vụ (dạng enum ServiceDuration - minutes)
-    - price (decimal(15,2)) -- giá tùy chọn
+    - category_price_id (bigint, nullable, foreign key to category_prices.id) -- id tùy chọn danh mục
     - softDeletes
     - timestamps
 
@@ -301,7 +332,7 @@
     # cấu trúc
     - id (bigint, primary key, auto-increment)
     - user_id (bigint, foreign key to users.id) -- id người dùng đặt lịch
-    - service_option_id (bigint, foreign key to service_options.id) -- id tùy chọn dịch vụ
+    - ktv_user_id (bigint, foreign key to users.id) -- id người làm dịch vụ (KTV)
     - service_id (bigint, foreign key to services.id) -- id dịch vụ
     - coupon_id (bigint, foreign key to coupons.id, nullable) -- id mã giảm giá
     - duration (smallint) -- thời gian thực hiện dịch vụ (dạng enum ServiceDuration - minutes)
@@ -313,9 +344,12 @@
     - price_before_discount (decimal(15,2)) -- giá dịch vụ trước khi áp dụng mã giảm giá
     - note (text, nullable) -- ghi chú
     - address (varchar, nullable) -- địa chỉ hẹn
+    - note_address (varchar, nullable) -- ghi chú thêm (ví dụ: yêu cầu đặc biệt)
     - latitude (decimal(10,8), nullable) -- vĩ độ
     - longitude (decimal(11,8), nullable) -- kinh độ
     - payment_type (smallint, nullable) -- hình thức thanh toán (trong enum PaymentType), null là khi dịch vụ chưa được xác nhận
+    - reason_cancel (varchar, nullable) -- lý do hủy đặt lịch
+    - overtime_warning_sent (boolean, default false) -- đã gửi thông báo về thời gian vượt quá không
     - softDeletes
     - timestamps
 
@@ -341,9 +375,12 @@
     - usage_limit (bigint, nullable) -- số lần sử dụng tối đa
     - used_count (bigint, default 0) -- số lần đã sử dụng
     - is_active (boolean) -- trạng thái kích hoạt
+    - banners (json, nullable) -- danh sách banner đa ngôn ngữ
+    - display_ads (boolean, default true) -- có hiển thị quảng cáo ở homepage không
     - softDeletes
     - timestamps
     - unique (code, created_by) -- mã giảm giá phải là duy nhất cho từng người dùng
+    - config (jsonb, nullable) -- cấu hình điều kiện sử dụng
 # coupon_used
     #note
     - Bảng coupon_used lưu trữ thông tin mã giảm giá đã được sử dụng.
@@ -364,6 +401,23 @@
     - timestamps
     - unique (booking_id, coupon_id) -- mã giảm giá phải là duy nhất cho từng đơn đặt lịch
 
+# coupon_users
+    #note
+    - Bảng coupon_users lưu trữ thông tin người dùng đã sử dụng mã giảm giá.
+
+    # relations
+    - Quan hệ 1-n với bảng coupons.
+    - Quan hệ 1-n với bảng users.
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - coupon_id (bigint, foreign key to coupons.id) -- id mã giảm giá
+    - user_id (bigint, foreign key to users.id) -- id người dùng
+    - is_used (boolean) -- đã sử dụng hay chưa
+    - softDeletes
+    - timestamps
+    - unique (user_id, coupon_id) -- mã giảm giá phải là duy nhất cho từng người dùng
+
 # reviews 
     # note
     - Bảng reviews lưu trữ thông tin đánh giá dịch vụ.
@@ -376,6 +430,7 @@
     - id (bigint, primary key, auto-increment)
     - user_id (bigint, foreign key to users.id) -- id người được đánh giá
     - review_by (bigint, foreign key to users.id) -- id người dùng đánh giá
+    - service_booking_id (bigint, foreign key to service_bookings.id) id của đơn dịch vụ đã đặt
     - rating (smallint) -- xếp hạng (dạng số từ 1-5)
     - comment (text, nullable) -- bình luận
     - review_at (timestamp) -- thời gian đánh giá
@@ -396,5 +451,98 @@
     - config_type (smallint) -- kiểu cấu hình (trong enum ConfigType)
     - config_value (text) -- giá trị cấu hình
     - description (text, nullable) -- mô tả cấu hình
+    - softDeletes
+    - timestamps
+
+# notifications
+    # note
+    - Bảng notifications lưu trữ thông tin các thông báo gửi đến người dùng.
+
+    # relations
+    - Quan hệ 1-n với bảng users.
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - user_id (bigint, foreign key to users.id) -- ID người dùng nhận thông báo
+    - title (varchar) -- Tiêu đề thông báo
+    - description (text) -- Nội dung thông báo
+    - data (text, nullable) -- Dữ liệu bổ sung (json format)
+    - type (smallint) -- Loại thông báo (trong enum NotificationType)
+    - status (smallint, default 0) -- Trạng thái thông báo (trong enum NotificationStatus)
+    - softDeletes
+    - timestamps
+
+# banners
+    # note
+    - Bảng banners lưu trữ thông tin các banner hiển thị trên home page.
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - image_url (json) -- URL hình ảnh banner (lưu trữ dưới dạng JSON đa ngôn ngữ)
+    - order (smallint, default 0) -- Sắp xếp banner
+    - is_active (boolean, default true) -- Trạng thái kích hoạt
+
+# chat_rooms
+    # note
+    - Bảng chat_rooms lưu trữ thông tin phòng chat giữa Khách hàng và KTV.
+
+    # relations
+    - Quan hệ n-1 với bảng users (customer_id).
+    - Quan hệ n-1 với bảng users (ktv_id).
+    - Quan hệ 1-n với bảng messages.
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - customer_id (bigint, foreign key to users.id) -- ID khách hàng
+    - ktv_id (bigint, foreign key to users.id) -- ID KTV
+    - softDeletes
+    - timestamps
+
+# messages
+    # note
+    - Bảng messages lưu trữ nội dung tin nhắn trong phòng chat.
+
+    # relations
+    - Quan hệ n-1 với bảng chat_rooms.
+    - Quan hệ n-1 với bảng users (sender_by).
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - room_id (bigint, foreign key to chat_rooms.id) -- ID phòng chat
+    - sender_by (bigint, foreign key to users.id) -- ID người gửi tin nhắn
+    - content (text) -- Nội dung tin nhắn
+    - seen_at (timestamp, nullable) -- Thời gian đã đọc tin nhắn
+    - timestamps
+
+# pages
+    # note
+    - Bảng pages lưu trữ nội dung trang tĩnh ở web.
+
+    # relations
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - title (json) -- Tiêu đề trang tĩnh (lưu trữ dưới dạng JSON đa ngôn ngữ)
+    - slug (string, unique) -- Đường dẫn trang tĩnh
+    - content (json, nullable) -- Nội dung trang tĩnh (lưu trữ dưới dạng JSON đa ngôn ngữ)
+    - meta_title (json, nullable) -- Tiêu đề meta (lưu trữ dưới dạng JSON đa ngôn ngữ)
+    - meta_description (json, nullable) -- Mô tả meta (lưu trữ dưới dạng JSON đa ngôn ngữ)
+    - meta_keywords (json, nullable) -- Từ khóa meta (lưu trữ dưới dạng JSON đa ngôn ngữ)
+    - og_image (string, nullable) -- Hình ảnh meta (lưu trữ dưới dạng JSON đa ngôn ngữ)
+    - is_active (boolean, default true) -- Trạng thái kích hoạt
+    - softDeletes
+    - timestamps
+# static contract 
+    # note
+    - Bảng static_contracts lưu trữ thông tin hợp đồng tĩnh.
+
+    # relations
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - title (json) -- Tiêu đề hợp đồng (lưu trữ dưới dạng JSON đa ngôn ngữ)
+    - path (string) -- Đường dẫn file hợp đồng
+    - note (json, nullable) -- Ghi chú (lưu trữ dưới dạng JSON đa ngôn ngữ)
+    - slug (string, unique) -- Đường dẫn hợp đồng
     - softDeletes
     - timestamps

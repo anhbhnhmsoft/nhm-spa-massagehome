@@ -23,6 +23,14 @@ class CategoryRepository extends BaseRepository
 
     public function filterQuery(Builder $query, array $filters): Builder
     {
+        if (isset($filters['keyword']) && !empty(trim($filters['keyword']))) {
+            $locale = app()->getLocale();
+            $keyword = trim($filters['keyword']);
+            $query->whereRaw("unaccent(name->>'{$locale}') ILIKE unaccent(?)", ["%{$keyword}%"]);
+        }
+        if (isset($filters['is_featured'])) {
+            $query->where('is_featured', true);
+        }
         return $query;
     }
 

@@ -35,9 +35,6 @@ class ServicesTable
                 ImageColumn::make('image_url')
                     ->label(__('admin.service.fields.image'))
                     ->disk('public'),
-                TextColumn::make('options_avg_price')
-                    ->label(__('admin.service.fields.options_avg_price'))
-                    ->formatStateUsing(fn($state) => number_format($state, 0, ',', '.')),
                 ToggleColumn::make('is_active')
                     ->label(__('admin.service.fields.status')),
                 TextColumn::make('created_at')
@@ -107,6 +104,7 @@ class ServicesTable
                         ->modalDescription(__('admin.common.modal.force_delete_confirm'))
                         ->modalSubmitActionLabel(__('admin.common.action.confirm_delete')),
                 ]),
-            ]);
+            ])
+            ->poll('3s');
     }
 }

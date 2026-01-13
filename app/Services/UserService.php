@@ -10,17 +10,33 @@ use App\Core\LogHelper;
 use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
+use App\Enums\BookingStatus;
+use App\Enums\ConfigName;
+use App\Enums\ContractFileType;
+use App\Enums\DirectFile;
+use App\Enums\KTVConfigSchedules;
+use App\Enums\NotificationType;
 use App\Enums\ReviewApplicationStatus;
+use App\Enums\UserFileType;
 use App\Enums\UserRole;
+use App\Enums\WalletTransactionStatus;
+use App\Enums\WalletTransactionType;
+use App\Jobs\SendNotificationJob;
 use App\Repositories\BookingRepository;
+use App\Repositories\CouponUserRepository;
+use App\Repositories\ReviewRepository;
+use App\Repositories\StaticContractRepository;
 use App\Repositories\UserAddressRepository;
 use App\Repositories\UserFileRepository;
+use App\Repositories\UserKtvScheduleRepository;
 use App\Repositories\UserProfileRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\UserReviewApplicationRepository;
 use App\Repositories\WalletRepository;
-use Carbon\Carbon;
+use App\Repositories\WalletTransactionRepository;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -31,13 +47,152 @@ class UserService extends BaseService
         protected UserRepository                  $userRepository,
         protected UserFileRepository              $userFileRepository,
         protected UserReviewApplicationRepository $userReviewApplicationRepository,
-        protected UserProfileRepository $userProfileRepository,
-        protected WalletRepository $walletRepository,
-        protected UserAddressRepository $userAddressRepository,
-        protected BookingRepository $bookingRepository
+        protected UserProfileRepository           $userProfileRepository,
+        protected WalletRepository                $walletRepository,
+        protected UserAddressRepository           $userAddressRepository,
+        protected BookingRepository               $bookingRepository,
+        protected CouponUserRepository            $couponUserRepository,
+        protected ConfigService                   $configService,
+        protected WalletTransactionRepository     $walletTransactionRepository,
+        protected ReviewRepository                $reviewRepository,
+        protected UserKtvScheduleRepository       $userKtvScheduleRepository,
+        protected StaticContractRepository        $staticContractRepository
     ) {
         parent::__construct();
     }
+
+
+    /**
+     * Lấy thông tin dashboard của KTV
+     * @return ServiceReturn
+     */
+    public function dashboardKtv()
+    {
+        try {
+            $user = Auth::user();
+
+            // 1. Chuẩn bị mốc thời gian (Dùng Carbon để chính xác và tận dụng Index DB tốt hơn)
+            $todayStart = Carbon::today();
+            $todayEnd = Carbon::today()->endOfDay();
+            $yesterdayStart = Carbon::yesterday()->startOfDay();
+            $yesterdayEnd = Carbon::yesterday()->endOfDay();
+
+            // 2. Lấy Wallet (Check exists nhanh hơn nếu chỉ cần check, nhưng ở đây cần ID nên giữ nguyên)
+            $wallet = $this->walletRepository->query()
+                ->where('user_id', $user->id)
+                ->select('id')
+                ->first();
+
+            if (!$wallet) {
+                throw new ServiceException(__('error.wallet_not_found'));
+            }
+
+            // 3. TỐI ƯU 1: Gộp doanh thu Hôm nay & Hôm qua vào 1 Query
+            // Thay vì 2 query, ta dùng SUM kết hợp CASE WHEN (hoặc IF trong MySQL)
+            $revenueStats = $this->walletTransactionRepository->query()
+                ->where('wallet_id', $wallet->id)
+                ->where('type', WalletTransactionType::PAYMENT_FOR_KTV->value)
+                ->where('status', WalletTransactionStatus::COMPLETED->value)
+                ->where('created_at', '>=', $yesterdayStart) // Chỉ quét dữ liệu từ hôm qua đến nay (Tận dụng Index)
+                ->toBase() // Bỏ qua việc hydrate Model để tăng tốc độ (trả về object thuần)
+                ->selectRaw("SUM(CASE WHEN created_at >= ? THEN point_amount ELSE 0 END) as today", [$todayStart])
+                ->selectRaw("SUM(CASE WHEN created_at < ? THEN point_amount ELSE 0 END) as yesterday", [$todayStart])
+                ->first();
+
+            // 4. TỐI ƯU 2: Gộp thống kê Booking (Completed & Pending) vào 1 Query
+            $bookingStats = $this->bookingRepository->queryBooking()
+                ->where('ktv_user_id', $user->id)
+                ->whereBetween('booking_time', [$todayStart, $todayEnd]) // Tận dụng Index tốt hơn whereDate
+                ->toBase()
+                ->selectRaw("COUNT(CASE WHEN status = ? THEN 1 END) as completed", [BookingStatus::COMPLETED->value])
+                ->selectRaw("COUNT(CASE WHEN status IN (?, ?) THEN 1 END) as pending", [BookingStatus::PENDING->value, BookingStatus::CONFIRMED->value])
+                ->first();
+
+            // 5. Lấy booking sắp tới (hoặc mới nhất)
+            // Lưu ý: Nếu là "sắp tới" thì nên dùng 'asc' và điều kiện >= now().
+            // Nhưng tôi giữ nguyên logic 'desc' của bạn.
+            $booking = $this->bookingRepository->queryBooking()
+                ->where('ktv_user_id', $user->id)
+                ->whereIn('status', [BookingStatus::PENDING->value, BookingStatus::CONFIRMED->value])
+                ->orderBy('booking_time', 'desc')
+                ->first();
+
+            // 6. Review mới nhất hôm nay
+            $reviewToday = $this->reviewRepository->queryReview()
+                ->where('user_id', $user->id)
+                ->whereBetween('review_at', [$todayStart, $todayEnd])
+                ->orderBy('review_at', 'desc')
+                ->get();
+
+            return ServiceReturn::success(
+                data: [
+                    'booking' => $booking,
+                    'total_revenue_today' => (float)($revenueStats->today ?? 0),
+                    'total_revenue_yesterday' => (float)($revenueStats->yesterday ?? 0),
+                    'total_booking_completed_today' => (int)($bookingStats->completed ?? 0),
+                    'total_booking_pending_today' => (int)($bookingStats->pending ?? 0),
+                    'review_today' => $reviewToday,
+                ]
+            );
+        } catch (ServiceException $e) {
+            return ServiceReturn::error($e->getMessage());
+        } catch (\Exception $e) {
+            LogHelper::error("Lỗi UserService@dashboardKtv", $e);
+            return ServiceReturn::error(__('common_error.server_error'));
+        }
+    }
+
+    /**
+     * Lấy thông tin dashboard profile của user hiện tại
+     * @return ServiceReturn
+     */
+    public function dashboardProfile()
+    {
+        try {
+            $user = Auth::user();
+            // Số dư wallet
+            $wallet = $this->walletRepository->query()
+                ->where('user_id', $user->id)
+                ->first();
+            $walletBalance = $wallet?->balance ?? "0";
+
+
+            // Lấy số lượng đặt lịch theo từng trạng thái
+            $bookingRawCounts = $this->bookingRepository->query()
+                ->where('user_id', $user->id)
+                ->select('status', DB::raw('count(*) as total'))
+                ->groupBy('status')
+                ->pluck('total', 'status');
+            $bookingCount = collect(BookingStatus::cases())
+                ->mapWithKeys(function ($case) use ($bookingRawCounts) {
+                    return [$case->value => $bookingRawCounts->get($case->value, 0)];
+                })
+                ->toArray();
+
+            // Số lượng mã giảm giá
+            $couponUserCount = $this->couponUserRepository->query()
+                ->where('user_id', $user->id)
+                ->where('is_used', false)
+                ->count();
+
+            return ServiceReturn::success(
+                data: [
+                    'booking_count' => $bookingCount,
+                    'wallet_balance' => $walletBalance,
+                    'coupon_user_count' => $couponUserCount,
+                ]
+            );
+        } catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi UserService@dashboardCustomer",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: __('common_error.server_error')
+            );
+        }
+    }
+
 
     /**
      * Lấy danh sách KTV
@@ -88,14 +243,44 @@ class UserService extends BaseService
     public function getKtvById(int $id): ServiceReturn
     {
         try {
-            $ktv = $this->userRepository->queryKTV()->find($id);
+            // Lấy config khoảng thời gian nghỉ giữa 2 buổi
+            $breakTimeGapReturn = $this->configService->getConfig(ConfigName::BREAK_TIME_GAP);
+            if ($breakTimeGapReturn->isError()) {
+                return ServiceReturn::error(
+                    message: __("booking.break_time_gap.not_found")
+                );
+            }
+            $breakTimeGap = $breakTimeGapReturn->getData();
+
+            $ktv = $this->userRepository->queryKTV()
+                ->with([
+                    'files' => function ($query) {
+                        $query->whereIn('type', [UserFileType::KTV_IMAGE_DISPLAY->value]);
+                    },
+                    // Chỉ lấy 1 review
+                    'reviewsReceived' => function ($query) {
+                        $query->where('hidden', false)
+                            ->latest('created_at')
+                            ->limit(1);
+                    },
+                    // Lấy lịch hẹn cuối cùng mà KTV này thực hiện hoặc đang diễn ra
+                    'ktvBookings' => function ($query) {
+                        $query->whereIn('status', [BookingStatus::CONFIRMED->value, BookingStatus::ONGOING->value])
+                            ->latest('booking_time')
+                            ->limit(1);
+                    },
+                ])
+                ->find($id);
             if (!$ktv) {
                 throw new ServiceException(
                     message: __("common_error.data_not_found")
                 );
             }
             return ServiceReturn::success(
-                data: $ktv
+                data: [
+                    'ktv' => $ktv,
+                    'break_time_gap' => $breakTimeGap['config_value'],
+                ]
             );
         } catch (\Exception $exception) {
             LogHelper::error(
@@ -103,93 +288,7 @@ class UserService extends BaseService
                 ex: $exception
             );
             return ServiceReturn::error(
-                message: "Không tìm thấy KTV"
-            );
-        }
-    }
-
-    public function makeNewApplyKTV(array $data)
-    {
-        DB::beginTransaction();
-        try {
-            $userCheck = $this->userRepository->query()->where('phone', $data['phone'])->first();
-            if ($userCheck) {
-                throw new ServiceException(
-                    message: __("common_error.data_exists")
-                );
-            }
-
-            $userInitial = $this->userRepository->create([
-                'name' => $data['name'],
-                'phone' => $data['phone'],
-                'password' => $data['password'],
-                'role' => UserRole::KTV->value,
-                'phone_verified_at' => now(),
-                'is_active' => false,
-                'referral_code' => Helper::generateReferCodeUser(UserRole::KTV)
-            ]);
-
-            $userReviewApplication = $this->userReviewApplicationRepository->create([
-                'user_id' => $userInitial->id,
-                'agency_id' => optional($data['reviewApplication'])['agency_id'] ?? null,
-                'status' => ReviewApplicationStatus::PENDING->value,
-                'province_code' => optional($data['reviewApplication'])['province']['name'] ?? null,
-                'address' => optional($data['reviewApplication'])['address'] ?? null,
-                'experience' => optional($data['reviewApplication'])['experience'] ?? null,
-                'application_date' => now(),
-                'bio' => optional($data['reviewApplication'])['bio'] ?? null
-            ]);
-
-            $userProfile = $this->userProfileRepository->create([
-                'avatar_url' => optional($data['profile'])['avatar_url'] ?? null,
-                'user_id' => $userInitial->id,
-                'gender' => optional($data['profile'])['gender'] ?? null,
-                'date_of_birth' => optional($data['profile'])['date_of_birth'] ?? null,
-                'bio' => optional($data['profile'])['bio'] ?? null
-            ]);
-
-            $wallet = $this->walletRepository->create([
-                'user_id' => $userInitial->id,
-                'balance' => 0,
-                'is_active' => false
-            ]);
-
-            foreach ($data['files'] as $file) {
-                $this->userFileRepository->create([
-                    'user_id' => $userInitial->id,
-                    'type' => optional($file)['type'] ?? null,
-                    'file_path' => optional($file)['file_path'] ?? null
-                ]);
-            }
-            DB::commit();
-            return ServiceReturn::success(
-                data: $userInitial->load('reviewApplication', 'profile', 'files')
-            );
-        } catch (ServiceException $exception) {
-            DB::rollBack();
-            LogHelper::error(
-                message: "Lỗi UserService@makeNewApplyKTV",
-                ex: $exception
-            );
-            foreach ($data['files'] as $file) {
-                Storage::delete($file['file_path']);
-            }
-            Storage::delete($data['profile']['avatar_url']);
-            return ServiceReturn::error(
-                message: $exception->getMessage()
-            );
-        } catch (\Exception $exception) {
-            DB::rollBack();
-            LogHelper::error(
-                message: "Lỗi UserService@makeNewApplyKTV",
-                ex: $exception
-            );
-            foreach ($data['files'] as $file) {
-                Storage::delete($file['file_path']);
-            }
-            Storage::delete($data['profile']['avatar_url']);
-            return ServiceReturn::error(
-                message: $exception->getMessage()
+                message: __("common_error.server_error")
             );
         }
     }
@@ -240,7 +339,13 @@ class UserService extends BaseService
         }
     }
 
-    public function activeKTVapply(int $id)
+    /**
+     * Duyệt hồ sơ KTV
+     * @param int $id
+     * @return ServiceReturn
+     * @throws \Throwable
+     */
+    public function activeStaffApply(int $id): ServiceReturn
     {
         DB::beginTransaction();
         try {
@@ -251,14 +356,31 @@ class UserService extends BaseService
                 );
             }
             $user->is_active = true;
-            $user->save();
-
-            if ($user->reviewApplication) {
-                $user->reviewApplication->status = ReviewApplicationStatus::APPROVED;
-                $user->reviewApplication->effective_date = now();
-                $user->reviewApplication->save();
+            $apply = $user->reviewApplication;
+            if ($apply) {
+                $apply->status = ReviewApplicationStatus::APPROVED;
+                $apply->effective_date = now();
+                $user->role = $apply->role;
+                $apply->save();
+                $user->save();
+            }
+            // Tạo lịch làm việc mặc định cho KTV
+             if ($user->role === UserRole::KTV) {
+                $user->schedule()->create([
+                    'is_working' => true,
+                    'working_schedule' => KTVConfigSchedules::getDefaultSchema(),
+                ]);
             }
 
+
+            SendNotificationJob::dispatch(
+                userId: $user->id,
+                type: NotificationType::STAFF_APPLY_SUCCESS,
+                data: [
+                    'user_id' => $user->id,
+                    'role' => $user->role,
+                ]
+            );
             if ($user->wallet) {
                 $user->wallet->is_active = true;
                 $user->wallet->save();
@@ -271,7 +393,7 @@ class UserService extends BaseService
             }
             DB::commit();
             return ServiceReturn::success(
-                message: __("common_success.data_updated")
+                message: __("common.success.data_updated")
             );
         } catch (\Exception $exception) {
             DB::rollBack();
@@ -285,67 +407,40 @@ class UserService extends BaseService
         }
     }
 
-    public function makeNewApplyAgency(array $data)
+    public function rejectStaffApply(int $id, string $note)
     {
         DB::beginTransaction();
         try {
-            $userCheck = $this->userRepository->query()->where('phone', $data['phone'])->first();
-            if ($userCheck) {
+            $user = $this->userRepository->query()->where('id', $id)->first();
+            if (!$user) {
                 throw new ServiceException(
-                    message: __("common_error.data_exists")
+                    message: __("common_error.data_not_found")
                 );
             }
-
-            $userInitial = $this->userRepository->create([
-                'name' => $data['name'],
-                'phone' => $data['phone'],
-                'password' => $data['password'],
-                'role' => UserRole::AGENCY->value,
-                'phone_verified_at' => now(),
-                'is_active' => false,
-                'referral_code' => Helper::generateReferCodeUser(UserRole::AGENCY)
-            ]);
-
-            $userReviewApplication = $this->userReviewApplicationRepository->create([
-                'user_id' => $userInitial->id,
-                'status' => ReviewApplicationStatus::PENDING->value,
-                'province_code' => optional($data['reviewApplication'])['province']['name'] ?? null,
-                'address' => optional($data['reviewApplication'])['address'] ?? null,
-                'application_date' => now(),
-                'bio' => optional($data['reviewApplication'])['bio'] ?? null
-            ]);
-
-            // $userProfile = $this->userProfileRepository->create([
-            //     'avatar_url' => optional($data['profile'])['avatar_url'] ?? null,
-            //     'user_id' => $userInitial->id,
-            //     'gender' => optional($data['profile'])['gender'] ?? null,
-            //     'date_of_birth' => optional($data['profile'])['date_of_birth'] ?? null,
-            //     'bio' => optional($data['profile'])['bio'] ?? null
-            // ]);
-
-            // $wallet = $this->walletRepository->create([
-            //     'user_id' => $userInitial->id,
-            //     'balance' => 0,
-            //     'is_active' => false
-            // ]);
-
-            foreach ($data['files'] as $file) {
-                $this->userFileRepository->create([
-                    'user_id' => $userInitial->id,
-                    'type' => optional($file)['type'] ?? null,
-                    'file_path' => optional($file)['file_path'] ?? null
-                ]);
+            $apply = $user->reviewApplication;
+            if ($apply) {
+                $apply->status = ReviewApplicationStatus::REJECTED;
+                $apply->note = $note;
+                $apply->effective_date = now();
+                $apply->save();
             }
 
+            SendNotificationJob::dispatch(
+                userId: $user->id,
+                type: NotificationType::STAFF_APPLY_REJECTED,
+                data: [
+                    'user_id' => $user->id,
+                    'role' => $user->role,
+                ]
+            );
             DB::commit();
             return ServiceReturn::success(
-                data: $userInitial->load('reviewApplication', 'files'),
-                message: __("common_success.data_created")
+                message: __("common.success.data_updated")
             );
         } catch (\Exception $exception) {
             DB::rollBack();
             LogHelper::error(
-                message: "Lỗi UserService@makeNewApplyAgency",
+                message: "Lỗi UserService@rejectKTVapply",
                 ex: $exception
             );
             return ServiceReturn::error(
@@ -354,72 +449,121 @@ class UserService extends BaseService
         }
     }
 
-    public function updateUser(array $data)
+
+    /**
+     * Đăng ký làm đối tác cho user hiện tại
+     * @param array $data
+     * @return ServiceReturn
+     */
+    public function applyPartnerForCurrentUser(array $data): ServiceReturn
     {
-        DB::beginTransaction();
+        $tempFiles = [];
         try {
-            $user = $this->userRepository->query()->where('id', $data['id'])->first();
+            DB::beginTransaction();
+            $user = Auth::user();
             if (!$user) {
                 throw new ServiceException(
-                    message: __("common_error.data_not_found")
-                );
-            }
-            $dataUpdate = [];
-            if (isset($data['name']) && $data['name']) {
-                $dataUpdate['name'] = $data['name'];
-            }
-            if (isset($data['phone']) && $data['phone']) {
-                $dataUpdate['phone'] = $data['phone'];
-            }
-            if (isset($data['password']) && $data['password']) {
-                $dataUpdate['password'] = $data['password'];
-            }
-            if (isset($data['role']) && $data['role']) {
-                $dataUpdate['role'] = $data['role'];
-            }
-            if (isset($data['is_active']) && $data['is_active']) {
-                $dataUpdate['is_active'] = $data['is_active'];
-            }
-            if (isset($data['referral_code']) && $data['referral_code']) {
-                $dataUpdate['referral_code'] = $data['referral_code'];
-            }
-
-            $user->update($dataUpdate);
-
-            if (isset($data['profile'])) {
-                $user->profile()->updateOrCreate(
-                    ['user_id' => $user->id],
-                    $data['profile']
+                    message: __("common_error.unauthenticated")
                 );
             }
 
-            if (isset($data['files'])) {
-                foreach ($data['files'] as $file) {
-                    $this->userFileRepository->create([
-                        'user_id' => $user->id,
-                        'type' => optional($file)['type'] ?? null,
-                        'file_path' => optional($file)['file_path'] ?? null
-                    ]);
+            // Kiểm tra xem user đã có review application chưa
+            $existingReview = $this->userReviewApplicationRepository
+                ->query()
+                ->where('user_id', $user->id)
+                ->first();
+            if ($existingReview) {
+                throw new ServiceException(
+                    message: __("error.user_have_review_application")
+                );
+            }
+
+            // Kiểm tra agency_id có tồn tại và có phải là đối tác không
+            if (!empty($data['agency_id'])) {
+                $agency = $this->userRepository
+                    ->query()
+                    ->where('id', $data['agency_id'])
+                    ->where('role', UserRole::AGENCY->value)
+                    ->where('is_active', true)
+                    ->first();
+                if (!$agency) {
+                    throw new ServiceException(
+                        message: __("error.agency_not_found")
+                    );
                 }
             }
 
-            $user->reviewApplication()->updateOrCreate(
-                ['user_id' => $user->id],
-                $data['reviewApplication']
-            );
+            $reviewData = [
+                'user_id' => $user->id,
+                'agency_id' => $data['agency_id'] ?? null,
+                'status' => ReviewApplicationStatus::PENDING->value,
+                'province_code' => $data['province_code'],
+                'address' => $data['address'],
+                'experience' => $data['experience'] ?? 0,
+                'latitude' => $data['latitude'],
+                'longitude' => $data['longitude'],
+                'application_date' => now(),
+                'role' => $data['role'],
+            ];
+            $reviewData['bio'] = Helper::multilingualPayload($data, 'bio');
+            // Lưu review application
+            $this->userReviewApplicationRepository->create($reviewData);
+
+            // Lưu file uploads
+            foreach ($data['file_uploads'] as $fileUpload) {
+                $typeUpload = $fileUpload['type_upload'];
+                $file = $fileUpload['file'];
+                // Kiểm tra file có phải là instance của UploadedFile không
+                if (!$file instanceof UploadedFile) {
+                    throw new ServiceException(
+                        message: __("common_error.invalid_data")
+                    );
+                }
+                $isPublic = !in_array($typeUpload, UserFileType::getTypeUploadToPrivateDisk());
+
+                $path = $file->store(DirectFile::makePathById(
+                    type: DirectFile::USER_FILE_UPLOAD,
+                    id: $user->id
+                ), $isPublic ? 'public' : 'private');
+                $tempFiles[] = [
+                    'disk' => $isPublic ? 'public' : 'private',
+                    'path' => $path,
+                ];
+                $this->userFileRepository->create([
+                    'user_id' => $user->id,
+                    'type' => $typeUpload,
+                    'file_path' => $path,
+                    'is_public' => $isPublic,
+                    'role' => $data['role'],
+                ]);
+            }
             DB::commit();
+
             return ServiceReturn::success(
-                data: $user->load('reviewApplication', 'files', 'profile'),
-                message: __("common_success.data_updated")
+                data: $user->load('reviewApplication', 'files'),
+                message: __("common.success.data_created")
             );
-        } catch (\Exception $exception) {
+        }
+        catch (ServiceException $exception) {
             DB::rollBack();
+            foreach ($tempFiles as $file) {
+                Storage::disk($file['disk'])->delete($file['path']);
+            }
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        }
+        catch (\Throwable $exception) {
+            DB::rollBack();
+            foreach ($tempFiles as $file) {
+                Storage::disk($file['disk'])->delete($file['path']);
+            }
             LogHelper::error(
-                message: "Lỗi UserService@updateUser",
+                message: "Lỗi UserService@applyPartnerForCurrentUser",
                 ex: $exception
             );
             return ServiceReturn::error(
-                message: $exception->getMessage()
+                message: __("common_error.server_error")
             );
         }
     }
@@ -464,10 +608,9 @@ class UserService extends BaseService
             DB::commit();
             return ServiceReturn::success(
                 data: $userAddress,
-                message: __("common_success.data_created")
+                message: __("common.success.data_created")
             );
-        }
-        catch (\Exception $exception) {
+        } catch (\Exception $exception) {
             DB::rollBack();
             LogHelper::error(
                 message: "Lỗi UserService@saveAddress",
@@ -515,14 +658,13 @@ class UserService extends BaseService
             }
             return ServiceReturn::success(
                 data: $userAddress,
-                message: __("common_success.data_updated")
+                message: __("common.success.data_updated")
             );
         } catch (ServiceException $exception) {
             return ServiceReturn::error(
                 message: $exception->getMessage()
             );
-        }
-        catch (\Exception $exception) {
+        } catch (\Exception $exception) {
             LogHelper::error(
                 message: "Lỗi UserService@editAddress",
                 ex: $exception
@@ -566,15 +708,14 @@ class UserService extends BaseService
             $userAddress->delete();
             DB::commit();
             return ServiceReturn::success(
-                message: __("common_success.data_deleted")
+                message: __("common.success.data_deleted")
             );
         } catch (ServiceException $exception) {
             DB::rollBack();
             return ServiceReturn::error(
                 message: $exception->getMessage()
             );
-        }
-        catch (\Exception $exception) {
+        } catch (\Exception $exception) {
             DB::rollBack();
             LogHelper::error(
                 message: "Lỗi UserService@deleteAddress",
@@ -585,7 +726,6 @@ class UserService extends BaseService
             );
         }
     }
-
 
     /**
      * Get paginate user address
@@ -629,41 +769,254 @@ class UserService extends BaseService
     }
 
     /**
-     * Lấy danh sách khách hàng đã đặt lịch trong ngày hôm nay
-     * với status COMPLETED hoặc ONGOING
+     * Cập nhật hồ sơ KTV
+     * @param array $data
      * @return ServiceReturn
      */
-    public function getTodayBookedCustomers(): ServiceReturn
+    public function updateKtvProfile(array $data): ServiceReturn
     {
         try {
-            $now = Carbon::now();
-            $startOfDay = $now->copy()->startOfDay();
-            $endOfDay   = $now->copy()->endOfDay();
+            /** @var \App\Models\User $user */
+            $user = Auth::user();
+            // 1. Update Password if old_pass provided
+            if (!empty($data['old_pass'])) {
+                if (!\Illuminate\Support\Facades\Hash::check($data['old_pass'], $user->password)) {
+                    // Fix: return ServiceReturn object directly
+                    return ServiceReturn::error(__('auth.error.wrong_password'));
+                }
+                $user->update(['password' => $data['new_pass']]);
+            }
 
-            $customers = $this->bookingRepository->query()
-                ->with([
-                    'user.profile',
-                ])
-                ->whereIn('status', [
-                    \App\Enums\BookingStatus::CONFIRMED->value,
-                    \App\Enums\BookingStatus::ONGOING->value,
-                    \App\Enums\BookingStatus::COMPLETED->value,
-                ])
-                ->whereBetween('booking_time', [$startOfDay, $endOfDay])
-                ->orderBy('booking_time', 'asc')
-                ->get();
+            // 2. Update UserReviewApplication
+            $reviewApp = $user->getStaffReviewsAttribute()->first();
+            if ($reviewApp) {
+                $updateData = [];
+                if (isset($data['bio'])) $updateData['bio'] = $data['bio'];
+                if (isset($data['experience'])) $updateData['experience'] = $data['experience'];
+                if (isset($data['lat'])) $updateData['latitude'] = (float) $data['lat'];
+                if (isset($data['lng'])) $updateData['longitude'] = (float) $data['lng'];
+                if (isset($data['address'])) $updateData['address'] = $data['address'];
+
+                if (!empty($updateData)) {
+                    $this->userReviewApplicationRepository->update($reviewApp->id, $updateData);
+                }
+            }else {
+                $updateData = [];
+                if (isset($data['bio'])) $updateData['bio'] = $data['bio'];
+                if (isset($data['experience'])) $updateData['experience'] = $data['experience'];
+                if (isset($data['lat'])) $updateData['latitude'] = (float) $data['lat'];
+                if (isset($data['lng'])) $updateData['longitude'] = (float) $data['lng'];
+                if (isset($data['address'])) $updateData['address'] = $data['address'];
+                if (!empty($updateData)) {
+                    $updateData['user_id'] = $user->id;
+                    $updateData['status'] = ReviewApplicationStatus::PENDING->value;
+                    $updateData['role'] = UserRole::KTV->value;
+                    $this->userReviewApplicationRepository->create($updateData);
+                }
+            }
+
+            // 3. Update UserProfile
+            $profile = $user->profile;
+            if ($profile) {
+                $updateProfile = [];
+                if (isset($data['gender'])) $updateProfile['gender'] = $data['gender'];
+                if (isset($data['date_of_birth'])) $updateProfile['date_of_birth'] = $data['date_of_birth'];
+
+                if (!empty($updateProfile)) {
+                    $profile->update($updateProfile);
+                    $profile->save();
+                }
+            }else {
+                $updateProfile = [];
+                if (isset($data['gender'])) $updateProfile['gender'] = $data['gender'];
+                if (isset($data['date_of_birth'])) $updateProfile['date_of_birth'] = $data['date_of_birth'];
+
+                if (!empty($updateProfile)) {
+                    $updateProfile['user_id'] = $user->id;
+                    $this->userProfileRepository->create($updateProfile);
+                }
+                $profile = $this->userProfileRepository->find($user->id);
+            }
+            $user->save();
+            // Reload user with relations to return fresh data
+            $user->load(['profile', 'reviewApplication']);
 
             return ServiceReturn::success(
-                data: $customers
+                data: $user,
+                message: __("common.success.data_updated")
+            );
+        } catch (ServiceException $exception) {
+            return ServiceReturn::error(
+                message: $exception->getMessage()
             );
         } catch (\Exception $exception) {
             LogHelper::error(
-                message: "Lỗi UserService@getTodayBookedCustomers",
+                message: "Lỗi UserService@updateKtvProfile",
                 ex: $exception
             );
             return ServiceReturn::error(
-                message: __("common_error.server_error")
+                message: $exception->getMessage()
             );
         }
     }
+
+    /**
+     * Link KTV to Agency via QR
+     * @param int $ktvId
+     * @param int $agencyId
+     * @return ServiceReturn
+     */
+    public function linkKtvToAgency(int $ktvId, int $agencyId): ServiceReturn
+    {
+        try {
+            $ktv = $this->userRepository->query()->find($ktvId);
+            $agency = $this->userRepository->query()->find($agencyId);
+
+            if (!$ktv || !$agency) {
+                return ServiceReturn::error(__('common_error.data_not_found'));
+            }
+
+            // Check roles
+            if ($ktv->role !== UserRole::KTV->value) {
+                return ServiceReturn::success( data: ['is_ktv' => false], message:  __('common_error.invalid_role'));
+            }
+
+            if ($agency->role !== UserRole::AGENCY->value) {
+                return ServiceReturn::error(__('common_error.invalid_role'));
+            }
+
+            // Prevent self-linking
+            if ($ktv->id === $agency->id) {
+                return ServiceReturn::error(__('common_error.cannot_link_self'));
+            }
+
+            // Update link
+            $ktv->referred_by_user_id = $agency->id;
+            $ktv->save();
+
+            return ServiceReturn::success(
+                data: [
+                    'ktv' => $ktv,
+                    'is_ktv' => true,
+                ],
+                message: __('common.success.data_updated')
+            );
+        } catch (\Exception $e) {
+            LogHelper::error('Lỗi UserService@linkKtvToAgency', $e);
+            return ServiceReturn::error(__('common_error.server_error'));
+        }
+    }
+
+    /**
+     * Lấy config lịch làm việc của KTV
+     * @param int $ktvId
+     * @return ServiceReturn
+     */
+    public function handleGetScheduleKtv(int $ktvId): ServiceReturn
+    {
+        try {
+            $ktv = $this->userRepository->query()->find($ktvId);
+
+            if (!$ktv || $ktv->role !== UserRole::KTV->value) {
+                throw new ServiceException(__('common_error.data_not_found'));
+            }
+
+            // Lấy config lịch làm việc của KTV
+            $schedules = $this->userKtvScheduleRepository->query()
+                ->where('ktv_id', $ktvId)
+                ->first();
+            // Nếu không có config, tạo config mặc định
+             if (!$schedules) {
+                $schedules = $this->userKtvScheduleRepository->create([
+                    'ktv_id' => $ktvId,
+                    'working_schedule' => KTVConfigSchedules::getDefaultSchema(),
+                    'is_working' => true,
+                ]);
+            }
+
+            return ServiceReturn::success(
+                data: $schedules,
+            );
+        }catch (ServiceException $exception) {
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        }
+        catch (\Exception $e) {
+            LogHelper::error('Lỗi UserService@handleGetScheduleKtv', $e);
+            return ServiceReturn::error(__('common_error.server_error'));
+        }
+    }
+
+    /**
+     * Cập nhật config lịch làm việc của KTV
+     * @param array $data
+     * @return ServiceReturn
+     */
+    public function handleUpdateScheduleKtv(array $data): ServiceReturn
+    {
+        try {
+            $user = Auth::user();
+            $resSchedule = $this->handleGetScheduleKtv($user->id);
+            if ($resSchedule->isError()) {
+                throw new ServiceException($resSchedule->getMessage());
+            }
+            $schedules = $resSchedule->getData();
+
+            // Xử lý dữ liệu config lịch làm việc
+            $workingSchedules = $data['working_schedule'];
+            foreach ($workingSchedules as $key => $workingSchedule) {
+                $workingSchedules[$key] = [
+                    'active' => $workingSchedule['active'],
+                    'start_time' => $workingSchedule['start_time'] ?? "08:00",
+                    'end_time' => $workingSchedule['end_time'] ?? "16:00",
+                    'day_key' => $workingSchedule['day_key'],
+                ];
+            }
+            // Cập nhật config lịch làm việc
+            $schedules->update([
+                'working_schedule' => $workingSchedules,
+                'is_working' => $data['is_working'],
+            ]);
+            return ServiceReturn::success(
+                data: $schedules,
+            );
+        }catch (ServiceException $exception) {
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        }
+        catch (\Exception $e) {
+            LogHelper::error('Lỗi UserService@handleUpdateScheduleKtv', $e);
+            return ServiceReturn::error(__('common_error.server_error'));
+        }
+    }
+
+    /**
+     * Lấy file hợp đồng
+     * @param ContractFileType $type
+     * @return ServiceReturn
+     */
+    public function getContractFile(ContractFileType $type): ServiceReturn
+    {
+        try {
+            $file = $this->staticContractRepository->query()
+                ->where('type', $type->value)
+                ->first();
+            if (!$file) {
+                throw new ServiceException(__('common_error.data_not_found'));
+            }
+            return ServiceReturn::success(
+                data: $file,
+            );
+        } catch (ServiceException $exception) {
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        } catch (\Exception $e) {
+            LogHelper::error('Lỗi UserService@getContractFile', $e);
+            return ServiceReturn::error(__('common_error.server_error'));
+        }
+    }
+
 }

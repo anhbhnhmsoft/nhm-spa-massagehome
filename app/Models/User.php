@@ -5,7 +5,10 @@ namespace App\Models;
 use App\Core\Cache\CacheKey;
 use App\Core\Cache\Caching;
 use App\Core\GenerateId\HasBigIntId;
+use App\Enums\UserRole;
+use App\Enums\UserFileType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -24,7 +27,6 @@ class User extends Authenticatable
         'role', // Cast enum UserRole
         'language',
         'is_active',
-        'referral_code',
         'referred_by_user_id',
         'last_login_at',
     ];
@@ -63,9 +65,44 @@ class User extends Authenticatable
         return $this->hasOne(UserReviewApplication::class);
     }
 
+    public function getAgencyReviewsAttribute()
+    {
+        return $this->hasOne(UserReviewApplication::class)->where('role', UserRole::AGENCY->value)->latestOfMany();
+    }
+
+    public function getStaffReviewsAttribute()
+    {
+        return $this->hasOne(UserReviewApplication::class)->where('role', UserRole::KTV->value)->latestOfMany();
+    }
+
     public function files()
     {
         return $this->hasMany(UserFile::class);
+    }
+
+    public function cccdFront()
+    {
+        return $this->hasOne(UserFile::class)->where('type', UserFileType::IDENTITY_CARD_FRONT);
+    }
+
+    public function cccdBack()
+    {
+        return $this->hasOne(UserFile::class)->where('type', UserFileType::IDENTITY_CARD_BACK);
+    }
+
+    public function certificate()
+    {
+        return $this->hasOne(UserFile::class)->where('type', UserFileType::LICENSE);
+    }
+
+    public function faceWithIdentityCard()
+    {
+        return $this->hasOne(UserFile::class)->where('type', UserFileType::FACE_WITH_IDENTITY_CARD);
+    }
+
+    public function gallery()
+    {
+        return $this->hasMany(UserFile::class)->where('type', UserFileType::KTV_IMAGE_DISPLAY);
     }
 
     public function wallet()
@@ -144,7 +181,17 @@ class User extends Authenticatable
         return $this->hasMany(ServiceBooking::class, 'user_id');
     }
 
-    public function reviewWrited() {
+    /**
+     * Lấy danh sách Booking mà User này ĐẶT (với tư cách là KTV)
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function ktvBookings()
+    {
+        return $this->hasMany(ServiceBooking::class, 'ktv_user_id');
+    }
+
+    public function reviewWrited()
+    {
         return $this->hasMany(Review::class, 'review_by');
     }
 
@@ -156,5 +203,45 @@ class User extends Authenticatable
     public function primaryAddress()
     {
         return $this->hasOne(UserAddress::class)->where('is_primary', true);
+    }
+
+    public function collectionCoupons(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Coupon::class,
+            'coupon_users', // Tên bảng trung gian
+            'user_id',      // Khóa ngoại của User trong bảng trung gian
+            'coupon_id'     // Khóa ngoại của Coupon trong bảng trung gian
+        )
+            ->withPivot('is_used') // Lấy thêm cột is_used từ bảng trung gian
+            ->withTimestamps();     // Nếu bảng coupon_users có created_at/updated_at
+    }
+
+    /**
+     * Lấy danh sách Affiliate Record
+     */
+    public function affiliateRecords()
+    {
+        return $this->hasMany(AffiliateLink::class, 'referred_user_id');
+    }
+
+    /**
+     * Lấy danh sách KTV mà User này ĐÃ ĐĂNG KÍ với
+     */
+    public function ktvsUnderAgency()
+    {
+        return $this->hasManyThrough(
+            User::class,
+            UserReviewApplication::class,
+            'agency_id',
+            'id',
+            'id',
+            'user_id'
+        );
+    }
+
+    public function schedule()
+    {
+        return $this->hasOne(UserKtvSchedule::class, 'ktv_id');
     }
 }

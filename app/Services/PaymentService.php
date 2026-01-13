@@ -11,8 +11,10 @@ use App\Core\Service\ServiceReturn;
 use App\Enums\BankBin;
 use App\Enums\ConfigName;
 use App\Enums\PaymentType;
+use App\Enums\NotificationType;
 use App\Enums\WalletTransactionStatus;
 use App\Enums\WalletTransactionType;
+use App\Jobs\SendNotificationJob;
 use App\Repositories\WalletRepository;
 use App\Repositories\WalletTransactionRepository;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -34,9 +36,10 @@ class PaymentService extends BaseService
     /**
      * Lấy ví của người dùng
      * @param int $userId
+     * @param bool $withTotal
      * @return ServiceReturn
      */
-    public function getUserWallet(int $userId): ServiceReturn
+    public function getUserWallet(int $userId, bool $withTotal = false): ServiceReturn
     {
         try {
             $wallet = $this->walletRepository->queryWallet()
@@ -47,8 +50,33 @@ class PaymentService extends BaseService
                     message: __("error.wallet_not_found")
                 );
             }
+            // Nếu không cần lấy tổng số điểm đã nạp vào ví và rút ra khỏi ví
+            if (!$withTotal) {
+                return ServiceReturn::success(
+                    data: [
+                        'wallet' => $wallet,
+                    ]
+                );
+            }
+            // Lấy tổng số điểm đã nạp vào ví
+            $totalDeposit = $this->walletTransactionRepository->queryTransaction()
+                ->where('wallet_id', $wallet->id)
+                ->whereIn('type', WalletTransactionType::statusIn())
+                ->where('status', WalletTransactionStatus::COMPLETED)
+                ->sum('point_amount');
+            // Lấy tổng số điểm đã rút ra khỏi ví
+            $totalWithdrawal = $this->walletTransactionRepository->queryTransaction()
+                ->where('wallet_id', $wallet->id)
+                ->whereIn('type', WalletTransactionType::statusOut())
+                ->where('status', WalletTransactionStatus::COMPLETED)
+                ->sum('point_amount');
+
             return ServiceReturn::success(
-                data: $wallet
+                data: [
+                    'wallet' => $wallet,
+                    'total_deposit' => $totalDeposit,
+                    'total_withdrawal' => $totalWithdrawal,
+                ]
             );
         } catch (ServiceException $exception) {
             return ServiceReturn::error(
@@ -218,8 +246,7 @@ class PaymentService extends BaseService
                     $transaction->update([
                         'metadata' => json_encode($payosResponse),
                     ]);
-                    // Bắn notif cho người dùng (để sau)
-                    // TODO:  Bắn notif cho người dùng
+
 
                     // Lấy dữ liệu QR Banking từ PayOS
                     $payosData = $payosResponse['data'];
@@ -294,7 +321,7 @@ class PaymentService extends BaseService
             }
 
             return ServiceReturn::success(
-                data: $transaction->status === WalletTransactionStatus::COMPLETED->value
+                data: $transaction->status == WalletTransactionStatus::COMPLETED->value
             );
         } catch (ServiceException $exception) {
             return ServiceReturn::error(
@@ -393,8 +420,17 @@ class PaymentService extends BaseService
                 'balance' => $wallet->balance + $pointEarned,
             ]);
 
-            // Bắn notif cho người dùng (để sau)
-            // TODO:  Bắn notif cho người dùng
+            // Bắn notif cho người dùng khi thanh toán thành công
+            SendNotificationJob::dispatch(
+                userId: $wallet->user_id,
+                type: NotificationType::WALLET_DEPOSIT,
+                data: [
+                    'transaction_id' => $transaction->id,
+                    'amount' => $dataPayOs['amount'],
+                    'point_amount' => $pointEarned,
+                    'balance_after' => $wallet->balance,
+                ]
+            );
 
             DB::commit();
             return ServiceReturn::success();

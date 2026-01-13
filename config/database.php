@@ -148,7 +148,7 @@ return [
 
         'options' => [
             'cluster' => env('REDIS_CLUSTER', 'redis'),
-            'prefix' => env('REDIS_PREFIX', Str::slug((string) env('APP_NAME', 'laravel')).'-database-'),
+            'prefix' => env('REDIS_PREFIX', Str::slug((string) env('APP_NAME', 'laravel')) . '-database-'),
             'persistent' => env('REDIS_PERSISTENT', false),
         ],
 
@@ -178,6 +178,14 @@ return [
             'backoff_cap' => env('REDIS_BACKOFF_CAP', 1000),
         ],
 
+        'pubsub' => [
+            'host' => env('REDIS_HOST', '127.0.0.1'),
+            'port' => env('REDIS_PORT', '6379'),
+            'password' => env('REDIS_PASSWORD'),
+            'database' => env('REDIS_DB', '0'),
+            'options' => [
+                'prefix' => env('REDIS_PREFIX', 'massagehome-redis-'),
+            ],
+        ],
     ],
-
 ];

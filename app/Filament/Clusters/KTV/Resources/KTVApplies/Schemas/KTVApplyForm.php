@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\KTV\Resources\KTVApplies\Schemas;
 
+use App\Core\Helper;
 use App\Enums\DirectFile;
 use App\Enums\Gender;
 use App\Enums\ReviewApplicationStatus;
@@ -9,8 +10,10 @@ use App\Enums\UserFileType;
 use App\Enums\UserRole;
 use App\Models\Province;
 use App\Models\User;
+use App\Services\LocationService;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -35,27 +38,23 @@ class KTVApplyForm
                                 ->label(__('admin.common.table.name'))
                                 ->required()
                                 ->maxLength(255)
-                                
                                 ->validationMessages([
                                     'required' => __('common.error.required'),
-                                    'max'      => __('common.error.max_length', ['max' => 255])
+                                    'max' => __('common.error.max_length', ['max' => 255])
                                 ]),
 
                             TextInput::make('phone')
                                 ->label(__('admin.common.table.phone'))
                                 ->tel()
                                 ->maxLength(20)
-                                ->numeric()
                                 ->required()
                                 ->unique()
                                 ->validationMessages([
-                                    'max'      => __('common.error.max_length', ['max' => 20]),
-                                    'numeric'  => __('common.error.numeric'),
+                                    'max' => __('common.error.max_length', ['max' => 20]),
                                     'max_digits' => __('common.error.max_digits', ['max' => 20]),
                                     'required' => __('common.error.required'),
-                                    'unique'   => __('common.error.unique'),
-                                ])
-                                ,
+                                    'unique' => __('common.error.unique'),
+                                ]),
                             TextInput::make('password')
                                 ->label(__('admin.common.table.password'))
                                 ->password()
@@ -66,7 +65,7 @@ class KTVApplyForm
                                 ->maxLength(255)
                                 ->validationMessages([
                                     'required' => __('common.error.required'),
-                                    'max'      => __('common.error.max_length', ['max' => 255])
+                                    'max' => __('common.error.max_length', ['max' => 255])
                                 ])
                                 ->hidden(fn($livewire) => $livewire instanceof ViewRecord),
                         ]),
@@ -80,7 +79,6 @@ class KTVApplyForm
                                     ->directory(DirectFile::KTVA->value)
                                     ->required()
                                     ->image()
-                                    
                                     ->downloadable()
                                     ->maxSize(102400)
                                     ->validationMessages([
@@ -88,43 +86,76 @@ class KTVApplyForm
                                     ]),
                                 Select::make('gender')
                                     ->label(__('admin.common.table.gender'))
-                                    ->options(Gender::toOptions())
-                                    ,
+                                    ->options(Gender::toOptions()),
 
                                 DatePicker::make('date_of_birth')
-                                    ->label(__('admin.common.table.date_of_birth'))
-                                    ,
+                                    ->label(__('admin.common.table.date_of_birth')),
 
                                 Textarea::make('bio')
                                     ->label(__('admin.ktv_apply.fields.bio'))
-                                    
                                     ->rows(3),
                             ])
                     ])
                     ->columns(2),
                 Section::make(__('admin.ktv_apply.fields.registration_info'))
-                    ->relationship('reviewApplication')
+                    ->relationship('getStaffReviewsAttribute')
                     ->schema([
                         Select::make('status')
                             ->label(__('admin.common.table.status'))
                             ->options(ReviewApplicationStatus::toOptions())
-                            ->default(ReviewApplicationStatus::PENDING)
-                            ,
+                            ->default(ReviewApplicationStatus::PENDING),
                         Select::make('agency_id')
                             ->label(__('admin.ktv_apply.fields.agency'))
                             ->searchable()
                             ->options(fn() => User::where('role', UserRole::AGENCY->value)->where('is_active', true)->pluck('name', 'id'))
-                            
                             ->columnSpan(1),
                         Select::make('province_code')
                             ->label(__('admin.ktv_apply.fields.province'))
                             ->searchable()
                             ->options(fn() => Province::all()->pluck('name', 'code'))
-                            
                             ->columnSpan(1),
+
+                        Select::make('search_location')
+                            ->label(__('admin.ktv_apply.fields.address_search'))
+                            ->searchable()
+                            ->live(debounce: 500)
+                            ->getSearchResultsUsing(function (string $search) {
+                                if (!$search) return [];
+                                $service = app(LocationService::class);
+                                $res = $service->autoComplete($search);
+                                if (!$res->isSuccess()) return [];
+                                return collect($res->getData())->pluck('formatted_address', 'place_id')->toArray();
+                            })
+                            ->getOptionLabelUsing(function ($value): ?string {
+                                if (!$value) return null;
+
+                                $service = app(LocationService::class);
+                                $res = $service->getDetail($value);
+
+                                return $res->isSuccess()
+                                    ? $res->getData()['formatted_address']
+                                    : null;
+                            })
+                            ->afterStateUpdated(function ($set, ?string $state) {
+                                if (!$state) return;
+                                $service = app(LocationService::class);
+                                $res = $service->getDetail($state);
+                                if ($res->isSuccess()) {
+                                    $data = $res->getData();
+                                    $set('address', $data['formatted_address']);
+                                    $set('latitude', $data['latitude']);
+                                    $set('longitude', $data['longitude']);
+                                }
+                            })
+                            ->dehydrated(false)
+                            ->columnSpanFull(),
+
+                        Hidden::make('latitude'),
+                        Hidden::make('longitude'),
 
                         Textarea::make('address')
                             ->label(__('admin.ktv_apply.fields.address'))
+                            ->columnSpanFull()
                             ->rows(2),
 
                         TextInput::make('experience')
@@ -134,55 +165,104 @@ class KTVApplyForm
 
                         Textarea::make('bio.' . $lang)
                             ->label(__('admin.ktv_apply.fields.experience_desc'))
-                            
                             ->rows(3)
                             ->columnSpanFull(),
-                        Placeholder::make('reviewApplication.effective_date')
-                            ->label(__('admin.common.table.effective_date'))
-                            ->content(fn($record) => $record?->reviewApplication?->effective_date?->format('d/m/Y H:i:s')),
-
-                        Placeholder::make('reviewApplication.application_date')
-                            ->label(__('admin.common.table.application_date'))
-                            ->content(fn($record) => $record?->reviewApplication?->application_date?->format('d/m/Y H:i:s')),
-
+                        Hidden::make('role')
+                            ->default(UserRole::KTV->value),
                     ])
                     ->columns(2),
 
                 Section::make(__('admin.ktv_apply.fields.files'))
                     ->schema([
-                        Repeater::make('files')
-                            ->label(__('admin.ktv_apply.fields.files'))
-                            ->relationship('files')
-                            ->columns(3)
+                        Section::make(__('admin.ktv_apply.file_type.identity_card_front'))
                             ->schema([
-                                Select::make('type')
-                                    ->label(__('admin.ktv_apply.fields.file_type'))
-                                    ->options(UserFileType::toOptions())
-                                    ->required()
-                                    
-                                    ->columnSpan(1),
-
-                                FileUpload::make('file_path')
-                                    ->label('File')
-                                    ->directory(DirectFile::KTVA->value)
+                                FileUpload::make('cccd_front_path')
+                                    ->label(__('admin.ktv_apply.file_type.identity_card_front'))
+                                    ->directory(fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
                                     ->disk('private')
                                     ->required()
-                                    
+                                    ->image()
+                                    ->maxSize(102400)
                                     ->downloadable()
-                                    ->columnSpan(2),
+                                    ->columnSpanFull()
+                                    ->afterStateHydrated(fn($component, $record) => $component->state($record?->cccdFront()->first()?->file_path)),
+                            ])->columnSpan(1),
+
+                        Section::make(__('admin.ktv_apply.file_type.identity_card_back'))
+                            ->schema([
+                                FileUpload::make('cccd_back_path')
+                                    ->label(__('admin.ktv_apply.file_type.identity_card_back'))
+                                    ->directory(fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
+                                    ->disk('private')
+                                    ->required()
+                                    ->image()
+                                    ->maxSize(102400)
+                                    ->downloadable()
+                                    ->columnSpanFull()
+                                    ->afterStateHydrated(fn($component, $record) => $component->state($record?->cccdBack()->first()?->file_path)),
+                            ])->columnSpan(1),
+
+                        Section::make(__('admin.ktv_apply.file_type.license'))
+                            ->schema([
+                                FileUpload::make('certificate_path')
+                                    ->label(__('admin.ktv_apply.file_type.license'))
+                                    ->directory(fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
+                                    ->disk('private')
+                                    ->nullable()
+                                    ->image()
+                                    ->maxSize(102400)
+                                    ->downloadable()
+                                    ->columnSpanFull()
+                                    ->deletable()
+                                    ->afterStateHydrated(fn($component, $record) => $component->state($record?->certificate()->first()?->file_path)),
+                            ])->columnSpanFull(),
+
+                        Section::make(__('admin.ktv_apply.file_type.face_with_identity_card'))
+                            ->schema([
+                                FileUpload::make('face_with_identity_card_path')
+                                    ->label(__('admin.ktv_apply.file_type.face_with_identity_card'))
+                                    ->directory(fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
+                                    ->disk('private')
+                                    ->required()
+                                    ->image()
+                                    ->maxSize(102400)
+                                    ->downloadable()
+                                    ->columnSpanFull()
+                                    ->deletable()
+                                    ->afterStateHydrated(fn($component, $record) => $component->state($record?->faceWithIdentityCard()->first()?->file_path)),
+                            ])->columnSpanFull(),
+
+                        Repeater::make('gallery')
+                            ->label(__('admin.ktv_apply.file_type.ktv_image_display'))
+                            ->relationship('gallery')
+                            ->grid(2)
+                            ->schema([
+                                Hidden::make('type')
+                                    ->default(UserFileType::KTV_IMAGE_DISPLAY),
+                                FileUpload::make('file_path')
+                                    ->label(__('admin.ktv_apply.file_type.ktv_image_display'))
+                                    ->directory(fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
+                                    ->disk('public')
+                                    ->required()
+                                    ->image()
+                                    ->maxSize(102400)
+                                    ->downloadable()
+                                    ->columnSpanFull(),
+                                Hidden::make('role')
+                                    ->default(fn($record) => $record?->role ?? UserRole::KTV->value),
+                                Hidden::make('is_public')
+                                    ->default(true),
                             ])
-                            ->columns(3)
-                            
-                            ->addable(fn($livewire) => $livewire instanceof CreateRecord)
-                            ->deletable(fn($livewire) => $livewire instanceof CreateRecord)
-                            ->reorderable(fn($livewire) => $livewire instanceof CreateRecord)
-                            ->minItems(1)
-                            ->defaultItems(1)
+                            ->minItems(3)
+                            ->maxItems(5)
+                            ->defaultItems(3)
                             ->validationMessages([
-                                'min' => __('common.error.min_items', ['min' => 1]),
-                                'required' => __('common.error.required'),
-                            ]),
-                    ]),
+                                'min' => __('common.error.min_items', ['min' => 3]),
+                                'max' => __('common.error.max_items', ['max' => 5]),
+                            ])
+                            ->helperText(__('common.notice.image_gallery'))
+                            ->columnSpanFull(),
+                    ])->columns(2),
 
                 Section::make(__('admin.ktv_apply.fields.system_info'))
                     ->schema([

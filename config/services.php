@@ -35,4 +35,13 @@ return [
         ],
     ],
 
+    // Node server configuration
+    'node_server' => [
+        'host' => env('NODE_HOST', '0.0.0.0'),
+        'port' => env('NODE_PORT', 3000),
+        'channel_notification' => env('REDIS_CHANNEL_NOTIFICATION', 'expo_notifications'),
+        'channel_chat' => env('REDIS_CHANNEL_CHAT', 'chat_messages'),
+        'channel_chat_auth' => env('REDIS_CHANNEL_CHAT_AUTH', 'chat_auth'),
+    ],
+
 ];

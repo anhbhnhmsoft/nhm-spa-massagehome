@@ -8,7 +8,7 @@ use Filament\Support\Icons\Heroicon;
 
 class AgencyCluster extends Cluster
 {
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedSquares2x2;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::UserGroup;
 
     public static function getNavigationLabel(): string
     {
@@ -20,4 +20,6 @@ class AgencyCluster extends Cluster
     {
         return __('admin.nav.agency');
     }
+
+    protected static string | \UnitEnum | null $navigationGroup = 'agency';
 }

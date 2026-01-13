@@ -113,6 +113,7 @@ class ConfigForm extends Component implements HasSchemas
                                 ]),
                             TextInput::make((string) ConfigName::DISCOUNT_RATE->value)
                                 ->label(__('admin.setting.fields.discount_rate'))
+                                ->helperText(__('admin.setting.fields.discount_rate_helper'))
                                 ->numeric()
                                 ->required()
                                 ->suffix('%')

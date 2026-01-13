@@ -6,6 +6,7 @@ use App\Enums\Language;
 use App\Enums\PaymentType;
 use App\Enums\UserRole;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 final class Helper
@@ -33,11 +34,12 @@ final class Helper
     public static function createDescPayment(PaymentType $paymentType): string
     {
         return match ($paymentType) {
-            PaymentType::QR_BANKING => "QRBK".self::getTimestampAsId(),
-            PaymentType::ZALO_PAY => "ZLPY".self::getTimestampAsId(),
-            PaymentType::MOMO_PAY => "MMPY".self::getTimestampAsId(),
-            PaymentType::BY_POINTS => "BYP".self::getTimestampAsId(),
-            default => "UNKNOWN".self::getTimestampAsId(),
+            PaymentType::QR_BANKING => "QRBK" . self::getTimestampAsId(),
+            PaymentType::ZALO_PAY => "ZLPY" . self::getTimestampAsId(),
+            PaymentType::MOMO_PAY => "MMPY" . self::getTimestampAsId(),
+            PaymentType::BY_POINTS => "BYP" . self::getTimestampAsId(),
+            PaymentType::WITHDRAWAL => "WDL" . self::getTimestampAsId(),
+            default => "UNKNOWN" . self::getTimestampAsId(),
         };
     }
 
@@ -59,12 +61,14 @@ final class Helper
 
     /**
      * Tạo mã tham gia ngẫu nhiên 8 ký tự in hoa.
+     * @param int|null $length
      * @return string
      */
-    public static function generateReferCode(): string
+    public static function generateReferCode(?int $length = 8): string
     {
-        return strtoupper(substr(Str::uuid()->toString(), 0, 8));
+        return strtoupper(substr(Str::uuid()->toString(), 0, $length));
     }
+
     /**
      * Tạo token ngẫu nhiên 60 ký tự.
      * @return string
@@ -81,6 +85,124 @@ final class Helper
      */
     public static function checkLanguage(?string $language = null): bool
     {
-        return in_array($language, [Language::VIETNAMESE->value, Language::ENGLISH->value, Language::CHINESE], true);
+        return in_array($language, [Language::VIETNAMESE->value, Language::ENGLISH->value, Language::CHINESE->value], true);
+    }
+
+    public static function FileUrl(string $path): string
+    {
+        return route('file_url_render', ['path' => $path]);
+    }
+
+    /**
+     * Kiểm tra thiết bị có phải là thiết bị di động không.
+     * @param string $userAgent
+     * @return bool
+     */
+    public static function isMobileDevice($userAgent)
+    {
+        return preg_match('/(android|iphone|ipad|mobile)/i', $userAgent);
+    }
+
+    /**
+     * Lấy URL công khai cho tệp tin.
+     * @param string $path
+     * @return string
+     */
+    public static function getPublicUrl(string $path): string
+    {
+        return Storage::disk('public')->url($path);
+    }
+
+    /**
+     * Xử lý dữ liệu đa ngôn ngữ.
+     * @param array $source
+     * @param string $field
+     * @return array
+     */
+    public static function multilingualPayload(array $source, string $field): array
+    {
+        $data = $source[$field] ?? [];
+        // Tìm giá trị fallback (lấy giá trị đầu tiên không rỗng trong mảng)
+        $fallback = '';
+        foreach ($data as $val) {
+            if (!empty($val)) {
+                $fallback = $val;
+                break;
+            }
+        }
+        return [
+            Language::VIETNAMESE->value => !empty($data[Language::VIETNAMESE->value]) ? $data[Language::VIETNAMESE->value] : $fallback,
+            Language::ENGLISH->value    => !empty($data[Language::ENGLISH->value]) ? $data[Language::ENGLISH->value] : $fallback,
+            Language::CHINESE->value    => !empty($data[Language::CHINESE->value]) ? $data[Language::CHINESE->value] : $fallback,
+        ];
+    }
+
+    /**
+     * Helper xóa file. Hỗ trợ string, JSON string, hoặc array.
+     * @param string|array|null $path
+     * @param string $disk
+     * @return void
+     */
+    public static function deleteFile(string|array|null $path, string $disk = 'public'): void
+    {
+        if (empty($path)) {
+            return;
+        }
+
+        // Nếu là array, duyệt đệ quy
+        if (is_array($path)) {
+            foreach ($path as $p) {
+                self::deleteFile($p, $disk);
+            }
+            return;
+        }
+
+        // Nếu là chuỗi JSON, log decode và gọi đệ quy
+        if (is_string($path) && Str::isJson($path)) {
+            $decoded = json_decode($path, true);
+            if (is_array($decoded)) {
+                self::deleteFile($decoded, $disk);
+                return;
+            }
+        }
+
+        // Xóa file (xử lý xóa storage)
+        if (is_string($path)) {
+            if (Storage::disk($disk)->exists($path)) {
+                Storage::disk($disk)->delete($path);
+            }
+        }
+    }
+
+
+    /**
+     * Tính toán số tiền hệ thống phải trừ đi.
+     * @param float $price
+     * @param float $discountRate
+     * @param int $precision
+     * @return float
+     */
+    public static function calculateSystemMinus(float $price, float $discountRate = 0, int $precision = 0): float
+    {
+        // Đảm bảo tỷ lệ chiết khấu hợp lệ
+        $discountRate = max(0, min(100, $discountRate));
+
+        return round($price * ($discountRate / 100), $precision);
+    }
+
+    /**
+     * Tính toán số tiền KTV thực nhận.
+     * * @param float $price Giá dịch vụ (sau khi trừ giảm giá của KTV).
+     * @param float $discountRate Tỷ lệ chiết khấu hệ thống (ví dụ: 10, 20...).
+     * @param int $precision Độ chính xác làm tròn (mặc định là 0 để lấy số nguyên).
+     * @return float
+     */
+    public static function calculatePriceDiscountForKTV(float $price, float $discountRate, int $precision = 0): float
+    {
+        // Tính số tiền Hệ thống thu (Commission) và làm tròn trước
+        $systemMinus = self::calculateSystemMinus($price, $discountRate, $precision);
+
+        // KTV thực nhận = Tổng tiền - Phí sàn
+        return $price - $systemMinus;
     }
 }

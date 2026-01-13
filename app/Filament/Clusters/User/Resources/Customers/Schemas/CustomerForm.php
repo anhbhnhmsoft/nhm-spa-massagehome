@@ -8,6 +8,7 @@ use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Resources\Pages\CreateRecord;
 use Filament\Schemas\Components\Flex;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
@@ -40,13 +41,17 @@ class CustomerForm
                                         'unique' => __('common.error.unique'),
                                     ]),
                                 TextInput::make('password')
-                                    ->label(__('admin.customer.fields.password'))
+                                    ->label(__('admin.common.table.password'))
                                     ->password()
-                                    ->required(fn($livewire) => $livewire instanceof \Filament\Resources\Pages\CreateRecord)
+                                    ->required(fn($livewire) => $livewire instanceof CreateRecord)
+                                    ->dehydrateStateUsing(fn($state) => filled($state) ? bcrypt($state) : null)
+                                    ->dehydrated(fn($state) => filled($state))
+                                    ->revealable()
+                                    ->maxLength(255)
                                     ->validationMessages([
                                         'required' => __('common.error.required'),
-                                    ])
-                                    ->visible(fn($livewire) => $livewire instanceof \Filament\Resources\Pages\CreateRecord), // Only show on create
+                                        'max' => __('common.error.max_length', ['max' => 255])
+                                    ]),
                                 DatePicker::make('profile.date_of_birth')
                                     ->label(__('admin.customer.fields.dob')),
                                 Select::make('role')

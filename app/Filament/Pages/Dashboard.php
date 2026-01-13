@@ -6,6 +6,16 @@ use Filament\Pages\Dashboard as PagesDashboard;
 
 class Dashboard extends PagesDashboard
 {
+
+    public static function getNavigationLabel(): string
+    {
+        return __('dashboard.navigation_label');
+    }
+
+    public function getTitle(): string
+    {
+        return __('dashboard.title');
+    }
     protected function getHeaderWidgets(): array
     {
         return [];

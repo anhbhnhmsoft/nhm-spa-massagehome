@@ -11,4 +11,9 @@ enum Language: string
     case ENGLISH = 'en';
     case VIETNAMESE = 'vi';
     case CHINESE = 'cn';
+
+    public static function values(): array
+    {
+        return array_column(self::cases(), 'value');
+    }
 }

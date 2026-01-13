@@ -10,9 +10,4 @@ use Inertia\Inertia;
 abstract class BaseController extends Controller
 {
     use AuthorizesRequests, ValidatesRequests, HandleApi;
-
-    protected function rendering(string $view, array $data = []): \Inertia\Response
-    {
-        return Inertia::render($view, $data);
-    }
 }

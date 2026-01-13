@@ -1,0 +1,246 @@
+import { config } from '#/core/app.config.js';
+import { redisPub, redisSub } from '#/core/app.redis.js';
+import {
+    _ChatConstant,
+    PayloadNewMessage,
+    UserSession,
+} from '#/services/chat/types.js';
+import type { Server, Socket } from 'socket.io';
+
+export class ChatService {
+    constructor(private io: Server) {}
+
+    public init() {
+        // Middleware xác thực token
+        this.middleware();
+
+        // Xử lý khi client kết nối
+        this.io.on('connection', (socket) => this.handleConnection(socket));
+
+        // Xử lý khi client ngắt kết nối
+        this.io.on('disconnect', (socket) => this.handleDisconnect(socket));
+
+        // Listen Redis pub/sub from Laravel
+        redisSub.subscribe(config.redis.channels.chat, (err) => {
+            if (err) console.error('Redis Chat Subscribe Error:', err);
+            else
+                console.log(
+                    `Subscribed Redis channel: ${config.redis.channels.chat}`,
+                );
+        });
+
+        redisSub.on('message', (channel, message) => {
+            if (channel !== config.redis.channels.chat) return;
+            this.handleLaravelMessage(message);
+        });
+    }
+
+    /**
+     * Xử lý message từ Redis pub/sub từ Laravel
+     */
+    protected handleLaravelMessage(rawMessage: string) {
+        try {
+            const parsed = JSON.parse(rawMessage);
+            const type = parsed?.type;
+            // Xử lý message:new
+            if (type === _ChatConstant.CHAT_MESSAGE_NEW && parsed?.payload) {
+                const payload: PayloadNewMessage = parsed?.payload;
+                if (payload.room_id) {
+                    // Format tên phòng phải KHỚP với lúc join
+                    const roomName = this.getConversationRoom(payload.room_id);
+                    // Emit tới phòng
+                    this.io
+                        .to(roomName)
+                        .emit(_ChatConstant.CHAT_MESSAGE_NEW, payload);
+                    // Emit riêng cho người nhận để cập nhật conversation
+                    if (payload.receiver_id){
+                        const receiverPrivateRoom = this.getPrivateUserRoom(payload.receiver_id);
+                        this.io.to(receiverPrivateRoom).emit(_ChatConstant.CHAT_CONVERSATION_UPDATE, payload);
+                    }
+                }
+            }
+        }
+        catch (error) {
+            console.error('ChatService@handleLaravelMessage error', error);
+        }
+    }
+
+    /**
+     * Xử lý khi client kết nối (QUAN TRỌNG: Đã thêm Callback)
+     */
+    protected handleConnection(socket: Socket) {
+        const user = socket.data.user as UserSession;
+        const userPrivateRoom = this.getPrivateUserRoom(user.id);
+
+        // Tự động join phòng cá nhân (để nhận noti riêng)
+        socket.join(userPrivateRoom);
+
+        // --- JOIN ROOM CÓ CALLBACK ---
+        this.updateUserOnlineStatus(user?.id || '', true);
+
+        socket.on(
+            'join',
+            (
+                { roomId },
+                callback: (data: {
+                    status: 'ok' | 'error';
+                    message?: string;
+                }) => void,
+            ) => {
+                try {
+                    if (!roomId) {
+                        callback({
+                            status: 'error',
+                            message: 'Missing roomId',
+                        });
+                        return;
+                    }
+
+                    const roomName = this.getConversationRoom(roomId);
+                    socket.join(roomName);
+
+                    // Báo lại cho Client biết là đã vào thành công
+                    callback({ status: 'ok' });
+                } catch (error) {
+                    console.error('Join Error:', error);
+                    callback({
+                        status: 'error',
+                        message: 'Internal Server Error',
+                    });
+                }
+            },
+        );
+
+        // --- LEAVE ROOM CÓ CALLBACK ---
+        socket.on(
+            'leave',
+            (
+                { roomId },
+                callback: (data: {
+                    status: 'ok' | 'error';
+                    message?: string;
+                }) => void,
+            ) => {
+                try {
+                    if (!roomId) {
+                        callback({
+                            status: 'error',
+                            message: 'Missing roomId',
+                        });
+                        return;
+                    }
+                    const roomName = this.getConversationRoom(roomId);
+                    socket.leave(roomName);
+                    if (typeof callback === 'function') {
+                        callback({ status: 'ok' });
+                    }
+                } catch (error) {
+                    console.error('Leave Error:', error);
+                    // Ignore error on leave
+                    callback({
+                        status: 'error',
+                        message: 'Internal Server Error',
+                    });
+                }
+            },
+        );
+    }
+
+    /**
+     * Xử lý khi client ngắt kết nối
+     */
+    protected handleDisconnect(socket: Socket) {
+        const user = socket.data.user as UserSession;
+        const token = socket.data.token as string;
+
+        const userPrivateRoom = this.getPrivateUserRoom(user.id);
+        // Rời phòng cá nhân khi ngắt kết nối
+        socket.leave(userPrivateRoom);
+
+        // Xóa token khỏi Redis khi ngắt kết nối
+        if (token) {
+            const tokenKey = this.getTokenKey(token);
+            redisPub.del(tokenKey);
+        }
+    }
+
+    /**
+     * Tạo tên phòng chat từ roomId
+     */
+    protected getConversationRoom(roomId: string): string {
+        return `conversation:${roomId}`;
+    }
+
+    /**
+     * Lấy key lưu trữ session user trong Redis từ token
+     * @param token
+     * @protected
+     */
+    protected getTokenKey(token: string): string {
+        return `${config.redis.channels.chat_auth}:${token}`;
+    }
+
+    /**
+     * Lấy tên phòng cá nhân từ userId
+     */
+    protected getPrivateUserRoom(userId: string): string {
+        return `user:${userId}`;
+    }
+
+    /**
+     * Xác thực token khi client kết nối
+     */
+    protected middleware() {
+        this.io.use(async (socket, next) => {
+            try {
+                const token = socket.handshake.auth.token;
+                if (!token) {
+                    return next(
+                        new Error('Authentication error: Token missing'),
+                    );
+                }
+                // Key mà Node đang định tìm
+                const rawKey = this.getTokenKey(token);
+                // --- DEBUG LOG ---
+                const rawData = await redisPub.get(rawKey);
+                if (!rawData) {
+                    return next(
+                        new Error(
+                            'Authentication error: Session expired or invalid',
+                        ),
+                    );
+                }
+                const user: UserSession = JSON.parse(rawData);
+                // Lưu user vào socket data
+                socket.data.user = user;
+                socket.data.token = token;
+
+                next();
+            } catch (error) {
+                console.error('Middleware Error:', error);
+                return next(new Error('Authentication error: Internal Error'));
+            }
+        });
+    }
+
+    /**
+     * Cập nhật trạng thái online/offline của user
+     */
+    protected async updateUserOnlineStatus(userId: string, isOnline: boolean) {
+        const statusKey = `${config.redis.prefix}user_online_status:${userId}`;
+
+        if (isOnline) {
+            // Set key online với TTL (ví dụ 60s) tương đương heartbeat
+            await redisPub.setex(statusKey, 60, 'online');
+        } else {
+            // Khi disconnect chủ động thì xóa luôn key
+            await redisPub.del(statusKey);
+        }
+
+        // 3. Phát sự kiện Realtime cho toàn hệ thống socket (hoặc chỉ những người liên quan)
+        this.io.emit('user_presence_change', {
+            userId: userId,
+            status: isOnline ? 'online' : 'offline',
+        });
+    }
+}

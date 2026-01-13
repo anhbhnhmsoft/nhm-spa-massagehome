@@ -14,7 +14,6 @@ use App\Services\AuthService;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\JsonResponse;
 use App\Core\Controller\BaseController;
-use Illuminate\Support\Facades\Validator;
 
 class AuthController extends BaseController
 {
@@ -129,14 +128,12 @@ class AuthController extends BaseController
                 }
             }],
             'password' => [new PasswordRule()],
-            'referral_code' => ['nullable', 'string'],
             'name' => ['required', 'string', 'max:255'],
             'gender' => ['required', Rule::in(Gender::cases())],
             'language' => ['required', Rule::in(Language::cases())],
         ], [
             'token.required' => __('auth.error.invalid_token_register'),
             'token.string' => __('auth.error.invalid_token_register'),
-            'referral_code.string' => __('validation.referrer_code'),
             'name.required' => __('validation.name.required'),
             'name.string' => __('validation.name.string'),
             'name.max' => __('validation.name.max', ['max' => 255]),
@@ -151,7 +148,6 @@ class AuthController extends BaseController
             token: $data['token'],
             password: $data['password'],
             name: $data['name'],
-            referralCode: $data['referral_code'] ?? null,
             gender: Gender::from($data['gender']),
             language: Language::from($data['language']),
         );
@@ -178,10 +174,9 @@ class AuthController extends BaseController
     public function login(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'phone' => [new PhoneRule()],
-            'password' => [new PasswordRule()],
+            'phone' => ['required', new PhoneRule()],
+            'password' => ['required', new PasswordRule()],
         ]);
-
         // Đăng nhập tài khoản
         $resService = $this->authService->login(
             phone: $data['phone'],
@@ -281,7 +276,6 @@ class AuthController extends BaseController
             token: $data['token'],
             deviceId: $data['device_id'],
             platform: $data['platform'] ?? null,
-            deviceName: $data['device_name'] ?? null,
         );
         if ($resService->isError()) {
             return $this->sendError(
@@ -387,6 +381,47 @@ class AuthController extends BaseController
             data: [
                 'user' => new UserResource($result->getData()),
             ],
+        );
+    }
+
+    /**
+     * Đăng xuất tài khoản.
+     * @return JsonResponse
+     */
+    public function logout(): JsonResponse
+    {
+        $result = $this->authService->logout();
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage(),
+            );
+        }
+        return $this->sendSuccess(
+            message: __('auth.success.logout'),
+        );
+    }
+
+    /**
+     * Khóa tài khoản.
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function lockAccount(Request $request): JsonResponse
+    {
+        $result = $this->authService->lockAccount();
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage(),
+            );
+        }
+        $res = $this->authService->lockAccount();
+        if ($res->isError()) {
+            return $this->sendError(
+                message: $res->getMessage(),
+            );
+        }
+        return $this->sendSuccess(
+            message: __('auth.success.lock_account'),
         );
     }
 }

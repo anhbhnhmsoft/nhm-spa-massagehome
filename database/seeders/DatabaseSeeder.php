@@ -10,14 +10,16 @@ use App\Enums\Language;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\ServiceDuration;
 use App\Enums\UserRole;
+use App\Models\AffiliateConfig;
+use App\Models\Banner;
 use App\Models\Category;
 use App\Models\Config;
 use App\Models\Coupon;
 use App\Models\Province;
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 
 class DatabaseSeeder extends Seeder
@@ -30,9 +32,10 @@ class DatabaseSeeder extends Seeder
         $this->seedProvince();
         $this->seedCategory();
         $this->seedAdmin();
-        $this->seedKTV();
+//        $this->seedKTV();
         $this->seedCoupon();
         $this->seedConfig();
+        $this->seedConfigAffiliate();
     }
 
     protected function seedAdmin(): void
@@ -43,12 +46,11 @@ class DatabaseSeeder extends Seeder
             $admin = User::query()->create([
                 'phone' => '012345678910',
                 'phone_verified_at' => now(),
-                'password' => bcrypt('Test1234568@'),
+                'password' => Hash::make('Test12345678@'),
                 'name' => 'Admin System',
                 'role' => UserRole::ADMIN->value,
                 'language' => Language::VIETNAMESE->value,
                 'is_active' => true,
-                'referral_code' => 'ADMIN001',
             ]);
         } catch (\Exception $exception) {
             dump($exception);
@@ -80,7 +82,6 @@ class DatabaseSeeder extends Seeder
                     'role' => UserRole::KTV->value,
                     'language' => Language::VIETNAMESE->value,
                     'is_active' => true,
-                    'referral_code' => Helper::generateReferCodeUser(UserRole::KTV),
                 ]);
 
                 $wallet = $user->wallet()->create([
@@ -164,11 +165,11 @@ class DatabaseSeeder extends Seeder
                     Language::CHINESE->value => '全身按摩',
                 ],
                 'description' => [
-                    Language::VIETNAMESE->value => fake('vi_VN')->paragraph(),
-                    Language::ENGLISH->value => fake('en_US')->paragraph(),
-                    Language::CHINESE->value => fake('zh_CN')->paragraph(),
+                    Language::VIETNAMESE->value => 'Liệu trình massage toàn thân giúp thư giãn cơ bắp, cải thiện tuần hoàn máu và giảm căng thẳng sau ngày dài mệt mỏi.',
+                    Language::ENGLISH->value => 'A full body massage therapy that helps relax muscles, improve blood circulation, and relieve stress after a long day.',
+                    Language::CHINESE->value => '全身按摩疗程，有助于放松肌肉、促进血液循环，并缓解一天后的疲劳与压力。',
                 ],
-                'image_url' => fake()->imageUrl(),
+                'image_url' => null,
                 'position' => 1,
                 'is_featured' => true,
                 'usage_count' => fake()->numberBetween(0, 100),
@@ -181,11 +182,11 @@ class DatabaseSeeder extends Seeder
                     Language::CHINESE->value => '手 massage',
                 ],
                 'description' => [
-                    Language::VIETNAMESE->value => fake('vi_VN')->paragraph(),
-                    Language::ENGLISH->value => fake('en_US')->paragraph(),
-                    Language::CHINESE->value => fake('zh_CN')->paragraph(),
+                    Language::VIETNAMESE->value => 'Liệu trình massage toàn thân giúp thư giãn cơ bắp, cải thiện tuần hoàn máu và giảm căng thẳng sau ngày dài mệt mỏi.',
+                    Language::ENGLISH->value => 'A full body massage therapy that helps relax muscles, improve blood circulation, and relieve stress after a long day.',
+                    Language::CHINESE->value => '全身按摩疗程，有助于放松肌肉、促进血液循环，并缓解一天后的疲劳与压力。',
                 ],
-                'image_url' => fake()->imageUrl(),
+                'image_url' => null,
                 'position' => 2,
                 'is_featured' => true,
                 'usage_count' => fake()->numberBetween(0, 100),
@@ -193,16 +194,16 @@ class DatabaseSeeder extends Seeder
             ]);
             Category::query()->create([
                 'name' => [
-                    Language::VIETNAMESE->value => 'Massage Thụy Điển',
-                    Language::ENGLISH->value => 'Foot Massage',
-                    Language::CHINESE->value => '脚 massage',
+                    Language::VIETNAMESE->value => 'Massage toàn thân',
+                    Language::ENGLISH->value => 'Full Body Massage',
+                    Language::CHINESE->value => '全身按摩',
                 ],
                 'description' => [
-                    Language::VIETNAMESE->value => fake('vi_VN')->paragraph(),
-                    Language::ENGLISH->value => fake('en_US')->paragraph(),
-                    Language::CHINESE->value => fake('zh_CN')->paragraph(),
+                    Language::VIETNAMESE->value => 'Liệu trình chuyên sâu cho vùng cổ, vai và gáy, giúp giảm đau nhức do ngồi lâu hoặc làm việc căng thẳng.',
+                    Language::ENGLISH->value => 'A targeted therapy for neck and shoulders to relieve pain caused by long sitting or work stress.',
+                    Language::CHINESE->value => '针对颈部和肩部的深层按摩，有效缓解久坐或工作压力引起的酸痛。',
                 ],
-                'image_url' => fake()->imageUrl(),
+                'image_url' => null,
                 'position' => 3,
                 'is_featured' => true,
                 'usage_count' => fake()->numberBetween(0, 100),
@@ -215,11 +216,11 @@ class DatabaseSeeder extends Seeder
                     Language::CHINESE->value => '头 massage',
                 ],
                 'description' => [
-                    Language::VIETNAMESE->value => fake('vi_VN')->paragraph(),
-                    Language::ENGLISH->value => fake('en_US')->paragraph(),
-                    Language::CHINESE->value => fake('zh_CN')->paragraph(),
+                    Language::VIETNAMESE->value => 'Massage da đầu giúp thư giãn thần kinh, cải thiện giấc ngủ và giảm căng thẳng tinh thần.',
+                    Language::ENGLISH->value => 'A head massage that relaxes the nervous system, improves sleep quality, and reduces mental stress.',
+                    Language::CHINESE->value => '头部按摩有助于放松神经系统，改善睡眠质量并缓解精神压力。',
                 ],
-                'image_url' => fake()->imageUrl(),
+                'image_url' => null,
                 'position' => 4,
                 'is_featured' => false,
                 'usage_count' => fake()->numberBetween(0, 100),
@@ -232,11 +233,11 @@ class DatabaseSeeder extends Seeder
                     Language::CHINESE->value => '脚 massage',
                 ],
                 'description' => [
-                    Language::VIETNAMESE->value => fake('vi_VN')->paragraph(),
-                    Language::ENGLISH->value => fake('en_US')->paragraph(),
-                    Language::CHINESE->value => fake('zh_CN')->paragraph(),
+                    Language::VIETNAMESE->value => 'Massage chân giúp giảm sưng mỏi, kích thích huyệt đạo và cải thiện lưu thông máu.',
+                    Language::ENGLISH->value => 'A leg and foot massage that reduces swelling, stimulates acupressure points, and improves blood circulation.',
+                    Language::CHINESE->value => '足部按摩有助于缓解肿胀与疲劳，刺激穴位并促进血液循环。',
                 ],
-                'image_url' => fake()->imageUrl(),
+                'image_url' => null,
                 'position' => 5,
                 'is_featured' => false,
                 'usage_count' => fake()->numberBetween(0, 100),
@@ -314,14 +315,6 @@ class DatabaseSeeder extends Seeder
                 ]
             );
             Config::query()->updateOrCreate(
-                ['config_key' => ConfigName::PAYOS_CHECKSUM_KEY->value],
-                [
-                    'config_value' => 'bcdaecc9ad73edff55c076519e5ab5e127fd9681c13cfd19de1dfa29d9d8fce9',
-                    'config_type' => ConfigType::STRING->value,
-                    'description' => 'Mã checksum key PayOS dùng để tích hợp thanh toán PayOS.',
-                ]
-            );
-            Config::query()->updateOrCreate(
                 ['config_key' => ConfigName::CURRENCY_EXCHANGE_RATE->value],
                 [
                     'config_value' => '1000',
@@ -333,7 +326,7 @@ class DatabaseSeeder extends Seeder
             Config::query()->updateOrCreate(
                 ['config_key' => ConfigName::GOONG_API_KEY->value],
                 [
-                    'config_value' => '',
+                    'config_value' => 'dpxUCPncHcWczUMJY5EfatOFCpxGI2tB9ADsR4sb',
                     'config_type' => ConfigType::STRING->value,
                     'description' => 'Mã API key Goong dùng để tích hợp tìm kiếm địa chỉ.',
                 ]
@@ -341,7 +334,7 @@ class DatabaseSeeder extends Seeder
             Config::query()->updateOrCreate(
                 ['config_key' => ConfigName::BREAK_TIME_GAP->value],
                 [
-                    'config_value' => '15',
+                    'config_value' => '60',
                     'config_type' => ConfigType::NUMBER->value,
                     'description' => 'Khoảng cách giữa 2 lần phục vụ của kỹ thuật viên tính bằng phút',
                 ]
@@ -349,9 +342,87 @@ class DatabaseSeeder extends Seeder
             Config::query()->updateOrCreate(
                 ['config_key' => ConfigName::DISCOUNT_RATE->value],
                 [
-                    'config_value' => '20',
+                    'config_value' => '80',
                     'config_type' => ConfigType::NUMBER->value,
-                    'description' => 'Tỷ lệ chiết khấu',
+                    'description' => 'Tỷ lệ chiết khấu ứng dụng nhận được',
+                ]
+            );
+
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::SP_PHONE->value],
+                [
+                    'config_value' => '0865643858',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'Số điện thoại hỗ trợ',
+                ]
+            );
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::SP_ZALO->value],
+                [
+                    'config_value' => 'https://zalo.me/0865643858',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'Trang Zalo hỗ trợ của admin',
+                ]
+            );
+
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::SP_FACEBOOK->value],
+                [
+                    'config_value' => 'https://facebook.com/admin.support',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'Trang Facebook hỗ trợ của admin',
+                ]
+            );
+
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::SP_WECHAT->value],
+                [
+                    'config_value' => 'wechat_admin_support',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'Link WeChat hỗ trợ của admin',
+                ]
+            );
+        } catch (\Exception $e) {
+            DB::rollBack();
+            dump($e);
+            return false;
+        }
+        DB::commit();
+        return true;
+    }
+
+    public function seedConfigAffiliate(): bool
+    {
+        DB::beginTransaction();
+        try {
+            AffiliateConfig::query()->updateOrCreate(
+                ['target_role' => UserRole::AGENCY->value],
+                [
+                    'name' => 'Cấu hình dành cho đại lý',
+                    'commission_rate' => '10',
+                    'min_commission' => '10000',
+                    'max_commission' => '100000',
+                    'description' => 'Tỷ lệ hoa hồng đại lý',
+                ]
+            );
+            AffiliateConfig::query()->updateOrCreate(
+                ['target_role' => UserRole::KTV->value],
+                [
+                    'name' => 'Cấu hình dành cho kỹ thuật viên',
+                    'commission_rate' => '10',
+                    'min_commission' => '10000',
+                    'max_commission' => '100000',
+                    'description' => 'Tỷ lệ hoa hồng kỹ thuật viên',
+                ]
+            );
+            AffiliateConfig::query()->updateOrCreate(
+                ['target_role' => UserRole::CUSTOMER->value],
+                [
+                    'name' => 'Cấu hình dành cho khách hàng',
+                    'commission_rate' => '10',
+                    'min_commission' => '10000',
+                    'max_commission' => '100000',
+                    'description' => 'Tỷ lệ hoa hồng khách hàng',
                 ]
             );
         } catch (\Exception $e) {
@@ -459,4 +530,5 @@ class DatabaseSeeder extends Seeder
         DB::commit();
         return true;
     }
+
 }

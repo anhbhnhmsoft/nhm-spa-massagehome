@@ -1,0 +1,37 @@
+<?php
+
+namespace App\Models;
+
+use App\Core\GenerateId\HasBigIntId;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class CouponUser extends Model
+{
+    use HasBigIntId, SoftDeletes;
+
+    protected $table = 'coupon_users';
+
+    protected $fillable = [
+        'coupon_id',
+        'user_id',
+        'is_used',
+    ];
+
+    protected $casts = [
+        'id' => 'string',
+        'coupon_id' => 'string',
+        'user_id' => 'string',
+        'is_used' => 'boolean',
+    ];
+
+    public function coupon()
+    {
+        return $this->belongsTo(Coupon::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+}

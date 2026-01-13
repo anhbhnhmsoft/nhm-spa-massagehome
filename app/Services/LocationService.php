@@ -126,11 +126,11 @@ class LocationService  extends BaseService
             $response = Http::timeout(10)->get(
                 $this->createLink(self::ENDPOINT_DETAIL . '?' . http_build_query($params))
             );
-
             $data = $response->json();
-
-            if ($response->failed() || $data['status'] !== 'OK') {
-                $errorMessage = __('error.goong_error');
+            if ($response->failed() || ($data['status'] ?? 'OK') !== 'OK') {
+                $status = $data['status'] ?? $response->status();
+                LogHelper::error("Goong API Error: " . $response->body() . " | Place ID: " . $placeId);
+                $errorMessage = __('error.goong_error', ['status' => $status . " - ID: " . $placeId]);
                 throw new ServiceException($errorMessage);
             }
 
@@ -143,9 +143,13 @@ class LocationService  extends BaseService
             $result = $data['result'];
             $locationData = $result['geometry']['location'] ?? [];
 
+            $name = $result['name'] ?? null;
+            $address = $result['formatted_address'] ?? null;
+            $formattedAddress = implode(', ', array_filter([$name, $address]));
+
             $dataToCache = [
                 'place_id'          => $result['place_id'] ?? $placeId,
-                'formatted_address' => $result['name'] . ', ' . $result['formatted_address'] ?? '',
+                'formatted_address' => $formattedAddress,
                 'latitude'          => $locationData['lat'] ?? null,
                 'longitude'         => $locationData['lng'] ?? null,
                 'raw_data'          => json_encode($result),
@@ -154,13 +158,12 @@ class LocationService  extends BaseService
             ];
 
             /** 3. Cache job */
-            ProcessCachingPlaceJob::dispatch([$dataToCache])->onQueue('locations');
-            // $this->processCachingPlace([$dataToCache]);
+            ProcessCachingPlaceJob::dispatch([$dataToCache]);
 
             /** 4. Trả output chuẩn hoá */
             return ServiceReturn::success([
                 'place_id'          => $result['place_id'] ?? $placeId,
-                'formatted_address' => $result['name'] . ', ' . $result['formatted_address'] ?? '',
+                'formatted_address' => $formattedAddress,
                 'latitude'          => $locationData['lat'] ?? null,
                 'longitude'         => $locationData['lng'] ?? null,
             ]);
@@ -250,7 +253,7 @@ class LocationService  extends BaseService
                     ];
                 }
 
-                ProcessCachingPlaceJob::dispatch($placesToCache)->onQueue('locations');
+                ProcessCachingPlaceJob::dispatch($placesToCache);
             }
 
             return ServiceReturn::success($dataReturn);
@@ -272,7 +275,6 @@ class LocationService  extends BaseService
             if (empty($places)) {
                 return ServiceReturn::success();
             }
-            LogHelper::error("LocationService@processCachingPlace", null, ['places' => $places]);
             $updateColumn = [
                 'formatted_address',
                 'keyword',
@@ -292,7 +294,6 @@ class LocationService  extends BaseService
 
                 return $place;
             })->toArray();
-            LogHelper::error("LocationService@processCachingPlace", null, ['places' => $preparedPlaces]);
             $this->geoCachingPlaceRepository->query()->upsert($preparedPlaces, 'place_id', $updateColumn);
 
             return ServiceReturn::success();

@@ -1,24 +1,26 @@
 import dotenv from 'dotenv';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
-// Setup __dirname cho ESM
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const envPath = path.resolve(process.cwd(), '.env');
 
-// Load .env từ thư mục gốc Laravel (nhảy ra ngoài 3 cấp: src -> node_server -> root)
-dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+dotenv.config({ path: envPath });
 
+const prefix = process.env.REDIS_PREFIX || 'massagehome-redis-';
 export const config = {
     redis: {
         host: process.env.REDIS_HOST || '127.0.0.1',
         port: Number(process.env.REDIS_PORT) || 6379,
         password: process.env.REDIS_PASSWORD || undefined,
+        prefix: prefix,
         channels: {
-            notification: process.env.REDIS_CHANNEL_NOTIFICATION || 'expo_notifications',
+            // Nối luôn prefix vào đây
+            notification: `${prefix}${process.env.REDIS_CHANNEL_NOTIFICATION || 'expo_notifications'}`,
+            chat: `${prefix}${process.env.REDIS_CHANNEL_CHAT || 'chat_messages'}`,
+            chat_auth: `${prefix}${process.env.REDIS_CHANNEL_CHAT_AUTH || 'chat_auth'}`,
         }
     },
     app: {
-        port: Number(process.env.SOCKET_PORT) || 3000, // Port cho Socket server sau này
+        host: process.env.NODE_HOST || '0.0.0.0',
+        port: Number(process.env.NODE_PORT) || 3000,
     }
 };

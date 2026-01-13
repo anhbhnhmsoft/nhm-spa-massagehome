@@ -13,4 +13,9 @@ enum ServiceDuration: int
     case TWO_AND_HALF_HOUR = 150;
     case THREE_HOUR = 180;
     case FOUR_HOUR = 240;
+
+    public static function values(): array
+    {
+        return array_column(self::cases(), 'value');
+    }
 }

@@ -23,7 +23,6 @@ class AffiliateConfigForm extends Component implements HasForms
     {
         $settingService = app(ConfigService::class);
         $result = $settingService->getAllAffiliateConfigs();
-
         if ($result->isSuccess()) {
             $this->form->fill([
                 'configs' => $result->getData(),
@@ -37,35 +36,57 @@ class AffiliateConfigForm extends Component implements HasForms
             ->schema([
                 Repeater::make('configs')
                     ->label(__('admin.setting.section.affiliate_config'))
+                    ->columns(3)
                     ->schema([
                         TextInput::make('name')
                             ->label(__('admin.common.table.name'))
-                            ->required(),
+                            ->required()
+                            ->validationMessages([
+                                'required' => __('common.error.required'),
+                            ]),
                         TextInput::make('commission_rate')
                             ->label(__('admin.setting.fields.commission_rate'))
                             ->numeric()
                             ->suffix('%')
-                            ->required(),
+                            ->required()
+                            ->validationMessages([
+                                'required' => __('common.error.required'),
+                            ]),
                         TextInput::make('min_commission')
                             ->label(__('admin.setting.fields.min_commission'))
                             ->numeric()
-                            ->prefix('$')
-                            ->required(),
+                            ->prefix('point')
+                            ->required()
+                            ->validationMessages([
+                                'required' => __('common.error.required'),
+                            ]),
                         TextInput::make('max_commission')
                             ->label(__('admin.setting.fields.max_commission'))
                             ->numeric()
-                            ->prefix('$')
-                            ->required(),
+                            ->prefix('point')
+                            ->required()
+                            ->validationMessages([
+                                'required' => __('common.error.required'),
+                            ]),
                         Select::make('target_role')
                             ->label(__('admin.setting.fields.target_role'))
                             ->options(\App\Enums\UserRole::class)
-                            ->required(),
-                        Toggle::make('is_active')->label(__('admin.setting.fields.is_active')),
+                            ->required()
+                            ->disabled()
+                            ->validationMessages([
+                                'required' => __('common.error.required'),
+                            ]),
+                        Toggle::make('is_active')
+                            ->label(__('admin.setting.fields.is_active'))
+                            ->disabled()
+                            ->validationMessages([
+                                'required' => __('common.error.required'),
+                            ]),
                     ])
                     ->addable(false)
-                    ->deletable()
+                    ->deletable(false)
                     ->itemLabel(fn(array $state): ?string => $state['name'] ?? null),
-            ]);
+            ])->statePath('data');
     }
 
     public function create(): void
