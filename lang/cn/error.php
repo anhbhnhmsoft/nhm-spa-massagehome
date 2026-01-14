@@ -41,4 +41,5 @@ return [
     'not_zalo_user' => '手机号不是 Zalo 用户',
     'couldnot_send_otp' => '无法连接到 Zalo 发送 OTP',
     'zalo_service_unavailable' => '手机号未注册 Zalo 服务',
+    'invalid_data' => '无效数据',
 ];

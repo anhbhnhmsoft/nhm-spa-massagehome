@@ -6,6 +6,9 @@ use App\Core\Cache\CacheKey;
 use App\Core\Cache\Caching;
 use App\Core\Helper;
 use App\Core\LogHelper;
+use App\Core\Service\ServiceException;
+use App\Core\Service\ServiceReturn;
+use App\Enums\ConfigName;
 use App\Enums\ZaloEndPointExtends;
 use Illuminate\Support\Facades\Http;
 use Zalo\Zalo;
@@ -18,15 +21,26 @@ class ZaloService
     private string $oaId;
 
     private string $templateId;
+    private ConfigService $configService;
+
+    private string $merchantId;
+    private string $merchantKey1;
 
     private const ACCESS_TOKEN_EXPIRE_BUFFER = 60 * 5; // 5 minutes
 
-    public function __construct()
+    public function __construct(
+        ConfigService $configService,
+    )
     {
-        $this->appId = config('services.zalo.app_id');
-        $this->appSecret = config('services.zalo.app_secret');
-        $this->oaId = config('services.zalo.oa_id');
-        $this->templateId = config('services.zalo.otp_template');
+        $this->configService = $configService;
+
+        $this->merchantId = strval($this->configService->getConfigValue(ConfigName::ZALO_MERCHANT_ID));
+        $this->merchantKey1 = strval($this->configService->getConfigValue(ConfigName::ZALO_MERCHANT_KEY_1));
+
+        $this->appId = strval($this->configService->getConfigValue(ConfigName::ZALO_APP_ID));
+        $this->appSecret = strval($this->configService->getConfigValue(ConfigName::ZALO_APPSECRET_KEY));
+        $this->oaId = strval($this->configService->getConfigValue(ConfigName::ZALO_OA_ID));
+        $this->templateId = strval($this->configService->getConfigValue(ConfigName::ZALO_TEMPLATE_ID));
 
         if (!$this->appId || !$this->appSecret || !$this->oaId || !$this->templateId) {
             throw new \RuntimeException('Missing Zalo configuration');
@@ -231,6 +245,64 @@ class ZaloService
                 'success' => false,
                 'message' => __('error.couldnot_send_otp')
             ];
+        }
+    }
+
+    /* =======================================================
+     * PAYMENT METHODS
+     * =======================================================
+     */
+
+    public function createOrder(
+        int $amount,
+        int $orderCode,
+        string $description,
+        int $userId
+    ): ServiceReturn {
+        try {
+            $app = config('app.debug');
+
+            $data = [
+                'app_id' => $this->merchantId,
+                'app_trans_id' => date('ymd') . '_' . $orderCode,
+                'app_user' => (string)$userId,
+                'amount' => $amount,
+                'item' => json_encode([]),
+                'description' => $description,
+                'embed_data' => json_encode([
+                    'redirecturl' => route('home'),
+                ]),
+                'callback_url' => route('webhook.zalopay'),
+            ];
+
+            $data['mac'] = hash_hmac(
+                'sha256',
+                implode('|', [
+                    $data['app_id'],
+                    $data['app_trans_id'],
+                    $data['app_user'],
+                    $data['amount'],
+                    $data['app_time'] = round(microtime(true) * 1000),
+                    $data['embed_data'],
+                    $data['item'],
+                ]),
+                $this->merchantKey1,
+            );
+
+            $response = Http::asForm()->post( $app ? ZaloEndPointExtends::API_CREATE_ORDER : ZaloEndPointExtends::SB_API_CREATE_ORDER, $data);
+
+            $result = $response->json();
+
+            if (($result['return_code'] ?? -1) !== 1) {
+                throw new \Exception($result['return_message']);
+            }
+
+            return ServiceReturn::success($result);
+        } catch (ServiceException $e) {
+            return ServiceReturn::error($e->getMessage());
+        } catch (\Throwable $e) {
+            LogHelper::error('ZaloService@createOrder', $e);
+            return ServiceReturn::error(__('error.unable_to_get_access_token'));
         }
     }
 
