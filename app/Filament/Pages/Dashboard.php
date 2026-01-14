@@ -30,7 +30,7 @@ class Dashboard extends PagesDashboard
     {
         return [
             \App\Filament\Widgets\OperationCostStats::class,
-            \App\Filament\Widgets\AddOnServiceStats::class,
+//            \App\Filament\Widgets\AddOnServiceStats::class,
             \App\Filament\Widgets\GeneralStats::class,
             \App\Filament\Widgets\RevenueRefundChart::class,
             \App\Filament\Widgets\ProfitChart::class,

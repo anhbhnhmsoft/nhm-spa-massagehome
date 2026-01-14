@@ -25,9 +25,11 @@ class AgencyResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    protected static ?string $cluster = AgencyCluster::class;
 
-    protected static string | \UnitEnum | null $navigationGroup = 'agency';
+    public static function getNavigationGroup(): \UnitEnum|string|null
+    {
+        return __('filament.navigation.agency');
+    }
 
     protected static ?string $recordTitleAttribute = 'User';
 

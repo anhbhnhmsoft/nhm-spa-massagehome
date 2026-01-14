@@ -21,7 +21,10 @@ class BannerResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedPhoto;
 
-    protected static ?string $cluster = MarketingCluster::class;
+    public static function getNavigationGroup(): \UnitEnum|string|null
+    {
+        return __('filament.navigation.marketing');
+    }
 
     protected static ?string $recordTitleAttribute = 'Banner';
 

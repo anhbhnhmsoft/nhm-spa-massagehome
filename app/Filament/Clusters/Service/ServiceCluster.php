@@ -20,4 +20,9 @@ class ServiceCluster extends Cluster
     {
         return __('admin.nav.service');
     }
+
+    public static function getNavigationGroup(): \UnitEnum|string|null
+    {
+        return __('filament.navigation.service');
+    }
 }

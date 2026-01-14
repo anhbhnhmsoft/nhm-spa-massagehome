@@ -20,4 +20,9 @@ class CategoryCluster extends Cluster
     {
         return __('admin.nav.category');
     }
+
+    public static function getNavigationGroup(): \UnitEnum|string|null
+    {
+        return __('filament.navigation.category');
+    }
 }

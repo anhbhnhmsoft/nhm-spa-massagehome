@@ -20,4 +20,9 @@ class UserCluster extends Cluster
     {
         return __('admin.nav.user');
     }
+
+    public static function getNavigationGroup(): \UnitEnum|string|null
+    {
+        return __('filament.navigation.user');
+    }
 }

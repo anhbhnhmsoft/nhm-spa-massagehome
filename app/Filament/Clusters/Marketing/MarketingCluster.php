@@ -21,4 +21,9 @@ class MarketingCluster extends Cluster
     {
         return __('admin.nav.marketing');
     }
+
+    public static function getNavigationGroup(): \UnitEnum|string|null
+    {
+        return __('filament.navigation.marketing');
+    }
 }

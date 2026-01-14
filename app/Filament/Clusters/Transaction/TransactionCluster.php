@@ -20,4 +20,9 @@ class TransactionCluster extends Cluster
     {
         return __('admin.nav.transaction');
     }
+
+    public static function getNavigationGroup(): \UnitEnum|string|null
+    {
+        return __('filament.navigation.transaction');
+    }
 }
