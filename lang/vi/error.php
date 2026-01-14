@@ -45,4 +45,5 @@ return [
     'user_blocked' => 'Số điện thoại đã bị khóa',
     'not_zalo_user' => 'Số điện thoại không phải là người dùng Zalo',
     'zalo_service_unavailable' => 'Số điện thoại này chưa đăng ký dịch vụ Zalo',
+    'invalid_data' => 'Dữ liệu không hợp lệ',
     ];

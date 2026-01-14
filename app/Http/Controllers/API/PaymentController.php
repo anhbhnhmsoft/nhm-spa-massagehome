@@ -6,9 +6,11 @@ use App\Core\Controller\BaseController;
 use App\Core\Controller\ListRequest;
 use App\Core\Helper;
 use App\Enums\BankBin;
+use App\Enums\ConfigName;
 use App\Enums\PaymentType;
 use App\Http\Resources\Payment\WalletResource;
 use App\Http\Resources\Payment\WalletTransactionResource;
+use App\Services\ConfigService;
 use App\Services\PaymentService;
 use App\Services\PayOsService;
 use Illuminate\Http\JsonResponse;
@@ -18,11 +20,13 @@ use Illuminate\Validation\Rule;
 
 class PaymentController extends BaseController
 {
-
+    private string $merchantKey2;
     public function __construct(
         protected PaymentService $paymentService,
+        protected ConfigService  $configService,
     )
     {
+        $this->merchantKey2 = strval($this->configService->getConfigValue(ConfigName::ZALO_MERCHANT_KEY_2));
     }
 
     /**
@@ -179,5 +183,28 @@ class PaymentController extends BaseController
         return $this->sendSuccess(
             data: $bank,
         );
+    }
+
+    /**
+     * Xử lý webhook ZaloPay.
+     * @param Request $request
+     */
+    public function handleWebhookZaloPay(Request $request)
+    {
+        $data = json_decode($request->input('data'), true);
+        $mac  = $request->input('mac');
+
+        $calcMac = hash_hmac('sha256', $request->input('data'), $this->merchantKey2);
+
+        if ($mac !== $calcMac) {
+            return response()->json(['return_code' => -1]);
+        }
+
+        if ($data['status'] === 1) {
+            $orderCode = explode('_', $data['app_trans_id'])[1];
+            $this->paymentService->handleZaloPayTransaction($orderCode, $data);
+        }
+
+        return response()->json(['return_code' => 1]);
     }
 }

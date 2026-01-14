@@ -169,6 +169,8 @@ Route::middleware('set-api-locale')->group(function () {
         Route::prefix('webhook')->group(function () {
             // Xử lý webhook PayOS
             Route::post('payos', [PaymentController::class, 'handleWebhookPayOs']);
+            // Xử lý webhook ZaloPay
+            Route::post('zalopay', [PaymentController::class, 'handleWebhookZaloPay'])->name('webhook.zalopay');
         });
 
         // router cần auth
