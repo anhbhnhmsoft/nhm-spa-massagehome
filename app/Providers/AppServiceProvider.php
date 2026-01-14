@@ -61,6 +61,7 @@ use App\Services\WalletService;
 use App\Services\AffiliateService;
 use App\Services\ReviewService;
 use App\Services\UserFileService;
+use App\Services\ZaloService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -141,6 +142,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(UserWithdrawInfoService::class);
         $this->app->singleton(UserFileService::class);
         $this->app->singleton(AgencyService::class);
+        $this->app->singleton(ZaloService::class);
     }
 
     /**

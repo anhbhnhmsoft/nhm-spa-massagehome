@@ -39,6 +39,7 @@ class AuthService extends BaseService
         protected UserRepository        $userRepository,
         protected UserProfileRepository $userProfileRepository,
         protected WalletRepository      $walletRepository,
+        protected ZaloService $zaloService,
     )
     {
         parent::__construct();
@@ -665,8 +666,11 @@ class AuthService extends BaseService
      */
     protected function createCacheRegisterOtp(string $phone): void
     {
-        //        $otp = rand(100000, 999999);
-        $otp = 123456; // Test
+        $otp = rand(100000, 999999);
+        $result = $this->zaloService->pushOTPAuthorize($phone, $otp);
+        if (!$result['success']) {
+            throw new ServiceException($result ['message']);
+        }
         // Set OTP limit số lần gửi lại
         if (!Caching::hasCache(key: CacheKey::CACHE_KEY_RESEND_REGISTER_OTP, uniqueKey: $phone)) {
             Caching::setCache(

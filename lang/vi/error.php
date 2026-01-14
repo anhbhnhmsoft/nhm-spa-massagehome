@@ -40,4 +40,9 @@ return [
     'cannot_change_referrer' => 'Bạn đã có người giới thiệu, không thể thay đổi',
     'exchange_rate_not_found' => 'Tỉ lệ đổi tiền không tồn tại',
     'discount_rate_not_found' => 'Tỉ lệ chiết khấu không tồn tại',
-];
+    'unvalid_phonenumber' => 'Số điện thoại không hợp lệ',
+    'unable_to_get_access_token' => 'Không thể kết nối đến Zalo',
+    'user_blocked' => 'Số điện thoại đã bị khóa',
+    'not_zalo_user' => 'Số điện thoại không phải là người dùng Zalo',
+    'zalo_service_unavailable' => 'Số điện thoại này chưa đăng ký dịch vụ Zalo',
+    ];

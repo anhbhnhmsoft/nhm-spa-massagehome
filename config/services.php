@@ -43,5 +43,10 @@ return [
         'channel_chat' => env('REDIS_CHANNEL_CHAT', 'chat_messages'),
         'channel_chat_auth' => env('REDIS_CHANNEL_CHAT_AUTH', 'chat_auth'),
     ],
-
+    'zalo' => [
+        'app_id' => env('ZALO_APP_ID'),
+        'app_secret' => env('ZALO_APP_SECRET'),
+        'oa_id' => env('ZALO_OA_ID'),
+        'otp_template' => env('ZALO_OTP_TEMPLATE'),
+    ],
 ];

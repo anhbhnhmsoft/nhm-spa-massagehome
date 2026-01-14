@@ -15,3 +15,8 @@ Schedule::job(new CheckOvertimeBookingJob())
     ->name('check-overtime-bookings')
     ->withoutOverlapping()
     ->onOneServer();
+Schedule::command('app:refresh-zalo-token-oa-command')
+    ->everyThirtyMinutes()
+    ->name('refresh-zalo-token-oa')
+    ->withoutOverlapping()
+    ->onOneServer();
