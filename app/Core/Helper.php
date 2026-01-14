@@ -247,10 +247,4 @@ final class Helper
         return preg_match('/^84\d{9}$/', $phone);
     }
 
-    /**
-     * Generate secure random token
-     *
-     * @param int $length
-     * @return string
-     */
 }

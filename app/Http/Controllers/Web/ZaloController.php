@@ -25,7 +25,7 @@ class ZaloController extends Controller
     {
         $callbackUrl = route('zalo.callback');
         $state = Str::random(40);
-        // You might want to store state in session to verify in callback, but for simplicity we just pass it
+        // cần lưu state  để kiểm tra khi callback
         // session(['zalo_auth_state' => $state]);
 
         $url = $this->zaloService->getAuthorizationUrlForCustomer($callbackUrl, $state);
@@ -60,7 +60,7 @@ class ZaloController extends Controller
 
         return response()->json([
             'message' => 'Zalo Token Initialized Successfully',
-            'data' => $result,
+            'data' => true,
         ]);
     }
 }
