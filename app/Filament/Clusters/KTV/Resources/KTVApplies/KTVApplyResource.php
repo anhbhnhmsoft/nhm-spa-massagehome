@@ -27,7 +27,10 @@ class KTVApplyResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    protected static ?string $cluster = KTVCluster::class;
+    public static function getNavigationGroup(): \UnitEnum|string|null
+    {
+        return __('filament.navigation.ktv');
+    }
 
     protected static ?string $recordTitleAttribute = 'User';
 

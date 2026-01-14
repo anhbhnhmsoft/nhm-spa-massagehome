@@ -23,7 +23,10 @@ class BookingResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    protected static ?string $cluster = ServiceCluster::class;
+    public static function getNavigationGroup(): \UnitEnum|string|null
+    {
+        return __('filament.navigation.service');
+    }
 
     protected static ?string $recordTitleAttribute = 'ServiceBooking';
 

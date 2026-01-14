@@ -335,6 +335,13 @@ return
                 'is_active' => '激活',
                 'break_time_gap' => '班次间隔',
                 'discount_rate' => '折扣率',
+                'discount_rate_referrer_agency' => '代理商折扣率',
+                'discount_rate_referrer_ktv' => '技师折扣率',
+                'discount_rate_referrer_ktv_leader' => '技师主管折扣率',
+                'sp_zalo' => 'Zalo 支持',
+                'sp_facebook' => 'Facebook 支持',
+                'sp_phone' => '客服电话',
+                'sp_wechat' => 'Wechat 支持',
             ],
             'actions' => [
                 'save' => '保存更改',

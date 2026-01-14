@@ -21,5 +21,8 @@ class AgencyCluster extends Cluster
         return __('admin.nav.agency');
     }
 
-    protected static string | \UnitEnum | null $navigationGroup = 'agency';
+    public static function getNavigationGroup(): \UnitEnum|string|null
+    {
+        return __('filament.navigation.agency');
+    }
 }
