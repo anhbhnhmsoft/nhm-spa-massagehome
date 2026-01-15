@@ -330,4 +330,20 @@ class ConfigService extends BaseService
         return $config->getData()['config_value'];
     }
 
+    /**
+     * Lấy số lượng KTV tối thiểu cần giới thiệu để trở thành trưởng nhóm KTV
+     * @return int
+     */
+    public function getKtvLeaderMinReferrals(): int
+    {
+        try {
+            $value = $this->getConfigValue(ConfigName::KTV_LEADER_MIN_REFERRALS);
+            $intValue = (int) $value;
+
+            return $intValue > 0 ? $intValue : 10;
+        } catch (\Throwable) {
+            return 10;
+        }
+    }
+
 }

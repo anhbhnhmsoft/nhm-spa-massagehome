@@ -340,6 +340,8 @@ return
                 'discount_rate_referrer_ktv_leader' => '技师主管折扣率',
                 'ktv_leader_min_referrals' => '成为技师主管所需邀请的技师数量',
                 'ktv_leader_min_referrals_helper' => '当技师成功邀请达到此数量的已审核技师时，将自动标记为技师主管',
+                'ktv_referral_reward_amount' => '成功邀请技师的奖励金额',
+                'ktv_referral_reward_amount_helper' => '成功邀请技师时获得的金额（积分）。设置为 0 以禁用此功能',
                 'sp_zalo' => 'Zalo 支持',
                 'sp_facebook' => 'Facebook 支持',
                 'sp_phone' => '客服电话',

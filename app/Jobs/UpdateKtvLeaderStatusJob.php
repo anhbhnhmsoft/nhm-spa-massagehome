@@ -2,12 +2,8 @@
 
 namespace App\Jobs;
 
-use App\Core\Helper;
 use App\Core\LogHelper;
-use App\Enums\ReviewApplicationStatus;
-use App\Enums\UserRole;
-use App\Repositories\UserRepository;
-use App\Repositories\UserReviewApplicationRepository;
+use App\Services\UserService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -25,49 +21,18 @@ class UpdateKtvLeaderStatusJob implements ShouldQueue
     }
 
     /**
-     * - Đếm số KTV đã được phê duyệt mà KTV này giới thiệu
+     * Cập nhật trạng thái is_leader cho KTV
      */
-    public function handle(
-        UserRepository $userRepository,
-        UserReviewApplicationRepository $reviewApplicationRepository,
-    ): void {
+    public function handle(UserService $userService): void
+    {
         try {
-            $referrer = $userRepository->query()
-                ->where('id', $this->referrerId)
-                ->where('role', UserRole::KTV->value)
-                ->first();
+            $result = $userService->updateKtvLeaderStatus($this->referrerId);
 
-            if (!$referrer) {
-                return;
-            }
-
-            // Đếm số KTV đã được duyệt mà KTV này giới thiệu
-            $invitedKtvCount = $reviewApplicationRepository->query()
-                ->where('referrer_id', $referrer->id)
-                ->where('status', ReviewApplicationStatus::APPROVED->value)
-                ->whereHas('user', function ($query) {
-                    $query->where('role', UserRole::KTV->value);
-                })
-                ->count();
-
-            if ($invitedKtvCount < Helper::getConditionToBeLeaderKtv()) {
-                return;
-            }
-
-            // Lấy hồ sơ apply KTV của người giới thiệu
-            $reviewApplication = $reviewApplicationRepository->query()
-                ->where('user_id', $referrer->id)
-                ->where('role', UserRole::KTV->value)
-                ->first();
-
-            if (!$reviewApplication) {
-                return;
-            }
-
-            // Đánh dấu là trưởng nhóm KTV
-            if (!$reviewApplication->is_leader) {
-                $reviewApplication->is_leader = true;
-                $reviewApplication->save();
+            if ($result->isError()) {
+                LogHelper::error(
+                    message: 'Lỗi UpdateKtvLeaderStatusJob@handle',
+                    ex: new \Exception($result->getMessage()),
+                );
             }
         } catch (\Throwable $exception) {
             LogHelper::error(

@@ -340,6 +340,8 @@ return
                 'discount_rate_referrer_ktv_leader' => 'Discount Rate for Referral KTV Leaders',
                 'ktv_leader_min_referrals' => 'Number of KTV referrals to become a leader',
                 'ktv_leader_min_referrals_helper' => 'When a KTV successfully refers at least this many approved KTVs, they will automatically be marked as a KTV leader',
+                'ktv_referral_reward_amount' => 'Reward amount for successful KTV referral',
+                'ktv_referral_reward_amount_helper' => 'Amount (points) received when successfully referring a KTV. Set to 0 to disable this feature',
                 'sp_zalo' => 'Zalo Support',
                 'sp_facebook' => 'Facebook Support',
                 'sp_phone' => 'Customer Service Phone',

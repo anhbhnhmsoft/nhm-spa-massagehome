@@ -454,6 +454,7 @@
     - config_value (text) -- giá trị cấu hình
     - description (text, nullable) -- mô tả cấu hình
     - KTV_LEADER_MIN_REFERRALS (number) -- số lượng KTV tối thiểu cần giới thiệu để lên KTV trưởng
+    - KTV_REFERRAL_REWARD_AMOUNT (number) -- số tiền (point) được nhận khi mời KTV thành công, nếu = 0 thì tắt tính năng
     - softDeletes
     - timestamps
 

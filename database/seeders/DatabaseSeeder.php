@@ -380,6 +380,14 @@ class DatabaseSeeder extends Seeder
                 ]
             );
             Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::KTV_REFERRAL_REWARD_AMOUNT->value],
+                [
+                    'config_value' => '0',
+                    'config_type' => ConfigType::NUMBER->value,
+                    'description' => 'Số tiền (point) được nhận khi mời KTV thành công. Nếu = 0 thì tắt tính năng này',
+                ]
+            );
+            Config::query()->updateOrCreate(
                 ['config_key' => ConfigName::SP_PHONE->value],
                 [
                     'config_value' => '0865643858',
