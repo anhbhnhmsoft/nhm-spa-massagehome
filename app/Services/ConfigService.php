@@ -316,10 +316,10 @@ class ConfigService extends BaseService
     /**
      * Lấy giá trị cấu hình theo key
      * @param ConfigName $configName
-     * @return ServiceReturn
+     * @return mixed|null
      * @throws ServiceException
      */
-    public function getConfigValue(ConfigName $configName): ServiceReturn
+    public function getConfigValue(ConfigName $configName): mixed
     {
         $config = $this->getConfig($configName);
         if ($config->isError()) {
@@ -327,7 +327,7 @@ class ConfigService extends BaseService
                 message: __("error.config_not_found")
             );
         }
-        return $config->getData()['config_value'];
+        return $config->getData()['config_value'] ?? null;
     }
 
     /**

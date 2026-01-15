@@ -17,7 +17,7 @@ class ListKtvPerformanceItem extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'avatar' => $this->avatar,
+            'avatar_url' => $this->avatar_url,
             'phone' => $this->phone,
             'total_reviews' => $this->total_reviews,
             'total_finished_bookings' => $this->total_finished_bookings, // Số lượng đặt lịch đã hoàn thành

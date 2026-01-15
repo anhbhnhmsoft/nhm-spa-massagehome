@@ -30,7 +30,7 @@ class RefreshZaloTokenOACommand extends Command
     {
         $result = $zaloService->getAccessTokenForOA();
 
-        if ($result) {
+        if ($result->isSuccess()) {
             $this->info('Refresh token OA success');
         } else {
             throw new \Exception('Refresh token OA failed');

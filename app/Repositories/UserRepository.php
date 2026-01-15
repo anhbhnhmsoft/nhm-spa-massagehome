@@ -278,7 +278,7 @@ class UserRepository extends BaseRepository
 
         // Xử lý dữ liệu cho từng item trong trang hiện tại (transform link ảnh)
         $paginator->getCollection()->transform(function ($item) {
-            $item->avatar_full = $item->avatar_url
+            $item->avatar_url = $item->avatar_url
                 ? Helper::getPublicUrl($item->avatar_url)
                 : null;
             return $item;
