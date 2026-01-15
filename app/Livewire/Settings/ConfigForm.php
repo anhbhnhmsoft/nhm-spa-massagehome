@@ -39,6 +39,7 @@ class ConfigForm extends Component implements HasSchemas
                     Grid::make()
                         ->schema([
                             Section::make(__('admin.setting.label_setting'))
+                                ->columns(2)
                                 ->schema([
                                     TextInput::make((string)ConfigName::PAYOS_CLIENT_ID->value)
                                         ->label(__('admin.setting.fields.payos_client_id'))
@@ -116,46 +117,38 @@ class ConfigForm extends Component implements HasSchemas
                                         ]),
                                     TextInput::make((string)ConfigName::SP_ZALO->value)
                                         ->label(__('admin.setting.fields.sp_zalo'))
-                                        ->required()
+                                        ->default('')
                                         ->rules([
-                                            'required',
                                             'string',
                                         ])
                                         ->validationMessages([
-                                            'required' => __('common.error.required'),
                                             'string' => __('common.error.string'),
                                         ]),
                                     TextInput::make((string)ConfigName::SP_FACEBOOK->value)
                                         ->label(__('admin.setting.fields.sp_facebook'))
-                                        ->required()
+                                        ->default('')
                                         ->rules([
-                                            'required',
                                             'string',
                                         ])
                                         ->validationMessages([
-                                            'required' => __('common.error.required'),
                                             'string' => __('common.error.string'),
                                         ]),
                                     TextInput::make((string)ConfigName::SP_PHONE->value)
                                         ->label(__('admin.setting.fields.sp_phone'))
-                                        ->required()
+                                        ->default('')
                                         ->rules([
-                                            'required',
                                             'string',
                                         ])
                                         ->validationMessages([
-                                            'required' => __('common.error.required'),
                                             'string' => __('common.error.string'),
                                         ]),
                                     TextInput::make((string)ConfigName::SP_WECHAT->value)
-                                            ->label(__('admin.setting.fields.sp_wechat'))
-                                        ->required()
+                                        ->label(__('admin.setting.fields.sp_wechat'))
+                                        ->default('')
                                         ->rules([
-                                            'required',
                                             'string',
                                         ])
                                         ->validationMessages([
-                                            'required' => __('common.error.required'),
                                             'string' => __('common.error.string'),
                                         ]),
                                 ]),
@@ -246,7 +239,7 @@ class ConfigForm extends Component implements HasSchemas
                                         ->helperText(__('admin.setting.fields.ktv_referral_reward_amount_helper'))
                                         ->numeric()
                                         ->required()
-                                        ->suffix(__('admin.common.unit.point'))
+                                        ->suffix(__('admin.currency'))
                                         ->rules([
                                             'required',
                                             'numeric',

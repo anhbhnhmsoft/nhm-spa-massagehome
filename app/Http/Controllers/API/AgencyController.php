@@ -122,7 +122,7 @@ class AgencyController extends BaseController
                 'bio.cn.string' => __('validation.bio.cn.string'),
             ]
         );
-
+        $data['user_id'] = Auth::user()->id;
         $res = $this->userService->updateAgencyProfile($data);
         if ($res->isError()) {
             return $this->sendError($res->getMessage());

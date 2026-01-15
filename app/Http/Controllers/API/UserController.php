@@ -52,7 +52,6 @@ class UserController extends BaseController
      */
     public function applyPartner(ApplyPartnerRequest $request): JsonResponse
     {
-
         $data = $request->validated();
         $result = $this->userService->applyPartnerForCurrentUser($data);
 

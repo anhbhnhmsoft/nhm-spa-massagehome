@@ -15,6 +15,7 @@ use App\Enums\NotificationType;
 use App\Enums\WalletTransactionStatus;
 use App\Enums\WalletTransactionType;
 use App\Jobs\SendNotificationJob;
+use App\Models\WalletTransaction;
 use App\Repositories\WalletRepository;
 use App\Repositories\WalletTransactionRepository;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -156,6 +157,12 @@ class PaymentService extends BaseService
             return ServiceReturn::success(
                 data: [
                     'currency_exchange_rate' => $currencyExchangeRate->getData()['config_value'],
+                    'allow_payment' => [
+                        'qrcode' => (bool)config('services.payment.qrcode'),
+                        'zalopay' => (bool)config('services.payment.zalopay'),
+                        'momo' => (bool)config('services.payment.momo'),
+                        'wechatpay' => (bool)config('services.payment.wechatpay'),
+                    ]
                 ]
             );
         } catch (ServiceException $exception) {
@@ -248,7 +255,6 @@ class PaymentService extends BaseService
                     $transaction->update([
                         'metadata' => json_encode($payosResponse),
                     ]);
-
 
                     // Lấy dữ liệu QR Banking từ PayOS
                     $payosData = $payosResponse['data'];
@@ -497,6 +503,24 @@ class PaymentService extends BaseService
             );
         }
     }
+
+    public function handleAdminConfirmTransaction(WalletTransaction $record): void
+    {
+        try {
+            $record->update(['status' => WalletTransactionStatus::COMPLETED]);
+            // Kiểm tra xem transaction có phải là nạp tiền hay không
+            if (in_array($record->type, WalletTransactionType::statusIn())) {
+                $record->wallet->increment('balance', (float)$record->point_amount);
+            }
+        }catch (\Exception $exception){
+            LogHelper::error(
+                message: "Lỗi WalletService@handleAdminConfirmTransaction",
+                ex: $exception
+            );
+            throw $exception;
+        }
+    }
+
 
     /**
      * Xử lý giao dịch ZaloPay.

@@ -104,7 +104,7 @@ class ConfigService extends BaseService
                 $this->configRepository->query()->updateOrCreate(
                     ['config_key' => $key],
                     [
-                        'config_value' => $value,
+                        'config_value' => $value ?? '',
                         'config_type' => is_numeric($value) ? ConfigType::NUMBER : ConfigType::STRING,
                     ]
                 );

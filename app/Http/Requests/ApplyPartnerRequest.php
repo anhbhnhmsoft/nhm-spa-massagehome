@@ -28,6 +28,7 @@ class ApplyPartnerRequest extends FormRequest
             'address' => ['required', 'string', 'max:255'],
             'latitude' => ['required', 'numeric', 'between:-90,90'],
             'longitude' => ['required', 'numeric', 'between:-180,180'],
+            'is_leader' => ['nullable', 'boolean'],
             // bio đa ngôn ngữ
             'bio.vi' => ['required', 'string'],
             'bio.en' => ['nullable', 'string'],

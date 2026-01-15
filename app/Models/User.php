@@ -30,6 +30,7 @@ class User extends Authenticatable
         'referred_by_user_id',
         'referred_at',
         'last_login_at',
+        'device_id',
     ];
 
     protected $hidden = [

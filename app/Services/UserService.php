@@ -508,16 +508,18 @@ class UserService extends BaseService
                 'role' => $data['role'],
             ];
             $reviewData['bio'] = Helper::multilingualPayload($data, 'bio');
+
+            // Kiểm tra nếu user dki làm và role = KTV thì set is_leader = true
+            if (isset($data['is_leader']) && $data['role'] === UserRole::KTV->value) {
+                $reviewData['is_leader'] = true;
+            }
+
             // Lưu review application
             $this->userReviewApplicationRepository->create($reviewData);
 
             // Trả tiền thưởng cho người giới thiệu nếu có referrer_id và role = KTV
             if (!empty($data['referrer_id']) && $data['role'] === UserRole::KTV->value) {
-                try {
-                    $this->walletService->paymentRewardForKtvReferral($data['referrer_id'], $user->id);
-                } catch (\Exception $e) {
-                    LogHelper::error('Lỗi khi trả tiền thưởng mời KTV', $e);
-                }
+                $this->walletService->paymentRewardForKtvReferral($data['referrer_id'], $user->id);
             }
 
             // Lưu file uploads

@@ -14,12 +14,9 @@ use App\Enums\PaymentType;
 use App\Enums\WalletTransactionStatus;
 use App\Enums\WalletTransactionType;
 use App\Jobs\SendNotificationJob;
-use App\Models\Config;
 use App\Repositories\BookingRepository;
 use App\Repositories\WalletRepository;
 use App\Repositories\WalletTransactionRepository;
-use App\Services\ConfigService;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class WalletService extends BaseService
@@ -429,7 +426,6 @@ class WalletService extends BaseService
         }
     }
 
-
     /**
      * Thanh toán phí chiết khấu cho người giới thiệu
      * @param int $amount Số tiền hoa hồng
@@ -536,7 +532,7 @@ class WalletService extends BaseService
         try {
             // Lấy số tiền thưởng từ config
             $rewardAmount = (int) $this->configService->getConfigValue(ConfigName::KTV_REFERRAL_REWARD_AMOUNT);
-            
+
             // Nếu = 0 thì tắt tính năng, không trả tiền
             if ($rewardAmount <= 0) {
                 return ServiceReturn::success(
@@ -548,7 +544,7 @@ class WalletService extends BaseService
                 ->where('user_id', $referrerId)
                 ->lockForUpdate()
                 ->first();
-            
+
             if (!$wallet) {
                 throw new ServiceException(
                     message: __("wallet.not_found")
@@ -558,8 +554,7 @@ class WalletService extends BaseService
             $existingReward = $this->walletTransactionRepository->query()
                 ->where('foreign_key', (string) $invitedKtvId)
                 ->where('wallet_id', $wallet->id)
-                ->where('type', WalletTransactionType::REFERRAL_KTV->value)
-                ->where('description', 'LIKE', '%' . __('wallet.referral_ktv_reward') . '%')
+                ->where('type', WalletTransactionType::REFERRAL_INVITE_KTV_REWARD->value)
                 ->exists();
 
             if ($existingReward) {
@@ -588,7 +583,7 @@ class WalletService extends BaseService
 
             $wallet->balance += $rewardAmount;
             $wallet->save();
-            
+
             return ServiceReturn::success(
                 message: __("wallet.referral_reward_paid_success")
             );
@@ -646,5 +641,4 @@ class WalletService extends BaseService
             'rate' => $rate,
         ];
     }
-
 }

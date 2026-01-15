@@ -445,6 +445,7 @@ class AuthService extends BaseService
             $user->devices()->updateOrCreate(
                 [
                     'device_id' => $deviceId,
+                    'user_id' => $user->id,
                 ],
                 [
                     'token' => $token,
