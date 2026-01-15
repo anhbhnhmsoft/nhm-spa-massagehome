@@ -41,5 +41,5 @@ return [
     'not_zalo_user' => 'Phone number is not a Zalo user',
     'couldnot_send_otp' => 'Could not connect to Zalo to send OTP',
     'zalo_service_unavailable' => 'Phone number has not registered Zalo service',
-
+    'invalid_data' => 'Invalid data',
 ];

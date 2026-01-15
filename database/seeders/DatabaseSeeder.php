@@ -405,6 +405,65 @@ class DatabaseSeeder extends Seeder
                     'description' => 'Link WeChat hỗ trợ của admin',
                 ]
             );
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::ZALO_MERCHANT_ID->value],
+                [
+                    'config_value' => 'zalo_merchant_id',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'ID Merchant Zalo',
+                ]
+            );
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::ZALO_MERCHANT_KEY_1->value],
+                [
+                    'config_value' => 'zalo_merchant_key_1',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'Key 1 Merchant Zalo',
+                ]
+            );
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::ZALO_MERCHANT_KEY_2->value],
+                [
+                    'config_value' => 'zalo_merchant_key_2',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'Key 2 Merchant Zalo',
+                ]
+            );
+
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::ZALO_APP_ID->value],
+                [
+                    'config_value' => 'zalo_app_id',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'ID Ứng dụng Zalo',
+                ]
+            );
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::ZALO_APPSECRET_KEY->value],
+                [
+                    'config_value' => 'zalo_appsecret_key',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'Secret Key Ứng dụng Zalo',
+                ]
+            );
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::ZALO_OA_ID->value],
+                [
+                    'config_value' => 'zalo_oa_id',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'ID Ứng dụng Zalo',
+                ]
+            );
+
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::ZALO_TEMPLATE_ID->value],
+                [
+                    'config_value' => 'zalo_template_id',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'ID Template Zalo',
+                ]
+            );
+
         } catch (\Exception $e) {
             DB::rollBack();
             dump($e);
