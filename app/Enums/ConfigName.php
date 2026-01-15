@@ -25,4 +25,6 @@ enum ConfigName: string
     case ZALO_APPSECRET_KEY  = 'ZALO_APPSECRET_KEY';
     case ZALO_OA_ID = 'ZALO_OA_ID';
     case ZALO_TEMPLATE_ID = 'ZALO_TEMPLATE_ID';
+    case KTV_LEADER_MIN_REFERRALS = 'KTV_LEADER_MIN_REFERRALS'; // Số lượng KTV tối thiểu cần giới thiệu để trở thành trưởng nhóm KTV
+
 }

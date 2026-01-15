@@ -338,6 +338,8 @@ return
                 'discount_rate_referrer_agency' => 'Discount Rate for Referral Agencies',
                 'discount_rate_referrer_ktv' => 'Discount Rate for Referral KTVs',
                 'discount_rate_referrer_ktv_leader' => 'Discount Rate for Referral KTV Leaders',
+                'ktv_leader_min_referrals' => 'Number of KTV referrals to become a leader',
+                'ktv_leader_min_referrals_helper' => 'When a KTV successfully refers at least this many approved KTVs, they will automatically be marked as a KTV leader',
                 'sp_zalo' => 'Zalo Support',
                 'sp_facebook' => 'Facebook Support',
                 'sp_phone' => 'Customer Service Phone',

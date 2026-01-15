@@ -79,7 +79,7 @@
     # cấu trúc
     - id (bigint, primary key, auto-increment)
     - user_id (bigint, foreign key to users.id) -- id người dùng
-    - referrer_id (bigint, nullable, foreign key to users.id) -- id người giới thiệu
+    - referrer_id (bigint, nullable, foreign key to users.id) -- id người giới thiệu (người mời apply)
     - status (smallint) -- trạng thái ứng dụng (trong enum ReviewApplicationStatus)
 
     - province_code (varchar, nullable, foreign key to provinces.code) -- mã tỉnh thành
@@ -93,7 +93,8 @@
 
     - effective_date (timestamp, nullable) -- ngày hiệu lực
     - application_date (timestamp, nullable) -- ngày nộp hồ sơ
-    - role (smallint, nullable) -- vai trò người dùng (trong enum UserRole)
+    - role (smallint) -- vai trò muốn apply (trong enum UserRole)
+    - is_leader (boolean, default false) -- đánh dấu trưởng nhóm KTV (job sẽ tự động set khi số KTV được giới thiệu >= điều kiện)
     - softDeletes
     - timestamps
 
@@ -452,6 +453,7 @@
     - config_type (smallint) -- kiểu cấu hình (trong enum ConfigType)
     - config_value (text) -- giá trị cấu hình
     - description (text, nullable) -- mô tả cấu hình
+    - KTV_LEADER_MIN_REFERRALS (number) -- số lượng KTV tối thiểu cần giới thiệu để lên KTV trưởng
     - softDeletes
     - timestamps
 

@@ -116,6 +116,9 @@ return
                 'policy_for_agency' => 'Chính sách hoạt động của đối tác',
                 'face_with_identity_card' => 'Hình ảnh chụp cùng CMND/CCCD',
             ],
+            'unit' => [
+                'user' => 'Số người',
+            ]
 
         ],
         "ktv_apply" => [
@@ -365,6 +368,8 @@ return
                 'discount_rate_referrer_ktv_helper' => 'Tỷ lệ chiết khấu dành cho kỹ thuật viên đối với 1 đơn hoàn thành của 1 KTV mà mình giới thiệu %',
                 'discount_rate_referrer_ktv_leader' => 'Tỷ lệ chiết khấu dành cho kỹ thuật viên trưởng %',
                 'discount_rate_referrer_ktv_leader_helper' => 'Tỷ lệ chiết khấu dành cho kỹ thuật viên trưởng đối với 1 đơn hoàn thành của 1 KTV mà mình giới thiệu %',
+                'ktv_leader_min_referrals' => 'Số lượng KTV cần giới thiệu để lên kỹ thuật viên trưởng',
+                'ktv_leader_min_referrals_helper' => 'Khi một KTV giới thiệu đủ số lượng KTV này (đã được duyệt) thì sẽ tự động được đánh dấu là KTV trưởng',
                 'sp_zalo' => 'Trang Zalo hỗ trợ',
                 'sp_facebook' => 'Trang Facebook hỗ trợ',
                 'sp_phone' => 'Số điện thoại hỗ trợ',

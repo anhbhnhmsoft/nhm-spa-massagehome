@@ -2,9 +2,11 @@
 
 namespace App\Core;
 
+use App\Enums\ConfigName;
 use App\Enums\Language;
 use App\Enums\PaymentType;
 use App\Enums\UserRole;
+use App\Services\ConfigService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -220,13 +222,22 @@ final class Helper
         return round($price * ($discountRate / 100), $precision);
     }
 
-     /**
+    /**
      * Lấy số lượng tối thiểu mà KTV phải có để trở thành trưởng KTV.
-     * @return int
      */
     public static function getConditionToBeLeaderKtv(): int
     {
-        return 10;
+        try {
+            /** @var \App\Services\ConfigService $configService */
+            $configService = app(ConfigService::class);
+            $value = $configService->getConfigValue(ConfigName::KTV_LEADER_MIN_REFERRALS);
+            $intValue = (int) $value;
+
+            return $intValue > 0 ? $intValue : 10;
+        } catch (\Throwable) {
+            // Fallback trong trường hợp chưa có config hoặc lỗi bất ngờ
+            return 10;
+        }
     }
 
     public static function formatPhone($phone): string

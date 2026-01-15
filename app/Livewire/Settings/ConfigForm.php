@@ -225,6 +225,22 @@ class ConfigForm extends Component implements HasSchemas
                                             'numeric' => __('common.error.numeric'),
                                             'min' => __('common.error.min', ['min' => 0]),
                                         ]),
+                                    TextInput::make((string)ConfigName::KTV_LEADER_MIN_REFERRALS->value)
+                                        ->label(__('admin.setting.fields.ktv_leader_min_referrals'))
+                                        ->helperText(__('admin.setting.fields.ktv_leader_min_referrals_helper'))
+                                        ->numeric()
+                                        ->required()
+                                        ->suffix(__('admin.common.unit.user'))
+                                        ->rules([
+                                            'required',
+                                            'numeric',
+                                            'min:1',
+                                        ])
+                                        ->validationMessages([
+                                            'required' => __('common.error.required'),
+                                            'numeric' => __('common.error.numeric'),
+                                            'min' => __('common.error.min', ['min' => 1]),
+                                        ]),
                                 ])
                         ])
                 ])

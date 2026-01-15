@@ -372,6 +372,14 @@ class DatabaseSeeder extends Seeder
                 ]
             );
             Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::KTV_LEADER_MIN_REFERRALS->value],
+                [
+                    'config_value' => '10',
+                    'config_type' => ConfigType::NUMBER->value,
+                    'description' => 'Số lượng KTV cần giới thiệu để lên kỹ thuật viên trưởng',
+                ]
+            );
+            Config::query()->updateOrCreate(
                 ['config_key' => ConfigName::SP_PHONE->value],
                 [
                     'config_value' => '0865643858',
