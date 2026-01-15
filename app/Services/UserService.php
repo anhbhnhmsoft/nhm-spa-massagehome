@@ -34,6 +34,7 @@ use App\Repositories\UserRepository;
 use App\Repositories\UserReviewApplicationRepository;
 use App\Repositories\WalletRepository;
 use App\Repositories\WalletTransactionRepository;
+use App\Services\WalletService;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
@@ -56,7 +57,8 @@ class UserService extends BaseService
         protected WalletTransactionRepository     $walletTransactionRepository,
         protected ReviewRepository                $reviewRepository,
         protected UserKtvScheduleRepository       $userKtvScheduleRepository,
-        protected StaticContractRepository        $staticContractRepository
+        protected StaticContractRepository        $staticContractRepository,
+        protected WalletService                   $walletService
     ) {
         parent::__construct();
     }
@@ -478,7 +480,7 @@ class UserService extends BaseService
                 );
             }
 
-            // Kiểm tra referrer_id có tồn tại và có phải là đối tác không
+            // Kiểm tra referrer_id có tồn tại
             if (!empty($data['referrer_id'])) {
                 $agency = $this->userRepository
                     ->queryUser()
@@ -507,6 +509,15 @@ class UserService extends BaseService
             $reviewData['bio'] = Helper::multilingualPayload($data, 'bio');
             // Lưu review application
             $this->userReviewApplicationRepository->create($reviewData);
+
+            // Trả tiền thưởng cho người giới thiệu nếu có referrer_id và role = KTV
+            if (!empty($data['referrer_id']) && $data['role'] === UserRole::KTV->value) {
+                try {
+                    $this->walletService->paymentRewardForKtvReferral($data['referrer_id'], $user->id);
+                } catch (\Exception $e) {
+                    LogHelper::error('Lỗi khi trả tiền thưởng mời KTV', $e);
+                }
+            }
 
             // Lưu file uploads
             foreach ($data['file_uploads'] as $fileUpload) {
@@ -905,6 +916,16 @@ class UserService extends BaseService
                 'referrer_id' => $referrer->id,
             ]);
 
+            // Trả tiền thưởng cho người giới thiệu nếu có config
+            // Chỉ trả khi KTV được mời có role = KTV
+            if ($ktv->role === UserRole::KTV->value) {
+                try {
+                    $this->walletService->paymentRewardForKtvReferral($referrer->id, $ktv->id);
+                } catch (\Exception $e) {
+                    LogHelper::error('Lỗi khi trả tiền thưởng mời KTV', $e);
+                }
+            }
+
             return ServiceReturn::success(
                 message: __('common.success.data_updated')
             );
@@ -1027,6 +1048,127 @@ class UserService extends BaseService
             );
         } catch (\Exception $e) {
             LogHelper::error('Lỗi UserService@getContractFile', $e);
+            return ServiceReturn::error(__('common_error.server_error'));
+        }
+    }
+
+    /**
+     * Cập nhật trạng thái is_leader cho một KTV cụ thể
+     */
+    public function updateKtvLeaderStatus(int|string $referrerId): ServiceReturn
+    {
+        try {
+            // Kiểm tra referrer có tồn tại và là KTV không
+            $referrer = $this->userRepository->query()
+                ->where('id', $referrerId)
+                ->where('role', UserRole::KTV->value)
+                ->where('is_active', true)
+                ->first();
+
+            if (!$referrer) {
+                return ServiceReturn::error(__('common_error.data_not_found'));
+            }
+
+            // Đếm số KTV đã được duyệt mà KTV này giới thiệu
+            $invitedKtvCount = $this->userReviewApplicationRepository->getCountKtvReferrers($referrerId);
+
+            $minReferrals = $this->configService->getKtvLeaderMinReferrals();
+
+            if ($invitedKtvCount < $minReferrals) {
+                return ServiceReturn::success(
+                    data: ['is_updated' => false, 'reason' => 'not_enough_referrals']
+                );
+            }
+
+            // Lấy hồ sơ apply KTV của người giới thiệu
+            $reviewApplication = $this->userReviewApplicationRepository->query()
+                ->where('user_id', $referrerId)
+                ->where('role', UserRole::KTV->value)
+                ->first();
+
+            if (!$reviewApplication) {
+                return ServiceReturn::error(__('common_error.data_not_found'));
+            }
+
+            // Đánh dấu là trưởng nhóm KTV
+            if (!$reviewApplication->is_leader) {
+                $reviewApplication->is_leader = true;
+                $reviewApplication->save();
+            }
+
+            return ServiceReturn::success(
+                data: [
+                    'is_updated' => true,
+                    'referrer_id' => $referrerId,
+                    'invited_count' => $invitedKtvCount,
+                ]
+            );
+        } catch (\Exception $e) {
+            LogHelper::error('Lỗi UserService@updateKtvLeaderStatus', $e);
+            return ServiceReturn::error(__('common_error.server_error'));
+        }
+    }
+
+    /**
+     * Cập nhật trạng thái is_leader cho tất cả KTV
+     * @return ServiceReturn
+     */
+    public function updateAllKtvLeaderStatus(): ServiceReturn
+    {
+        try {
+            $minReferrals = $this->configService->getKtvLeaderMinReferrals();
+
+            // Lấy tất cả KTV có giới thiệu người khác
+            $ktvReferrers = $this->userRepository->query()
+                ->where('role', UserRole::KTV->value)
+                ->where('is_active', true)
+                ->whereHas('reviewApplication', function ($query) {
+                    $query->where('role', UserRole::KTV->value);
+                })
+                ->get();
+
+            $updatedCount = 0;
+            $skippedCount = 0;
+
+            DB::beginTransaction();
+
+            foreach ($ktvReferrers as $referrer) {
+                // Đếm số KTV đã được duyệt mà KTV này giới thiệu
+                $invitedKtvCount = $this->userReviewApplicationRepository->getCountKtvReferrers($referrer->id);
+
+                // Lấy hồ sơ apply KTV của người giới thiệu
+                $reviewApplication = $this->userReviewApplicationRepository->query()
+                    ->where('user_id', $referrer->id)
+                    ->where('role', UserRole::KTV->value)
+                    ->first();
+
+                if (!$reviewApplication) {
+                    $skippedCount++;
+                    continue;
+                }
+
+                // Kiểm tra điều kiện và cập nhật
+                if ($invitedKtvCount >= $minReferrals) {
+                    if (!$reviewApplication->is_leader) {
+                        $reviewApplication->is_leader = true;
+                        $reviewApplication->save();
+                        $updatedCount++;
+                    }
+                }
+            }
+
+            DB::commit();
+
+            return ServiceReturn::success(
+                data: [
+                    'updated_count' => $updatedCount,
+                    'skipped_count' => $skippedCount,
+                    'total_checked' => $ktvReferrers->count(),
+                ]
+            );
+        } catch (\Exception $e) {
+            DB::rollBack();
+            LogHelper::error('Lỗi UserService@updateAllKtvLeaderStatus', $e);
             return ServiceReturn::error(__('common_error.server_error'));
         }
     }

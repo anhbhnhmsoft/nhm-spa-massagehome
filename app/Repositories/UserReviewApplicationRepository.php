@@ -3,7 +3,10 @@
 namespace App\Repositories;
 
 use App\Core\BaseRepository;
+use App\Models\User;
 use App\Models\UserReviewApplication;
+use App\Enums\ReviewApplicationStatus;
+use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
@@ -44,5 +47,22 @@ class UserReviewApplicationRepository extends BaseRepository
         }
         $query->orderBy($column, $direction);
         return $query;
+    }
+
+    /**
+     * Đếm số KTV đã được duyệt mà một KTV referrer đã giới thiệu
+     */
+    public function getCountKtvReferrers(int|string $referrerId): int
+    {
+        return $this->query()
+            ->join('users', 'user_review_application.user_id', '=', 'users.id')
+            ->where('user_review_application.referrer_id', $referrerId)
+            ->where('user_review_application.status', ReviewApplicationStatus::APPROVED->value)
+            ->where('user_review_application.role', UserRole::KTV->value)
+            ->where('users.role', UserRole::KTV->value)
+            ->whereNull('users.deleted_at')
+            ->whereNull('user_review_application.deleted_at')
+            ->distinct('user_review_application.id')
+            ->count('user_review_application.id');
     }
 }

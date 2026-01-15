@@ -20,3 +20,10 @@ Schedule::command('app:refresh-zalo-token-oa-command')
     ->name('refresh-zalo-token-oa')
     ->withoutOverlapping()
     ->onOneServer();
+
+// Cronjob cập nhật trạng thái KTV trưởng - chạy mỗi ngày lúc 2:00 AM
+Schedule::command('app:update-all-ktv-leader-status')
+    ->daily()
+    ->name('update-all-ktv-leader-status')
+    ->withoutOverlapping()
+    ->onOneServer();

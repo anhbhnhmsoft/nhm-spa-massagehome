@@ -1107,7 +1107,7 @@ class BookingService extends BaseService
                     })
                     ->count();
                 // Nếu KTV đã có đủ số lượng booking để trở thành trưởng KTV
-                if ($isLeaderKtv >= Helper::getConditionToBeLeaderKtv()){
+                if ($isLeaderKtv >= $this->configService->getKtvLeaderMinReferrals()){
                     $rateDiscount = (float) $this->configService->getConfigValue(ConfigName::DISCOUNT_RATE_REFERRER_KTV_LEADER);
                 }else{
                     $rateDiscount = (float) $this->configService->getConfigValue(ConfigName::DISCOUNT_RATE_REFERRER_KTV);

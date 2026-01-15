@@ -220,9 +220,8 @@ final class Helper
         return round($price * ($discountRate / 100), $precision);
     }
 
-     /**
+    /**
      * Lấy số lượng tối thiểu mà KTV phải có để trở thành trưởng KTV.
-     * @return int
      */
     public static function getConditionToBeLeaderKtv(): int
     {

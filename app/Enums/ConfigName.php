@@ -25,4 +25,15 @@ enum ConfigName: string
     case ZALO_APPSECRET_KEY  = 'ZALO_APPSECRET_KEY';
     case ZALO_OA_ID = 'ZALO_OA_ID';
     case ZALO_TEMPLATE_ID = 'ZALO_TEMPLATE_ID';
+    case KTV_LEADER_MIN_REFERRALS = 'KTV_LEADER_MIN_REFERRALS'; // Số lượng KTV tối thiểu cần giới thiệu để trở thành trưởng nhóm KTV
+    case ZALO_MERCHANT_ID  = 'ZALO_MERCHANT_ID';
+    case ZALO_MERCHANT_KEY_1  = 'ZALO_MERCHANT_KEY_1';
+    case ZALO_MERCHANT_KEY_2  = 'ZALO_MERCHANT_KEY_2';
+    case ZALO_APP_ID  = 'ZALO_APP_ID';
+    case ZALO_APPSECRET_KEY  = 'ZALO_APPSECRET_KEY';
+    case ZALO_OA_ID = 'ZALO_OA_ID';
+    case ZALO_TEMPLATE_ID = 'ZALO_TEMPLATE_ID';
+    case KTV_LEADER_MIN_REFERRALS = 'KTV_LEADER_MIN_REFERRALS'; // Số lượng KTV tối thiểu cần giới thiệu để trở thành trưởng nhóm KTV
+    case KTV_REFERRAL_REWARD_AMOUNT = 'KTV_REFERRAL_REWARD_AMOUNT'; // Số tiền được nhận khi mời KTV thành công (nếu = 0 thì tắt tính năng)
+
 }
