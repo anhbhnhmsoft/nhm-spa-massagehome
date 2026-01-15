@@ -73,7 +73,7 @@ class CustomerForm
                                     ->label(__('admin.customer.fields.balance'))
                                     ->numeric()
                                     ->disabled()
-                                    ->suffix(__('admin.common.currency'))
+                                    ->suffix(__('admin.currency'))
                                     ->validationMessages([
                                         'required' => __('common.error.required'),
                                     ]),

@@ -34,11 +34,13 @@ use App\Repositories\UserRepository;
 use App\Repositories\UserReviewApplicationRepository;
 use App\Repositories\WalletRepository;
 use App\Repositories\WalletTransactionRepository;
+use App\Services\WalletService;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 
 class UserService extends BaseService
@@ -56,7 +58,8 @@ class UserService extends BaseService
         protected WalletTransactionRepository     $walletTransactionRepository,
         protected ReviewRepository                $reviewRepository,
         protected UserKtvScheduleRepository       $userKtvScheduleRepository,
-        protected StaticContractRepository        $staticContractRepository
+        protected StaticContractRepository        $staticContractRepository,
+        protected WalletService                   $walletService
     ) {
         parent::__construct();
     }
@@ -478,13 +481,12 @@ class UserService extends BaseService
                 );
             }
 
-            // Kiểm tra agency_id có tồn tại và có phải là đối tác không
-            if (!empty($data['agency_id'])) {
+            // Kiểm tra referrer_id có tồn tại
+            if (!empty($data['referrer_id'])) {
                 $agency = $this->userRepository
-                    ->query()
-                    ->where('id', $data['agency_id'])
-                    ->where('role', UserRole::AGENCY->value)
-                    ->where('is_active', true)
+                    ->queryUser()
+                    ->where('id', $data['referrer_id'])
+                    ->whereIn('role', [UserRole::AGENCY->value, UserRole::KTV->value])
                     ->first();
                 if (!$agency) {
                     throw new ServiceException(
@@ -495,7 +497,7 @@ class UserService extends BaseService
 
             $reviewData = [
                 'user_id' => $user->id,
-                'agency_id' => $data['agency_id'] ?? null,
+                'referrer_id' => $data['referrer_id'] ?? null,
                 'status' => ReviewApplicationStatus::PENDING->value,
                 'province_code' => $data['province_code'],
                 'address' => $data['address'],
@@ -506,8 +508,19 @@ class UserService extends BaseService
                 'role' => $data['role'],
             ];
             $reviewData['bio'] = Helper::multilingualPayload($data, 'bio');
+
+            // Kiểm tra nếu user dki làm và role = KTV thì set is_leader = true
+            if (isset($data['is_leader']) && $data['role'] === UserRole::KTV->value) {
+                $reviewData['is_leader'] = true;
+            }
+
             // Lưu review application
             $this->userReviewApplicationRepository->create($reviewData);
+
+            // Trả tiền thưởng cho người giới thiệu nếu có referrer_id và role = KTV
+            if (!empty($data['referrer_id']) && $data['role'] === UserRole::KTV->value) {
+                $this->walletService->paymentRewardForKtvReferral($data['referrer_id'], $user->id);
+            }
 
             // Lưu file uploads
             foreach ($data['file_uploads'] as $fileUpload) {
@@ -775,69 +788,56 @@ class UserService extends BaseService
      */
     public function updateKtvProfile(array $data): ServiceReturn
     {
+        DB::beginTransaction();
         try {
-            /** @var \App\Models\User $user */
-            $user = Auth::user();
+            $user = $this->userRepository->queryUser()
+                ->where('id', $data['user_id'])
+                ->where('role', UserRole::KTV->value)
+                ->first();
+            if (!$user) {
+                throw new ServiceException(__("error.user_not_found"));
+            }
             // 1. Update Password if old_pass provided
             if (!empty($data['old_pass'])) {
-                if (!\Illuminate\Support\Facades\Hash::check($data['old_pass'], $user->password)) {
+                if (!Hash::check($data['old_pass'], $user->password)) {
                     // Fix: return ServiceReturn object directly
                     return ServiceReturn::error(__('auth.error.wrong_password'));
                 }
-                $user->update(['password' => $data['new_pass']]);
+                $user->update(['password' => Hash::make($data['new_pass'])]);
             }
 
             // 2. Update UserReviewApplication
             $reviewApp = $user->getStaffReviewsAttribute()->first();
-            if ($reviewApp) {
-                $updateData = [];
-                if (isset($data['bio'])) $updateData['bio'] = $data['bio'];
-                if (isset($data['experience'])) $updateData['experience'] = $data['experience'];
-                if (isset($data['lat'])) $updateData['latitude'] = (float) $data['lat'];
-                if (isset($data['lng'])) $updateData['longitude'] = (float) $data['lng'];
-                if (isset($data['address'])) $updateData['address'] = $data['address'];
-
-                if (!empty($updateData)) {
-                    $this->userReviewApplicationRepository->update($reviewApp->id, $updateData);
-                }
-            }else {
-                $updateData = [];
-                if (isset($data['bio'])) $updateData['bio'] = $data['bio'];
-                if (isset($data['experience'])) $updateData['experience'] = $data['experience'];
-                if (isset($data['lat'])) $updateData['latitude'] = (float) $data['lat'];
-                if (isset($data['lng'])) $updateData['longitude'] = (float) $data['lng'];
-                if (isset($data['address'])) $updateData['address'] = $data['address'];
-                if (!empty($updateData)) {
-                    $updateData['user_id'] = $user->id;
-                    $updateData['status'] = ReviewApplicationStatus::PENDING->value;
-                    $updateData['role'] = UserRole::KTV->value;
-                    $this->userReviewApplicationRepository->create($updateData);
-                }
+            if (!$reviewApp) {
+                throw new ServiceException(__("error.user_not_found"));
+            }
+            $updateData = [];
+            if (isset($data['bio'])){
+                $updateData['bio'] = Helper::multilingualPayload($data, 'bio');
+            }
+            if (isset($data['experience'])) $updateData['experience'] = $data['experience'];
+            if (isset($data['lat'])) $updateData['latitude'] = (float) $data['lat'];
+            if (isset($data['lng'])) $updateData['longitude'] = (float) $data['lng'];
+            if (isset($data['address'])) $updateData['address'] = $data['address'];
+            if (!empty($updateData)) {
+                $this->userReviewApplicationRepository->update($reviewApp->id, $updateData);
             }
 
             // 3. Update UserProfile
             $profile = $user->profile;
-            if ($profile) {
-                $updateProfile = [];
-                if (isset($data['gender'])) $updateProfile['gender'] = $data['gender'];
-                if (isset($data['date_of_birth'])) $updateProfile['date_of_birth'] = $data['date_of_birth'];
+            if (!$profile) {
+                throw new ServiceException(__("error.user_not_found"));
+            }
+            $updateProfile = [];
+            if (isset($data['gender'])) $updateProfile['gender'] = $data['gender'];
+            if (isset($data['date_of_birth'])) $updateProfile['date_of_birth'] = $data['date_of_birth'];
 
-                if (!empty($updateProfile)) {
-                    $profile->update($updateProfile);
-                    $profile->save();
-                }
-            }else {
-                $updateProfile = [];
-                if (isset($data['gender'])) $updateProfile['gender'] = $data['gender'];
-                if (isset($data['date_of_birth'])) $updateProfile['date_of_birth'] = $data['date_of_birth'];
-
-                if (!empty($updateProfile)) {
-                    $updateProfile['user_id'] = $user->id;
-                    $this->userProfileRepository->create($updateProfile);
-                }
-                $profile = $this->userProfileRepository->find($user->id);
+            if (!empty($updateProfile)) {
+                $profile->update($updateProfile);
+                $profile->save();
             }
             $user->save();
+            DB::commit();
             // Reload user with relations to return fresh data
             $user->load(['profile', 'reviewApplication']);
 
@@ -846,12 +846,94 @@ class UserService extends BaseService
                 message: __("common.success.data_updated")
             );
         } catch (ServiceException $exception) {
+            DB::rollBack();
             return ServiceReturn::error(
                 message: $exception->getMessage()
             );
         } catch (\Exception $exception) {
+            DB::rollBack();
             LogHelper::error(
                 message: "Lỗi UserService@updateKtvProfile",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        }
+    }
+
+    /**
+     * Update agency profile
+     * @param array $data
+     * @return ServiceReturn
+     */
+    public function updateAgencyProfile(array $data): ServiceReturn
+    {
+        DB::beginTransaction();
+        try {
+            $user = $this->userRepository->queryUser()
+                ->where('id', $data['user_id'])
+                ->where('role', UserRole::AGENCY->value)
+                ->first();
+            if (!$user) {
+                throw new ServiceException(__("error.user_not_found"));
+            }
+            // 1. Update Password if old_pass provided
+            if (!empty($data['old_pass'])) {
+                if (!Hash::check($data['old_pass'], $user->password)) {
+                    // Fix: return ServiceReturn object directly
+                    return ServiceReturn::error(__('auth.error.wrong_password'));
+                }
+                $user->update(['password' => Hash::make($data['new_pass'])]);
+            }
+
+            // 2. Update UserReviewApplication
+            $reviewApp = $user->getAgencyReviewsAttribute()->first();
+            if (!$reviewApp) {
+                throw new ServiceException(__("error.user_not_found"));
+            }
+            $updateData = [];
+            if (isset($data['bio'])){
+                $updateData['bio'] = Helper::multilingualPayload($data, 'bio');
+            }
+            if (isset($data['lat'])) $updateData['latitude'] = (float) $data['lat'];
+            if (isset($data['lng'])) $updateData['longitude'] = (float) $data['lng'];
+            if (isset($data['address'])) $updateData['address'] = $data['address'];
+            if (!empty($updateData)) {
+                $this->userReviewApplicationRepository->update($reviewApp->id, $updateData);
+            }
+
+            // 3. Update UserProfile
+            $profile = $user->profile;
+            if (!$profile) {
+                throw new ServiceException(__("error.user_not_found"));
+            }
+            $updateProfile = [];
+            if (isset($data['gender'])) $updateProfile['gender'] = $data['gender'];
+            if (isset($data['date_of_birth'])) $updateProfile['date_of_birth'] = $data['date_of_birth'];
+
+            if (!empty($updateProfile)) {
+                $profile->update($updateProfile);
+                $profile->save();
+            }
+            $user->save();
+            DB::commit();
+            // Reload user with relations to return fresh data
+            $user->load(['profile', 'reviewApplication']);
+
+            return ServiceReturn::success(
+                data: $user,
+                message: __("common.success.data_updated")
+            );
+        } catch (ServiceException $exception) {
+            DB::rollBack();
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            LogHelper::error(
+                message: "Lỗi UserService@updateAgencyProfile",
                 ex: $exception
             );
             return ServiceReturn::error(
@@ -905,6 +987,16 @@ class UserService extends BaseService
             $ktv->reviewApplication()->update([
                 'referrer_id' => $referrer->id,
             ]);
+
+            // Trả tiền thưởng cho người giới thiệu nếu có config
+            // Chỉ trả khi KTV được mời có role = KTV
+            if ($ktv->role === UserRole::KTV->value) {
+                try {
+                    $this->walletService->paymentRewardForKtvReferral($referrer->id, $ktv->id);
+                } catch (\Exception $e) {
+                    LogHelper::error('Lỗi khi trả tiền thưởng mời KTV', $e);
+                }
+            }
 
             return ServiceReturn::success(
                 message: __('common.success.data_updated')
@@ -1028,6 +1120,127 @@ class UserService extends BaseService
             );
         } catch (\Exception $e) {
             LogHelper::error('Lỗi UserService@getContractFile', $e);
+            return ServiceReturn::error(__('common_error.server_error'));
+        }
+    }
+
+    /**
+     * Cập nhật trạng thái is_leader cho một KTV cụ thể
+     */
+    public function updateKtvLeaderStatus(int|string $referrerId): ServiceReturn
+    {
+        try {
+            // Kiểm tra referrer có tồn tại và là KTV không
+            $referrer = $this->userRepository->query()
+                ->where('id', $referrerId)
+                ->where('role', UserRole::KTV->value)
+                ->where('is_active', true)
+                ->first();
+
+            if (!$referrer) {
+                return ServiceReturn::error(__('common_error.data_not_found'));
+            }
+
+            // Đếm số KTV đã được duyệt mà KTV này giới thiệu
+            $invitedKtvCount = $this->userReviewApplicationRepository->getCountKtvReferrers($referrerId);
+
+            $minReferrals = $this->configService->getKtvLeaderMinReferrals();
+
+            if ($invitedKtvCount < $minReferrals) {
+                return ServiceReturn::success(
+                    data: ['is_updated' => false, 'reason' => 'not_enough_referrals']
+                );
+            }
+
+            // Lấy hồ sơ apply KTV của người giới thiệu
+            $reviewApplication = $this->userReviewApplicationRepository->query()
+                ->where('user_id', $referrerId)
+                ->where('role', UserRole::KTV->value)
+                ->first();
+
+            if (!$reviewApplication) {
+                return ServiceReturn::error(__('common_error.data_not_found'));
+            }
+
+            // Đánh dấu là trưởng nhóm KTV
+            if (!$reviewApplication->is_leader) {
+                $reviewApplication->is_leader = true;
+                $reviewApplication->save();
+            }
+
+            return ServiceReturn::success(
+                data: [
+                    'is_updated' => true,
+                    'referrer_id' => $referrerId,
+                    'invited_count' => $invitedKtvCount,
+                ]
+            );
+        } catch (\Exception $e) {
+            LogHelper::error('Lỗi UserService@updateKtvLeaderStatus', $e);
+            return ServiceReturn::error(__('common_error.server_error'));
+        }
+    }
+
+    /**
+     * Cập nhật trạng thái is_leader cho tất cả KTV
+     * @return ServiceReturn
+     */
+    public function updateAllKtvLeaderStatus(): ServiceReturn
+    {
+        try {
+            $minReferrals = $this->configService->getKtvLeaderMinReferrals();
+
+            // Lấy tất cả KTV có giới thiệu người khác
+            $ktvReferrers = $this->userRepository->query()
+                ->where('role', UserRole::KTV->value)
+                ->where('is_active', true)
+                ->whereHas('reviewApplication', function ($query) {
+                    $query->where('role', UserRole::KTV->value);
+                })
+                ->get();
+
+            $updatedCount = 0;
+            $skippedCount = 0;
+
+            DB::beginTransaction();
+
+            foreach ($ktvReferrers as $referrer) {
+                // Đếm số KTV đã được duyệt mà KTV này giới thiệu
+                $invitedKtvCount = $this->userReviewApplicationRepository->getCountKtvReferrers($referrer->id);
+
+                // Lấy hồ sơ apply KTV của người giới thiệu
+                $reviewApplication = $this->userReviewApplicationRepository->query()
+                    ->where('user_id', $referrer->id)
+                    ->where('role', UserRole::KTV->value)
+                    ->first();
+
+                if (!$reviewApplication) {
+                    $skippedCount++;
+                    continue;
+                }
+
+                // Kiểm tra điều kiện và cập nhật
+                if ($invitedKtvCount >= $minReferrals) {
+                    if (!$reviewApplication->is_leader) {
+                        $reviewApplication->is_leader = true;
+                        $reviewApplication->save();
+                        $updatedCount++;
+                    }
+                }
+            }
+
+            DB::commit();
+
+            return ServiceReturn::success(
+                data: [
+                    'updated_count' => $updatedCount,
+                    'skipped_count' => $skippedCount,
+                    'total_checked' => $ktvReferrers->count(),
+                ]
+            );
+        } catch (\Exception $e) {
+            DB::rollBack();
+            LogHelper::error('Lỗi UserService@updateAllKtvLeaderStatus', $e);
             return ServiceReturn::error(__('common_error.server_error'));
         }
     }

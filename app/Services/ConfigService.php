@@ -104,7 +104,7 @@ class ConfigService extends BaseService
                 $this->configRepository->query()->updateOrCreate(
                     ['config_key' => $key],
                     [
-                        'config_value' => $value,
+                        'config_value' => $value ?? '',
                         'config_type' => is_numeric($value) ? ConfigType::NUMBER : ConfigType::STRING,
                     ]
                 );
@@ -316,10 +316,10 @@ class ConfigService extends BaseService
     /**
      * Lấy giá trị cấu hình theo key
      * @param ConfigName $configName
-     * @return ServiceReturn
+     * @return mixed|null
      * @throws ServiceException
      */
-    public function getConfigValue(ConfigName $configName): ServiceReturn
+    public function getConfigValue(ConfigName $configName): mixed
     {
         $config = $this->getConfig($configName);
         if ($config->isError()) {
@@ -327,7 +327,23 @@ class ConfigService extends BaseService
                 message: __("error.config_not_found")
             );
         }
-        return $config->getData()['config_value'];
+        return $config->getData()['config_value'] ?? null;
+    }
+
+    /**
+     * Lấy số lượng KTV tối thiểu cần giới thiệu để trở thành trưởng nhóm KTV
+     * @return int
+     */
+    public function getKtvLeaderMinReferrals(): int
+    {
+        try {
+            $value = $this->getConfigValue(ConfigName::KTV_LEADER_MIN_REFERRALS);
+            $intValue = (int) $value;
+
+            return $intValue > 0 ? $intValue : 10;
+        } catch (\Throwable) {
+            return 10;
+        }
     }
 
 }

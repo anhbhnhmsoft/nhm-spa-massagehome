@@ -30,6 +30,7 @@ class UserReviewApplication extends Model
         'effective_date',
         'application_date',
         'role',
+        'is_leader',
     ];
 
     protected $casts = [
@@ -42,6 +43,7 @@ class UserReviewApplication extends Model
         'note' => 'string',
         'effective_date' => 'date',
         'application_date' => 'date',
+        'is_leader' => 'boolean',
     ];
 
     /**

@@ -212,9 +212,9 @@ return [
     'direction' => [
         'in' => 'Hướng sắp xếp không hợp lệ.',
     ],
-    'type' => [
-        'in' => 'Loại thống kê không hợp lệ.',
-        'required' => 'Vui lòng chọn loại thống kê.',
+    'type_date_range' => [
+        'in' => 'Kiểu thời gian hiển thị không hợp lệ.',
+        'required' => 'Vui lòng chọn kiểu thời gian hiển thị.',
     ],
     'images' => [
         'required' => 'Vui lòng tải lên ít nhất 1 ảnh.',

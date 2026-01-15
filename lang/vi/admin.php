@@ -101,7 +101,6 @@ return
                 'price' => 'Giá tiền',
                 'add_price' => 'Thêm mức giá',
             ],
-            'currency' => 'Điểm',
             'from' => 'Từ',
             'to' => 'Đến',
             'error' => [
@@ -116,6 +115,10 @@ return
                 'policy_for_agency' => 'Chính sách hoạt động của đối tác',
                 'face_with_identity_card' => 'Hình ảnh chụp cùng CMND/CCCD',
             ],
+            'unit' => [
+                'user' => 'Số người',
+                'point' => 'Điểm thưởng',
+            ]
 
         ],
         "ktv_apply" => [
@@ -365,6 +368,10 @@ return
                 'discount_rate_referrer_ktv_helper' => 'Tỷ lệ chiết khấu dành cho kỹ thuật viên đối với 1 đơn hoàn thành của 1 KTV mà mình giới thiệu %',
                 'discount_rate_referrer_ktv_leader' => 'Tỷ lệ chiết khấu dành cho kỹ thuật viên trưởng %',
                 'discount_rate_referrer_ktv_leader_helper' => 'Tỷ lệ chiết khấu dành cho kỹ thuật viên trưởng đối với 1 đơn hoàn thành của 1 KTV mà mình giới thiệu %',
+                'ktv_leader_min_referrals' => 'Số lượng KTV cần giới thiệu để lên kỹ thuật viên trưởng',
+                'ktv_leader_min_referrals_helper' => 'Khi một KTV giới thiệu đủ số lượng KTV này (đã được duyệt) thì sẽ tự động được đánh dấu là KTV trưởng',
+                'ktv_referral_reward_amount' => 'Số tiền thưởng khi mời KTV thành công',
+                'ktv_referral_reward_amount_helper' => 'Số tiền được nhận khi mời KTV thành công. Nếu = 0 thì tắt tính năng này',
                 'sp_zalo' => 'Trang Zalo hỗ trợ',
                 'sp_facebook' => 'Trang Facebook hỗ trợ',
                 'sp_phone' => 'Số điện thoại hỗ trợ',
@@ -406,6 +413,11 @@ return
                 'PAYMENT' => 'Thanh toán',
                 'AFFILIATE' => 'Hoa hồng',
                 'PAYMENT_FOR_KTV' => 'Thanh toán cho KTV',
+                'REFUND' => 'Hoàn tiền DV',
+                'RETRIEVE_PAYMENT_REFUND_KTV' => 'Thu hồi tiền thanh toán cho KTV khi hủy booking',
+                'REFERRAL_KTV' => 'Nhận hoa hồng từ người giới thiệu KTV',
+                'REFERRAL_INVITE_KTV_REWARD' => 'Nhận hoa hồng khi mời KTV thành công',
+                'DEPOSIT_WECHAT_PAY' => 'Nạp tiền qua Wechat Pay',
             ],
             'status' => [
                 'PENDING' => 'Chờ xử lý',

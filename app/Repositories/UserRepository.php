@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Core\BaseRepository;
+use App\Core\Helper;
 use App\Enums\BookingStatus;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserRole;
@@ -10,7 +11,10 @@ use App\Models\Review;
 use App\Models\Service;
 use App\Models\ServiceBooking;
 use App\Models\User;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class UserRepository extends BaseRepository
 {
@@ -203,11 +207,83 @@ class UserRepository extends BaseRepository
             ->exists();
     }
 
+    /**
+     * Tìm kiếm User theo SĐT đã xác thực
+     * @param string $phone
+     * @return User|null
+     */
     public function findByPhone(string $phone): ?User
     {
         return $this->query()
             ->where('phone', $phone)
             ->whereNotNull('phone_verified_at')
             ->first();
+    }
+
+    /**
+     * Số lượng Khách hàng đã giới thiệu trong khoảng thời gian
+     * @param int $referrerId
+     * @param Carbon $from
+     * @param Carbon $to
+     * @return int
+     */
+    public function countReferralCustomers(int $referrerId, Carbon $from, Carbon $to): int
+    {
+        return $this->queryUser()
+            ->where('referred_by_user_id', $referrerId)
+            ->where('role', UserRole::CUSTOMER->value)
+            ->whereBetween('referred_at', [$from->format('Y-m-d H:i:s'), $to->format('Y-m-d H:i:s')])
+            ->count();
+    }
+
+    /**
+     * Lấy danh sách KTV và số lượng đơn hoàn thành, doanh thu trong khoảng thời gian
+     * @param int $leadUserId
+     * @param Carbon $from
+     * @param Carbon $to
+     * @param int $page
+     * @param int $perPage
+     * @return LengthAwarePaginator
+     */
+    public function getKtvPerformancePaginated(int $leadUserId, Carbon $from, Carbon $to, int $page = 1, int $perPage = 10): LengthAwarePaginator
+    {
+        $fromDate = $from->format('Y-m-d H:i:s');
+        $toDate = $to->format('Y-m-d H:i:s');
+
+        $query = $this->query()
+            ->where('users.role', UserRole::KTV->value)
+            ->where('users.is_active', true)
+            ->join('user_review_application', 'users.id', '=', 'user_review_application.user_id')
+            ->where('user_review_application.referrer_id', $leadUserId)
+            ->leftJoin('service_bookings', function($join) use ($fromDate, $toDate) {
+                $join->on('users.id', '=', 'service_bookings.ktv_user_id')
+                    ->where('service_bookings.status', BookingStatus::COMPLETED->value)
+                    ->whereBetween('service_bookings.booking_time', [$fromDate, $toDate]);
+            })
+            ->leftJoin('user_profiles', 'users.id', '=', 'user_profiles.user_id')
+            ->select([
+                'users.id',
+                'users.name',
+                'users.phone',
+                'user_profiles.avatar_url',
+                DB::raw('COUNT(service_bookings.id) as total_finished_bookings'),
+                DB::raw('COALESCE(SUM(service_bookings.price), 0) as total_revenue'),
+                DB::raw('COUNT(DISTINCT service_bookings.user_id) as total_unique_customers')
+            ])
+            ->groupBy('users.id', 'users.name', 'users.phone', 'user_profiles.avatar_url')
+            ->orderByDesc('total_revenue');
+
+        // Sử dụng paginate thay vì get
+        $paginator = $query->paginate($perPage, ['*'], 'page', $page);
+
+        // Xử lý dữ liệu cho từng item trong trang hiện tại (transform link ảnh)
+        $paginator->getCollection()->transform(function ($item) {
+            $item->avatar_url = $item->avatar_url
+                ? Helper::getPublicUrl($item->avatar_url)
+                : null;
+            return $item;
+        });
+
+        return $paginator;
     }
 }

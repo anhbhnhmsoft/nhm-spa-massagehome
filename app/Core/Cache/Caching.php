@@ -2,8 +2,8 @@
 
 namespace App\Core\Cache;
 
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
-use Psr\SimpleCache\InvalidArgumentException;
 
 class Caching
 {
@@ -21,20 +21,17 @@ class Caching
      * @param CacheKey $key
      * @param \Closure $callback Hàm lấy dữ liệu từ DB nếu chưa có cache
      * @param string|null $uniqueKey
-     * @param int|null $ttlInMinutes Null = Forever, Int = Minutes
+     * @param int|Carbon $expire Expire time in minutes or Carbon instance
      * @return mixed
      */
-    public static function remember(CacheKey $key, \Closure $callback, ?string $uniqueKey = null, ?int $ttlInMinutes = 60): mixed
+    public static function remember(CacheKey $key, \Closure $callback, ?string $uniqueKey = null, int | Carbon $expire = 60): mixed
     {
         $cacheKey = self::makeKey($key, $uniqueKey);
 
-        if (is_null($ttlInMinutes)) {
-            return Cache::rememberForever($cacheKey, $callback);
+        if (!$expire instanceof Carbon) {
+            $expire = now()->addMinutes($expire);
         }
-
-        // Chuyển đổi phút sang giây hoặc dùng now()->addMinutes() tùy ý
-        // Cache::remember nhận tham số thứ 2 là TTL (seconds) hoặc DateTime instance
-        return Cache::remember($cacheKey, now()->addMinutes($ttlInMinutes), $callback);
+        return Cache::remember($cacheKey, $expire, $callback);
     }
 
 
@@ -67,13 +64,16 @@ class Caching
      * @param CacheKey $key
      * @param $value
      * @param string|null $uniqueKey
-     * @param int $expire Expire time in minutes
+     * @param int|Carbon $expire Expire time in minutes or Carbon instance
      * @return bool
      */
-    public static function setCache(CacheKey $key, $value, string $uniqueKey = null, int $expire = 60): bool
+    public static function setCache(CacheKey $key, $value, string $uniqueKey = null, int | Carbon $expire = 60): bool
     {
         $cacheKey = self::makeKey($key, $uniqueKey);
-        return Cache::put($cacheKey, $value, now()->addMinutes($expire));
+        if (!$expire instanceof Carbon) {
+            $expire = now()->addMinutes($expire);
+        }
+        return Cache::put($cacheKey, $value, $expire);
     }
 
     /**

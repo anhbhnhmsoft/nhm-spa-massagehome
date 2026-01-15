@@ -20,40 +20,49 @@ class AffiliateController extends BaseController
 
     public function handleAffiliateLink(Request $request, $referrerId): View | RedirectResponse
     {
-        $chplay = env('CHPLAY_APP');
-        $appstore = env('APPSTORE_APP');
-        // 1. Kiểm tra ID người giới thiệu có tồn tại không
-        if (! $this->affiliateService->isValidReferrer($referrerId)) {
+        $chplay = config('services.store.chplay');
+        $appstore = config('services.store.appstore');
+
+        // Kiểm tra ID người giới thiệu có tồn tại không
+        $resultValidate = $this->affiliateService->isValidReferrer($referrerId);
+        if ($resultValidate->isError()) {
             return redirect('/');
         }
-
         $userAgent = $request->header('User-Agent');
+        $ip = $request->ip();
 
-        // 2. GHI NHẬN TRACKING (TẠO FINGERPRINT RECORD)
-        $this->affiliateService->trackClick($referrerId, $request->ip(), $userAgent);
+        // GHI NHẬN TRACKING (TẠO FINGERPRINT RECORD)
+        $resultTrack = $this->affiliateService->trackClick(
+            referrerId: $referrerId,
+            ip: $ip,
+            userAgent: $userAgent,
+        );
+        if ($resultTrack->isError()) {
+            return redirect('/');
+        }
 
         return view('web.affiliate', ['chplay' => $chplay, 'appstore' => $appstore]);
     }
 
     /**
+     * Đối chiếu Affiliate Link
      * @return JsonResponse
      */
 
     public function matchAffiliate(): JsonResponse
     {
-
-        $userId = Auth::check() ? Auth::user()->id : null;
+        $userId = auth('sanctum')->user()->id ?? null;
         $ip = request()->ip();
-
-        $resutl = $this->affiliateService->signinAffiliate($userId, $ip);
-        if (!$resutl->isSuccess()) {
-            return $this->sendError(
-                message: $resutl->getMessage()
+        $result = $this->affiliateService->signinAffiliate($userId, $ip);
+        if ($result->isError()) {
+            return $this->sendSuccess(
+                data: [
+                    'status' => false
+                ],
             );
         }
         return $this->sendSuccess(
-            data: $resutl->getData(),
-            message: $resutl->getMessage()
+            data: $result->getData(),
         );
     }
 

@@ -9,8 +9,6 @@ class FilterDTO
         public readonly int $perPage,
         public ?string $sortBy,
         public string $direction,
-
-        // Bỏ readonly ở đây để có thể sửa được
         public array $filters
     ) {
     }
@@ -21,13 +19,19 @@ class FilterDTO
         $this->filters = $filters;
     }
 
+    // Tìm filter theo key
+    public function findFilter(string $key)
+    {
+        return $this->filters[$key] ?? null;
+    }
+
     // Hoặc hàm merge thêm filter mới
     public function addFilter(string $key, mixed $value): void
     {
         $this->filters[$key] = $value;
     }
 
-    // Setter cho sortByvà direction
+    // Setter cho sortBy và direction
     public function setSortBy(string $sortBy): void
     {
         $this->sortBy = $sortBy;

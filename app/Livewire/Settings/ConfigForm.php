@@ -117,24 +117,25 @@ class ConfigForm extends Component implements HasSchemas
                                         ]),
                                     TextInput::make((string)ConfigName::SP_ZALO->value)
                                         ->label(__('admin.setting.fields.sp_zalo'))
+                                        ->default('')
                                         ->rules([
                                             'string',
                                         ])
                                         ->validationMessages([
-                                            'required' => __('common.error.required'),
                                             'string' => __('common.error.string'),
                                         ]),
                                     TextInput::make((string)ConfigName::SP_FACEBOOK->value)
                                         ->label(__('admin.setting.fields.sp_facebook'))
+                                        ->default('')
                                         ->rules([
                                             'string',
                                         ])
                                         ->validationMessages([
-                                            'required' => __('common.error.required'),
                                             'string' => __('common.error.string'),
                                         ]),
                                     TextInput::make((string)ConfigName::SP_PHONE->value)
                                         ->label(__('admin.setting.fields.sp_phone'))
+                                        ->default('')
                                         ->rules([
                                             'string',
                                         ])
@@ -143,83 +144,12 @@ class ConfigForm extends Component implements HasSchemas
                                         ]),
                                     TextInput::make((string)ConfigName::SP_WECHAT->value)
                                         ->label(__('admin.setting.fields.sp_wechat'))
+                                        ->default('')
                                         ->rules([
                                             'string',
                                         ])
                                         ->validationMessages([
                                             'string' => __('common.error.string'),
-                                        ]),
-                                    TextInput::make((string)ConfigName::ZALO_MERCHANT_ID->value)
-                                        ->label(__('admin.setting.fields.zalo_merchant_id'))
-                                        ->helperText(__('admin.setting.fields.zalo_merchant_id_helper'))
-                                        ->required()
-                                        ->rules([
-                                            'required',
-                                            'min:0',
-                                        ])
-                                        ->validationMessages([
-                                            'required' => __('common.error.required'),
-                                            'min' => __('common.error.min', ['min' => 0]),
-                                        ]),
-                                    TextInput::make((string)ConfigName::ZALO_MERCHANT_KEY_1->value)
-                                        ->label(__('admin.setting.fields.zalo_merchant_key_1'))
-                                        ->helperText(__('admin.setting.fields.zalo_merchant_key_1_helper'))
-                                        ->required()
-                                        ->rules([
-                                            'required',
-                                        ])
-                                        ->validationMessages([
-                                            'required' => __('common.error.required'),
-                                        ]),
-                                    TextInput::make((string)ConfigName::ZALO_MERCHANT_KEY_2->value)
-                                        ->label(__('admin.setting.fields.zalo_merchant_key_2'))
-                                        ->helperText(__('admin.setting.fields.zalo_merchant_key_2_helper'))
-                                        ->required()
-                                        ->rules([
-                                            'required',
-                                        ])
-                                        ->validationMessages([
-                                            'required' => __('common.error.required'),
-                                        ]),
-                                    TextInput::make((string)ConfigName::ZALO_APP_ID->value)
-                                        ->label(__('admin.setting.fields.zalo_app_id'))
-                                        ->helperText(__('admin.setting.fields.zalo_app_id_helper'))
-                                        ->required()
-                                        ->rules([
-                                            'required',
-                                        ])
-                                        ->validationMessages([
-                                            'required' => __('common.error.required'),
-                                        ]),
-                                    TextInput::make((string)ConfigName::ZALO_APPSECRET_KEY->value)
-                                        ->label(__('admin.setting.fields.zalo_appsecret_key'))
-                                        ->helperText(__('admin.setting.fields.zalo_appsecret_key_helper'))
-                                        ->required()
-                                        ->rules([
-                                            'required',
-                                        ])
-                                        ->validationMessages([
-                                            'required' => __('common.error.required'),
-                                        ]),
-                                    TextInput::make((string)ConfigName::ZALO_OA_ID->value)
-                                        ->label(__('admin.setting.fields.zalo_oa_id'))
-                                        ->helperText(__('admin.setting.fields.zalo_oa_id_helper'))
-                                        ->required()
-                                        ->rules([
-                                            'required',
-                                        ])
-                                        ->validationMessages([
-                                            'required' => __('common.error.required'),
-                                        ]),
-                                    TextInput::make((string)ConfigName::ZALO_TEMPLATE_ID->value)
-                                        ->label(__('admin.setting.fields.zalo_template_id'))
-                                        ->helperText(__('admin.setting.fields.zalo_template_id_helper'))
-                                        ->required()
-                                        ->rules([
-                                            'required',
-                                        ])
-                                        ->validationMessages([
-                                            'required' => __('common.error.required'),
                                         ]),
                                 ]),
                             Section::make(__('admin.setting.label_config_discount_rate'))
@@ -279,6 +209,38 @@ class ConfigForm extends Component implements HasSchemas
                                         ->numeric()
                                         ->required()
                                         ->suffix('%')
+                                        ->rules([
+                                            'required',
+                                            'numeric',
+                                            'min:0',
+                                        ])
+                                        ->validationMessages([
+                                            'required' => __('common.error.required'),
+                                            'numeric' => __('common.error.numeric'),
+                                            'min' => __('common.error.min', ['min' => 0]),
+                                        ]),
+                                    TextInput::make((string)ConfigName::KTV_LEADER_MIN_REFERRALS->value)
+                                        ->label(__('admin.setting.fields.ktv_leader_min_referrals'))
+                                        ->helperText(__('admin.setting.fields.ktv_leader_min_referrals_helper'))
+                                        ->numeric()
+                                        ->required()
+                                        ->suffix(__('admin.common.unit.user'))
+                                        ->rules([
+                                            'required',
+                                            'numeric',
+                                            'min:1',
+                                        ])
+                                        ->validationMessages([
+                                            'required' => __('common.error.required'),
+                                            'numeric' => __('common.error.numeric'),
+                                            'min' => __('common.error.min', ['min' => 1]),
+                                        ]),
+                                    TextInput::make((string)ConfigName::KTV_REFERRAL_REWARD_AMOUNT->value)
+                                        ->label(__('admin.setting.fields.ktv_referral_reward_amount'))
+                                        ->helperText(__('admin.setting.fields.ktv_referral_reward_amount_helper'))
+                                        ->numeric()
+                                        ->required()
+                                        ->suffix(__('admin.currency'))
                                         ->rules([
                                             'required',
                                             'numeric',

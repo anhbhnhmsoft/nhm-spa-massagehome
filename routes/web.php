@@ -10,6 +10,9 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/affiliate/{referrerId}', [AffiliateController::class, 'handleAffiliateLink'])->name('affiliate.link');
 
 Route::get('/{slug}', [PageController::class, 'show'])->name('page.show');
-// Zalo Access Token Initialization Routes
-Route::get('/zalo/redirect', [\App\Http\Controllers\Web\ZaloController::class, 'redirect'])->name('zalo.redirect');
-Route::get('/zalo/callback', [\App\Http\Controllers\Web\ZaloController::class, 'callback'])->name('zalo.callback');
+
+
+Route::prefix('zalo')->group(function () {
+    // Zalo Access Token Initialization Routes
+    Route::get('callback', [\App\Http\Controllers\Web\ZaloController::class, 'callback'])->name('zalo.callback');
+});
