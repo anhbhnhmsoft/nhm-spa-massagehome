@@ -478,13 +478,12 @@ class UserService extends BaseService
                 );
             }
 
-            // Kiểm tra agency_id có tồn tại và có phải là đối tác không
-            if (!empty($data['agency_id'])) {
+            // Kiểm tra referrer_id có tồn tại và có phải là đối tác không
+            if (!empty($data['referrer_id'])) {
                 $agency = $this->userRepository
-                    ->query()
-                    ->where('id', $data['agency_id'])
-                    ->where('role', UserRole::AGENCY->value)
-                    ->where('is_active', true)
+                    ->queryUser()
+                    ->where('id', $data['referrer_id'])
+                    ->whereIn('role', [UserRole::AGENCY->value, UserRole::KTV->value])
                     ->first();
                 if (!$agency) {
                     throw new ServiceException(
@@ -495,7 +494,7 @@ class UserService extends BaseService
 
             $reviewData = [
                 'user_id' => $user->id,
-                'agency_id' => $data['agency_id'] ?? null,
+                'referrer_id' => $data['referrer_id'] ?? null,
                 'status' => ReviewApplicationStatus::PENDING->value,
                 'province_code' => $data['province_code'],
                 'address' => $data['address'],
