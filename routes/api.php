@@ -307,7 +307,10 @@ Route::middleware('set-api-locale')->group(function () {
         Route::get('/dashboard', [AgencyController::class, 'dashboard']);
         // Lấy danh sách KTV Performance
         Route::get('list-ktv-performance', [AgencyController::class, 'listKtvPerformance']);
-        // Lấy thông tin dashboard profile của user hiện tại
-        Route::get('manage-ktv', [AgencyController::class, 'listKtv']);
+        // Lấy thông tin profile Agency
+        Route::get('profile', [AgencyController::class, 'profile']);
+        // Cập nhật thông tin profile
+        Route::post('edit-profile', [AgencyController::class, 'editProfile']);
+
     });
 });

@@ -330,10 +330,7 @@ class KTVController extends BaseController
         }
 
         $data = $validator->validated();
-        LogHelper::debug(
-            message: "KTVController@editProfileKtv",
-            context: $data,
-        );
+        $data['user_id'] = $request->user()->id;
         $res = $this->userService->updateKtvProfile($data);
         if ($res->isError()) {
             return $this->sendError($res->getMessage());

@@ -5,15 +5,14 @@ namespace App\Http\Controllers\API;
 use App\Core\Controller\BaseController;
 use App\Core\Controller\ListRequest;
 use App\Enums\DateRangeDashboard;
-use App\Http\Requests\API\Agency\ListKtvRequest;
-use App\Http\Resources\Auth\UserResource;
 use App\Http\Resources\User\ListKtvPerformanceItem;
+use App\Http\Resources\User\ProfileAgencyResource;
 use App\Services\AgencyService;
 use App\Services\DashboardService;
 use App\Services\UserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
 class AgencyController extends BaseController
@@ -81,15 +80,56 @@ class AgencyController extends BaseController
         );
     }
 
-    public function listKtv(ListKtvRequest $request): JsonResponse
+    /**
+     * Lấy thông tin profile Agency
+     * @return JsonResponse
+     */
+    public function profile(): JsonResponse
     {
-        $filterDTO = $request->getFilterOptions();
-        $result = $this->agencyService->manageKtv($filterDTO);
-        if ($result->isError()) {
-            return $this->sendError($result->getMessage());
-        }
-        return $this->sendSuccess(data: UserResource::collection($result->getData())->response()->getData(true));
+        return $this->sendSuccess(data: new ProfileAgencyResource(Auth::user()));
     }
+    /**
+     * Cập nhật thông tin profile
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function editProfile(Request $request): JsonResponse
+    {
+        $data = $request->validate(
+            [
+                'bio.vi' => 'nullable|string',
+                'bio.en' => 'nullable|string',
+                'bio.cn' => 'nullable|string',
+                'old_pass' => 'nullable|string',
+                'new_pass' => 'required_with:old_pass|string|min:6',
+                'lat' => 'nullable|numeric',
+                'lng' => 'nullable|numeric',
+                'address' => 'nullable|string',
+                'gender' => 'nullable|in:1,2',
+                'date_of_birth' => 'nullable|date',
+            ],
+            [
+                'date_of_birth.date' => __('validation.date_of_birth.date'),
+                'date_of_birth.date_format' => __('validation.date_of_birth.date_format'),
+                'old_pass.string' => __('validation.old_pass.string'),
+                'new_pass.string' => __('validation.new_pass.string'),
+                'lat.numeric' => __('validation.lat.numeric'),
+                'lng.numeric' => __('validation.lng.numeric'),
+                'address.string' => __('validation.address.string'),
+                'gender.in' => __('validation.gender.in'),
+                'bio.vi.string' => __('validation.bio.vi.string'),
+                'bio.en.string' => __('validation.bio.en.string'),
+                'bio.cn.string' => __('validation.bio.cn.string'),
+            ]
+        );
 
+        $res = $this->userService->updateAgencyProfile($data);
+        if ($res->isError()) {
+            return $this->sendError($res->getMessage());
+        }
+        return $this->sendSuccess(
+            message: __('admin.notification.success.update_success')
+        );
+    }
 
 }

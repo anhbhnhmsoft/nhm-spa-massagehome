@@ -48,4 +48,5 @@ return [
     'invalid_data' => 'Dữ liệu không hợp lệ',
     'could_not_send_otp' => 'Không thể gửi OTP, hãy thử lại sau vài phút',
     'zalo_service_configuration_error' => 'Hiện tại đang có trục trặc hệ thống, xin quý khách thông cảm và thử lại sau',
+    'review_application_not_found' => 'Ứng tuyển review không tồn tại',
 ];

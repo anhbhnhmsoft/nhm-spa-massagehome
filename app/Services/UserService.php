@@ -40,6 +40,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 
 class UserService extends BaseService
@@ -785,69 +786,56 @@ class UserService extends BaseService
      */
     public function updateKtvProfile(array $data): ServiceReturn
     {
+        DB::beginTransaction();
         try {
-            /** @var \App\Models\User $user */
-            $user = Auth::user();
+            $user = $this->userRepository->queryUser()
+                ->where('id', $data['user_id'])
+                ->where('role', UserRole::KTV->value)
+                ->first();
+            if (!$user) {
+                throw new ServiceException(__("error.user_not_found"));
+            }
             // 1. Update Password if old_pass provided
             if (!empty($data['old_pass'])) {
-                if (!\Illuminate\Support\Facades\Hash::check($data['old_pass'], $user->password)) {
+                if (!Hash::check($data['old_pass'], $user->password)) {
                     // Fix: return ServiceReturn object directly
                     return ServiceReturn::error(__('auth.error.wrong_password'));
                 }
-                $user->update(['password' => $data['new_pass']]);
+                $user->update(['password' => Hash::make($data['new_pass'])]);
             }
 
             // 2. Update UserReviewApplication
             $reviewApp = $user->getStaffReviewsAttribute()->first();
-            if ($reviewApp) {
-                $updateData = [];
-                if (isset($data['bio'])) $updateData['bio'] = $data['bio'];
-                if (isset($data['experience'])) $updateData['experience'] = $data['experience'];
-                if (isset($data['lat'])) $updateData['latitude'] = (float) $data['lat'];
-                if (isset($data['lng'])) $updateData['longitude'] = (float) $data['lng'];
-                if (isset($data['address'])) $updateData['address'] = $data['address'];
-
-                if (!empty($updateData)) {
-                    $this->userReviewApplicationRepository->update($reviewApp->id, $updateData);
-                }
-            }else {
-                $updateData = [];
-                if (isset($data['bio'])) $updateData['bio'] = $data['bio'];
-                if (isset($data['experience'])) $updateData['experience'] = $data['experience'];
-                if (isset($data['lat'])) $updateData['latitude'] = (float) $data['lat'];
-                if (isset($data['lng'])) $updateData['longitude'] = (float) $data['lng'];
-                if (isset($data['address'])) $updateData['address'] = $data['address'];
-                if (!empty($updateData)) {
-                    $updateData['user_id'] = $user->id;
-                    $updateData['status'] = ReviewApplicationStatus::PENDING->value;
-                    $updateData['role'] = UserRole::KTV->value;
-                    $this->userReviewApplicationRepository->create($updateData);
-                }
+            if (!$reviewApp) {
+                throw new ServiceException(__("error.user_not_found"));
+            }
+            $updateData = [];
+            if (isset($data['bio'])){
+                $updateData['bio'] = Helper::multilingualPayload($data, 'bio');
+            }
+            if (isset($data['experience'])) $updateData['experience'] = $data['experience'];
+            if (isset($data['lat'])) $updateData['latitude'] = (float) $data['lat'];
+            if (isset($data['lng'])) $updateData['longitude'] = (float) $data['lng'];
+            if (isset($data['address'])) $updateData['address'] = $data['address'];
+            if (!empty($updateData)) {
+                $this->userReviewApplicationRepository->update($reviewApp->id, $updateData);
             }
 
             // 3. Update UserProfile
             $profile = $user->profile;
-            if ($profile) {
-                $updateProfile = [];
-                if (isset($data['gender'])) $updateProfile['gender'] = $data['gender'];
-                if (isset($data['date_of_birth'])) $updateProfile['date_of_birth'] = $data['date_of_birth'];
+            if (!$profile) {
+                throw new ServiceException(__("error.user_not_found"));
+            }
+            $updateProfile = [];
+            if (isset($data['gender'])) $updateProfile['gender'] = $data['gender'];
+            if (isset($data['date_of_birth'])) $updateProfile['date_of_birth'] = $data['date_of_birth'];
 
-                if (!empty($updateProfile)) {
-                    $profile->update($updateProfile);
-                    $profile->save();
-                }
-            }else {
-                $updateProfile = [];
-                if (isset($data['gender'])) $updateProfile['gender'] = $data['gender'];
-                if (isset($data['date_of_birth'])) $updateProfile['date_of_birth'] = $data['date_of_birth'];
-
-                if (!empty($updateProfile)) {
-                    $updateProfile['user_id'] = $user->id;
-                    $this->userProfileRepository->create($updateProfile);
-                }
-                $profile = $this->userProfileRepository->find($user->id);
+            if (!empty($updateProfile)) {
+                $profile->update($updateProfile);
+                $profile->save();
             }
             $user->save();
+            DB::commit();
             // Reload user with relations to return fresh data
             $user->load(['profile', 'reviewApplication']);
 
@@ -856,12 +844,94 @@ class UserService extends BaseService
                 message: __("common.success.data_updated")
             );
         } catch (ServiceException $exception) {
+            DB::rollBack();
             return ServiceReturn::error(
                 message: $exception->getMessage()
             );
         } catch (\Exception $exception) {
+            DB::rollBack();
             LogHelper::error(
                 message: "Lỗi UserService@updateKtvProfile",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        }
+    }
+
+    /**
+     * Update agency profile
+     * @param array $data
+     * @return ServiceReturn
+     */
+    public function updateAgencyProfile(array $data): ServiceReturn
+    {
+        DB::beginTransaction();
+        try {
+            $user = $this->userRepository->queryUser()
+                ->where('id', $data['user_id'])
+                ->where('role', UserRole::AGENCY->value)
+                ->first();
+            if (!$user) {
+                throw new ServiceException(__("error.user_not_found"));
+            }
+            // 1. Update Password if old_pass provided
+            if (!empty($data['old_pass'])) {
+                if (!Hash::check($data['old_pass'], $user->password)) {
+                    // Fix: return ServiceReturn object directly
+                    return ServiceReturn::error(__('auth.error.wrong_password'));
+                }
+                $user->update(['password' => Hash::make($data['new_pass'])]);
+            }
+
+            // 2. Update UserReviewApplication
+            $reviewApp = $user->getAgencyReviewsAttribute()->first();
+            if (!$reviewApp) {
+                throw new ServiceException(__("error.user_not_found"));
+            }
+            $updateData = [];
+            if (isset($data['bio'])){
+                $updateData['bio'] = Helper::multilingualPayload($data, 'bio');
+            }
+            if (isset($data['lat'])) $updateData['latitude'] = (float) $data['lat'];
+            if (isset($data['lng'])) $updateData['longitude'] = (float) $data['lng'];
+            if (isset($data['address'])) $updateData['address'] = $data['address'];
+            if (!empty($updateData)) {
+                $this->userReviewApplicationRepository->update($reviewApp->id, $updateData);
+            }
+
+            // 3. Update UserProfile
+            $profile = $user->profile;
+            if (!$profile) {
+                throw new ServiceException(__("error.user_not_found"));
+            }
+            $updateProfile = [];
+            if (isset($data['gender'])) $updateProfile['gender'] = $data['gender'];
+            if (isset($data['date_of_birth'])) $updateProfile['date_of_birth'] = $data['date_of_birth'];
+
+            if (!empty($updateProfile)) {
+                $profile->update($updateProfile);
+                $profile->save();
+            }
+            $user->save();
+            DB::commit();
+            // Reload user with relations to return fresh data
+            $user->load(['profile', 'reviewApplication']);
+
+            return ServiceReturn::success(
+                data: $user,
+                message: __("common.success.data_updated")
+            );
+        } catch (ServiceException $exception) {
+            DB::rollBack();
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            LogHelper::error(
+                message: "Lỗi UserService@updateAgencyProfile",
                 ex: $exception
             );
             return ServiceReturn::error(
