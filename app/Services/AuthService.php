@@ -666,10 +666,14 @@ class AuthService extends BaseService
      */
     protected function createCacheRegisterOtp(string $phone): void
     {
-        $otp = rand(100000, 999999);
-        $result = $this->zaloService->pushOTPAuthorize($phone, $otp);
-        if (!$result['success']) {
-            throw new ServiceException($result ['message']);
+        if (config('app.debug')) {
+            $otp = 123456;
+        } else {
+            $otp = rand(100000, 999999);
+            $result = $this->zaloService->pushOTPAuthorize($phone, $otp);
+            if (!$result['success']) {
+                throw new ServiceException($result ['message']);
+            }
         }
         // Set OTP limit số lần gửi lại
         if (!Caching::hasCache(key: CacheKey::CACHE_KEY_RESEND_REGISTER_OTP, uniqueKey: $phone)) {

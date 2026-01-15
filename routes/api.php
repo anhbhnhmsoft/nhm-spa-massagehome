@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\CommercialController;
+use App\Http\Controllers\API\DashboardController;
 use App\Http\Controllers\API\FileController;
 use App\Http\Controllers\API\BookingController;
 use App\Http\Controllers\API\KTVController;
@@ -214,7 +215,9 @@ Route::middleware('set-api-locale')->group(function () {
     });
 
     Route::prefix('affiliate')->group(function () {
+        // Đối chiếu Affiliate Link
         Route::get('match', [AffiliateController::class, 'matchAffiliate']);
+
         Route::middleware(['auth:sanctum'])->group(function () {
             // Lấy thông tin cấu hình affiliate
             Route::get('config', [ConfigController::class, 'getConfigAffiliate']);
@@ -299,7 +302,11 @@ Route::middleware('set-api-locale')->group(function () {
     });
 
     // Dành cho agency
-    Route::prefix('agency')->middleware(['auth:sanctum'])->group(function () {
+    Route::prefix('agency')->middleware(['auth:sanctum','check-role:agency'])->group(function () {
+        // Lấy thông tin dashboard
+        Route::get('/dashboard', [AgencyController::class, 'dashboard']);
+        // Lấy danh sách KTV Performance
+        Route::get('list-ktv-performance', [AgencyController::class, 'listKtvPerformance']);
         // Lấy thông tin dashboard profile của user hiện tại
         Route::get('manage-ktv', [AgencyController::class, 'listKtv']);
     });

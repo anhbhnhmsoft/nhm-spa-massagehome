@@ -20,6 +20,9 @@ class AffiliateLink extends Model
     ];
 
     protected $casts = [
+        'id' => 'string',
+        'referrer_id' => 'string',
+        'referred_user_id' => 'string',
         'is_matched' => 'boolean',
         'expired_at' => 'datetime',
     ];

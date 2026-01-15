@@ -49,4 +49,8 @@ return [
         'oa_id' => env('ZALO_OA_ID'),
         'otp_template' => env('ZALO_OTP_TEMPLATE'),
     ],
+    'store' => [
+        'chplay' => env('CHPLAY_APP') ?? '',
+        'appstore' => env('APPSTORE_APP') ?? '',
+    ],
 ];

@@ -2,17 +2,22 @@
 
 namespace App\Services;
 
+use App\Core\Cache\Caching;
+use App\Core\LogHelper;
 use App\Core\Service\BaseService;
+use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
 use App\Enums\BookingStatus;
+use App\Enums\DateRangeDashboard;
 use App\Enums\ReviewApplicationStatus;
+use App\Enums\UserRole;
 use App\Enums\WalletTransactionType;
 use App\Enums\WalletTransactionStatus;
-//        use App\Repositories\AffiliateEarningRepository;
 use App\Repositories\BookingRepository;
 use App\Repositories\ReviewRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\UserReviewApplicationRepository;
+use App\Repositories\WalletRepository;
 use App\Repositories\WalletTransactionRepository;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Facades\DB;
@@ -20,15 +25,17 @@ use Illuminate\Support\Facades\DB;
 class DashboardService extends BaseService
 {
     public function __construct(
-        protected BookingRepository $bookingRepository,
-        protected UserRepository $userRepository,
+        protected BookingRepository               $bookingRepository,
+        protected UserRepository                  $userRepository,
         protected UserReviewApplicationRepository $userReviewApplicationRepository,
-        protected WalletTransactionRepository $walletTransactionRepository,
-        protected ReviewRepository $reviewRepository,
-//        protected AffiliateEarningRepository $affiliateEarningRepository,
-    ) {
+        protected WalletTransactionRepository     $walletTransactionRepository,
+        protected ReviewRepository                $reviewRepository,
+        protected WalletRepository                $walletRepository,
+    )
+    {
         parent::__construct();
     }
+
     /**
      * Lấy thống kê tổng quan dashboard
      * @return ServiceReturn
@@ -533,6 +540,129 @@ class DashboardService extends BaseService
             ]);
         } catch (\Exception $e) {
             return ServiceReturn::error($e->getMessage());
+        }
+    }
+
+    /**
+     * Lấy dữ liệu dashboard tổng quan cho Agency
+     * @param $userId
+     * @param DateRangeDashboard $range
+     * @return ServiceReturn
+     */
+    public function getAgencyDashboardData($userId, DateRangeDashboard $range): ServiceReturn
+    {
+        try {
+            // Lấy khoảng thời gian hiển thị
+            $dateRange = $range->getDateRange();
+
+            // Lấy thông tin user
+            $user = $this->userRepository->queryUser()
+                ->where('role', UserRole::AGENCY->value)
+                ->where('id', $userId)
+                ->first();
+            if (!$user) {
+                throw new ServiceException(__('error.user_not_found'));
+            }
+            // Lấy thông tin wallet
+            $walletData = $this->walletRepository->queryWallet()
+                ->where('user_id', $userId)
+                ->first();
+            if (!$walletData) {
+                throw new ServiceException(__('error.wallet_not_found'));
+            }
+
+            // Tổng lợi nhuận của các KTV mà mình giới thiệu trong khoảng thời gian
+            $totalProfitReferralKtv = $this->walletTransactionRepository->sumReferralKtvProfit(
+                walletId: $walletData->id,
+                from: $dateRange['from'],
+                to: $dateRange['to'],
+            );
+
+            // Tổng lợi nhuận của mời Agency trong khoảng thời gian
+            $totalProfitAffiliate = $this->walletTransactionRepository->sumAffiliateProfit(
+                walletId: $walletData->id,
+                from: $dateRange['from'],
+                to: $dateRange['to'],
+            );
+
+            // Số lượng Khách hàng đã giới thiệu trong khoảng thời gian
+            $totalReferralCustomer = $this->userRepository->countReferralCustomers(
+                referrerId: $user->id,
+                from: $dateRange['from'],
+                to: $dateRange['to'],
+            );
+
+            // Tổng số lượng khách hàng đã đặt trong khoảng thời gian mà KTV này quản lý
+            $totalCustomerOrderKtv = $this->bookingRepository->countManagedKtvCustomerBookingTime(
+                leadUserId: $user->id,
+                from: $dateRange['from'],
+                to: $dateRange['to'],
+            );
+
+            // Tổng số khách hàng đã đặt trong khoảng thời gian mà Agency này giới thiệu
+            $totalCustomerAffiliateOrder = $this->bookingRepository->countReferredCustomerBookingTime(
+                referrerId: $user->id,
+                from: $dateRange['from'],
+                to: $dateRange['to'],
+            );
+
+            return ServiceReturn::success([
+                'total_profit_referral_ktv' => $totalProfitReferralKtv, // Tổng chiết khấu lợi nhuận của mời KTV trong khoảng thời gian
+                'total_profit_affiliate' => $totalProfitAffiliate, // Tổng chiết khấu lợi nhuận Affiliate trong khoảng thời gian
+                'total_referral_customer' => $totalReferralCustomer, // Số lượng Khách hàng đã giới thiệu trong khoảng thời gian
+                'total_customer_order_ktv' => $totalCustomerOrderKtv, // Tổng số lượng đơn đặt hàng mà user đang quản lý KTV trong khoảng thời gian
+                'total_customer_affiliate_order' => $totalCustomerAffiliateOrder, // Tổng số khách hàng Affiliate đã đặt trong khoảng thời gian
+            ]);
+
+        } catch (ServiceException $e) {
+            return ServiceReturn::error($e->getMessage());
+        } catch (\Exception $e) {
+            LogHelper::error(
+                message: "Lỗi DashboardService@getGeneralDashboardData",
+                ex: $e,
+            );
+            return ServiceReturn::error($e->getMessage());
+        }
+    }
+
+    /**
+     * Lấy dữ liệu dashboard tổng quan cho KTV
+     * @param $userId
+     * @param DateRangeDashboard $range
+     * @param int $page
+     * @param int $limit
+     * @return ServiceReturn
+     */
+    public function getListKtvPerformancePaginated($userId, DateRangeDashboard $range, int $page, int $limit): ServiceReturn
+    {
+        try {
+            // Lấy khoảng thời gian hiển thị
+            $dateRange = $range->getDateRange();
+            // Lấy thông tin user
+            $user = $this->userRepository->queryUser()
+                ->whereIn('role', [UserRole::KTV->value, UserRole::AGENCY->value])
+                ->where('id', $userId)
+                ->first();
+            if (!$user) {
+                throw new ServiceException(__('error.user_not_found'));
+            }
+            $listKtvPerformance = $this->userRepository->getKtvPerformancePaginated(
+                leadUserId: $user->id,
+                from: $dateRange['from'],
+                to: $dateRange['to'],
+                page: $page,
+                perPage: $limit,
+            );
+            return ServiceReturn::success($listKtvPerformance);
+
+        } catch (ServiceException $e) {
+            return ServiceReturn::error($e->getMessage());
+        } catch (\Exception $e) {
+            LogHelper::error(
+                message: "Lỗi DashboardService@getListKtvPerformancePaginated",
+                ex: $e,
+            );
+            return ServiceReturn::error(__('common_error.server_error'));
         }
     }
 }
