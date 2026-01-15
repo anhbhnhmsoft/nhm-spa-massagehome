@@ -29,13 +29,13 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->seedProvince();
-        $this->seedCategory();
-        $this->seedAdmin();
-//        $this->seedKTV();
-        $this->seedCoupon();
+//        $this->seedProvince();
+//        $this->seedCategory();
+//        $this->seedAdmin();
+////        $this->seedKTV();
+//        $this->seedCoupon();
         $this->seedConfig();
-        $this->seedConfigAffiliate();
+//        $this->seedConfigAffiliate();
     }
 
     protected function seedAdmin(): void
@@ -290,121 +290,121 @@ class DatabaseSeeder extends Seeder
     {
         DB::beginTransaction();
         try {
-            Config::query()->updateOrCreate(
-                ['config_key' => ConfigName::PAYOS_CLIENT_ID->value],
-                [
-                    'config_value' => '3199a47f-9162-4d98-9908-9732432cf365',
-                    'config_type' => ConfigType::STRING->value,
-                    'description' => 'Mã client ID PayOS dùng để tích hợp thanh toán PayOS.',
-                ]
-            );
-            Config::query()->updateOrCreate(
-                ['config_key' => ConfigName::PAYOS_API_KEY->value],
-                [
-                    'config_value' => '18e78b87-1300-4e2d-adef-0de1423d89a8',
-                    'config_type' => ConfigType::STRING->value,
-                    'description' => 'Mã secret key PayOS dùng để tích hợp thanh toán PayOS.',
-                ]
-            );
-            Config::query()->updateOrCreate(
-                ['config_key' => ConfigName::PAYOS_CHECKSUM_KEY->value],
-                [
-                    'config_value' => 'bcdaecc9ad73edff55c076519e5ab5e127fd9681c13cfd19de1dfa29d9d8fce9',
-                    'config_type' => ConfigType::STRING->value,
-                    'description' => 'Mã checksum key PayOS dùng để tích hợp thanh toán PayOS.',
-                ]
-            );
-            Config::query()->updateOrCreate(
-                ['config_key' => ConfigName::CURRENCY_EXCHANGE_RATE->value],
-                [
-                    'config_value' => '1000',
-                    'config_type' => ConfigType::NUMBER->value,
-                    'description' => 'Tỷ giá đổi tiền VNĐ -> Point VD: 1000 VNĐ = 1 Point',
-                ]
-            );
-
-            Config::query()->updateOrCreate(
-                ['config_key' => ConfigName::GOONG_API_KEY->value],
-                [
-                    'config_value' => 'dpxUCPncHcWczUMJY5EfatOFCpxGI2tB9ADsR4sb',
-                    'config_type' => ConfigType::STRING->value,
-                    'description' => 'Mã API key Goong dùng để tích hợp tìm kiếm địa chỉ.',
-                ]
-            );
-            Config::query()->updateOrCreate(
-                ['config_key' => ConfigName::BREAK_TIME_GAP->value],
-                [
-                    'config_value' => '60',
-                    'config_type' => ConfigType::NUMBER->value,
-                    'description' => 'Khoảng cách giữa 2 lần phục vụ của kỹ thuật viên tính bằng phút',
-                ]
-            );
-            Config::query()->updateOrCreate(
-                ['config_key' => ConfigName::DISCOUNT_RATE->value],
-                [
-                    'config_value' => '20',
-                    'config_type' => ConfigType::NUMBER->value,
-                    'description' => 'Tỷ lệ chiết khấu ứng dụng nhận được',
-                ]
-            );
-            Config::query()->updateOrCreate(
-                ['config_key' => ConfigName::DISCOUNT_RATE_REFERRER_AGENCY->value],
-                [
-                    'config_value' => '15',
-                    'config_type' => ConfigType::NUMBER->value,
-                    'description' => 'Tỷ lệ chiết khấu dành cho đại lý đối với 1 đơn hoàn thành của 1 KTV mà mình giới thiệu %',
-                ]
-            );
-            Config::query()->updateOrCreate(
-                ['config_key' => ConfigName::DISCOUNT_RATE_REFERRER_KTV->value],
-                [
-                    'config_value' => '5',
-                    'config_type' => ConfigType::NUMBER->value,
-                    'description' => 'Tỷ lệ chiết khấu dành cho kỹ thuật viên đối với 1 đơn hoàn thành của 1 KTV mà mình giới thiệu %',
-                ]
-            );
-            Config::query()->updateOrCreate(
-                ['config_key' => ConfigName::DISCOUNT_RATE_REFERRER_KTV_LEADER->value],
-                [
-                    'config_value' => '10',
-                    'config_type' => ConfigType::NUMBER->value,
-                    'description' => 'Tỷ lệ chiết khấu dành cho kỹ thuật viên trưởng đối với 1 đơn hoàn thành của 1 KTV mà mình giới thiệu %',
-                ]
-            );
-            Config::query()->updateOrCreate(
-                ['config_key' => ConfigName::SP_PHONE->value],
-                [
-                    'config_value' => '0865643858',
-                    'config_type' => ConfigType::STRING->value,
-                    'description' => 'Số điện thoại hỗ trợ',
-                ]
-            );
-            Config::query()->updateOrCreate(
-                ['config_key' => ConfigName::SP_ZALO->value],
-                [
-                    'config_value' => 'https://zalo.me/0865643858',
-                    'config_type' => ConfigType::STRING->value,
-                    'description' => 'Trang Zalo hỗ trợ của admin',
-                ]
-            );
-
-            Config::query()->updateOrCreate(
-                ['config_key' => ConfigName::SP_FACEBOOK->value],
-                [
-                    'config_value' => 'https://facebook.com/admin.support',
-                    'config_type' => ConfigType::STRING->value,
-                    'description' => 'Trang Facebook hỗ trợ của admin',
-                ]
-            );
-
-            Config::query()->updateOrCreate(
-                ['config_key' => ConfigName::SP_WECHAT->value],
-                [
-                    'config_value' => 'wechat_admin_support',
-                    'config_type' => ConfigType::STRING->value,
-                    'description' => 'Link WeChat hỗ trợ của admin',
-                ]
-            );
+//            Config::query()->updateOrCreate(
+//                ['config_key' => ConfigName::PAYOS_CLIENT_ID->value],
+//                [
+//                    'config_value' => '3199a47f-9162-4d98-9908-9732432cf365',
+//                    'config_type' => ConfigType::STRING->value,
+//                    'description' => 'Mã client ID PayOS dùng để tích hợp thanh toán PayOS.',
+//                ]
+//            );
+//            Config::query()->updateOrCreate(
+//                ['config_key' => ConfigName::PAYOS_API_KEY->value],
+//                [
+//                    'config_value' => '18e78b87-1300-4e2d-adef-0de1423d89a8',
+//                    'config_type' => ConfigType::STRING->value,
+//                    'description' => 'Mã secret key PayOS dùng để tích hợp thanh toán PayOS.',
+//                ]
+//            );
+//            Config::query()->updateOrCreate(
+//                ['config_key' => ConfigName::PAYOS_CHECKSUM_KEY->value],
+//                [
+//                    'config_value' => 'bcdaecc9ad73edff55c076519e5ab5e127fd9681c13cfd19de1dfa29d9d8fce9',
+//                    'config_type' => ConfigType::STRING->value,
+//                    'description' => 'Mã checksum key PayOS dùng để tích hợp thanh toán PayOS.',
+//                ]
+//            );
+//            Config::query()->updateOrCreate(
+//                ['config_key' => ConfigName::CURRENCY_EXCHANGE_RATE->value],
+//                [
+//                    'config_value' => '1000',
+//                    'config_type' => ConfigType::NUMBER->value,
+//                    'description' => 'Tỷ giá đổi tiền VNĐ -> Point VD: 1000 VNĐ = 1 Point',
+//                ]
+//            );
+//
+//            Config::query()->updateOrCreate(
+//                ['config_key' => ConfigName::GOONG_API_KEY->value],
+//                [
+//                    'config_value' => 'dpxUCPncHcWczUMJY5EfatOFCpxGI2tB9ADsR4sb',
+//                    'config_type' => ConfigType::STRING->value,
+//                    'description' => 'Mã API key Goong dùng để tích hợp tìm kiếm địa chỉ.',
+//                ]
+//            );
+//            Config::query()->updateOrCreate(
+//                ['config_key' => ConfigName::BREAK_TIME_GAP->value],
+//                [
+//                    'config_value' => '60',
+//                    'config_type' => ConfigType::NUMBER->value,
+//                    'description' => 'Khoảng cách giữa 2 lần phục vụ của kỹ thuật viên tính bằng phút',
+//                ]
+//            );
+//            Config::query()->updateOrCreate(
+//                ['config_key' => ConfigName::DISCOUNT_RATE->value],
+//                [
+//                    'config_value' => '20',
+//                    'config_type' => ConfigType::NUMBER->value,
+//                    'description' => 'Tỷ lệ chiết khấu ứng dụng nhận được',
+//                ]
+//            );
+//            Config::query()->updateOrCreate(
+//                ['config_key' => ConfigName::DISCOUNT_RATE_REFERRER_AGENCY->value],
+//                [
+//                    'config_value' => '15',
+//                    'config_type' => ConfigType::NUMBER->value,
+//                    'description' => 'Tỷ lệ chiết khấu dành cho đại lý đối với 1 đơn hoàn thành của 1 KTV mà mình giới thiệu %',
+//                ]
+//            );
+//            Config::query()->updateOrCreate(
+//                ['config_key' => ConfigName::DISCOUNT_RATE_REFERRER_KTV->value],
+//                [
+//                    'config_value' => '5',
+//                    'config_type' => ConfigType::NUMBER->value,
+//                    'description' => 'Tỷ lệ chiết khấu dành cho kỹ thuật viên đối với 1 đơn hoàn thành của 1 KTV mà mình giới thiệu %',
+//                ]
+//            );
+//            Config::query()->updateOrCreate(
+//                ['config_key' => ConfigName::DISCOUNT_RATE_REFERRER_KTV_LEADER->value],
+//                [
+//                    'config_value' => '10',
+//                    'config_type' => ConfigType::NUMBER->value,
+//                    'description' => 'Tỷ lệ chiết khấu dành cho kỹ thuật viên trưởng đối với 1 đơn hoàn thành của 1 KTV mà mình giới thiệu %',
+//                ]
+//            );
+//            Config::query()->updateOrCreate(
+//                ['config_key' => ConfigName::SP_PHONE->value],
+//                [
+//                    'config_value' => '0865643858',
+//                    'config_type' => ConfigType::STRING->value,
+//                    'description' => 'Số điện thoại hỗ trợ',
+//                ]
+//            );
+//            Config::query()->updateOrCreate(
+//                ['config_key' => ConfigName::SP_ZALO->value],
+//                [
+//                    'config_value' => 'https://zalo.me/0865643858',
+//                    'config_type' => ConfigType::STRING->value,
+//                    'description' => 'Trang Zalo hỗ trợ của admin',
+//                ]
+//            );
+//
+//            Config::query()->updateOrCreate(
+//                ['config_key' => ConfigName::SP_FACEBOOK->value],
+//                [
+//                    'config_value' => 'https://facebook.com/admin.support',
+//                    'config_type' => ConfigType::STRING->value,
+//                    'description' => 'Trang Facebook hỗ trợ của admin',
+//                ]
+//            );
+//
+//            Config::query()->updateOrCreate(
+//                ['config_key' => ConfigName::SP_WECHAT->value],
+//                [
+//                    'config_value' => 'wechat_admin_support',
+//                    'config_type' => ConfigType::STRING->value,
+//                    'description' => 'Link WeChat hỗ trợ của admin',
+//                ]
+//            );
             Config::query()->updateOrCreate(
                 ['config_key' => ConfigName::ZALO_MERCHANT_ID->value],
                 [

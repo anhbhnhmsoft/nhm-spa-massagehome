@@ -39,6 +39,7 @@ class ConfigForm extends Component implements HasSchemas
                     Grid::make()
                         ->schema([
                             Section::make(__('admin.setting.label_setting'))
+                                ->columns(2)
                                 ->schema([
                                     TextInput::make((string)ConfigName::PAYOS_CLIENT_ID->value)
                                         ->label(__('admin.setting.fields.payos_client_id'))
@@ -116,9 +117,7 @@ class ConfigForm extends Component implements HasSchemas
                                         ]),
                                     TextInput::make((string)ConfigName::SP_ZALO->value)
                                         ->label(__('admin.setting.fields.sp_zalo'))
-                                        ->required()
                                         ->rules([
-                                            'required',
                                             'string',
                                         ])
                                         ->validationMessages([
@@ -127,9 +126,7 @@ class ConfigForm extends Component implements HasSchemas
                                         ]),
                                     TextInput::make((string)ConfigName::SP_FACEBOOK->value)
                                         ->label(__('admin.setting.fields.sp_facebook'))
-                                        ->required()
                                         ->rules([
-                                            'required',
                                             'string',
                                         ])
                                         ->validationMessages([
@@ -138,28 +135,95 @@ class ConfigForm extends Component implements HasSchemas
                                         ]),
                                     TextInput::make((string)ConfigName::SP_PHONE->value)
                                         ->label(__('admin.setting.fields.sp_phone'))
-                                        ->required()
                                         ->rules([
-                                            'required',
                                             'string',
                                         ])
                                         ->validationMessages([
-                                            'required' => __('common.error.required'),
                                             'string' => __('common.error.string'),
                                         ]),
                                     TextInput::make((string)ConfigName::SP_WECHAT->value)
-                                            ->label(__('admin.setting.fields.sp_wechat'))
-                                        ->required()
+                                        ->label(__('admin.setting.fields.sp_wechat'))
                                         ->rules([
-                                            'required',
                                             'string',
                                         ])
                                         ->validationMessages([
-                                            'required' => __('common.error.required'),
                                             'string' => __('common.error.string'),
+                                        ]),
+                                    TextInput::make((string)ConfigName::ZALO_MERCHANT_ID->value)
+                                        ->label(__('admin.setting.fields.zalo_merchant_id'))
+                                        ->helperText(__('admin.setting.fields.zalo_merchant_id_helper'))
+                                        ->required()
+                                        ->rules([
+                                            'required',
+                                            'min:0',
+                                        ])
+                                        ->validationMessages([
+                                            'required' => __('common.error.required'),
+                                            'min' => __('common.error.min', ['min' => 0]),
+                                        ]),
+                                    TextInput::make((string)ConfigName::ZALO_MERCHANT_KEY_1->value)
+                                        ->label(__('admin.setting.fields.zalo_merchant_key_1'))
+                                        ->helperText(__('admin.setting.fields.zalo_merchant_key_1_helper'))
+                                        ->required()
+                                        ->rules([
+                                            'required',
+                                        ])
+                                        ->validationMessages([
+                                            'required' => __('common.error.required'),
+                                        ]),
+                                    TextInput::make((string)ConfigName::ZALO_MERCHANT_KEY_2->value)
+                                        ->label(__('admin.setting.fields.zalo_merchant_key_2'))
+                                        ->helperText(__('admin.setting.fields.zalo_merchant_key_2_helper'))
+                                        ->required()
+                                        ->rules([
+                                            'required',
+                                        ])
+                                        ->validationMessages([
+                                            'required' => __('common.error.required'),
+                                        ]),
+                                    TextInput::make((string)ConfigName::ZALO_APP_ID->value)
+                                        ->label(__('admin.setting.fields.zalo_app_id'))
+                                        ->helperText(__('admin.setting.fields.zalo_app_id_helper'))
+                                        ->required()
+                                        ->rules([
+                                            'required',
+                                        ])
+                                        ->validationMessages([
+                                            'required' => __('common.error.required'),
+                                        ]),
+                                    TextInput::make((string)ConfigName::ZALO_APPSECRET_KEY->value)
+                                        ->label(__('admin.setting.fields.zalo_appsecret_key'))
+                                        ->helperText(__('admin.setting.fields.zalo_appsecret_key_helper'))
+                                        ->required()
+                                        ->rules([
+                                            'required',
+                                        ])
+                                        ->validationMessages([
+                                            'required' => __('common.error.required'),
+                                        ]),
+                                    TextInput::make((string)ConfigName::ZALO_OA_ID->value)
+                                        ->label(__('admin.setting.fields.zalo_oa_id'))
+                                        ->helperText(__('admin.setting.fields.zalo_oa_id_helper'))
+                                        ->required()
+                                        ->rules([
+                                            'required',
+                                        ])
+                                        ->validationMessages([
+                                            'required' => __('common.error.required'),
+                                        ]),
+                                    TextInput::make((string)ConfigName::ZALO_TEMPLATE_ID->value)
+                                        ->label(__('admin.setting.fields.zalo_template_id'))
+                                        ->helperText(__('admin.setting.fields.zalo_template_id_helper'))
+                                        ->required()
+                                        ->rules([
+                                            'required',
+                                        ])
+                                        ->validationMessages([
+                                            'required' => __('common.error.required'),
                                         ]),
                                 ]),
                             Section::make(__('admin.setting.label_config_discount_rate'))
+                                ->columns(2)
                                 ->schema([
                                     TextInput::make((string)ConfigName::DISCOUNT_RATE->value)
                                         ->label(__('admin.setting.fields.discount_rate'))
