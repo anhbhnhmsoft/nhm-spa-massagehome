@@ -30,9 +30,8 @@ class AuthController extends BaseController
     public function authenticate(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'phone' => [new PhoneRule()],
+            'phone' => ['required', new PhoneRule()],
         ]);
-
         $resService = $this->authService->authenticate(
             phone: $data['phone'],
         );

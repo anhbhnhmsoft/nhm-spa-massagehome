@@ -62,7 +62,7 @@ class CategoryForm
                     ->schema([
                         Repeater::make('prices')
                             ->label(__('admin.category.price_list'))
-                            ->relationship() // Quan trọng: Báo cho Filament biết đây là quan hệ HasMany
+                            ->relationship("prices")
                             ->schema([
                                 TextInput::make('duration')
                                     ->label(__('admin.common.form.duration'))

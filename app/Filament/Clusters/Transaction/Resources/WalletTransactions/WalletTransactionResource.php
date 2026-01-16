@@ -21,7 +21,10 @@ class WalletTransactionResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    protected static ?string $cluster = TransactionCluster::class;
+    public static function getNavigationGroup(): \UnitEnum|string|null
+    {
+        return __('filament.navigation.transaction');
+    }
 
     protected static ?string $recordTitleAttribute = 'Transaction';
 

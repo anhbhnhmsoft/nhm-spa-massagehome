@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Filament\Pages\Dashboard;
 use App\Models\Banner;
 use App\Models\Category;
+use App\Models\Config;
 use App\Models\Coupon;
 use App\Models\Page;
 use App\Models\Service;
@@ -13,6 +14,7 @@ use App\Models\UserFile;
 use App\Models\UserProfile;
 use App\Observers\BannerObserver;
 use App\Observers\CategoryObserver;
+use App\Observers\ConfigObserver;
 use App\Observers\CouponObserver;
 use App\Observers\PageObserver;
 use App\Observers\ServiceObserver;
@@ -59,6 +61,7 @@ use App\Services\WalletService;
 use App\Services\AffiliateService;
 use App\Services\ReviewService;
 use App\Services\UserFileService;
+use App\Services\ZaloService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -139,6 +142,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(UserWithdrawInfoService::class);
         $this->app->singleton(UserFileService::class);
         $this->app->singleton(AgencyService::class);
+        $this->app->singleton(ZaloService::class);
     }
 
     /**
@@ -154,5 +158,6 @@ class AppServiceProvider extends ServiceProvider
         UserFile::observe(UserFileObserver::class);
         UserProfile::observe(UserProfileObserver::class);
         StaticContract::observe(StaticContractObserver::class);
+        Config::observe(ConfigObserver::class);
     }
 }

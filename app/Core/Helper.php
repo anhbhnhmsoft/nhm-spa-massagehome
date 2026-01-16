@@ -205,4 +205,45 @@ final class Helper
         // KTV thực nhận = Tổng tiền - Phí sàn
         return $price - $systemMinus;
     }
+
+    /**
+     * Tính toán số tiền mà người giới thiệu sẽ nhận được.
+     * @param float $price
+     * @param float $discountRate
+     * @param int $precision
+     * @return float
+     */
+    public static function calculatePriceReferrer(float $price, float $discountRate, int $precision = 0): float
+    {
+        $discountRate = max(0, min(100, $discountRate));
+
+        return round($price * ($discountRate / 100), $precision);
+    }
+
+    /**
+     * Lấy số lượng tối thiểu mà KTV phải có để trở thành trưởng KTV.
+     */
+    public static function getConditionToBeLeaderKtv(): int
+    {
+        return 10;
+    }
+
+    public static function formatPhone($phone): string
+    {
+        $phone = preg_replace('/[^0-9]/', '', $phone);
+        if (str_starts_with($phone, '0')) {
+            $phone = '84' . substr($phone, 1);
+        }
+        if (!str_starts_with($phone, '84')) {
+            $phone = '84' . $phone;
+        }
+        return $phone;
+    }
+
+    public static function isValidPhone($phone): bool
+    {
+        $phone = self::formatPhone($phone);
+        return preg_match('/^84\d{9}$/', $phone);
+    }
+
 }

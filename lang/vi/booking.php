@@ -11,7 +11,7 @@ return [
     ],
     'book_time' => [
         'break_time_gap_not_found' => 'Có lỗi xảy ra khi lấy khoảng thời gian nghỉ, vui lòng liên hệ quản trị viên, cảm ơn!',
-        'book_time_not_valid' => 'Thời gian đặt không hợp lệ, cần phải lớn hơn thời gian hiện tại ít nhất :break_time phút!',
+        'book_time_not_valid' => 'Thời gian đặt không hợp lệ, bạn có thể đặt lịch từ :time trở đi!',
         'overlapping' => 'Đang có người khác đặt lịch trong khoảng thời gian này. Vui lòng chọn thời gian khác! Thời gian sớm nhất bạn có thể đặt là :time',
     ],
     'status_not_confirmed' => 'Booking chưa được xác nhận',
@@ -61,7 +61,9 @@ return [
         'wallet_customer_not_found' => 'Không tìm thấy tài khoản ví',
         'wallet_technician_not_found' => 'Không tìm thấy tài khoản ví kĩ thuật viên',
         'booking_not_found' => 'Không tìm thấy lịch đặt hẹn này',
-        'wallet_referred_staff' => 'Trả tiền hoa hồng cho người giới thiệu',
+        'wallet_referred_staff_ktv' => 'Trả tiền hoa hồng cho người giới thiệu KTV',
+        'wallet_referred_staff_affiliate' => 'Trả tiền hoa hồng cho người giới thiệu Affiliate',
+
     ],
     'validate' => [
         'required' => 'Booking ID không được để trống',
@@ -76,6 +78,6 @@ return [
     'started_successfully' => 'Bắt đầu dịch vụ thành công',
     'refunded' => 'Booking đã được hoàn tiền',
     'status_not_completed' => 'Booking không ở trạng thái hoàn thành',
-    'not_permission_at_this_time' => 'Bạn không có quyền hoàn thành booking này lúc này',
-    'booking_time_not_yet' => 'Booking chưa đến thời gian bắt đầu',
+    'not_permission_at_this_time' => 'Chỉ có thể hoàn thành booking khi đã đến thời gian dự kiến hoặc đã qua',
+    'only_start_today_bookings' => 'Chỉ có thể bắt đầu dịch vụ hôm nay',
 ];

@@ -18,6 +18,8 @@ return [
         'max_length' => '此值不能超过 :max 个字符',
         'title' => '发生错误，请稍后再试！',
         'forbidden' => '您没有权限执行此操作',
+        'numeric' => '此值必须是一个数字',
+        'min' => '此值必须大于或等于 :min',
     ],
     'unit' => [
         'minute' => '分钟',

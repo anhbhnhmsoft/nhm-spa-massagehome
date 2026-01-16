@@ -39,6 +39,7 @@ class AuthService extends BaseService
         protected UserRepository        $userRepository,
         protected UserProfileRepository $userProfileRepository,
         protected WalletRepository      $walletRepository,
+        protected ZaloService $zaloService,
     )
     {
         parent::__construct();
@@ -444,6 +445,7 @@ class AuthService extends BaseService
             $user->devices()->updateOrCreate(
                 [
                     'device_id' => $deviceId,
+                    'user_id' => $user->id,
                 ],
                 [
                     'token' => $token,
@@ -665,8 +667,6 @@ class AuthService extends BaseService
      */
     protected function createCacheRegisterOtp(string $phone): void
     {
-        //        $otp = rand(100000, 999999);
-        $otp = 123456; // Test
         // Set OTP limit số lần gửi lại
         if (!Caching::hasCache(key: CacheKey::CACHE_KEY_RESEND_REGISTER_OTP, uniqueKey: $phone)) {
             Caching::setCache(
@@ -681,6 +681,16 @@ class AuthService extends BaseService
         // Kiểm tra số lần gửi lại OTP
         if ($attempts > $this->maxResendOtp) {
             throw new ServiceException(__('auth.error.resend_otp', ['minutes' => $this->blockTime]));
+        }
+
+        if (config('app.debug')) {
+            $otp = 123456;
+        } else {
+            $otp = rand(100000, 999999);
+            $result = $this->zaloService->pushOTPAuthorize($phone, $otp);
+            if ($result->isError()) {
+                throw new ServiceException($result->getMessage());
+            }
         }
         // Lưu OTP vào cache
         Caching::setCache(

@@ -35,4 +35,11 @@ return [
     'config_not_found' => 'Configuration does not exist',
     'contract_not_found' => 'Contract does not exist',
     'verify_agency' => 'You have not yet verified your agency',
+    'unvalid_phonenumber' => 'Invalid phone number',
+    'unable_to_get_access_token' => 'Unable to connect to Zalo',
+    'user_blocked' => 'Phone number has been blocked',
+    'not_zalo_user' => 'Phone number is not a Zalo user',
+    'couldnot_send_otp' => 'Could not connect to Zalo to send OTP',
+    'zalo_service_unavailable' => 'Phone number has not registered Zalo service',
+    'invalid_data' => 'Invalid data',
 ];

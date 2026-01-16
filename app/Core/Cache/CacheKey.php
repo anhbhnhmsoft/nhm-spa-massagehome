@@ -64,4 +64,14 @@ enum CacheKey: string
      * Lưu tổng biểu đồ thu nhập trong khoảng thời gian.
      */
     case CACHE_KEY_TOTAL_INCOME = 'CACHE_KEY_TOTAL_INCOME';
+
+     /**
+     * Lưu token Zalo.
+     */
+    case CACHE_KEY_ZALO_TOKEN = 'CACHE_KEY_ZALO_TOKEN';
+
+    /**
+     * Lưu refresh token Zalo.
+     */
+    case CACHE_KEY_ZALO_REFRESH_TOKEN = 'CACHE_KEY_ZALO_REFRESH_TOKEN';
 }

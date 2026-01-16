@@ -14,12 +14,9 @@ use App\Enums\PaymentType;
 use App\Enums\WalletTransactionStatus;
 use App\Enums\WalletTransactionType;
 use App\Jobs\SendNotificationJob;
-use App\Models\Config;
 use App\Repositories\BookingRepository;
 use App\Repositories\WalletRepository;
 use App\Repositories\WalletTransactionRepository;
-use App\Services\ConfigService;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class WalletService extends BaseService
@@ -45,14 +42,7 @@ class WalletService extends BaseService
         DB::beginTransaction();
         try {
             // Lấy tỉ lệ đổi tiền từ config
-            $exchangeRate = $this->configService->getConfig(ConfigName::CURRENCY_EXCHANGE_RATE);
-            // Kiểm tra tỉ lệ đổi tiền có tồn tại không
-            if ($exchangeRate->isError()) {
-                throw new ServiceException(
-                    message: __("booking.payment.exchange_rate_not_found")
-                );
-            }
-            $exchangeRate = $exchangeRate->getData()['config_value'];
+            $exchangeRate = (float) $this->configService->getConfigValue(ConfigName::CURRENCY_EXCHANGE_RATE);
 
             // Tìm booking theo id
             $booking = $this->bookingRepository->query()->find($bookingId);
@@ -169,7 +159,6 @@ class WalletService extends BaseService
             throw $exception;
         }
     }
-
 
     /**
      * Hoàn lại tiền cho khách hàng khi hủy booking
@@ -372,13 +361,13 @@ class WalletService extends BaseService
     }
 
     /**
-     * Thanh toán phí chiết khấu cho người giới thiệu
-     * @param int $amount
-     * @param int $userId
-     * @param string $bookingId
+     * Thanh toán phí chiết khấu cho người giới thiệu Affiliate
+     * @param int $amount Số tiền hoa hồng
+     * @param int $userId ID của người giới thiệu
+     * @param string $bookingId ID của booking
      * @return ServiceReturn
      */
-    public function paymentCommissionFeeForRefferal($amount, int $userId, $bookingId): ServiceReturn
+    public function paymentCommissionFeeForReferralAffiliate($amount, int $userId, $bookingId): ServiceReturn
     {
         try {
             $wallet = $this->walletRepository->query()
@@ -386,7 +375,7 @@ class WalletService extends BaseService
                 ->lockForUpdate()
                 ->first();
             if (!$wallet) {
-                return ServiceReturn::error(
+                throw new ServiceException(
                     message: __("wallet.not_found")
                 );
             }
@@ -404,14 +393,8 @@ class WalletService extends BaseService
                 );
             }
 
-            $currencyExchangeRate = $this->configService->getConfig(ConfigName::CURRENCY_EXCHANGE_RATE);
-            if ($currencyExchangeRate->isError()) {
-                throw new ServiceException(
-                    message: __("error.config_wallet_error")
-                );
-            }
 
-            $exchangeRate = $currencyExchangeRate->getData()['config_value'];
+            $exchangeRate = (int)$this->configService->getConfigValue(ConfigName::CURRENCY_EXCHANGE_RATE);
 
             $this->walletTransactionRepository->create([
                 'wallet_id' => $wallet->id,
@@ -423,7 +406,7 @@ class WalletService extends BaseService
                 'type' => WalletTransactionType::AFFILIATE->value,
                 'status' => WalletTransactionStatus::COMPLETED->value,
                 'transaction_code' => Helper::createDescPayment(PaymentType::BY_POINTS),
-                'description' => __('booking.payment.wallet_referred_staff'),
+                'description' => __('booking.payment.wallet_referred_staff_affiliate'),
                 'expired_at' => now(),
                 'transaction_id' => null,
                 'metadata' => null,
@@ -436,7 +419,73 @@ class WalletService extends BaseService
             );
         } catch (\Exception $exception) {
             LogHelper::error(
-                message: "Lỗi WalletService@paymentCommissionFeeForRefferal",
+                message: "Lỗi WalletService@paymentCommissionFeeForReferralAffiliate",
+                ex: $exception
+            );
+            throw $exception;
+        }
+    }
+
+    /**
+     * Thanh toán phí chiết khấu cho người giới thiệu
+     * @param int $amount Số tiền hoa hồng
+     * @param int $userId ID của người giới thiệu
+     * @param string $bookingId ID của booking
+     * @return ServiceReturn
+     * @throws ServiceException
+     */
+    public function paymentCommissionFeeForReferral($amount, int $userId, $bookingId): ServiceReturn
+    {
+        try {
+            $wallet = $this->walletRepository->query()
+                ->where('user_id', $userId)
+                ->lockForUpdate()
+                ->first();
+            if (!$wallet) {
+                throw new ServiceException(
+                    message: __("wallet.not_found")
+                );
+            }
+
+            // Check if commission already paid (Idempotency)
+            $existingCommission = $this->walletTransactionRepository->query()
+                ->where('foreign_key', $bookingId)
+                ->where('wallet_id', $wallet->id)
+                ->where('type', WalletTransactionType::REFERRAL_KTV->value)
+                ->exists();
+
+            if ($existingCommission) {
+                return ServiceReturn::success(
+                    message: __("booking.pay_commission_fee_success")
+                );
+            }
+
+            $exchangeRate = (int)$this->configService->getConfigValue(ConfigName::CURRENCY_EXCHANGE_RATE);
+
+            $this->walletTransactionRepository->create([
+                'wallet_id' => $wallet->id,
+                'foreign_key' => $bookingId,
+                'money_amount' => $amount * $exchangeRate,
+                'exchange_rate_point' => $exchangeRate,
+                'point_amount' => $amount,
+                'balance_after' => $wallet->balance + $amount,
+                'type' => WalletTransactionType::REFERRAL_KTV->value,
+                'status' => WalletTransactionStatus::COMPLETED->value,
+                'transaction_code' => Helper::createDescPayment(PaymentType::BY_POINTS),
+                'description' => __('booking.payment.wallet_referred_staff_ktv'),
+                'expired_at' => now(),
+                'transaction_id' => null,
+                'metadata' => null,
+            ]);
+
+            $wallet->balance += $amount;
+            $wallet->save();
+            return ServiceReturn::success(
+                message: __("booking.pay_commission_fee_success")
+            );
+        } catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi WalletService@paymentCommissionFeeForReferral",
                 ex: $exception
             );
             throw $exception;
@@ -476,6 +525,78 @@ class WalletService extends BaseService
     }
 
     /**
+     * Trả tiền thưởng cho người giới thiệu khi mời KTV thành công
+     */
+    public function paymentRewardForKtvReferral(int $referrerId, int $invitedKtvId): ServiceReturn
+    {
+        try {
+            // Lấy số tiền thưởng từ config
+            $rewardAmount = (int) $this->configService->getConfigValue(ConfigName::KTV_REFERRAL_REWARD_AMOUNT);
+
+            // Nếu = 0 thì tắt tính năng, không trả tiền
+            if ($rewardAmount <= 0) {
+                return ServiceReturn::success(
+                    message: __('wallet.referral_reward_disabled')
+                );
+            }
+
+            $wallet = $this->walletRepository->query()
+                ->where('user_id', $referrerId)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$wallet) {
+                throw new ServiceException(
+                    message: __("wallet.not_found")
+                );
+            }
+
+            $existingReward = $this->walletTransactionRepository->query()
+                ->where('foreign_key', (string) $invitedKtvId)
+                ->where('wallet_id', $wallet->id)
+                ->where('type', WalletTransactionType::REFERRAL_INVITE_KTV_REWARD->value)
+                ->exists();
+
+            if ($existingReward) {
+                return ServiceReturn::success(
+                    message: __("wallet.referral_reward_already_paid")
+                );
+            }
+
+            $exchangeRate = (int)$this->configService->getConfigValue(ConfigName::CURRENCY_EXCHANGE_RATE);
+
+            $this->walletTransactionRepository->create([
+                'wallet_id' => $wallet->id,
+                'foreign_key' => (string) $invitedKtvId,
+                'money_amount' => $rewardAmount * $exchangeRate,
+                'exchange_rate_point' => $exchangeRate,
+                'point_amount' => $rewardAmount,
+                'balance_after' => $wallet->balance + $rewardAmount,
+                'type' => WalletTransactionType::REFERRAL_KTV->value,
+                'status' => WalletTransactionStatus::COMPLETED->value,
+                'transaction_code' => Helper::createDescPayment(PaymentType::BY_POINTS),
+                'description' => __('wallet.referral_ktv_reward'),
+                'expired_at' => now(),
+                'transaction_id' => null,
+                'metadata' => null,
+            ]);
+
+            $wallet->balance += $rewardAmount;
+            $wallet->save();
+
+            return ServiceReturn::success(
+                message: __("wallet.referral_reward_paid_success")
+            );
+        } catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi WalletService@paymentRewardForKtvReferral",
+                ex: $exception
+            );
+            throw $exception;
+        }
+    }
+
+    /**
      * Kiểm tra số dư ví của kỹ thuật viên có đủ không
      * @param $ktvId
      * @param $price
@@ -504,15 +625,10 @@ class WalletService extends BaseService
             );
         }
         $balanceKtv = $ktvWallet->balance;
-        // kiểm tra số dư ví của kỹ thuật viên
+
         // lấy mức chiết khấu của nhà cung cấp
-        $rateDiscount = $this->configService->getConfig(ConfigName::DISCOUNT_RATE);
-        if ($rateDiscount->isError()) {
-            throw new ServiceException(
-                message: __("booking.discount_rate.not_found")
-            );
-        }
-        $rate = floatval($rateDiscount->getData()['config_value']);
+        $rateDiscount = $this->configService->getConfigValue(ConfigName::DISCOUNT_RATE);
+        $rate = floatval($rateDiscount);
 
         // Tính số tiền Hệ thống thu (Commission)
         $systemMinus = Helper::calculateSystemMinus($price, $rate);
@@ -525,5 +641,4 @@ class WalletService extends BaseService
             'rate' => $rate,
         ];
     }
-
 }

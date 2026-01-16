@@ -8,6 +8,8 @@ use App\Enums\WalletTransactionStatus;
 use App\Enums\WalletTransactionType;
 use App\Jobs\SendNotificationJob;
 use App\Services\ConfigService;
+use App\Services\PaymentService;
+use App\Services\WalletService;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Forms\Components\Placeholder;
@@ -61,20 +63,14 @@ class WalletTransactionsTable
             ])
             ->recordActions([
                 ActionGroup::make([
+                    // Approve transaction
                     Action::make('approve')
                         ->label(__('admin.transaction.actions.approve'))
                         ->icon('heroicon-o-check')
                         ->color('success')
                         ->visible(fn($record) => $record->status === WalletTransactionStatus::PENDING->value)
-                        ->action(function ($record) {
-                            $record->update(['status' => WalletTransactionStatus::COMPLETED]);
-                            if (
-                                $record->type === WalletTransactionType::DEPOSIT_QR_CODE->value ||
-                                $record->type === WalletTransactionType::DEPOSIT_ZALO_PAY->value ||
-                                $record->type === WalletTransactionType::DEPOSIT_MOMO_PAY->value
-                            ) {
-                                $record->wallet()->increment('balance', (float)$record->point_amount);
-                            }
+                        ->action(function ($record, PaymentService $paymentService) {
+                            $paymentService->handleAdminConfirmTransaction($record);
                         })
                         ->requiresConfirmation()
                         ->hidden(fn($record) => $record->type === WalletTransactionType::WITHDRAWAL->value),
@@ -108,7 +104,7 @@ class WalletTransactionsTable
                         })
                         ->hidden(fn($record) => $record->status !== WalletTransactionStatus::PENDING->value)
                         ->modal(true)
-                        ->schema(function ($record) {
+                        ->schema(function ($record, ConfigService $service) {
                             try {
                                 $service = app(ConfigService::class);
                                 $res = $service->getConfig(ConfigName::CURRENCY_EXCHANGE_RATE);

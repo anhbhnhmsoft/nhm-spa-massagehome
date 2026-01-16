@@ -8,12 +8,14 @@ use App\Core\LogHelper;
 use App\Enums\UserRole;
 use App\Http\Requests\ApplyPartnerRequest;
 use App\Http\Requests\ListKTVRequest;
+use App\Http\Resources\Auth\UserResource;
 use App\Http\Resources\User\AddressResource;
 use App\Http\Resources\User\ItemKTVResource;
 use App\Http\Resources\User\ListAddressResource;
 use App\Http\Resources\User\ListKTVResource;
 use App\Rules\AgencyExistsRule;
 use App\Services\UserService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -50,7 +52,6 @@ class UserController extends BaseController
      */
     public function applyPartner(ApplyPartnerRequest $request): JsonResponse
     {
-
         $data = $request->validated();
         $result = $this->userService->applyPartnerForCurrentUser($data);
 
@@ -75,6 +76,22 @@ class UserController extends BaseController
     {
         $dto = $request->getFilterOptions();
 
+        $result = $this->userService->paginationKTV(dto: $dto);
+        $data = $result->getData();
+        return $this->sendSuccess(
+            data: ListKTVResource::collection($data)->response()->getData()
+        );
+    }
+
+    /**
+     * Lấy danh sách KTV được quản lý bởi Agency hoặc KTV
+     * @param ListKTVRequest $request
+     * @return JsonResponse
+     */
+    public function listKtvManager(ListKTVRequest $request): JsonResponse
+    {
+        $dto = $request->getFilterOptions();
+        $dto->addFilter('referrer_id', Auth::user()->id);
         $result = $this->userService->paginationKTV(dto: $dto);
         $data = $result->getData();
         return $this->sendSuccess(
@@ -218,4 +235,5 @@ class UserController extends BaseController
             data: ListAddressResource::collection($data)->response()->getData()
         );
     }
+
 }

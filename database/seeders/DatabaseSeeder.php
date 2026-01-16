@@ -29,13 +29,13 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->seedProvince();
-        $this->seedCategory();
-        $this->seedAdmin();
-//        $this->seedKTV();
-        $this->seedCoupon();
+//        $this->seedProvince();
+//        $this->seedCategory();
+//        $this->seedAdmin();
+////        $this->seedKTV();
+//        $this->seedCoupon();
         $this->seedConfig();
-        $this->seedConfigAffiliate();
+//        $this->seedConfigAffiliate();
     }
 
     protected function seedAdmin(): void
@@ -342,12 +342,51 @@ class DatabaseSeeder extends Seeder
             Config::query()->updateOrCreate(
                 ['config_key' => ConfigName::DISCOUNT_RATE->value],
                 [
-                    'config_value' => '80',
+                    'config_value' => '20',
                     'config_type' => ConfigType::NUMBER->value,
                     'description' => 'Tỷ lệ chiết khấu ứng dụng nhận được',
                 ]
             );
-
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::DISCOUNT_RATE_REFERRER_AGENCY->value],
+                [
+                    'config_value' => '15',
+                    'config_type' => ConfigType::NUMBER->value,
+                    'description' => 'Tỷ lệ chiết khấu dành cho đại lý đối với 1 đơn hoàn thành của 1 KTV mà mình giới thiệu %',
+                ]
+            );
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::DISCOUNT_RATE_REFERRER_KTV->value],
+                [
+                    'config_value' => '5',
+                    'config_type' => ConfigType::NUMBER->value,
+                    'description' => 'Tỷ lệ chiết khấu dành cho kỹ thuật viên đối với 1 đơn hoàn thành của 1 KTV mà mình giới thiệu %',
+                ]
+            );
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::DISCOUNT_RATE_REFERRER_KTV_LEADER->value],
+                [
+                    'config_value' => '10',
+                    'config_type' => ConfigType::NUMBER->value,
+                    'description' => 'Tỷ lệ chiết khấu dành cho kỹ thuật viên trưởng đối với 1 đơn hoàn thành của 1 KTV mà mình giới thiệu %',
+                ]
+            );
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::KTV_LEADER_MIN_REFERRALS->value],
+                [
+                    'config_value' => '10',
+                    'config_type' => ConfigType::NUMBER->value,
+                    'description' => 'Số lượng KTV cần giới thiệu để lên kỹ thuật viên trưởng',
+                ]
+            );
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::KTV_REFERRAL_REWARD_AMOUNT->value],
+                [
+                    'config_value' => '0',
+                    'config_type' => ConfigType::NUMBER->value,
+                    'description' => 'Số tiền (point) được nhận khi mời KTV thành công. Nếu = 0 thì tắt tính năng này',
+                ]
+            );
             Config::query()->updateOrCreate(
                 ['config_key' => ConfigName::SP_PHONE->value],
                 [
@@ -382,6 +421,65 @@ class DatabaseSeeder extends Seeder
                     'description' => 'Link WeChat hỗ trợ của admin',
                 ]
             );
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::ZALO_MERCHANT_ID->value],
+                [
+                    'config_value' => 'zalo_merchant_id',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'ID Merchant Zalo',
+                ]
+            );
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::ZALO_MERCHANT_KEY_1->value],
+                [
+                    'config_value' => 'zalo_merchant_key_1',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'Key 1 Merchant Zalo',
+                ]
+            );
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::ZALO_MERCHANT_KEY_2->value],
+                [
+                    'config_value' => 'zalo_merchant_key_2',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'Key 2 Merchant Zalo',
+                ]
+            );
+
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::ZALO_APP_ID->value],
+                [
+                    'config_value' => 'zalo_app_id',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'ID Ứng dụng Zalo',
+                ]
+            );
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::ZALO_APPSECRET_KEY->value],
+                [
+                    'config_value' => 'zalo_appsecret_key',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'Secret Key Ứng dụng Zalo',
+                ]
+            );
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::ZALO_OA_ID->value],
+                [
+                    'config_value' => 'zalo_oa_id',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'ID Ứng dụng Zalo',
+                ]
+            );
+
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::ZALO_TEMPLATE_ID->value],
+                [
+                    'config_value' => 'zalo_template_id',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'ID Template Zalo',
+                ]
+            );
+
         } catch (\Exception $e) {
             DB::rollBack();
             dump($e);

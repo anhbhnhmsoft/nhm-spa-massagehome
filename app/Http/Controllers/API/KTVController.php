@@ -5,8 +5,10 @@ namespace App\Http\Controllers\API;
 use App\Core\Controller\BaseController;
 use App\Core\Controller\ListRequest;
 use App\Core\LogHelper;
+use App\Enums\DateRangeDashboard;
 use App\Http\Requests\EditConfigScheduleRequest;
 use App\Http\Requests\FormServiceRequest;
+use App\Http\Resources\Auth\UserResource;
 use App\Http\Resources\Booking\BookingItemResource;
 use App\Http\Resources\Review\ReviewResource;
 use App\Http\Resources\Service\CategoryPriceResource;
@@ -25,6 +27,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class KTVController extends BaseController
 {
@@ -245,10 +248,10 @@ class KTVController extends BaseController
     public function totalIncome(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'type' => 'required|in:day,week,month,quarter,year',
+            'type' => ['required', Rule::in(DateRangeDashboard::values())],
         ], [
-            'type.in' => __('validation.type.in'),
-            'type.required' => __('validation.type.required'),
+            'type.in' => __('validation.type_date_range.in'),
+            'type.required' => __('validation.type_date_range.required'),
         ]);
 
         if ($validator->fails()) {
@@ -327,10 +330,7 @@ class KTVController extends BaseController
         }
 
         $data = $validator->validated();
-        LogHelper::debug(
-            message: "KTVController@editProfileKtv",
-            context: $data,
-        );
+        $data['user_id'] = $request->user()->id;
         $res = $this->userService->updateKtvProfile($data);
         if ($res->isError()) {
             return $this->sendError($res->getMessage());
@@ -433,5 +433,35 @@ class KTVController extends BaseController
             data: new UserKTVScheduleItemResource($res->getData()),
             message: __('admin.notification.success.update_success')
         );
+    }
+
+    /**
+     * Link mã giới thiệu để KTV áp dụng
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function linkReferrer(Request $request): JsonResponse
+    {
+        $data = $request->validate(
+            [
+                'referrer_id' => 'required|integer|exists:users,id'
+            ],
+            [
+                'referrer_id.required' => __('error.verify_referrer'),
+                'referrer_id.integer' => __('error.verify_referrer'),
+                'referrer_id.exists' => __('error.verify_referrer'),
+            ]
+        );
+
+        $user = $request->user();
+        $result = $this->userService->linkKtvToReferrer(
+            ktvId: $user->id,
+            referrerId: $data['referrer_id']
+        );
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage());
+        }
+
+        return $this->sendSuccess();
     }
 }

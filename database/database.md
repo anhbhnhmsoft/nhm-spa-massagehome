@@ -49,6 +49,7 @@
     - language (varchar, nullable) -- ngôn ngữ (trong enum Language)
     - is_active (boolean) -- trạng thái bị khóa
     - referred_by_user_id (bigint, nullable) -- id người giới thiệu
+    - referred_at (timestamp, nullable) -- thời gian được giới thiệu
     - last_login_at (timestamp, nullable) -- thời gian đăng nhập cuối cùng
     - softDeletes
     - timestamps
@@ -78,7 +79,7 @@
     # cấu trúc
     - id (bigint, primary key, auto-increment)
     - user_id (bigint, foreign key to users.id) -- id người dùng
-    - agency_id (bigint, nullable, foreign key to agencies.id) -- id Agency
+    - referrer_id (bigint, nullable, foreign key to users.id) -- id người giới thiệu (người mời apply)
     - status (smallint) -- trạng thái ứng dụng (trong enum ReviewApplicationStatus)
 
     - province_code (varchar, nullable, foreign key to provinces.code) -- mã tỉnh thành
@@ -92,7 +93,8 @@
 
     - effective_date (timestamp, nullable) -- ngày hiệu lực
     - application_date (timestamp, nullable) -- ngày nộp hồ sơ
-
+    - role (smallint) -- vai trò muốn apply (trong enum UserRole)
+    - is_leader (boolean, default false) -- đánh dấu trưởng nhóm KTV (job sẽ tự động set khi số KTV được giới thiệu >= điều kiện)
     - softDeletes
     - timestamps
 
@@ -252,9 +254,9 @@
     # cấu trúc
     - id (bigint, primary key, auto-increment)
     - client_ip (varchar) -- IP của người dùng
-    - user_agent (varchar) -- User agent của người dùng
+    - user_agent (varchar, nullable) -- User agent của người dùng
     - referrer_id (bigint, foreign key to users.id) -- id người giới thiệu
-    - referred_user_id (bigint, foreign key to users.id) -- id người được giới thiệu (User mới đăng ký/đăng nhập)
+    - referred_user_id (bigint, foreign key to users.id, nullable) -- id người được giới thiệu (User mới đăng ký/đăng nhập)
     - is_matched (boolean) -- trạng thái khớp
     - expired_at (timestamp, nullable) -- thời gian hết hạn
     - softDeletes
@@ -451,6 +453,8 @@
     - config_type (smallint) -- kiểu cấu hình (trong enum ConfigType)
     - config_value (text) -- giá trị cấu hình
     - description (text, nullable) -- mô tả cấu hình
+    - KTV_LEADER_MIN_REFERRALS (number) -- số lượng KTV tối thiểu cần giới thiệu để lên KTV trưởng
+    - KTV_REFERRAL_REWARD_AMOUNT (number) -- số tiền (point) được nhận khi mời KTV thành công, nếu = 0 thì tắt tính năng
     - softDeletes
     - timestamps
 

@@ -15,6 +15,7 @@ use App\Enums\NotificationType;
 use App\Enums\WalletTransactionStatus;
 use App\Enums\WalletTransactionType;
 use App\Jobs\SendNotificationJob;
+use App\Models\WalletTransaction;
 use App\Repositories\WalletRepository;
 use App\Repositories\WalletTransactionRepository;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -28,6 +29,7 @@ class PaymentService extends BaseService
         protected WalletTransactionRepository $walletTransactionRepository,
         protected ConfigService               $configService,
         protected PayOsService                $payOsService,
+        protected ZaloService                 $zaloService,
     )
     {
         parent::__construct();
@@ -155,6 +157,12 @@ class PaymentService extends BaseService
             return ServiceReturn::success(
                 data: [
                     'currency_exchange_rate' => $currencyExchangeRate->getData()['config_value'],
+                    'allow_payment' => [
+                        'qrcode' => (bool)config('services.payment.qrcode'),
+                        'zalopay' => (bool)config('services.payment.zalopay'),
+                        'momo' => (bool)config('services.payment.momo'),
+                        'wechatpay' => (bool)config('services.payment.wechatpay'),
+                    ]
                 ]
             );
         } catch (ServiceException $exception) {
@@ -204,14 +212,15 @@ class PaymentService extends BaseService
                     message: __("error.wallet_not_found")
                 );
             }
+            $pointAmount = $this->calculatePointAmount($amount, $config['currency_exchange_rate']);
+            $orderCode = (int)(microtime(true) * 1000);
+
+            // Thời gian hết hạn 30 phút
+            $expireTime = now()->addMinutes(30);
             switch ($paymentType) {
                 case PaymentType::QR_BANKING:
                     // Tính toán số lượng point cần cộng dồn
-                    $pointAmount = $this->calculatePointAmount($amount, $config['currency_exchange_rate']);
-                    // Thời gian hết hạn 30 phút
-                    $expireTime = now()->addMinutes(30);
                     // Tạo mã đơn hàng duy nhất
-                    $orderCode = (int)(microtime(true) * 1000);
                     // Tạo Transaction
                     $transaction = $this->walletTransactionRepository->create(
                         data: [
@@ -247,7 +256,6 @@ class PaymentService extends BaseService
                         'metadata' => json_encode($payosResponse),
                     ]);
 
-
                     // Lấy dữ liệu QR Banking từ PayOS
                     $payosData = $payosResponse['data'];
                     DB::commit();
@@ -267,6 +275,47 @@ class PaymentService extends BaseService
                         ]
                     );
                 case PaymentType::ZALO_PAY:
+
+                    $transaction = $this->walletTransactionRepository->create([
+                        'wallet_id' => $wallet->id,
+                        'money_amount' => $amount,
+                        'point_amount' => $pointAmount,
+                        'type' => WalletTransactionType::DEPOSIT_ZALO_PAY->value,
+                        'exchange_rate_point' => $config['currency_exchange_rate'],
+                        'payment_type' => $paymentType,
+                        'transaction_id' => $orderCode,
+                        'transaction_code' => Helper::createDescPayment(PaymentType::ZALO_PAY),
+                        'status' => WalletTransactionStatus::PENDING->value,
+                        'expire_at' => $expireTime,
+                    ]);
+
+                    $zalopayResult = $this->zaloService->createOrder(
+                        amount: $amount,
+                        orderCode: $orderCode,
+                        description: $transaction->transaction_code,
+                        userId: $user->id
+                    );
+
+                    if ($zalopayResult->isError()) {
+                        throw new ServiceException($zalopayResult->getMessage());
+                    }
+
+                    $zpData = $zalopayResult->getData();
+
+                    $transaction->update([
+                        'metadata' => json_encode($zpData),
+                    ]);
+
+                    DB::commit();
+
+                    return ServiceReturn::success([
+                        'transaction_id' => $transaction->id,
+                        'payment_type' => $paymentType->value,
+                        'data_payment' => [
+                            'order_url' => $zpData['order_url'] ?? null,
+                            'qr_code' => $zpData['qr_code'] ?? null,
+                        ]
+                    ]);
                 case PaymentType::MOMO_PAY:
                 default:
                     // Hiện tại không hỗ trợ nạp tiền qua ZaloPay và MoMoPay
@@ -447,6 +496,105 @@ class PaymentService extends BaseService
             DB::rollBack();
             LogHelper::error(
                 message: "Lỗi PaymentService@checkWebhookPayOs",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: __("common_error.server_error")
+            );
+        }
+    }
+
+    public function handleAdminConfirmTransaction(WalletTransaction $record): void
+    {
+        try {
+            $record->update(['status' => WalletTransactionStatus::COMPLETED]);
+            // Kiểm tra xem transaction có phải là nạp tiền hay không
+            if (in_array($record->type, WalletTransactionType::statusIn())) {
+                $record->wallet->increment('balance', (float)$record->point_amount);
+            }
+        }catch (\Exception $exception){
+            LogHelper::error(
+                message: "Lỗi WalletService@handleAdminConfirmTransaction",
+                ex: $exception
+            );
+            throw $exception;
+        }
+    }
+
+
+    /**
+     * Xử lý giao dịch ZaloPay.
+     * @param string $orderCode
+     * @param array $data
+     * @return ServiceReturn
+     */
+    public function handleZaloPayTransaction(string $orderCode, array $data): ServiceReturn
+    {
+        DB::beginTransaction();
+        try {
+            // Kiểm tra xem transaction có tồn tại hay không
+            $transaction = $this->walletTransactionRepository
+                ->query()
+                // Cần kiểm tra xem transaction có phải là nạp tiền hay không
+                ->where('type', WalletTransactionType::DEPOSIT_ZALO_PAY->value)
+                ->where('status', WalletTransactionStatus::PENDING->value)
+                ->where('transaction_id', $orderCode)
+                ->first();
+            if (!$transaction) {
+                throw new ServiceException(message: __('error.transaction_not_found'));
+            }
+            // Lấy ví của user
+            $wallet = $this->walletRepository->queryWallet()
+                ->where('id', $transaction->wallet_id)
+                ->first();
+            if (!$wallet) {
+                throw new ServiceException(message: __('error.wallet_not_found'));
+            }
+            // Tính toán số lượng point cần cộng dồn
+            $pointEarned = $this->calculatePointAmount(
+                amount: $transaction->money_amount,
+                exchangeRate: $transaction->exchange_rate_point // Lấy tỉ giá từ lúc tạo transaction
+            );
+
+            // Cập nhật trạng thái giao dịch thành công
+            $transaction->update([
+                'status' => WalletTransactionStatus::COMPLETED->value,
+                'balance_after' => $wallet->balance + $pointEarned,
+                'metadata' => json_encode($data), // Lưu toàn bộ dữ liệu từ ZaloPay cập nhật mới nhất
+            ]);
+
+            // cộng dồn số dư ví
+            $wallet->update([
+                'balance' => $wallet->balance + $pointEarned,
+            ]);
+
+            // Bắn notif cho người dùng khi thanh toán thành công
+            SendNotificationJob::dispatch(
+                userId: $wallet->user_id,
+                type: NotificationType::WALLET_DEPOSIT,
+                data: [
+                    'transaction_id' => $transaction->id,
+                    'amount' => $transaction->money_amount,
+                    'point_amount' => $pointEarned,
+                    'balance_after' => $wallet->balance,
+                ]
+            );
+
+            DB::commit();
+            return ServiceReturn::success();
+        } catch (ServiceException $exception) {
+            DB::rollBack();
+            LogHelper::error(
+                message: "Lỗi PaymentService@handleZaloPayTransaction",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            LogHelper::error(
+                message: "Lỗi PaymentService@handleZaloPayTransaction",
                 ex: $exception
             );
             return ServiceReturn::error(

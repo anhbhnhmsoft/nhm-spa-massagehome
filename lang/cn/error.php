@@ -35,4 +35,11 @@ return [
     'config_not_found' => '配置不存在',
     'contract_not_found' => '合同不存在',
     'verify_agency' => '您还没有验证您的代理商',
+    'unvalid_phonenumber' => '无效的手机号',
+    'unable_to_get_access_token' => '无法连接到 Zalo',
+    'user_blocked' => '手机号已被阻塞',
+    'not_zalo_user' => '手机号不是 Zalo 用户',
+    'couldnot_send_otp' => '无法连接到 Zalo 发送 OTP',
+    'zalo_service_unavailable' => '手机号未注册 Zalo 服务',
+    'invalid_data' => '无效数据',
 ];

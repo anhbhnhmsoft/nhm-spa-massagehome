@@ -28,7 +28,9 @@ class User extends Authenticatable
         'language',
         'is_active',
         'referred_by_user_id',
+        'referred_at',
         'last_login_at',
+        'device_id',
     ];
 
     protected $hidden = [
@@ -41,6 +43,7 @@ class User extends Authenticatable
         'phone_verified_at' => 'datetime',
         'password' => 'hashed',
         'last_login_at' => 'datetime',
+        'referred_at' => 'datetime',
         'is_active' => 'boolean',
     ];
 
@@ -243,5 +246,13 @@ class User extends Authenticatable
     public function schedule()
     {
         return $this->hasOne(UserKtvSchedule::class, 'ktv_id');
+    }
+
+    /**
+     * Lấy danh sách các hồ sơ ứng tuyển/KTV mà user này giới thiệu
+     */
+    public function managedApplications()
+    {
+        return $this->hasMany(UserReviewApplication::class, 'referrer_id');
     }
 }

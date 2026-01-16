@@ -43,5 +43,20 @@ return [
         'channel_chat' => env('REDIS_CHANNEL_CHAT', 'chat_messages'),
         'channel_chat_auth' => env('REDIS_CHANNEL_CHAT_AUTH', 'chat_auth'),
     ],
-
+    'zalo' => [
+        'app_id' => env('ZALO_APP_ID'),
+        'app_secret' => env('ZALO_APP_SECRET'),
+        'oa_id' => env('ZALO_OA_ID'),
+        'otp_template' => env('ZALO_OTP_TEMPLATE'),
+    ],
+    'store' => [
+        'chplay' => env('CHPLAY_APP') ?? '',
+        'appstore' => env('APPSTORE_APP') ?? '',
+    ],
+    'payment' => [
+        'qrcode' => env('QRCODE_ENABLE', false),
+        'zalopay' => env('ZALOPAY_ENABLE', false),
+        'momo' => env('MOMOPAY_ENABLE', false),
+        'wechatpay' => env('WECHATPAY_ENABLE', false),
+    ],
 ];

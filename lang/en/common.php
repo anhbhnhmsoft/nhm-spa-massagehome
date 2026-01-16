@@ -18,6 +18,8 @@ return [
         'max_length' => 'This value must not exceed :max characters',
         'title' => 'An error occurred, please try again later!',
         'forbidden' => 'You are not authorized to perform this action',
+        'numeric' => 'This value must be a number',
+        'min' => 'This value must be greater than or equal to :min',
     ],
     'unit' => [
         'minute' => 'minutes',

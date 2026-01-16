@@ -18,6 +18,8 @@ return [
         'max_length' => 'Giá trị này không được vượt quá :max ký tự',
         'title' => 'Có lỗi xảy ra, vui lòng thử lại sau!',
         'forbidden' => 'Bạn không có quyền thực hiện hành động này',
+        'numeric' => 'Giá trị này phải là một số',
+        'min' => 'Giá trị này phải lớn hơn hoặc bằng :min',
     ],
     'unit' => [
         'minute' => 'phút',
