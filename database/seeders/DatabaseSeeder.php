@@ -29,13 +29,13 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->seedProvince();
-        $this->seedCategory();
-        $this->seedAdmin();
-//        $this->seedKTV();
-        $this->seedCoupon();
+//        $this->seedProvince();
+//        $this->seedCategory();
+//        $this->seedAdmin();
+////        $this->seedKTV();
+//        $this->seedCoupon();
         $this->seedConfig();
-        $this->seedConfigAffiliate();
+//        $this->seedConfigAffiliate();
     }
 
     protected function seedAdmin(): void

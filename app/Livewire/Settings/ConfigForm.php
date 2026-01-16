@@ -153,6 +153,7 @@ class ConfigForm extends Component implements HasSchemas
                                         ]),
                                 ]),
                             Section::make(__('admin.setting.label_config_discount_rate'))
+                                ->columns(2)
                                 ->schema([
                                     TextInput::make((string)ConfigName::DISCOUNT_RATE->value)
                                         ->label(__('admin.setting.fields.discount_rate'))
