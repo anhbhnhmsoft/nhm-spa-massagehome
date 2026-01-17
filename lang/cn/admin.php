@@ -524,6 +524,8 @@ return
                     'commission_desc' => '佣金总额',
                     'coupon' => '优惠券',
                     'coupon_desc' => '优惠券总价值',
+                    'volumn_affiliate' => '佣金费用',
+                    'volumn_affiliate_desc' => '已支付佣金总额'
                 ],
                 'technician_status' => [
                     'total' => '技师总数',

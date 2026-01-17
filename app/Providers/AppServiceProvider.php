@@ -34,6 +34,7 @@ use App\Repositories\ProvinceRepository;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
 use App\Repositories\StaticContractRepository;
+use App\Repositories\UserDeviceRepository;
 use App\Repositories\UserFileRepository;
 use App\Repositories\UserKtvScheduleRepository;
 use App\Repositories\UserProfileRepository;
@@ -91,6 +92,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(ConfigRepository::class);
         $this->app->singleton(UserRepository::class);
+        $this->app->singleton(UserDeviceRepository::class);
         $this->app->singleton(UserProfileRepository::class);
         $this->app->singleton(WalletRepository::class);
         $this->app->singleton(ServiceRepository::class);

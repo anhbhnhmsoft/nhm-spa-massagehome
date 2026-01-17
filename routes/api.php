@@ -130,8 +130,7 @@ Route::middleware('set-api-locale')->group(function () {
             // Lấy thông tin chi tiết dịch vụ
             Route::get('detail/{id}', [ServiceController::class, 'detailService'])->where('id', '[0-9]+');
             // Đặt lịch dịch vụ
-            Route::post('booking', [ServiceController::class, 'booking'])
-                ->middleware(['check-role:customer']); // Chỉ cho phép Customer đặt lịch
+            Route::post('booking', [ServiceController::class, 'booking'])->middleware(['check-role:customer']); // Chỉ cho phép Customer đặt lịch
             // Lấy danh sách lịch đã đặt hôm nay
             Route::get('today-booked/{id}', [ServiceController::class, 'getTodayBookedCustomers'])->where('id', '[0-9]+');
             // Lấy danh sách mã giảm giá
@@ -154,11 +153,11 @@ Route::middleware('set-api-locale')->group(function () {
             Route::get('{bookingId}', [BookingController::class, 'checkBooking']);
             // Lấy thông tin chi tiết lịch đặt
             Route::get('detail/{id}', [BookingController::class, 'detailBooking'])->where('id', '[0-9]+');
+            // Hủy lịch đặt
+            Route::post('cancel', [BookingController::class, 'cancelBooking'])
+                ->middleware(['check-role:customer']);
 
-            // KTV mới có thể hủy và hoàn thành booking
             Route::middleware(['check-role:ktv'])->group(function () {
-                // Hủy lịch đặt
-                Route::post('cancel', [BookingController::class, 'cancelBooking']);
                 // Xác nhận hoàn thành lịch đặt
                 Route::post('finish', [BookingController::class, 'finishBooking']);
             });
@@ -275,6 +274,8 @@ Route::middleware('set-api-locale')->group(function () {
         Route::get('list-service', [KTVController::class, 'listService']);
         // Thêm service mới
         Route::post('add-service', [KTVController::class, 'addService']);
+        // Kết thúc dịch vụ
+        Route::post('finish-booking', [BookingController::class, 'finishBooking']);
         // Cập nhật service
         Route::post('update-service/{id}', [KTVController::class, 'updateService'])->where('id', '[0-9]+');
         // Lấy thông tin chi tiết service

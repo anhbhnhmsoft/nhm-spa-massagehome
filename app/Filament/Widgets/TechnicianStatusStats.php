@@ -7,10 +7,17 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class TechnicianStatusStats extends BaseWidget
 {
+    protected ?string $pollingInterval = null;
+
+    protected $listeners = ['dateRangeUpdated' => '$refresh'];
+
     protected function getStats(): array
     {
+        $startDate = session('dashboard_start_date');
+        $endDate = session('dashboard_end_date');
+
         $dashboardService = app(\App\Services\DashboardService::class);
-        $result = $dashboardService->getTechnicianStatusStats();
+        $result = $dashboardService->getTechnicianStatusStats($startDate, $endDate);
 
         if (!$result->isSuccess()) {
             return [

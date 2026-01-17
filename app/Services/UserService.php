@@ -78,7 +78,6 @@ class UserService extends BaseService
             $todayStart = Carbon::today();
             $todayEnd = Carbon::today()->endOfDay();
             $yesterdayStart = Carbon::yesterday()->startOfDay();
-            $yesterdayEnd = Carbon::yesterday()->endOfDay();
 
             // 2. Lấy Wallet (Check exists nhanh hơn nếu chỉ cần check, nhưng ở đây cần ID nên giữ nguyên)
             $wallet = $this->walletRepository->query()
@@ -92,18 +91,17 @@ class UserService extends BaseService
 
             // 3. TỐI ƯU 1: Gộp doanh thu Hôm nay & Hôm qua vào 1 Query
             // Thay vì 2 query, ta dùng SUM kết hợp CASE WHEN (hoặc IF trong MySQL)
-            $revenueStats = $this->walletTransactionRepository->query()
-                ->where('wallet_id', $wallet->id)
-                ->where('type', WalletTransactionType::PAYMENT_FOR_KTV->value)
-                ->where('status', WalletTransactionStatus::COMPLETED->value)
-                ->where('created_at', '>=', $yesterdayStart) // Chỉ quét dữ liệu từ hôm qua đến nay (Tận dụng Index)
+            $revenueStats = $this->bookingRepository->query()
+                ->where('ktv_user_id', $user->id)
+                ->where('status', BookingStatus::COMPLETED->value)
+                ->where('booking_time', '>=', $yesterdayStart) // Chỉ quét dữ liệu từ hôm qua đến nay (Tận dụng Index)
                 ->toBase() // Bỏ qua việc hydrate Model để tăng tốc độ (trả về object thuần)
-                ->selectRaw("SUM(CASE WHEN created_at >= ? THEN point_amount ELSE 0 END) as today", [$todayStart])
-                ->selectRaw("SUM(CASE WHEN created_at < ? THEN point_amount ELSE 0 END) as yesterday", [$todayStart])
+                ->selectRaw("SUM(CASE WHEN booking_time >= ? THEN price ELSE 0 END) as today", [$todayStart])
+                ->selectRaw("SUM(CASE WHEN booking_time < ? THEN price ELSE 0 END) as yesterday", [$todayStart])
                 ->first();
 
             // 4. TỐI ƯU 2: Gộp thống kê Booking (Completed & Pending) vào 1 Query
-            $bookingStats = $this->bookingRepository->queryBooking()
+            $bookingStats = $this->bookingRepository->query()
                 ->where('ktv_user_id', $user->id)
                 ->whereBetween('booking_time', [$todayStart, $todayEnd]) // Tận dụng Index tốt hơn whereDate
                 ->toBase()
@@ -114,14 +112,14 @@ class UserService extends BaseService
             // 5. Lấy booking sắp tới (hoặc mới nhất)
             // Lưu ý: Nếu là "sắp tới" thì nên dùng 'asc' và điều kiện >= now().
             // Nhưng tôi giữ nguyên logic 'desc' của bạn.
-            $booking = $this->bookingRepository->queryBooking()
+            $booking = $this->bookingRepository->query()
                 ->where('ktv_user_id', $user->id)
                 ->whereIn('status', [BookingStatus::PENDING->value, BookingStatus::CONFIRMED->value])
                 ->orderBy('booking_time', 'desc')
                 ->first();
 
             // 6. Review mới nhất hôm nay
-            $reviewToday = $this->reviewRepository->queryReview()
+            $reviewToday = $this->reviewRepository->query()
                 ->where('user_id', $user->id)
                 ->whereBetween('review_at', [$todayStart, $todayEnd])
                 ->orderBy('review_at', 'desc')
@@ -270,6 +268,8 @@ class UserService extends BaseService
                     'ktvBookings' => function ($query) {
                         $query->whereIn('status', [BookingStatus::CONFIRMED->value, BookingStatus::ONGOING->value])
                             ->latest('booking_time')
+                            // Chỉ lấy lịch hôm nay
+                            ->whereDate('booking_time', date('Y-m-d'))
                             ->limit(1);
                     },
                 ])

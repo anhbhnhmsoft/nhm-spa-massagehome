@@ -14,6 +14,7 @@ use App\Enums\Gender;
 use App\Enums\Language;
 use App\Enums\UserRole;
 use App\Models\User;
+use App\Repositories\UserDeviceRepository;
 use App\Repositories\UserProfileRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\WalletRepository;
@@ -39,6 +40,7 @@ class AuthService extends BaseService
         protected UserRepository        $userRepository,
         protected UserProfileRepository $userProfileRepository,
         protected WalletRepository      $walletRepository,
+        protected UserDeviceRepository $userDeviceRepository,
         protected ZaloService $zaloService,
     )
     {
@@ -437,12 +439,23 @@ class AuthService extends BaseService
         string  $deviceId,
         ?string $platform = null,
     ): ServiceReturn {
+        DB::beginTransaction();
         try {
             $user = Auth::user();
             if (!$user) {
                 return ServiceReturn::error(message: __('auth.error.unauthorized'));
             }
-            $user->devices()->updateOrCreate(
+
+            // Cơ chế "Chiếm quyền"
+            // Tìm và xóa token này (hoặc device_id này) nếu nó đang thuộc về user KHÁC.
+            // Điều này đảm bảo 1 thiết bị tại 1 thời điểm chỉ thuộc về 1 user duy nhất.
+            $this->userDeviceRepository->query()
+                ->where('user_id', $user->id)
+                ->where('device_id', $deviceId)
+                ->forceDelete(); // Xóa cứng (xóa luôn khỏi bảng)
+
+            // Cập nhật hoặc tạo mới device_id này cho user hiện tại
+            $this->userDeviceRepository->query()->updateOrCreate(
                 [
                     'device_id' => $deviceId,
                     'user_id' => $user->id,
@@ -450,12 +463,13 @@ class AuthService extends BaseService
                 [
                     'token' => $token,
                     'device_type' => $platform ?? 'unknown',
-                    // 'device_name' => $deviceName ?? 'Unknown Device',
                     'updated_at' => now(),
                 ]
             );
+            DB::commit();
             return ServiceReturn::success();
         } catch (Exception $exception) {
+            DB::rollBack();
             LogHelper::error(
                 message: "Lỗi AuthService@setDevice",
                 ex: $exception

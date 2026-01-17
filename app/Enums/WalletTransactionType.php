@@ -27,7 +27,6 @@ enum WalletTransactionType: int
             self::DEPOSIT_WECHAT_PAY->value,
             self::AFFILIATE->value,
             self::PAYMENT_FOR_KTV->value,
-            self::REFUND->value,
             self::REFERRAL_INVITE_KTV_REWARD->value,
             self::REFERRAL_KTV->value,
         ];

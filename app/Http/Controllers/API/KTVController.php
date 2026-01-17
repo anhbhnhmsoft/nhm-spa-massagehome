@@ -20,6 +20,7 @@ use App\Http\Resources\User\ProfileKTVResource;
 use App\Http\Resources\User\UserFileResource;
 use App\Http\Resources\User\UserKTVScheduleItemResource;
 use App\Services\BookingService;
+use App\Services\DashboardService;
 use App\Services\ServiceService;
 use App\Services\UserFileService;
 use App\Services\UserService;
@@ -36,6 +37,7 @@ class KTVController extends BaseController
         protected BookingService  $bookingService,
         protected ServiceService  $serviceService,
         protected UserFileService $userFileService,
+        protected DashboardService $dashboardService,
     )
     {
         /**
@@ -85,7 +87,7 @@ class KTVController extends BaseController
     {
         $dto = $request->getFilterOptions();
         $dto->addFilter('ktv_user_id', $request->user()->id);
-        $dto->setSortBy('booking_time');
+        $dto->setSortBy('created_at');
         $dto->setDirection('desc');
         $result = $this->bookingService->bookingPaginate($dto);
         if ($result->isError()) {
@@ -261,8 +263,11 @@ class KTVController extends BaseController
         }
 
         $validatedData = $validator->validated();
-
-        $result = $this->bookingService->totalIncome($request->user(), $validatedData['type']);
+        $range = DateRangeDashboard::from($validatedData['type']);
+        $result = $this->dashboardService->getKtvDashboardData(
+            user: $request->user(),
+            range: $range,
+        );
 
         if ($result->isError()) {
             return $this->sendError(message: $result->getMessage());

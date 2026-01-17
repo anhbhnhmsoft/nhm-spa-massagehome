@@ -15,6 +15,7 @@ class BookingItemResource extends JsonResource
         $ktvUserProfile = $this->ktvUser->profile;
         $user = $this->user;
         $userProfile = $this->user->profile;
+        $coupon = $this->coupon ?? null;
         return [
             'id' => $this->id,
             'service' => [
@@ -43,6 +44,11 @@ class BookingItemResource extends JsonResource
             'duration' => $this->duration,
             'status' => $this->status,
             'price' => $this->price,
+            'coupon' => $coupon ? [
+                'id' => $coupon->id,
+                'label' => $coupon->label,
+            ] : null,
+            'price_before_discount' => $this->price_before_discount,
             // Số lượng đánh giá
             'has_reviews' => $this->reviews_count > 0,
         ];

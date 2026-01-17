@@ -84,11 +84,9 @@ class CouponService extends BaseService
         } else {
             $discountAmount = $priceBeforeDiscount - $coupon->discount_value;
         }
-        // Kiểm tra giá trị giảm tối đa
+        // Kiểm tra giá trị giảm tối đa không vượt quá giá trị tối đa của mã
         if ($discountAmount > $coupon->max_discount) {
-            return ServiceReturn::error(
-                message: __("booking.coupon.max_discount_exceeded")
-            );
+            $discountAmount = $coupon->max_discount;
         }
 
         // --- 6. Kiểm tra thời gian sử dụng hợp lệ hay không ---

@@ -524,6 +524,8 @@ return
                     'commission_desc' => 'Total Commission',
                     'coupon' => 'Coupon',
                     'coupon_desc' => 'Total Coupon Value',
+                    'volumn_affiliate' => 'Commission fee',
+                    'volumn_affiliate_desc' => 'Total commission paid'
                 ],
                 'technician_status' => [
                     'total' => 'Total Staff',

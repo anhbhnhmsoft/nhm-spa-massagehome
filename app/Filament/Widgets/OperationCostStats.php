@@ -7,10 +7,17 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class OperationCostStats extends BaseWidget
 {
+    protected ?string $pollingInterval = null;
+
+    protected $listeners = ['dateRangeUpdated' => '$refresh'];
+
     protected function getStats(): array
     {
+        $startDate = session('dashboard_start_date');
+        $endDate = session('dashboard_end_date');
+
         $dashboardService = app(\App\Services\DashboardService::class);
-        $result = $dashboardService->getOperationCostStats();
+        $result = $dashboardService->getOperationCostStats($startDate, $endDate);
 
         if (!$result->isSuccess()) {
             // Fallback or error handling
@@ -22,26 +29,15 @@ class OperationCostStats extends BaseWidget
         $data = $result->getData();
 
         return [
-            Stat::make(__('admin.dashboard.widgets.operation_cost.label'), number_format($data['operation_cost']) . ' đ')
-                ->description(__('admin.dashboard.widgets.operation_cost.desc'))
-                ->descriptionIcon('heroicon-m-arrow-trending-down')
-                ->color('danger'),
-
-            Stat::make(__('admin.dashboard.widgets.operation_cost.primary_order_count'), $data['primary_order_count'])
-                ->description(__('admin.dashboard.widgets.operation_cost.primary_order_desc'))
+            Stat::make(__('dashboard.operation_cost.active_order_count'), $data['active_order_count'])
                 ->color('primary'),
-
-            Stat::make(__('admin.dashboard.widgets.operation_cost.primary_service_value'), number_format($data['primary_service_value']) . ' đ')
-                ->description(__('admin.dashboard.widgets.operation_cost.primary_service_desc'))
-                ->color('success'),
-
-            Stat::make(__('admin.dashboard.widgets.operation_cost.canceled_orders'), $data['canceled_orders'])
-                ->description(__('admin.dashboard.widgets.operation_cost.canceled_orders_desc'))
-                ->color('warning'),
-
-            Stat::make(__('admin.dashboard.widgets.operation_cost.refund_amount'), number_format($data['refund_amount']) . ' đ')
-                ->description(__('admin.dashboard.widgets.operation_cost.refund_amount_desc'))
+            Stat::make(__('dashboard.operation_cost.refund_amount'), number_format($data['refund_amount']) . ' đ')
                 ->color('danger'),
+            Stat::make(__('dashboard.operation_cost.fee_amount'), number_format($data['fee_amount']) . ' đ')
+                ->color('danger'),
+            Stat::make(__('dashboard.operation_cost.deposit_amount'),number_format($data['deposit_amount']) . ' đ')
+                ->color('green'),
         ];
     }
 }
+

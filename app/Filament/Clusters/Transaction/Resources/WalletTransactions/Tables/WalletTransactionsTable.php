@@ -38,7 +38,7 @@ class WalletTransactionsTable
                 TextColumn::make('point_amount')
                     ->label(__('admin.transaction.fields.amount'))
                     ->numeric(2)
-                    ->suffix(' P'),
+                    ->suffix('vnd'),
                 TextColumn::make('status')
                     ->label(__('admin.transaction.fields.status'))
                     ->formatStateUsing(fn($state) => WalletTransactionStatus::tryFrom($state)?->name ? __('admin.transaction.status.' . WalletTransactionStatus::tryFrom($state)->name) : '')

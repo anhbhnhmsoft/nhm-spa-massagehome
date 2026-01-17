@@ -11,6 +11,7 @@ use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
 use App\Enums\BookingStatus;
+use App\Enums\DateRangeDashboard;
 use App\Enums\NotificationType;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserRole;
@@ -307,10 +308,10 @@ class BookingService extends BaseService
                     message: __("booking.not_permission")
                 );
             }
-            // Kiểm tra quyền hủy booking (chỉ có thể hủy booking của chính mình hoặc KTV)
+            // Kiểm tra quyền hủy booking (chỉ có thể hủy booking của chính mình)
             if ($proactive) {
                 $userCurrent = Auth::user();
-                if ($userCurrent->id != $booking->ktv_user_id) {
+                if ($userCurrent->id != $booking->user_id) {
                     throw new ServiceException(
                         message: __("booking.not_permission")
                     );
@@ -476,20 +477,20 @@ class BookingService extends BaseService
                 ->first();
 
             if (!$booking) {
-                return ServiceReturn::error(
+                throw new ServiceException(
                     message: __("booking.not_found")
                 );
             }
             // Kiểm tra quyền thực hiện (KTV chỉ có thể bắt đầu dịch vụ của mình)
             if ($user->role != UserRole::KTV->value || $user->id != $booking->ktv_user_id) {
-                return ServiceReturn::error(
+                throw new ServiceException(
                     message: __("common_error.unauthorized")
                 );
             }
             $bookingTime = Carbon::make($booking->booking_time);
             // Không cho phép làm lịch của ngày mai hoặc ngày hôm qua
             if (!$bookingTime->isToday()) {
-                return ServiceReturn::error(message: __("booking.only_start_today_bookings"));
+                throw new ServiceException(message: __("booking.only_start_today_bookings"));
             }
 
             // Gửi thông báo cho khách hàng biết rằng lịch đã bắt đầu
@@ -515,6 +516,12 @@ class BookingService extends BaseService
                 ]
             );
         }
+        catch (ServiceException $exception) {
+            DB::rollBack();
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        }
         catch (\Exception $exception) {
             DB::rollBack();
             LogHelper::error(
@@ -538,12 +545,11 @@ class BookingService extends BaseService
     {
         DB::beginTransaction();
         try {
-            $userCurrent = Auth::user();
+
             // Lock Booking Row
             $booking = $this->bookingRepository->query()
                 ->lockForUpdate()
                 ->where('id', $bookingId)
-                ->where('ktv_user_id', $userCurrent->id)
                 ->where('status', BookingStatus::ONGOING->value)
                 ->first();
             if (!$booking) {
@@ -551,6 +557,15 @@ class BookingService extends BaseService
             }
             $now = now();
             $startTime = Carbon::make($booking->start_time);
+
+            if ($proactive) {
+                $userCurrent = Auth::user();
+                if ($userCurrent->role == UserRole::KTV->value && $userCurrent->id != $booking->ktv_user_id) {
+                    throw new ServiceException(
+                        message: __("common_error.unauthorized")
+                    );
+                }
+            }
 
             // Chỉ cho phép finish khi đã đến thời gian dự kiến hoặc đã qua
             if ($now->lessThan($startTime->copy()->addMinutes($booking->duration))) {
@@ -661,139 +676,6 @@ class BookingService extends BaseService
                 ex: $exception
             );
             throw $exception;
-        }
-    }
-
-
-    /**
-     * Lấy tổng thu nhập trong khoảng thời gian
-     * @param User $user
-     * @param string type
-     * @return ServiceReturn
-     */
-    public function totalIncome(User $user, string $type = 'day'): ServiceReturn
-    {
-        try {
-            $uniqueKey = 'user_' . $user->id;
-            $cachedData = Caching::getCache(CacheKey::CACHE_KEY_TOTAL_INCOME, $uniqueKey);
-
-            // Kiểm tra cache theo type
-            if ($cachedData && $cachedData['type'] === $type) {
-                return ServiceReturn::success(data: $cachedData['content']);
-            }
-
-            $wallet = $user->wallet;
-            if (!$wallet) return ServiceReturn::error(__("error.wallet_not_found"));
-
-            $now = Carbon::now();
-            $fromDate = match ($type) {
-                'day' => $now->copy()->startOfDay(),
-                'week' => $now->copy()->subDays(7)->startOfDay(),
-                'month' => $now->copy()->startOfMonth(),
-                'quarter' => $now->copy()->subMonths(3)->startOfDay(),
-                'year' => $now->copy()->startOfYear(),
-                default => $now->copy()->startOfDay(),
-            };
-            $toDate = $now->copy()->endOfDay();
-
-            $chartGroupBy = match ($type) {
-                'day' => "to_char(created_at, 'HH24:00')", // Theo giờ
-                'week', 'year', 'month' => "to_char(created_at, 'YYYY-MM-DD')", // Theo ngày
-                default => "to_char(created_at, 'YYYY-MM-DD')",
-            };
-
-            // 1. Tổng thu nhập (Kỳ này)
-            $totalIncome = $this->walletTransactionRepository->query()
-                ->where('wallet_id', $wallet->id)
-                ->where('type', WalletTransactionType::PAYMENT_FOR_KTV->value)
-                ->whereBetween('created_at', [$fromDate, $toDate])
-                ->sum('point_amount');
-
-            // 2. Doanh thu thực nhận (Status: COMPLETED)
-            $receivedIncome = $this->walletTransactionRepository->query()
-                ->where('wallet_id', $wallet->id)
-                ->where('type', WalletTransactionType::PAYMENT_FOR_KTV->value)
-                ->where('status', WalletTransactionStatus::COMPLETED->value)
-                ->whereBetween('created_at', [$fromDate, $toDate])
-                ->sum('point_amount');
-
-            // 3. Số khách
-            $totalCustomers = $this->bookingRepository->query()
-                ->where('ktv_user_id', $user->id)
-                ->where('status', BookingStatus::COMPLETED->value)
-                ->whereBetween('created_at', [$fromDate, $toDate])
-                ->count();
-
-            // 4. Thu nhập Affiliate
-            $affiliateIncome = $this->walletTransactionRepository->query()
-                ->where('wallet_id', $wallet->id)
-                ->where('type', WalletTransactionType::AFFILIATE->value)
-                ->whereBetween('created_at', [$fromDate, $toDate])
-                ->sum('point_amount');
-
-            // 5. Lượt review
-            $totalReviews = $this->reviewRepository->query()
-                ->where('user_id', $user->id)
-                ->whereBetween('created_at', [$fromDate, $toDate])
-                ->count();
-
-            // 6. Dữ liệu biểu đồ
-            if ($type === 'day') {
-                $chartData = $this->walletTransactionRepository->query()
-                    ->selectRaw("
-            CASE
-                WHEN CAST(to_char(created_at, 'HH24') AS INTEGER) < 6 THEN '00:00-06:00'
-                WHEN CAST(to_char(created_at, 'HH24') AS INTEGER) < 12 THEN '06:00-12:00'
-                WHEN CAST(to_char(created_at, 'HH24') AS INTEGER) < 18 THEN '12:00-18:00'
-                ELSE '18:00-00:00'
-            END as date,
-            SUM(point_amount) as total
-        ")
-                    ->where('wallet_id', $wallet->id)
-                    ->where('type', WalletTransactionType::PAYMENT_FOR_KTV->value)
-                    ->whereBetween('created_at', [$fromDate, $toDate])
-                    ->groupByRaw("date")
-                    ->orderByRaw("MIN(created_at) ASC")
-                    ->get();
-            } else {
-                // Điều chỉnh logic format ngày cho year, month, week
-                $format = match ($type) {
-                    'year'  => "to_char(created_at, 'YYYY-MM')", // Lấy theo tháng nếu là Year
-                    'month', 'week' => "to_char(created_at, 'YYYY-MM-DD')", // Lấy theo ngày nếu là Month/Week
-                    default => "to_char(created_at, 'YYYY-MM-DD')",
-                };
-
-                $chartData = $this->walletTransactionRepository->query()
-                    ->selectRaw("$format as date, SUM(point_amount) as total")
-                    ->where('wallet_id', $wallet->id)
-                    ->where('type', WalletTransactionType::PAYMENT_FOR_KTV->value)
-                    ->whereBetween('created_at', [$fromDate, $toDate])
-                    ->groupByRaw("date")
-                    ->orderBy('date', 'asc')
-                    ->get();
-            }
-
-            $resultData = [
-                'total_income' => (float)$totalIncome,
-                'received_income' => (float)$receivedIncome,
-                'total_customers' => $totalCustomers,
-                'affiliate_income' => (float)$affiliateIncome,
-                'total_reviews' => $totalReviews,
-                'chart_data' => $chartData,
-                'type_label' => $type
-            ];
-
-            Caching::setCache(
-                key: CacheKey::CACHE_KEY_TOTAL_INCOME,
-                value: ['type' => $type, 'content' => $resultData],
-                uniqueKey: $uniqueKey,
-                expire: 60 * 5,
-            );
-            return ServiceReturn::success(data: $resultData);
-
-        } catch (\Exception $exception) {
-            LogHelper::error("Lỗi BookingService@totalIncome", $exception);
-            return ServiceReturn::error(message: $exception->getMessage());
         }
     }
 
@@ -1012,7 +894,6 @@ class BookingService extends BaseService
             // Sắp xếp theo thời gian book tăng dần
             ->orderBy('booking_time', 'asc')
             ->get();
-
         foreach ($bookingsInDay as $existing) {
             // Thông tin booking cũ (Booking B)
             $existingStart = Carbon::parse($existing->booking_time);

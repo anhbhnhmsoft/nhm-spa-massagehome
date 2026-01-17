@@ -2,7 +2,9 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Widgets\SelectGap;
 use Filament\Pages\Dashboard as PagesDashboard;
+use Filament\Schemas\Components\Grid;
 
 class Dashboard extends PagesDashboard
 {
@@ -12,26 +14,18 @@ class Dashboard extends PagesDashboard
         return __('dashboard.navigation_label');
     }
 
-    public function getTitle(): string
+public function getTitle(): string
     {
         return __('dashboard.title');
-    }
-    protected function getHeaderWidgets(): array
-    {
-        return [];
-    }
-
-    protected function getFooterWidgets(): array
-    {
-        return [];
     }
 
     public function getWidgets(): array
     {
         return [
+            \App\Filament\Widgets\SelectGap::class,
+            \App\Filament\Widgets\GeneralStats::class,
             \App\Filament\Widgets\OperationCostStats::class,
 //            \App\Filament\Widgets\AddOnServiceStats::class,
-            \App\Filament\Widgets\GeneralStats::class,
             \App\Filament\Widgets\RevenueRefundChart::class,
             \App\Filament\Widgets\ProfitChart::class,
             \App\Filament\Widgets\TechnicianStatusStats::class,

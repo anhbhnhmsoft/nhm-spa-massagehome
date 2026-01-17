@@ -184,7 +184,7 @@ class NotificationService extends BaseService
         $description = $type->getDescByLang($userLang);
 
         // Tạo notification trong database
-        $notification = Notification::create([
+        $notification = $this->notificationRepository->query()->create([
             'user_id' => $user->id,
             'title' => $title,
             'description' => $description,

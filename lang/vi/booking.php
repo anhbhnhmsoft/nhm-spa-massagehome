@@ -12,6 +12,7 @@ return [
     'book_time' => [
         'break_time_gap_not_found' => 'Có lỗi xảy ra khi lấy khoảng thời gian nghỉ, vui lòng liên hệ quản trị viên, cảm ơn!',
         'book_time_not_valid' => 'Thời gian đặt không hợp lệ, bạn có thể đặt lịch từ :time trở đi!',
+        'not_working' => 'Kỹ thuật viên không làm việc trong khoảng thời gian này, vui lòng chọn thời gian khác!',
         'overlapping' => 'Đang có người khác đặt lịch trong khoảng thời gian này. Vui lòng chọn thời gian khác! Thời gian sớm nhất bạn có thể đặt là :time',
     ],
     'status_not_confirmed' => 'Booking chưa được xác nhận',

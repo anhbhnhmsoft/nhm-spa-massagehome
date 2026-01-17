@@ -42,10 +42,6 @@ class TechnicianLeaderboard extends BaseWidget
                 ->avg('reviewsReceived', 'rating')
                 ->formatStateUsing(fn($state) => number_format($state, 1)),
             // Level (Custom logic needed, placeholder for now)
-            Tables\Columns\TextColumn::make('level')
-                ->label(__('admin.dashboard.widgets.leaderboard.columns.level'))
-                ->default('Lv 1'),
-
             // Service Duration (Sum of bookings duration)
             Tables\Columns\TextColumn::make('service_duration')
                 ->label(__('admin.dashboard.widgets.leaderboard.columns.service_duration'))
@@ -59,21 +55,10 @@ class TechnicianLeaderboard extends BaseWidget
                     return $query->withSum('ktvBookings', 'price')->orderBy('ktv_bookings_sum_price', $direction);
                 }),
 
-            // Add-on Rate (Placeholder)
-            Tables\Columns\TextColumn::make('addon_rate')
-                ->label(__('admin.dashboard.widgets.leaderboard.columns.addon_rate'))
-                ->default('0%'),
-
             // Points (Wallet Balance or specific points)
             Tables\Columns\TextColumn::make('points')
                 ->label(__('admin.dashboard.widgets.leaderboard.columns.points'))
                 ->getStateUsing(fn(User $record) => $record->wallet?->balance ?? 0),
-
-            // Total Orders
-            Tables\Columns\TextColumn::make('total_orders')
-                ->label(__('admin.dashboard.widgets.leaderboard.columns.total_orders'))
-                ->counts('ktvBookings')
-                ->sortable(),
         ];
     }
 }

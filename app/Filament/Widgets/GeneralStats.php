@@ -7,10 +7,16 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class GeneralStats extends BaseWidget
 {
+    protected ?string $pollingInterval = null;
+    protected $listeners = ['dateRangeUpdated' => '$refresh'];
+
     protected function getStats(): array
     {
+        $startDate = session('dashboard_start_date');
+        $endDate = session('dashboard_end_date');
+
         $dashboardService = app(\App\Services\DashboardService::class);
-        $result = $dashboardService->getGeneralStats();
+        $result = $dashboardService->getGeneralStats($startDate, $endDate);
 
         if (!$result->isSuccess()) {
             return [
@@ -21,24 +27,26 @@ class GeneralStats extends BaseWidget
         $data = $result->getData();
 
         return [
-            Stat::make(__('admin.dashboard.widgets.general.order_volume'), $data['order_volume'])
-                ->description(__('admin.dashboard.widgets.general.order_volume_desc'))
+            Stat::make(__('dashboard.general_stat.total_booking'), $data['total_booking'])
+                ->description(__('dashboard.general_stat.total_booking_desc'))
                 ->color('primary'),
 
-            Stat::make(__('admin.dashboard.widgets.general.sales'), number_format($data['sales']) . ' đ')
-                ->description(__('admin.dashboard.widgets.general.sales_desc'))
+            Stat::make(__('dashboard.general_stat.completed_booking'), $data['completed_booking'])
                 ->color('success'),
 
-            Stat::make(__('admin.dashboard.widgets.general.net_sales'), number_format($data['net_sales']) . ' đ')
-                ->description(__('admin.dashboard.widgets.general.net_sales_desc'))
+            Stat::make(__('dashboard.general_stat.canceled_booking'), $data['canceled_booking'])
+                ->color('danger'),
+
+            Stat::make(__('dashboard.general_stat.gross_revenue'), number_format($data['gross_revenue']) . ' đ')
+                ->description(__('dashboard.general_stat.gross_revenue_desc'))
                 ->color('success'),
 
-            Stat::make(__('admin.dashboard.widgets.general.commission'), number_format($data['commission_amount']) . ' đ')
-                ->description(__('admin.dashboard.widgets.general.commission_desc'))
+            Stat::make(__('dashboard.general_stat.ktv_cost'), number_format($data['ktv_cost']) . ' đ')
+                ->description(__('dashboard.general_stat.ktv_cost_desc'))
                 ->color('warning'),
 
-            Stat::make(__('admin.dashboard.widgets.general.coupon'), number_format($data['coupon_amount']) . ' đ')
-                ->description(__('admin.dashboard.widgets.general.coupon_desc'))
+            Stat::make(__('dashboard.general_stat.net_profit'), number_format($data['net_profit']) . ' đ')
+                ->description(__('dashboard.general_stat.net_profit_desc'))
                 ->color('info'),
         ];
     }

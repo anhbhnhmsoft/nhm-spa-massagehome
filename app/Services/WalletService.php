@@ -90,7 +90,7 @@ class WalletService extends BaseService
                 'foreign_key' => $bookingId,
                 'money_amount' => $booking->price * $exchangeRate,
                 'exchange_rate_point' => $exchangeRate,
-                'point_amount' => -$booking->price,
+                'point_amount' => $booking->price,
                 'balance_after' => $walletCustomer->balance - $booking->price,
                 'type' => WalletTransactionType::PAYMENT->value,
                 'status' => WalletTransactionStatus::COMPLETED->value,
@@ -269,7 +269,7 @@ class WalletService extends BaseService
             }
             // Lấy wallet ktv với lock
             $walletKtv = $this->walletRepository->query()
-                ->where('user_id', $booking->technician_id)
+                ->where('user_id', $booking->ktv_user_id)
                 ->lockForUpdate()
                 ->first();
             if (!$walletKtv) {
@@ -281,8 +281,7 @@ class WalletService extends BaseService
             $this->walletTransactionRepository->create([
                 'wallet_id' => $walletKtv->id,
                 'type' => WalletTransactionType::RETRIEVE_PAYMENT_REFUND_KTV->value,
-                'point_amount' => $transactionOfKtv->price,
-                'amount' => $transactionOfKtv->point_amount,
+                'point_amount' => $transactionOfKtv->point_amount,
                 'balance_after' => $walletKtv->balance - $transactionOfKtv->point_amount,
                 'money_amount' => $transactionOfKtv->money_amount,
                 'exchange_rate_point' => $transactionOfKtv->exchange_rate_point,

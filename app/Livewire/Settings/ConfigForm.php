@@ -151,6 +151,71 @@ class ConfigForm extends Component implements HasSchemas
                                         ->validationMessages([
                                             'string' => __('common.error.string'),
                                         ]),
+                                    TextInput::make((string) ConfigName::ZALO_MERCHANT_ID->value)
+                                        ->label(__('admin.setting.fields.zalo_merchant_id'))
+                                        ->default('')
+                                        ->rules([
+                                            'string',
+                                        ])
+                                        ->validationMessages([
+                                            'string' => __('common.error.string'),
+                                        ]),
+                                    TextInput::make((string) ConfigName::ZALO_MERCHANT_KEY_1->value)
+                                        ->label(__('admin.setting.fields.zalo_merchant_key_1'))
+                                        ->default('')
+                                        ->rules([
+                                            'string',
+                                        ])
+                                        ->validationMessages([
+                                            'string' => __('common.error.string'),
+                                        ]),
+                                    TextInput::make((string) ConfigName::ZALO_MERCHANT_KEY_2->value)
+                                        ->label(__('admin.setting.fields.zalo_merchant_key_2'))
+                                        ->default('')
+                                        ->rules([
+                                            'string',
+                                        ])
+                                        ->validationMessages([
+                                            'string' => __('common.error.string'),
+                                        ]),
+                                    TextInput::make((string) ConfigName::ZALO_APP_ID->value)
+                                        ->label(__('admin.setting.fields.zalo_app_id'))
+                                        ->default('')
+                                        ->rules([
+                                            'string',
+                                        ])
+                                        ->validationMessages([
+                                            'string' => __('common.error.string'),
+                                        ]),
+                                    TextInput::make((string) ConfigName::ZALO_APPSECRET_KEY->value )
+                                        ->label(__('admin.setting.fields.zalo_appsecret_key'))
+                                        ->default('')
+                                        ->rules([
+                                            'string',
+                                        ])
+                                        ->validationMessages([
+                                            'string' => __('common.error.string'),
+                                        ]),
+
+                                    TextInput::make((string) ConfigName::ZALO_OA_ID->value)
+                                        ->label(__('admin.setting.fields.zalo_oa_id'))
+                                        ->default('')
+                                        ->rules([
+                                            'string',
+                                        ])
+                                        ->validationMessages([
+                                            'string' => __('common.error.string'),
+                                        ]),
+                                    TextInput::make((string) ConfigName::ZALO_TEMPLATE_ID->value)
+                                        ->label(__('admin.setting.fields.zalo_template_id'))
+                                        ->default('')
+                                        ->rules([
+                                            'string',
+                                        ])
+                                        ->validationMessages([
+                                            'string' => __('common.error.string'),
+                                        ]),
+
                                 ]),
                             Section::make(__('admin.setting.label_config_discount_rate'))
                                 ->columns(2)

@@ -31,6 +31,7 @@ class BookingRepository extends BaseRepository
                 'service',
                 'ktvUser',
                 'ktvUser.profile',
+                'coupon'
             ]);
     }
 
@@ -61,6 +62,11 @@ class BookingRepository extends BaseRepository
 
     public function sortQuery(Builder $query, ?string $sortBy, string $direction): Builder
     {
+        if ($sortBy) {
+            $query->orderBy($sortBy, $direction);
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
         return $query;
     }
 

@@ -559,6 +559,8 @@ return
                     'commission_desc' => 'Tổng tiền hoa hồng',
                     'coupon' => 'Mã giảm giá',
                     'coupon_desc' => 'Tổng giá trị mã giảm giá',
+                    'volumn_affiliate' => 'Phí hoa hồng ',
+                    'volumn_affiliate_desc' => 'Tổng tiền hoa hồng đã trả'
                 ],
                 'technician_status' => [
                     'total' => 'Tổng nhân sự',
