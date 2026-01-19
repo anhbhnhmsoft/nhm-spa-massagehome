@@ -366,6 +366,10 @@ class UserService extends BaseService
                 $user->role = $apply->role;
                 $apply->save();
                 $user->save();
+            }else{
+                throw new ServiceException(
+                    message: __("common_error.data_not_found")
+                );
             }
             // Tạo lịch làm việc mặc định cho KTV
              if ($user->role === UserRole::KTV) {
@@ -398,14 +402,20 @@ class UserService extends BaseService
             return ServiceReturn::success(
                 message: __("common.success.data_updated")
             );
-        } catch (\Exception $exception) {
+        } catch (ServiceException $exception) {
+            DB::rollBack();
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        }
+        catch (\Exception $exception) {
             DB::rollBack();
             LogHelper::error(
-                message: "Lỗi UserService@activeKTVapply",
+                message: "Lỗi UserService@activeStaffApply",
                 ex: $exception
             );
             return ServiceReturn::error(
-                message: $exception->getMessage()
+                message: __("common_error.server_error")
             );
         }
     }
@@ -426,6 +436,11 @@ class UserService extends BaseService
                 $apply->note = $note;
                 $apply->effective_date = now();
                 $apply->save();
+                $user->save();
+            }else{
+                throw new ServiceException(
+                    message: __("common_error.data_not_found")
+                );
             }
 
             SendNotificationJob::dispatch(
@@ -436,14 +451,21 @@ class UserService extends BaseService
                     'role' => $user->role,
                 ]
             );
+
             DB::commit();
             return ServiceReturn::success(
                 message: __("common.success.data_updated")
             );
-        } catch (\Exception $exception) {
+        }catch (ServiceException $exception) {
+            DB::rollBack();
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        }
+        catch (\Exception $exception) {
             DB::rollBack();
             LogHelper::error(
-                message: "Lỗi UserService@rejectKTVapply",
+                message: "Lỗi UserService@rejectStaffApply",
                 ex: $exception
             );
             return ServiceReturn::error(

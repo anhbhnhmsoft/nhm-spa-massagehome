@@ -6,11 +6,11 @@ use App\Core\Helper;
 use App\Enums\DirectFile;
 use App\Enums\Gender;
 use App\Enums\KTVConfigSchedules;
+use App\Enums\Language;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserFileType;
 use App\Enums\UserRole;
 use App\Models\Province;
-use App\Models\User;
 use App\Services\LocationService;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Hidden;
@@ -18,7 +18,7 @@ use Filament\Forms\Components\TimePicker;
 use Filament\Resources\Pages\CreateRecord;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Placeholder;
+use Filament\Schemas\Components\Text;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -33,13 +33,27 @@ class KTVForm
 {
     public static function configure(Schema $schema): Schema
     {
-        $lang = app()->getLocale();
         return $schema
+            ->disabled(function ($record) {
+                if (!$record) {
+                    return false;
+                }
+                $status = $record->reviewApplication?->status;
+
+                return in_array($status, [
+                    ReviewApplicationStatus::PENDING,
+                    ReviewApplicationStatus::REJECTED,
+                ]);
+            })
             ->components([
+                // Thông tin cơ bản
                 Section::make(__('admin.common.table.basic_info'))
                     ->schema([
                         Section::make()
                             ->schema([
+                                TextInput::make('id')
+                                    ->label(__('admin.common.table.id'))
+                                    ->disabled(),
                                 TextInput::make('name')
                                     ->label(__('admin.common.table.name'))
                                     ->required()
@@ -74,6 +88,10 @@ class KTVForm
                                         'required' => __('common.error.required'),
                                         'max' => __('common.error.max_length', ['max' => 255])
                                     ]),
+                                Toggle::make('is_active')
+                                    ->label(__('admin.common.table.status'))
+                                    ->columnSpanFull()
+                                    ->default(true),
                             ]),
 
                         Section::make()
@@ -82,6 +100,8 @@ class KTVForm
                                 FileUpload::make('avatar_url')
                                     ->label(__('admin.common.table.avatar'))
                                     ->image()
+                                    ->avatar()
+                                    ->imageEditor()
                                     ->disk('public')
                                     ->directory(DirectFile::KTVA->value)
                                     ->required()
@@ -95,7 +115,11 @@ class KTVForm
                                     ->rows(3),
                                 Select::make('gender')
                                     ->label(__('admin.common.table.gender'))
-                                    ->options(Gender::toOptions()),
+                                    ->options(Gender::toOptions())
+                                    ->required()
+                                    ->validationMessages([
+                                        'required' => __('common.error.required'),
+                                    ]),
                                 DatePicker::make('date_of_birth')
                                     ->label(__('admin.common.table.date_of_birth'))
                                     ->required()
@@ -105,19 +129,36 @@ class KTVForm
                             ]),
 
                     ])
+                    ->compact()
                     ->columns(2),
 
+                // Thông tin đăng ký
                 Section::make(__('admin.ktv_apply.fields.registration_info'))
                     ->relationship('reviewApplication')
+                    ->compact()
+                    ->afterHeader([
+                        Text::make(function($record) {
+                            return __('admin.common.table.status_review') . ": " . $record->status->label();
+                        })
+                            ->badge()
+                            ->color(fn($record) => $record->status?->color()),
+                    ])
                     ->schema([
                         Hidden::make('role')
                             ->default(UserRole::KTV->value)
                             ->dehydrateStateUsing(fn() => UserRole::KTV->value)
                             ->dehydrated(true),
-                        Select::make('status')
+                        Hidden::make('status')
                             ->label(__('admin.common.table.status'))
-                            ->options(ReviewApplicationStatus::toOptions())
                             ->default(ReviewApplicationStatus::APPROVED),
+
+                        Toggle::make('is_leader')
+                            ->label(__('admin.ktv_apply.fields.is_leader'))
+                            ->onIcon('heroicon-m-user-group')
+                            ->offIcon('heroicon-m-user')
+                            ->onColor('success')
+                            ->columnSpanFull(),
+
                         Select::make('referrer_id')
                             ->label(__('admin.ktv_apply.fields.agency'))
                             ->relationship(
@@ -131,9 +172,51 @@ class KTVForm
                             ->preload() // Load trước một ít dữ liệu để chọn nhanh
                             ->disabled(fn($livewire) => $livewire instanceof ViewRecord)
                             ->columnSpan(1),
+
+                        TextInput::make('experience')
+                            ->label(__('admin.ktv_apply.fields.experience'))
+                            ->numeric()
+                            ->required()
+                            ->validationMessages([
+                                'required' => __('common.error.required'),
+                            ])
+                            ->disabled(fn($livewire) => $livewire instanceof ViewRecord)
+                            ->suffix(__('admin.ktv_apply.fields.years')),
+
+                        Textarea::make('bio.' . Language::VIETNAMESE->value)
+                            ->label(__('admin.ktv_apply.fields.experience_desc_vi'))
+                            ->rows(3)
+                            ->required()
+                            ->validationMessages([
+                                'required' => __('common.error.required'),
+                            ])
+                            ->columnSpanFull(),
+                        Textarea::make('bio.' . Language::ENGLISH->value)
+                            ->label(__('admin.ktv_apply.fields.experience_desc_en'))
+                            ->rows(3)
+                            ->columnSpanFull(),
+                        Textarea::make('bio.' . Language::CHINESE->value)
+                            ->label(__('admin.ktv_apply.fields.experience_desc_cn'))
+                            ->rows(3)
+                            ->columnSpanFull(),
+                    ])
+                    ->columns(2),
+
+                // Thông tin địa điểm
+                Section::make(__('admin.ktv_apply.fields.location_info'))
+                    ->description(__('admin.ktv_apply.fields.location_info_desc'))
+                    ->relationship('reviewApplication')
+                    ->aside()
+                    ->columnSpanFull()
+                    ->compact()
+                    ->schema([
                         Select::make('province_code')
                             ->label(__('admin.ktv_apply.fields.province'))
                             ->searchable()
+                            ->required()
+                            ->validationMessages([
+                                'required' => __('common.error.required'),
+                            ])
                             ->options(fn() => Province::all()->pluck('name', 'code'))
                             ->disabled(fn($livewire) => $livewire instanceof ViewRecord)
                             ->columnSpan(1),
@@ -176,55 +259,42 @@ class KTVForm
                         TextInput::make('latitude')
                             ->label(__('admin.ktv_apply.fields.latitude') ?? 'Latitude')
                             ->numeric()
+                            ->required()
+                            ->validationMessages([
+                                'required' => __('common.error.required'),
+                            ])
                             ->rules(['nullable', 'numeric', 'between:-90,90'])
                             ->columnSpan(1),
 
                         TextInput::make('longitude')
                             ->label(__('admin.ktv_apply.fields.longitude') ?? 'Longitude')
                             ->numeric()
+                            ->required()
+                            ->validationMessages([
+                                'required' => __('common.error.required'),
+                            ])
                             ->rules(['nullable', 'numeric', 'between:-180,180'])
                             ->columnSpan(1),
 
                         Textarea::make('address')
                             ->label(__('admin.ktv_apply.fields.address'))
                             ->columnSpanFull()
+                            ->required()
+                            ->validationMessages([
+                                'required' => __('common.error.required'),
+                            ])
                             ->rows(2),
-                        TextInput::make('experience')
-                            ->label(__('admin.ktv_apply.fields.experience'))
-                            ->numeric()
-                            ->disabled(fn($livewire) => $livewire instanceof ViewRecord)
-                            ->suffix(__('admin.ktv_apply.fields.years')),
-
-                        Textarea::make('bio.' . $lang)
-                            ->label(__('admin.ktv_apply.fields.experience_desc'))
-                            ->rows(3)
-                            ->columnSpanFull(),
-                        Hidden::make('role')
-                            ->default(UserRole::KTV->value),
-                    ])
-                    ->columns(2),
-
-                // Thông tin hệ thống
-                Section::make(__('admin.ktv_apply.fields.system_info'))
-                    ->schema([
-                        Select::make('role')
-                            ->label(__('admin.common.table.role'))
-                            ->options(UserRole::toOptions())
-                            ->default(UserRole::KTV->value)
-                            ->disabled(),
-                        DateTimePicker::make('last_login_at')
-                            ->label(__('admin.common.table.last_login'))
-                            ->disabled(),
-                        Toggle::make('is_active')
-                            ->label(__('admin.common.table.status'))
-                            ->columnSpanFull()
-                            ->default(true),
-
-                    ])
-                    ->columnSpanFull(),
+                    ]),
 
                 // Lịch làm việc Kỹ thuật viên
                 Section::make(__('admin.ktv_apply.fields.schedule'))
+                    ->hidden(function ($record) {
+                        $status = $record->reviewApplication?->status;
+                        return in_array($status, [
+                            ReviewApplicationStatus::PENDING,
+                            ReviewApplicationStatus::REJECTED,
+                        ]);
+                    })
                     ->relationship('schedule') // Tên hàm quan hệ trong Model User
                     ->schema([
                         Toggle::make('is_working')
@@ -287,75 +357,79 @@ class KTVForm
                     ->columnSpanFull()
                     ->compact(),
 
+                // Thông tin tệp tin
                 Section::make(__('admin.ktv_apply.fields.files'))
+                    ->columns(4)
                     ->schema([
-                        Section::make(__('admin.ktv_apply.file_type.identity_card_front'))
-                            ->schema([
-                                FileUpload::make('cccd_front_path')
-                                    ->label(__('admin.ktv_apply.file_type.identity_card_front'))
-                                    ->directory(fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
-                                    ->disk('private')
-                                    ->required()
-                                    ->image()
-                                    ->maxSize(102400)
-                                    ->downloadable()
-                                    ->columnSpanFull()
-                                    ->deletable()
-                                    ->afterStateHydrated(fn($component, $record) => $component->state($record?->cccdFront()->first()?->file_path)),
-                            ])->columnSpan(1),
+                        // Hình ảnh CCCD mặt trước
+                        FileUpload::make('cccd_front_path')
+                            ->label(__('admin.ktv_apply.file_type.identity_card_front'))
+                            ->directory(fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
+                            ->disk('private')
+                            ->required()
+                            ->validationMessages([
+                                'required' => __('common.error.required'),
+                            ])
+                            ->image()
+                            ->maxSize(102400)
+                            ->downloadable()
+                            ->deletable()
+                            ->afterStateHydrated(fn($component, $record) => $component->state($record?->cccdFront()->first()?->file_path)),
 
-                        Section::make(__('admin.ktv_apply.file_type.identity_card_back'))
-                            ->schema([
-                                FileUpload::make('cccd_back_path')
-                                    ->label(__('admin.ktv_apply.file_type.identity_card_back'))
-                                    ->directory(fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
-                                    ->disk('private')
-                                    ->required()
-                                    ->image()
-                                    ->maxSize(102400)
-                                    ->downloadable()
-                                    ->columnSpanFull()
-                                    ->afterStateHydrated(fn($component, $record) => $component->state($record?->cccdBack()->first()?->file_path)),
-                            ])->columnSpan(1),
+                        // Hình ảnh CCCD mặt sau
+                        FileUpload::make('cccd_back_path')
+                            ->label(__('admin.ktv_apply.file_type.identity_card_back'))
+                            ->directory(fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
+                            ->disk('private')
+                            ->required()
+                            ->validationMessages([
+                                'required' => __('common.error.required'),
+                            ])
+                            ->image()
+                            ->maxSize(102400)
+                            ->downloadable()
+                            ->afterStateHydrated(fn($component, $record) => $component->state($record?->cccdBack()->first()?->file_path)),
 
-                        Section::make(__('admin.ktv_apply.file_type.license'))
-                            ->schema([
-                                FileUpload::make('certificate_path')
-                                    ->label(__('admin.ktv_apply.file_type.license'))
-                                    ->directory(fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
-                                    ->disk('private')
-                                    ->nullable()
-                                    ->image()
-                                    ->maxSize(102400)
-                                    ->downloadable()
-                                    ->columnSpanFull()
-                                    ->afterStateHydrated(fn($component, $record) => $component->state($record?->certificate()->first()?->file_path)),
-                            ])->columnSpanFull(),
+                        // Hình ảnh khuôn mặt với CCCD
+                        FileUpload::make('face_with_identity_card_path')
+                            ->label(__('admin.ktv_apply.file_type.face_with_identity_card'))
+                            ->directory(fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
+                            ->disk('private')
+                            ->required()
+                            ->validationMessages([
+                                'required' => __('common.error.required'),
+                            ])
+                            ->image()
+                            ->maxSize(102400)
+                            ->downloadable()
+                            ->deletable()
+                            ->afterStateHydrated(fn($component, $record) => $component->state($record?->faceWithIdentityCard()->first()?->file_path)),
 
-                        Section::make(__('admin.ktv_apply.file_type.face_with_identity_card'))
-                            ->schema([
-                                FileUpload::make('face_with_identity_card_path')
-                                    ->label(__('admin.ktv_apply.file_type.face_with_identity_card'))
-                                    ->directory(fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
-                                    ->disk('private')
-                                    ->required()
-                                    ->image()
-                                    ->maxSize(102400)
-                                    ->downloadable()
-                                    ->columnSpanFull()
-                                    ->deletable()
-                                    ->afterStateHydrated(fn($component, $record) => $component->state($record?->faceWithIdentityCard()->first()?->file_path)),
-                            ])->columnSpanFull(),
+                        // Hình ảnh giấy phép KTV
+                        FileUpload::make('certificate_path')
+                            ->label(__('admin.ktv_apply.file_type.license'))
+                            ->directory(fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
+                            ->disk('private')
+                            ->nullable()
+                            ->required()
+                            ->validationMessages([
+                                'required' => __('common.error.required'),
+                            ])
+                            ->image()
+                            ->maxSize(102400)
+                            ->downloadable()
+                            ->deletable()
+                            ->afterStateHydrated(fn($component, $record) => $component->state($record?->certificate()->first()?->file_path)),
 
                         Repeater::make('gallery')
-                            ->label(__('admin.ktv_apply.file_type.ktv_image_display'))
+                            ->label(__('admin.ktv_apply.file_type.ktv_image_display', ['min' => 3, 'max' => 5]))
                             ->relationship('gallery')
-                            ->grid(2)
+                            ->grid(5)
                             ->schema([
                                 Hidden::make('type')
                                     ->default(UserFileType::KTV_IMAGE_DISPLAY),
                                 FileUpload::make('file_path')
-                                    ->label(__('admin.ktv_apply.file_type.ktv_image_display'))
+                                    ->hiddenLabel()
                                     ->directory(fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
                                     ->disk('public')
                                     ->required()
@@ -379,9 +453,6 @@ class KTVForm
                             ->helperText(__('common.notice.image_gallery'))
                             ->columnSpanFull(),
                     ])->columnSpanFull(),
-
-
-
             ]);
     }
 }

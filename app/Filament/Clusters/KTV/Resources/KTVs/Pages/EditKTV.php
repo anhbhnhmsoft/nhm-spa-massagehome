@@ -2,10 +2,15 @@
 
 namespace App\Filament\Clusters\KTV\Resources\KTVs\Pages;
 
+use App\Enums\ReviewApplicationStatus;
 use App\Filament\Clusters\KTV\Resources\KTVs\KTVResource;
 use App\Enums\UserRole;
 use App\Enums\UserFileType;
 use App\Models\UserFile;
+use App\Services\UserService;
+use Filament\Actions\Action;
+use Filament\Forms\Components\Textarea;
+use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Model;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ForceDeleteAction;
@@ -18,12 +23,94 @@ class EditKTV extends EditRecord
 
     protected array $tempFiles = [];
 
+    protected UserService $userService;
+
+    public function boot(UserService $userService): void
+    {
+        $this->userService = $userService;
+    }
     protected function getHeaderActions(): array
     {
         return [
+
+            // Hiển thị nút Approve nếu trạng thái là PENDING hoặc REJECTED
+            Action::make('approve')
+                ->label(__('admin.ktv_apply.actions.approve.label'))
+                ->icon('heroicon-o-check-circle')
+                ->color('success')
+                ->requiresConfirmation()
+                ->modalHeading(__('admin.ktv_apply.actions.approve.heading'))
+                ->modalDescription(__('admin.ktv_apply.actions.approve.description'))
+                ->visible(function() {
+                    $status = $this->record->reviewApplication?->status;
+                    return in_array($status, [
+                        ReviewApplicationStatus::PENDING,
+                        ReviewApplicationStatus::REJECTED,
+                    ]);
+                })
+                ->action(function () {
+                    $result = $this->userService->activeStaffApply($this->record->id);
+
+                    if ($result->isSuccess()) {
+                        Notification::make()
+                            ->success()
+                            ->title(__('admin.ktv_apply.actions.approve.success_title'))
+                            ->body(__('admin.ktv_apply.actions.approve.success_body'))
+                            ->send();
+                    } else {
+                        Notification::make()
+                            ->danger()
+                            ->title(__('common.error.title'))
+                            ->body($result->getMessage())
+                            ->send();
+                    }
+                    return redirect()->to($this->getResource()::getUrl('index'));
+                }),
+
+            Action::make('reject')
+                ->label(__('admin.ktv_apply.actions.reject.label'))
+                ->icon('heroicon-o-x-circle')
+                ->color('danger')
+                ->requiresConfirmation()
+                ->modalHeading(__('admin.ktv_apply.actions.reject.heading'))
+                ->modalDescription(__('admin.ktv_apply.actions.reject.description'))
+                ->schema([
+                    Textarea::make('note')
+                        ->label(__('admin.ktv_apply.actions.reject.reason_label'))
+                        ->required()
+                        ->rows(3)
+                        ->maxLength(500)
+                        ->validationMessages([
+                            'required' => __('common.error.required'),
+                            'max'      => __('common.error.max_length', ['max' => 500]),
+                        ]),
+                ])
+                ->visible(fn() => $this->record->reviewApplication?->status == ReviewApplicationStatus::PENDING)
+                ->action(function (array $data) {
+                    $result = $this->userService->rejectStaffApply($this->record->id, $data['note']);
+
+                    if ($result->isSuccess()) {
+                        Notification::make()
+                            ->warning()
+                            ->title(__('admin.ktv_apply.actions.reject.success_title'))
+                            ->body(__('admin.ktv_apply.actions.reject.success_body'))
+                            ->send();
+                    } else {
+                        Notification::make()
+                            ->danger()
+                            ->title(__('common.error.title'))
+                            ->body($result->getMessage())
+                            ->send();
+                    }
+                    return redirect()->to($this->getResource()::getUrl('index'));
+                }),
+
+
             DeleteAction::make(),
             ForceDeleteAction::make(),
             RestoreAction::make(),
+
+
         ];
     }
 
@@ -123,7 +210,22 @@ class EditKTV extends EditRecord
             }
         }
     }
-
+    protected function getSaveFormAction(): Action
+    {
+        $record = $this->getRecord();
+        $status = $record->reviewApplication?->status;
+        $isLocked = in_array($status, [
+            ReviewApplicationStatus::PENDING,
+            ReviewApplicationStatus::REJECTED,
+        ]);
+        return parent::getSaveFormAction()
+            // 3. Đổi màu sang xám nếu bị khóa (tạo cảm giác disabled)
+            ->color($isLocked ? 'gray' : 'primary')
+            ->icon($isLocked ? 'heroicon-m-lock-closed' : 'heroicon-m-check')
+            // 4. Thêm Tooltip giải thích lý do
+            ->tooltip($isLocked ? 'Không thể lưu: Hồ sơ đang chờ duyệt hoặc đã bị từ chối' : null)
+            ->disabled($isLocked);
+    }
     protected function mutateFormDataBeforeValidate(array $data): array
     {
         if (isset($data['reviewApplication'])) {

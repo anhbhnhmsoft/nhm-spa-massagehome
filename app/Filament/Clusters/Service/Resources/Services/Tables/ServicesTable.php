@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\Service\Resources\Services\Tables;
 
+use App\Enums\UserRole;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -14,6 +15,7 @@ use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
@@ -24,6 +26,9 @@ class ServicesTable
     {
         return $table
             ->columns([
+                TextColumn::make('id')
+                    ->label(__('admin.common.table.id'))
+                    ->limit(50),
                 TextColumn::make('name')
                     ->label(__('admin.service.fields.name'))
                     ->limit(50),
@@ -37,12 +42,6 @@ class ServicesTable
                     ->disk('public'),
                 ToggleColumn::make('is_active')
                     ->label(__('admin.service.fields.status')),
-                TextColumn::make('created_at')
-                    ->label(__('admin.service.fields.created_at'))
-                    ->dateTime(),
-                TextColumn::make('updated_at')
-                    ->label(__('admin.service.fields.updated_at'))
-                    ->dateTime(),
             ])
             ->defaultSort('created_at', 'desc')
             ->recordActions([
@@ -65,7 +64,7 @@ class ServicesTable
                         ->modalHeading(__('admin.common.modal.delete_title'))
                         ->modalDescription(__('admin.common.modal.delete_confirm'))
                         ->modalSubmitActionLabel(__('admin.common.action.confirm_delete'))
-                        ->visible(fn($record) => ! $record->trashed()),
+                        ->visible(fn($record) => !$record->trashed()),
 
                     RestoreAction::make()
                         ->label(__('admin.common.action.restore'))
@@ -75,7 +74,17 @@ class ServicesTable
                 ]),
             ])
             ->filters([
-                TrashedFilter::make(),
+                SelectFilter::make('user_id')
+                    ->label(__('admin.service.fields.provider'))
+                    ->relationship(
+                        name: 'provider',
+                        titleAttribute: 'name',
+                        modifyQueryUsing: fn($query) => $query
+                            ->where('role', UserRole::KTV->value)
+                            ->where('is_active', true)
+                    )
+                    ->searchable() // Bật tìm kiếm
+                    ->preload(),
                 SelectFilter::make('is_active')
                     ->options([
                         true => __('admin.common.status.active'),
@@ -83,6 +92,8 @@ class ServicesTable
                     ])
                     ->label(__('admin.common.filter.status')),
             ])
+            ->filtersLayout(FiltersLayout::AboveContent)
+            ->filtersFormColumns(5)
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make()

@@ -4,13 +4,10 @@ namespace App\Filament\Clusters\KTV\Resources\KTVs;
 
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserRole;
-use App\Filament\Clusters\KTV\KTVCluster;
 use App\Filament\Clusters\KTV\Resources\KTVs\Tables\KTVsTable;
-use App\Filament\Clusters\KTV\Resources\KTVs\Pages\CreateKTV;
 use App\Filament\Clusters\KTV\Resources\KTVs\Pages\ListKTVs;
 use App\Filament\Clusters\KTV\Resources\KTVs\Schemas\KTVForm;
 use App\Filament\Clusters\KTV\Resources\KTVs\Pages\EditKTV;
-use App\Filament\Clusters\KTV\Resources\KTVs\Pages\ViewKTV;
 use App\Models\User;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -47,19 +44,17 @@ class KTVResource extends Resource
     {
         $query = parent::getEloquentQuery();
 
-        $query = $query->where('role', UserRole::KTV->value, UserRole::CUSTOMER->value)
-            ->with('profile', 'reviewApplication')
-            ->whereRelation('reviewApplication', 'status', ReviewApplicationStatus::APPROVED->value)
+        $query = $query->with('profile', 'reviewApplication')
+            ->whereIn('role', [UserRole::KTV->value, UserRole::CUSTOMER->value])
+            ->whereHas('reviewApplication', function (Builder $query) {
+                $query->whereIn('status', ReviewApplicationStatus::values());
+                $query->where('role', UserRole::KTV->value);
+            })
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
         return $query;
     }
-
-    // public static function getNavigationGroup(): \UnitEnum|string|null
-    // {
-    //     return __('admin.nav.ktv');
-    // }
 
     public static function getNavigationLabel(): string
     {
@@ -74,7 +69,6 @@ class KTVResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
         ];
     }
 
@@ -82,7 +76,6 @@ class KTVResource extends Resource
     {
         return [
             'index' => ListKTVs::route('/'),
-            'create' => CreateKTV::route('/create'),
             'edit' => EditKTV::route('/{record}/edit'),
         ];
     }

@@ -13,8 +13,8 @@ class ListKTVs extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make()
-                ->label(__('admin.common.action.create')),
+//            CreateAction::make()
+//                ->label(__('admin.common.action.create')),
         ];
     }
 }

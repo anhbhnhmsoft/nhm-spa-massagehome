@@ -18,6 +18,7 @@ return
             'back' => 'Quay lại',
             'minute' => 'phút',
             'table' => [
+                'id' => 'ID',
                 'name' => 'Tên',
                 'email' => 'Email',
                 'address' => 'Địa chỉ',
@@ -44,11 +45,13 @@ return
                 'effective_date' => 'Ngày hiệu lực',
                 'application_date' => 'Ngày đăng ký',
                 'creator' => 'Tạo bởi',
+                'status_review' => 'Trạng thái hồ sơ',
                 'password_desc_ktv' => 'Mật khẩu phải có ít nhất 8 kí tự, bao gồm chữ hoa, chữ thường, số và kí tự đặc biệt, 1 khi thay đổi mật khẩu mới, KTV sẽ không được sử dụng mật khẩu cũ.',
             ],
             'action' => [
                 'view' => 'Xem',
                 'edit' => 'Sửa',
+                'detail' => 'Chi tiết',
                 'delete' => 'Xóa',
                 'restore' => 'Khôi phục',
                 'force_delete' => 'Xóa vĩnh viễn',
@@ -63,6 +66,7 @@ return
                 'book' => 'Lên lịch',
                 'close' => 'Đóng',
                 'create' => 'Tạo mới',
+                'view_service' => 'Dịch vụ của KTV',
             ],
             'tooltip' => [
                 'view' => 'Xem chi tiết ',
@@ -83,7 +87,8 @@ return
                 'gender' => 'Giới tính',
                 'status' => 'Trạng thái',
                 'is_featured' => 'Nổi bật',
-                'type' => 'Loại'
+                'type' => 'Loại',
+                'review_status' => 'Trạng thái review',
             ],
             'status' => [
                 'active' => 'Kích hoạt',
@@ -135,14 +140,16 @@ return
                 "license" => "Bằng cấp/Chứng chỉ",
                 "health_insurance" => "Bảo hiểm y tế",
                 "business_image" => "Hình ảnh doanh nghiệp",
-                "ktv_image_display" => "Hình ảnh hiển thị cho khách hàng",
+                "ktv_image_display" => "Hình ảnh hiển thị cho khách hàng (tối thiểu :min, tối đa :max)",
                 "face_with_identity_card" => "Hình ảnh chụp cùng CMND/CCCD",
             ],
             "fields" => [
                 "experience" => "Kinh nghiệm",
                 "skills" => "Kỹ năng",
                 "bio" => "Giới thiệu bản thân",
-                "experience_desc" => "Mô tả kinh nghiệm",
+                "experience_desc_vi" => "Mô tả kinh nghiệm (Tiếng Việt)",
+                "experience_desc_en" => "Mô tả kinh nghiệm (Tiếng Anh)",
+                "experience_desc_cn" => "Mô tả kinh nghiệm (Tiếng Trung)",
                 "province" => "Tỉnh/Thành phố",
                 "address" => "Địa chỉ chi tiết",
                 "address_search" => "Tìm kiếm địa chỉ",
@@ -170,6 +177,9 @@ return
                 'sunday' => 'Chủ Nhật',
                 'start_time' => 'Giờ bắt đầu',
                 'end_time' => 'Giờ kết thúc',
+                'is_leader' => 'Trưởng nhóm',
+                'location_info' => 'Thông tin địa điểm',
+                'location_info_desc' => 'Địa điểm mà kỹ thuật viên sẽ làm việc, hãy tìm kiếm địa chỉ hoặc tra thông tin địa chỉ trên Google Maps, lấy vĩ độ và kinh độ của vị trí đó.',
             ],
             "actions" => [
                 "approve" => [
