@@ -129,6 +129,13 @@ class AffiliateService extends BaseService
                     );
                 }
 
+                // Kiểm tra xem không thể tự giới thiệu đối với bản thân được
+                if ($referredUser->id === $referrerUser->id) {
+                    throw new ServiceException(
+                        message: __("affiliate_link.cant_referrer_your_self")
+                    );
+                }
+
                 // Cập nhật user với referrer
                 $this->userRepository->update($referredUserId, [
                     'referred_by_user_id' => $match->referrer_id,

@@ -4,6 +4,7 @@ return [
     'not_found' => 'Không tìm thấy bản ghi affiliate',
     'user_not_found' => 'Người dùng không tồn tại',
     'has_referrer' => 'Người dùng đã có người giới thiệu',
+    'cant_referrer_your_self' => 'Bạn không thể tự giới thiệu cho chính bản thân mình được',
     'no_match_found' => 'Không tìm thấy link giới thiệu phù hợp',
     'match_success' => 'Đối sánh thành công',
     'tracking_confirmed' => 'Xác nhận tracking thành công',

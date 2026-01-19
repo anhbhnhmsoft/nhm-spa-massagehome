@@ -120,6 +120,7 @@ class UserService extends BaseService
 
             // 6. Review mới nhất hôm nay
             $reviewToday = $this->reviewRepository->query()
+                ->with('reviewer')
                 ->where('user_id', $user->id)
                 ->whereBetween('review_at', [$todayStart, $todayEnd])
                 ->orderBy('review_at', 'desc')

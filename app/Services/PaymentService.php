@@ -195,14 +195,7 @@ class PaymentService extends BaseService
         try {
             $user = Auth::user();
             // Lấy config
-            $configResult = $this->getConfigPayment();
-            if ($configResult->isError()) {
-                throw new ServiceException(
-                    message: __("error.config_wallet_error")
-                );
-            }
-
-            $config = $configResult->getData();
+            $exchangeRate = $this->configService->getConfigValue(ConfigName::CURRENCY_EXCHANGE_RATE);
             // Kiểm tra ví của người dùng
             $wallet = $this->walletRepository->queryWallet()
                 ->where('user_id', $user->id)
@@ -212,7 +205,7 @@ class PaymentService extends BaseService
                     message: __("error.wallet_not_found")
                 );
             }
-            $pointAmount = $this->calculatePointAmount($amount, $config['currency_exchange_rate']);
+            $pointAmount = $this->calculatePointAmount($amount, $exchangeRate);
             $orderCode = (int)(microtime(true) * 1000);
 
             // Thời gian hết hạn 30 phút
@@ -228,7 +221,7 @@ class PaymentService extends BaseService
                             'money_amount' => $amount, // Số tiền nạp vào
                             'point_amount' => $pointAmount, // Số lượng point nạp vào
                             'type' => WalletTransactionType::DEPOSIT_QR_CODE->value,
-                            'exchange_rate_point' => $config['currency_exchange_rate'], // Tỉ giá chuyển đổi point
+                            'exchange_rate_point' => $exchangeRate, // Tỉ giá chuyển đổi point
                             'payment_type' => $paymentType,
                             'transaction_id' => $orderCode,
                             'transaction_code' => Helper::createDescPayment(PaymentType::QR_BANKING),
@@ -281,7 +274,7 @@ class PaymentService extends BaseService
                         'money_amount' => $amount,
                         'point_amount' => $pointAmount,
                         'type' => WalletTransactionType::DEPOSIT_ZALO_PAY->value,
-                        'exchange_rate_point' => $config['currency_exchange_rate'],
+                        'exchange_rate_point' => $exchangeRate,
                         'payment_type' => $paymentType,
                         'transaction_id' => $orderCode,
                         'transaction_code' => Helper::createDescPayment(PaymentType::ZALO_PAY),
