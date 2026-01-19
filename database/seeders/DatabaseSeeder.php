@@ -422,6 +422,14 @@ class DatabaseSeeder extends Seeder
                 ]
             );
             Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::SP_WECHAT_QR_IMAGE->value],
+                [
+                    'config_value' => '',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'Ảnh/URL mã QR thanh toán WeChat Pay',
+                ]
+            );
+            Config::query()->updateOrCreate(
                 ['config_key' => ConfigName::ZALO_MERCHANT_ID->value],
                 [
                     'config_value' => 'zalo_merchant_id',

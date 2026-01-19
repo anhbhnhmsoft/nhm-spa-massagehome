@@ -8,6 +8,7 @@ use App\Core\LogHelper;
 use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
+use App\Core\Helper;
 use App\Enums\ConfigName;
 use App\Enums\ConfigType;
 use App\Enums\UserRole;
@@ -101,6 +102,10 @@ class ConfigService extends BaseService
         DB::beginTransaction();
         try {
             foreach ($data as $key => $value) {
+                $oldConfig = $this->configRepository->query()
+                    ->where('config_key', $key)
+                    ->first();
+
                 $this->configRepository->query()->updateOrCreate(
                     ['config_key' => $key],
                     [
@@ -108,6 +113,14 @@ class ConfigService extends BaseService
                         'config_type' => is_numeric($value) ? ConfigType::NUMBER : ConfigType::STRING,
                     ]
                 );
+
+                // Nếu cấu hình là ảnh QR Wechat, xóa file cũ khi đổi sang file mới
+                if ($key === ConfigName::SP_WECHAT_QR_IMAGE->value && $oldConfig) {
+                    $oldPath = $oldConfig->config_value ?? null;
+                    if (!empty($oldPath) && $oldPath !== $value) {
+                        Helper::deleteFile($oldPath, 'public');
+                    }
+                }
                 // Xóa cache config
                 Caching::deleteCache(
                     key: CacheKey::CACHE_KEY_CONFIG,

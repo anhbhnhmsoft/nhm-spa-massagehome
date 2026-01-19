@@ -14,6 +14,7 @@ enum ConfigName: string
     case SP_FACEBOOK = 'SP_FACEBOOK'; // Trang Facebook hỗ trợ của admin
     case SP_PHONE = 'SP_PHONE'; // Số điện thoại hỗ trợ
     case SP_WECHAT = 'SP_WECHAT'; // link Wechat hỗ trợ của admin
+    case SP_WECHAT_QR_IMAGE = 'SP_WECHAT_QR_IMAGE'; // Ảnh/URL mã QR Wechat Pay
     case DISCOUNT_RATE = 'DISCOUNT_RATE'; // Tỷ lệ chiết khấu dành cho kỹ thuật viên %
     case DISCOUNT_RATE_REFERRER_AGENCY = 'DISCOUNT_RATE_REFERRER_AGENCY'; // Tỷ lệ chiết khấu dành cho đại lý đối với 1 đơn hoàn thành của 1 KTV mà mình giới thiệu %
     case DISCOUNT_RATE_REFERRER_KTV = 'DISCOUNT_RATE_REFERRER_KTV'; // Tỷ lệ chiết khấu dành cho kỹ thuật viên đối với 1 đơn hoàn thành của 1 KTV mà mình giới thiệu %

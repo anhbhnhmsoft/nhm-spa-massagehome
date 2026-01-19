@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Core\GenerateId\HasBigIntId;
+use App\Core\Helper;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -38,7 +39,7 @@ class UserProfile extends Model
                 }
                 // Nếu dữ liệu bị lỗi dấu \ (do Windows), sửa lại cho an toàn
                 $path = str_replace('\\', '/', $this->avatar_url);
-                return Storage::disk('public')->url($path);
+                return Helper::getPublicUrl($path);
             }
         );
     }

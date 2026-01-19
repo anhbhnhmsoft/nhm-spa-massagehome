@@ -346,6 +346,7 @@ return
                 'sp_facebook' => 'Facebook Support',
                 'sp_phone' => 'Customer Service Phone',
                 'sp_wechat' => 'Wechat Support',
+                'sp_wechat_qr_image' => 'Wechat Pay QR image/URL',
                 'zalo_merchant_id' => 'Zalo Merchant ID',
                 'zalo_merchant_id_helper' => 'Zalo Merchant ID for Zalo Pay',
                 'zalo_merchant_key_1' => 'Zalo Merchant Key 1',

@@ -52,8 +52,12 @@ class CustomerForm
                                         'required' => __('common.error.required'),
                                         'max' => __('common.error.max_length', ['max' => 255])
                                     ]),
-                                DatePicker::make('profile.date_of_birth')
-                                    ->label(__('admin.customer.fields.dob')),
+                                Section::make()
+                                    ->relationship('profile')
+                                    ->schema([
+                                        DatePicker::make('date_of_birth')
+                                            ->label(__('admin.customer.fields.dob')),
+                                    ]),
                                 Select::make('role')
                                     ->label(__('admin.customer.fields.role'))
                                     ->options(UserRole::class)
