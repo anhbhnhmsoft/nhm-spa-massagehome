@@ -22,12 +22,18 @@ return [
         'ktv_cost' => '技术人员成本',
         'ktv_cost_desc' => '收取的技术人员费用总额',
         'net_profit' => '利润',
-        'net_profit_desc' => '扣除运营费用后的利润'
+        'net_profit_desc' => '扣除运营费用后的利润',
+        'payment_failed' => '支付失败订单总数',
+        'payment_failed_desc' => '支付失败订单总数 ~ 客户或技术人员余额不足',
+        'booking_confirmed' => '已确认订单总数',
+        'booking_confirmed_desc' => '已确认订单总数 ~ 不包括已完成或已取消的订单',
+        ''
     ],
     'operation_cost' => [
         'active_order_count' => '正在进行的订单数量',
         'refund_amount' => '已退款给客户的总金额',
-        'fee_amount' => '已支付的佣金金额',
+        'fee_amount' => '已支付的佣金金额（客户 vs 客户）',
+        'fee_amount_from_ktv_for_customer' => '已支付的佣金金额（KTV vs 客户）',
         'deposit_amount' => '客户已存入的总金额'
 
     ]

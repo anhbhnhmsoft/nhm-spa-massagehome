@@ -34,8 +34,7 @@ class DashboardService extends BaseService
         protected WalletTransactionRepository     $walletTransactionRepository,
         protected ReviewRepository                $reviewRepository,
         protected WalletRepository                $walletRepository,
-    )
-    {
+    ) {
         parent::__construct();
     }
 
@@ -403,7 +402,8 @@ class DashboardService extends BaseService
                 ->where('status', WalletTransactionStatus::COMPLETED->value)
                 ->sum('money_amount');
             $depositAmount = $this->walletTransactionRepository->query()
-                ->whereIn('type', [WalletTransactionType::DEPOSIT_MOMO_PAY->value,
+                ->whereIn('type', [
+                    WalletTransactionType::DEPOSIT_MOMO_PAY->value,
                     WalletTransactionType::DEPOSIT_QR_CODE->value,
                     WalletTransactionType::DEPOSIT_ZALO_PAY->value,
                     WalletTransactionType::DEPOSIT_WECHAT_PAY->value,
@@ -411,10 +411,16 @@ class DashboardService extends BaseService
                 ->whereBetween('created_at', [$start, $end])
                 ->where('status', WalletTransactionStatus::COMPLETED->value)
                 ->sum('money_amount');
+            $feeAmountForKtvForCustomer = $this->walletTransactionRepository->query()
+                ->where('type', WalletTransactionType::REFERRAL_KTV->value)
+                ->whereBetween('created_at', [$start, $end])
+                ->where('status', WalletTransactionStatus::COMPLETED->value)
+                ->sum('money_amount');
             return ServiceReturn::success([
                 'active_order_count' => $activeOrder,
                 'refund_amount' => $refundAmount,
-                'fee_amount' => $feeAmount,
+                'fee_amount_for_affiliate' => $feeAmount,
+                'fee_amount_for_ktv_for_customer' => $feeAmountForKtvForCustomer,
                 'deposit_amount' => $depositAmount,
             ]);
         } catch (\Exception $e) {
@@ -483,6 +489,20 @@ class DashboardService extends BaseService
                 ->where('sb.status', '!=', BookingStatus::CANCELED)
                 ->whereBetween('wallet_transactions.created_at', [$start, $end])
                 ->sum('wallet_transactions.money_amount');
+            $paymentFailed = $this->bookingRepository->query()
+                ->where('status', BookingStatus::PAYMENT_FAILED)
+                ->whereBetween('created_at', [$start, $end])
+                ->count();
+
+            $bookingConfirm = $this->bookingRepository->query()
+                ->where('status', BookingStatus::CONFIRMED)
+                ->whereBetween('created_at', [$start, $end])
+                ->count();
+
+            $activeOrder = $this->bookingRepository->query()
+                ->where('status', BookingStatus::ONGOING)
+                ->whereBetween('created_at', [$start, $end])
+                ->count();
 
             $affiliateCostMagnitude = abs($affiliateCost);
 
@@ -497,6 +517,9 @@ class DashboardService extends BaseService
                 'ktv_cost' => $ktvCostMagnitude,
                 'net_profit' => $netProfit,
                 'affiliate_cost' => $affiliateCostMagnitude,
+                'payment_failed' => $paymentFailed,
+                'booking_confirmed' => $bookingConfirm,
+                'active_order_count' => $activeOrder,
             ]);
         } catch (\Exception $e) {
             return ServiceReturn::error($e->getMessage());
@@ -610,7 +633,7 @@ class DashboardService extends BaseService
 
             $data = $this->bookingRepository->query()
                 ->selectRaw('DATE(created_at) as date, SUM(price) as total')
-                ->where('status', '=',BookingStatus::COMPLETED->value)
+                ->where('status', '=', BookingStatus::COMPLETED->value)
                 ->whereBetween('created_at', [$start, $end])
                 ->groupBy('date')
                 ->pluck('total', 'date')
@@ -867,11 +890,9 @@ class DashboardService extends BaseService
                 expire: 5,
             );
             return ServiceReturn::success(data: $resultData);
-
         } catch (ServiceException $e) {
             return ServiceReturn::error($e->getMessage());
-        }
-        catch (\Exception $exception) {
+        } catch (\Exception $exception) {
             dd($exception);
             LogHelper::error("Lỗi BookingService@totalIncome", $exception);
             return ServiceReturn::error(message: __("common_error.server_error"));

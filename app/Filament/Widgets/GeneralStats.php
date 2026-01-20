@@ -34,20 +34,19 @@ class GeneralStats extends BaseWidget
             Stat::make(__('dashboard.general_stat.completed_booking'), $data['completed_booking'])
                 ->color('success'),
 
+            Stat::make(__('dashboard.general_stat.booking_confirmed'), $data['booking_confirmed'])
+                ->description(__('dashboard.general_stat.booking_confirmed_desc'))
+                ->color('success'),
+
+            Stat::make(__('dashboard.operation_cost.active_order_count'), $data['active_order_count'])
+                ->color('primary'),
+
             Stat::make(__('dashboard.general_stat.canceled_booking'), $data['canceled_booking'])
                 ->color('danger'),
 
-            Stat::make(__('dashboard.general_stat.gross_revenue'), number_format($data['gross_revenue']) . ' đ')
-                ->description(__('dashboard.general_stat.gross_revenue_desc'))
-                ->color('success'),
-
-            Stat::make(__('dashboard.general_stat.ktv_cost'), number_format($data['ktv_cost']) . ' đ')
-                ->description(__('dashboard.general_stat.ktv_cost_desc'))
-                ->color('warning'),
-
-            Stat::make(__('dashboard.general_stat.net_profit'), number_format($data['net_profit']) . ' đ')
-                ->description(__('dashboard.general_stat.net_profit_desc'))
-                ->color('info'),
+            Stat::make(__('dashboard.general_stat.payment_failed'), $data['payment_failed'])
+                ->description(__('dashboard.general_stat.payment_failed_desc'))
+                ->color('danger'),
         ];
     }
 }

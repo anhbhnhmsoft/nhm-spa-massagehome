@@ -17,27 +17,47 @@ class OperationCostStats extends BaseWidget
         $endDate = session('dashboard_end_date');
 
         $dashboardService = app(\App\Services\DashboardService::class);
-        $result = $dashboardService->getOperationCostStats($startDate, $endDate);
 
-        if (!$result->isSuccess()) {
-            // Fallback or error handling
+        // Get Revenue stats from GeneralStats
+        $generalResult = $dashboardService->getGeneralStats($startDate, $endDate);
+        if (!$generalResult->isSuccess()) {
+            return [Stat::make('Error', 'Unable to load data')->color('danger')];
+        }
+        $generalData = $generalResult->getData();
+
+        // Get Cost stats from OperationCostStats
+        $operationResult = $dashboardService->getOperationCostStats($startDate, $endDate);
+        if (!$operationResult->isSuccess()) {
             return [
                 Stat::make('Error', 'Unable to load data')->color('danger'),
             ];
         }
-
-        $data = $result->getData();
+        $operationData = $operationResult->getData();
 
         return [
-            Stat::make(__('dashboard.operation_cost.active_order_count'), $data['active_order_count'])
-                ->color('primary'),
-            Stat::make(__('dashboard.operation_cost.refund_amount'), number_format($data['refund_amount']) . ' đ')
+            Stat::make(__('dashboard.general_stat.gross_revenue'), number_format($generalData['gross_revenue']) . ' đ')
+                ->description(__('dashboard.general_stat.gross_revenue_desc'))
+                ->color('success'),
+
+            Stat::make(__('dashboard.general_stat.ktv_cost'), number_format($generalData['ktv_cost']) . ' đ')
+                ->description(__('dashboard.general_stat.ktv_cost_desc'))
+                ->color('warning'),
+
+            Stat::make(__('dashboard.general_stat.net_profit'), number_format($generalData['net_profit']) . ' đ')
+                ->description(__('dashboard.general_stat.net_profit_desc'))
+                ->color('info'),
+
+            Stat::make(__('dashboard.operation_cost.refund_amount'), number_format($operationData['refund_amount']) . ' đ')
                 ->color('danger'),
-            Stat::make(__('dashboard.operation_cost.fee_amount'), number_format($data['fee_amount']) . ' đ')
+
+            Stat::make(__('dashboard.operation_cost.fee_amount'), number_format($operationData['fee_amount_for_affiliate']) . ' đ')
                 ->color('danger'),
-            Stat::make(__('dashboard.operation_cost.deposit_amount'),number_format($data['deposit_amount']) . ' đ')
+
+            Stat::make(__('dashboard.operation_cost.fee_amount_from_ktv_for_customer'), number_format($operationData['fee_amount_for_ktv_for_customer']) . ' đ')
+                ->color('danger'),
+
+            Stat::make(__('dashboard.operation_cost.deposit_amount'), number_format($operationData['deposit_amount']) . ' đ')
                 ->color('green'),
         ];
     }
 }
-
