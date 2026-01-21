@@ -3,7 +3,9 @@
 namespace App\Livewire\Settings;
 
 use App\Enums\ConfigName;
+use App\Enums\DirectFile;
 use App\Services\ConfigService;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Grid;
@@ -151,6 +153,7 @@ class ConfigForm extends Component implements HasSchemas
                                         ->validationMessages([
                                             'string' => __('common.error.string'),
                                         ]),
+
                                     TextInput::make((string) ConfigName::ZALO_MERCHANT_ID->value)
                                         ->label(__('admin.setting.fields.zalo_merchant_id'))
                                         ->default('')
@@ -215,7 +218,18 @@ class ConfigForm extends Component implements HasSchemas
                                         ->validationMessages([
                                             'string' => __('common.error.string'),
                                         ]),
-
+                                    FileUpload::make((string)ConfigName::SP_WECHAT_QR_IMAGE->value)
+                                        ->label(__('admin.setting.fields.sp_wechat_qr_image'))
+                                        ->image()
+                                        ->directory(DirectFile::CONFIG->value)
+                                        ->disk('public')
+                                        ->visibility('public')
+                                        ->maxSize(2048)
+                                        ->helperText(__('admin.setting.fields.sp_wechat'))
+                                        ->validationMessages([
+                                            'image' => __('common.error.image'),
+                                            'max' => __('common.error.max', ['max' => 2048]),
+                                    ]),
                                 ]),
                             Section::make(__('admin.setting.label_config_discount_rate'))
                                 ->columns(2)

@@ -309,7 +309,45 @@ class PaymentService extends BaseService
                             'qr_code' => $zpData['qr_code'] ?? null,
                         ]
                     ]);
-                case PaymentType::MOMO_PAY:
+            case PaymentType::MOMO_PAY:
+                    throw new ServiceException(
+                        message: __("error.payment_type_not_supported")
+                    );
+                case PaymentType::WECHAT:
+                    $wechatQrImage = $this->configService->getConfigValue(ConfigName::SP_WECHAT_QR_IMAGE);
+                    if (empty($wechatQrImage)) {
+                        throw new ServiceException(
+                            message: __("error.config_wallet_error")
+                        );
+                    }
+                    $wechatQrUrl = Helper::getPublicUrl($wechatQrImage);
+
+                    $transaction = $this->walletTransactionRepository->create(
+                        data: [
+                            'wallet_id' => $wallet->id,
+                            'money_amount' => $amount,
+                            'point_amount' => $pointAmount,
+                            'type' => WalletTransactionType::DEPOSIT_WECHAT_PAY->value,
+                            'exchange_rate_point' => $exchangeRate,
+                            'payment_type' => $paymentType,
+                            'transaction_id' => $orderCode,
+                            'transaction_code' => Helper::createDescPayment(PaymentType::WECHAT),
+                            'status' => WalletTransactionStatus::PENDING->value,
+                            'expire_at' => $expireTime,
+                        ]
+                    );
+
+                    DB::commit();
+
+                    return ServiceReturn::success([
+                        'transaction_id' => $transaction->id,
+                        'payment_type' => $paymentType->value,
+                        'data_payment' => [
+                            'qr_image' => $wechatQrUrl,
+                            'amount' => $amount,
+                            'description' => $transaction->transaction_code,
+                        ]
+                    ]);
                 default:
                     // Hiện tại không hỗ trợ nạp tiền qua ZaloPay và MoMoPay
                     throw new ServiceException(

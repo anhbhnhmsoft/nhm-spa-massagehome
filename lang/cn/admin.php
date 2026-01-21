@@ -346,6 +346,7 @@ return
                 'sp_facebook' => 'Facebook 支持',
                 'sp_phone' => '客服电话',
                 'sp_wechat' => 'Wechat 支持',
+                'sp_wechat_qr_image' => 'Wechat Pay 二维码图片/URL',
                 'zalo_merchant_id' => 'Zalo 商户 ID',
                 'zalo_merchant_id_helper' => 'Zalo 商户 ID 支持 Zalo Pay',
                 'zalo_merchant_key_1' => 'Zalo 商户 Key 1',

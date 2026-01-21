@@ -386,6 +386,7 @@ return
                 'sp_facebook' => 'Trang Facebook hỗ trợ',
                 'sp_phone' => 'Số điện thoại hỗ trợ',
                 'sp_wechat' => 'Link Wechat hỗ trợ',
+                'sp_wechat_qr_image' => 'Ảnh/URL mã QR Wechat Pay',
                 'zalo_merchant_id' => 'Mã merchant Zalo',
                 'zalo_merchant_id_helper' => 'Mã merchant Zalo hỗ trợ thanh toán qua Zalo Pay',
                 'zalo_merchant_key_1' => 'Mã merchant key 1',
