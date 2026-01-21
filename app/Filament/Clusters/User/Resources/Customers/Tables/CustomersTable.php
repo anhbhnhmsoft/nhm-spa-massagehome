@@ -26,9 +26,6 @@ class CustomersTable
                 TextColumn::make('phone')
                     ->label(__('admin.customer.fields.phone'))
                     ->searchable(),
-                TextColumn::make('email')
-                    ->label(__('admin.customer.fields.email'))
-                    ->searchable(),
                 TextColumn::make('wallet.balance')
                     ->label(__('admin.customer.fields.balance'))
                     ->money()

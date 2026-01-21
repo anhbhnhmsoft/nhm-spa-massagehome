@@ -22,12 +22,17 @@ return [
         'ktv_cost' => 'Chi phí kỹ thuật viên',
         'ktv_cost_desc' => 'Tổng chi phí kỹ thuật viên nhận được từ khách hàng',
         'net_profit' => 'Lợi nhuận',
-        'net_profit_desc' => 'Lợi nhuận nhận được sau chi phí vận hành'
+        'net_profit_desc' => 'Lợi nhuận nhận được sau chi phí vận hành',
+        'payment_failed' => 'Tổng số đơn thanh toán thất bại',
+        'payment_failed_desc' => 'Tổng số đơn thanh toán thất bại ~ do số dư ví khách hàng hoặc kỹ thuật viên không đủ tiền',
+        'booking_confirmed' => 'Tổng số đơn đã xác nhận',
+        'booking_confirmed_desc' => 'Tổng số đơn đã được xác nhận chờ thực hiện ~ không bao gồm các đơn đã hoàn thành hoặc hủy',
     ],
     'operation_cost' => [
         'active_order_count' => 'Đơn đang thực hiện',
         'refund_amount' => 'Tổng số tiền đã hoàn cho khách hàng',
-        'fee_amount' => 'Phí hoa hồng đã trả',
+        'fee_amount' => 'Phí hoa hồng giữa khách hàng vs khách hàng',
+        'fee_amount_from_ktv_for_customer' => 'Phí hoa hồng từ KTV cho trả cho người giới thiệu',
         'deposit_amount' => 'Tổng số tiền khách hàng đã nạp'
     ]
 ];

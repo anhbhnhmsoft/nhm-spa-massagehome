@@ -22,12 +22,17 @@ return [
         'ktv_cost' => 'Technician costs',
         'ktv_cost_desc' => 'Total technician fees received from customers',
         'net_profit' => 'Profit',
-        'net_profit_desc' => 'Profit received after operating expenses'
+        'net_profit_desc' => 'Profit received after operating expenses',
+        'payment_failed' => 'Total failed payment orders',
+        'payment_failed_desc' => 'Total failed payment orders ~ customer or technician balance is insufficient',
+        'booking_confirmed' => 'Total confirmed orders',
+        'booking_confirmed_desc' => 'Total confirmed orders ~ does not include completed or cancelled orders',
     ],
     'operation_cost' => [
         'active_order_count' => 'Orders in progress',
         'refund_amount' => 'Total amount refunded to the customer',
-        'fee_amount' => 'Commission fee paid',
+        'fee_amount' => 'Commission fee paid between customer and customer',
+        'fee_amount_from_ktv_for_customer' => 'Commission fee paid from KTV to the customer',
         'deposit_amount' => 'Total amount deposited by the customer'
     ]
 ];
