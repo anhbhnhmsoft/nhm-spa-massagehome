@@ -311,7 +311,7 @@ class BookingService extends BaseService
             // Kiểm tra quyền hủy booking (chỉ có thể hủy booking của chính mình)
             if ($proactive) {
                 $userCurrent = Auth::user();
-                if ($userCurrent->id != $booking->user_id) {
+                if ($userCurrent->id != $booking->user_id && $userCurrent->id != $booking->ktv_user_id) {
                     throw new ServiceException(
                         message: __("booking.not_permission")
                     );

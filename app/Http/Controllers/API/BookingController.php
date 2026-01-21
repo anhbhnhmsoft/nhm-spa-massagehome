@@ -62,7 +62,7 @@ class BookingController extends BaseController
             );
         }
         return $this->sendSuccess(
-            data: BookingItemResource::make($result->getData())->response()->getData()
+            data: BookingItemResource::make($result->getData())->response()->getData()->data
         );
     }
 
@@ -144,6 +144,8 @@ class BookingController extends BaseController
      */
     public function cancelBooking(Request $request): JsonResponse
     {
+        try {
+
         $data = $request->validate(
             [
                 'booking_id' => 'required|numeric',
@@ -172,5 +174,11 @@ class BookingController extends BaseController
             ],
             message: $result->getMessage()
         );
+        }
+        catch (\Exception $e) {
+            return $this->sendError(
+                message: $e->getMessage()
+            );
+        }
     }
 }

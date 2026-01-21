@@ -893,7 +893,6 @@ class DashboardService extends BaseService
         } catch (ServiceException $e) {
             return ServiceReturn::error($e->getMessage());
         } catch (\Exception $exception) {
-            dd($exception);
             LogHelper::error("Lỗi BookingService@totalIncome", $exception);
             return ServiceReturn::error(message: __("common_error.server_error"));
         }

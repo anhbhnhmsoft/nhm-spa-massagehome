@@ -300,6 +300,8 @@ Route::middleware('set-api-locale')->group(function () {
         Route::post('config-schedule', [KTVController::class, 'editConfigSchedule']);
         // Link KTV to Referrer via QR
         Route::post('link-referrer', [KTVController::class, 'linkReferrer']);
+        // Cancel booking
+        Route::post('cancel-booking/', [BookingController::class, 'cancelBooking']);
     });
 
     // Dành cho agency
