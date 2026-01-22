@@ -51,6 +51,7 @@ class BookingItemResource extends JsonResource
             'price_before_discount' => $this->price_before_discount,
             // Số lượng đánh giá
             'has_reviews' => $this->reviews_count > 0,
+            'reason_cancel' => (string)($this->reason_cancel ?? null),
         ];
     }
 

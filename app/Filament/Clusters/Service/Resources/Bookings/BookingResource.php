@@ -2,12 +2,10 @@
 
 namespace App\Filament\Clusters\Service\Resources\Bookings;
 
-use App\Filament\Clusters\Service\Resources\Bookings\Pages\CreateBooking;
-use App\Filament\Clusters\Service\Resources\Bookings\Pages\EditBooking;
 use App\Filament\Clusters\Service\Resources\Bookings\Pages\ListBookings;
-use App\Filament\Clusters\Service\Resources\Bookings\Schemas\BookingForm;
+use App\Filament\Clusters\Service\Resources\Bookings\Pages\ViewBooking;
+use App\Filament\Clusters\Service\Resources\Bookings\Schemas\BookingInfoList;
 use App\Filament\Clusters\Service\Resources\Bookings\Tables\BookingsTable;
-use App\Filament\Clusters\Service\ServiceCluster;
 use App\Models\ServiceBooking;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -40,14 +38,14 @@ class BookingResource extends Resource
         return __('admin.booking.label');
     }
 
-    public static function form(Schema $schema): Schema
-    {
-        return BookingForm::configure($schema);
-    }
-
     public static function table(Table $table): Table
     {
         return BookingsTable::configure($table);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return BookingInfoList::configure($schema);
     }
 
     public static function getRelations(): array
@@ -61,6 +59,7 @@ class BookingResource extends Resource
     {
         return [
             'index' => ListBookings::route('/'),
+            'view' => ViewBooking::route('/{record}'), // Thêm dòng này
         ];
     }
 

@@ -60,6 +60,7 @@ class KTVController extends BaseController
         }
         $data = $result->getData();
         $booking = $data['booking'];
+        $bookingOnGoing = $data['booking_ongoing'];
         $totalRevenueToday = $data['total_revenue_today'];
         $totalRevenueYesterday = $data['total_revenue_yesterday'];
         $totalBookingCompletedToday = $data['total_booking_completed_today'];
@@ -68,6 +69,7 @@ class KTVController extends BaseController
         return $this->sendSuccess(
             data: [
                 'booking' => $booking ? new BookingItemResource($booking) : null,
+                'booking_ongoing' => $bookingOnGoing ? new BookingItemResource($bookingOnGoing) : null,
                 'total_revenue_today' => $totalRevenueToday,
                 'total_revenue_yesterday' => $totalRevenueYesterday,
                 'total_booking_completed_today' => $totalBookingCompletedToday,

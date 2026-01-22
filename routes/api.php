@@ -152,7 +152,8 @@ Route::middleware('set-api-locale')->group(function () {
             // kiểm tra trạng thái booking
             Route::get('{bookingId}', [BookingController::class, 'checkBooking']);
             // Lấy thông tin chi tiết lịch đặt
-            Route::get('detail/{id}', [BookingController::class, 'detailBooking'])->where('id', '[0-9]+');
+            Route::get('detail/{id}', [BookingController::class, 'detailBooking'])
+                ->where('id', '[0-9]+');
             // Hủy lịch đặt
             Route::post('cancel', [BookingController::class, 'cancelBooking'])
                 ->middleware(['check-role:customer']);
@@ -187,13 +188,13 @@ Route::middleware('set-api-locale')->group(function () {
             Route::get('check-transaction', [PaymentController::class, 'checkTransaction']);
             // Lấy danh sách ngân hàng hỗ trợ rút tiền
             Route::get('bank-info', [PaymentController::class, 'getBank']);
-            //Lấy thông tin tài khoản rút tiền
+            // Lấy thông tin tài khoản rút tiền
             Route::get('info-withdraw', [WithdrawController::class, 'getWithdrawInfo']);
-            //Tạo thông tin tài khoản rút tiền
+            // Tạo thông tin tài khoản rút tiền
             Route::post('info-withdraw', [WithdrawController::class, 'createWithdrawInfo']);
             // Xóa thông tin tài khoản rút tiền
             Route::delete('info-withdraw/{id}', [WithdrawController::class, 'deleteWithdrawInfo']);
-            //Yêu cầu rút tiền
+            // Yêu cầu rút tiền
             Route::post('request-withdraw', [WithdrawController::class, 'requestWithdraw']);
         });
     });

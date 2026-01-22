@@ -61,8 +61,9 @@ class BookingController extends BaseController
                 message: $result->getMessage()
             );
         }
+        $data = $result->getData();
         return $this->sendSuccess(
-            data: BookingItemResource::make($result->getData())->response()->getData()->data
+            data: new BookingItemResource($data)
         );
     }
 
@@ -93,12 +94,8 @@ class BookingController extends BaseController
         return $this->sendSuccess(
             data: [
                 'booking_id' => $booking->id,
-                'status' => $data['status'],
-                'status_label' => BookingStatus::getLabel($data['status']),
                 'start_time' => $data['start_time'],
-                'expected_end_time' => \Carbon\Carbon::parse($data['start_time'])->addMinutes($data['duration'])->format('Y-m-d H:i:s'),
                 'duration' => $data['duration'],
-                'booking' => new BookingItemResource($booking),
             ],
             message: __('booking.started_successfully')
         );
@@ -138,7 +135,7 @@ class BookingController extends BaseController
     }
 
     /**
-     * Hủy booking
+     * Hủy booking (hủy lịch đặt - admin duyệt sau)
      * @param Request $request
      * @return JsonResponse
      */
@@ -158,7 +155,10 @@ class BookingController extends BaseController
                 'reason.required' => __('booking.validate.reason_required'),
             ]
         );
-        $result = $this->bookingService->cancelBooking((int)$data['booking_id'], BookingStatus::CANCELED, $data['reason'], true);
+        $result = $this->bookingService->cancelBooking(
+            bookingId: $data['booking_id'],
+            reason: $data['reason'] ?? null,
+        );
         if ($result->isError()) {
             return $this->sendError(
                 message: $result->getMessage()

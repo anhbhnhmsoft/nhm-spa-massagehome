@@ -104,7 +104,12 @@ class PaymentController extends BaseController
     {
         $validate = $request->validate([
             'amount' => ['required', 'numeric', 'min:0', 'max:50000000'],
-            'payment_type' => ['required', Rule::in(PaymentType::values())],
+            'payment_type' => ['required', Rule::in([
+                PaymentType::QR_BANKING->value,
+                PaymentType::ZALO_PAY->value,
+                PaymentType::MOMO_PAY->value,
+                PaymentType::WECHAT->value,
+            ])],
         ], [
             'amount.required' => __('validation.amount.required'),
             'amount.numeric' => __('validation.amount.numeric'),

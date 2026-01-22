@@ -284,15 +284,14 @@ class BookingService extends BaseService
     /**
      * Hủy booking, trường hợp khách hàng chủ động hủy hoặc thất bại thanh toán
      * @param string $bookingId
-     * @param BookingStatus $status
      * @param string|null $reason
-     * @param bool $proactive - Kiểm tra quyền hủy booking (chỉ có thể hủy booking của chính mình hoặc KTV)
      * @return ServiceReturn
      */
-    public function cancelBooking(string $bookingId, BookingStatus $status, ?string $reason = null, $proactive = true): ServiceReturn
+    public function cancelBooking(string $bookingId, ?string $reason = null): ServiceReturn
     {
-        DB::beginTransaction();
         try {
+            $userCurrent = Auth::user();
+
             // Tìm booking cần hủy và khóa hàng để tránh xung đột
             $booking = $this->bookingRepository->query()
                 ->lockForUpdate()
@@ -309,52 +308,156 @@ class BookingService extends BaseService
                 );
             }
             // Kiểm tra quyền hủy booking (chỉ có thể hủy booking của chính mình)
-            if ($proactive) {
-                $userCurrent = Auth::user();
-                if ($userCurrent->id != $booking->user_id && $userCurrent->id != $booking->ktv_user_id) {
-                    throw new ServiceException(
-                        message: __("booking.not_permission")
-                    );
-                }
+            if ($userCurrent->id != $booking->user_id && $userCurrent->id != $booking->ktv_user_id) {
+                throw new ServiceException(
+                    message: __("booking.not_permission")
+                );
             }
 
-            $booking->status = $status->value;
+            // Cập nhật trạng thái booking thành WAITING_CANCEL để admin có thể xử lý hủy
+            $booking->status = BookingStatus::WAITING_CANCEL->value;
             $booking->reason_cancel = $reason;
             $booking->save();
 
+            return ServiceReturn::success(
+                message: __("booking.cancelled")
+            );
+        }catch (ServiceException $exception) {
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        }
+        catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi ServiceService@cancelBooking",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: __("common_error.server_error")
+            );
+        }
+    }
+
+    /**
+     * Xác nhận hủy booking, trường hợp admin xác nhận hủy booking
+     * @param string $bookingId
+     * @return ServiceReturn
+     */
+    public function confirmCancelBooking(string $bookingId): ServiceReturn
+    {
+        try {
+            $booking = $this->bookingRepository->query()
+                ->lockForUpdate()
+                ->find($bookingId);
+            if (!$booking) {
+                throw new ServiceException(
+                    message: __("booking.not_found")
+                );
+            };
+            // Kiểm tra trạng thái booking có thể hủy không
+            if ($booking->status != BookingStatus::WAITING_CANCEL->value) {
+                throw new ServiceException(
+                    message: __("booking.not_permission")
+                );
+            }
+
+            // Cập nhật trạng thái booking thành CANCELED
+            $booking->status = BookingStatus::CANCELED->value;
+            $booking->save();
+            // Gửi thông báo cho khách hàng
             SendNotificationJob::dispatch(
                 userId: $booking->user_id,
                 type: NotificationType::BOOKING_CANCELLED,
                 data: [
                     'booking_id' => $booking->id,
-                    'reason' => $reason,
+                    'reason' => $booking->reason_cancel,
                 ]
             );
+            // Gửi thông báo cho KTV
             SendNotificationJob::dispatch(
                 userId: $booking->ktv_user_id,
                 type: NotificationType::BOOKING_CANCELLED,
                 data: [
                     'booking_id' => $booking->id,
-                    'reason' => $reason,
+                    'reason' => $booking->reason_cancel,
                 ]
             );
 
-            RefundBookingCancelJob::dispatch($booking->id, $reason);
-            DB::commit();
+            // Gửi job để hoàn lại tiền cho khách hàng
+            RefundBookingCancelJob::dispatch($booking->id, $booking->reason_cancel);
+
             return ServiceReturn::success(
-                message: __("booking.cancelled")
+                message: __("booking.canceled")
             );
-        } catch (\Exception $exception) {
-            DB::rollBack();
+        } catch (ServiceException $exception) {
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        }
+        catch (\Exception $exception) {
             LogHelper::error(
-                message: "Lỗi ServiceService@cancelBooking",
+                message: "Lỗi ServiceService@confirmCancelBooking",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: __("common_error.server_error")
+            );
+        }
+    }
+
+    /**
+     * Xử lý khi thanh toán thất bại
+     * @param string $bookingId
+     * @return void
+     */
+    public function handleBookingPaymentFailed(string $bookingId, $reason = null)
+    {
+        try {
+            $reasonCancel = "System: " . ($reason ?? __("booking.payment_failed"));
+            $booking = $this->bookingRepository->query()
+                ->lockForUpdate()
+                ->find($bookingId);
+            if (!$booking) {
+                throw new ServiceException(
+                    message: __("booking.not_found")
+                );
+            };
+
+            $booking->status = BookingStatus::PAYMENT_FAILED->value;
+            $booking->reason_cancel = $reasonCancel;
+            $booking->save();
+
+            // Gửi thông báo cho khách hàng
+            SendNotificationJob::dispatch(
+                userId: $booking->user_id,
+                type: NotificationType::BOOKING_CANCELLED,
+                data: [
+                    'booking_id' => $booking->id,
+                    'reason' => $reasonCancel,
+                ]
+            );
+
+            // Gửi thông báo cho KTV
+            SendNotificationJob::dispatch(
+                userId: $booking->ktv_user_id,
+                type: NotificationType::BOOKING_CANCELLED,
+                data: [
+                    'booking_id' => $booking->id,
+                    'reason' => $reasonCancel,
+                ]
+            );
+
+            // Hoàn tiền cho khách hàng
+            RefundBookingCancelJob::dispatch($booking->id, $reasonCancel);
+
+        }catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi ServiceService@handleBookingPaymentFailed",
                 ex: $exception
             );
             throw $exception;
         }
     }
-
-
 
     /**
      * Kiểm tra booking

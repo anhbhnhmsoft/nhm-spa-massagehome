@@ -81,4 +81,5 @@ return [
     'status_not_completed' => 'Booking không ở trạng thái hoàn thành',
     'not_permission_at_this_time' => 'Chỉ có thể hoàn thành booking khi đã đến thời gian dự kiến hoặc đã qua',
     'only_start_today_bookings' => 'Chỉ có thể bắt đầu dịch vụ hôm nay',
+    'payment_failed' => 'Thanh toán thất bại',
 ];

@@ -268,7 +268,10 @@ class PaymentService extends BaseService
                         ]
                     );
                 case PaymentType::ZALO_PAY:
-
+                    // Hiện tại không hỗ trợ nạp tiền qua ZaloPay và MoMoPay
+                    throw new ServiceException(
+                        message: __("error.payment_type_not_supported")
+                    );
                     $transaction = $this->walletTransactionRepository->create([
                         'wallet_id' => $wallet->id,
                         'money_amount' => $amount,
@@ -309,7 +312,7 @@ class PaymentService extends BaseService
                             'qr_code' => $zpData['qr_code'] ?? null,
                         ]
                     ]);
-            case PaymentType::MOMO_PAY:
+                case PaymentType::MOMO_PAY:
                     throw new ServiceException(
                         message: __("error.payment_type_not_supported")
                     );

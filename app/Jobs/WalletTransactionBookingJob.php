@@ -66,11 +66,9 @@ class WalletTransactionBookingJob implements ShouldQueue
 
         // Gọi service để cancel booking
         $bookingService = app(BookingService::class);
-        $bookingService->cancelBooking(
-            $this->bookingId,
-            BookingStatus::PAYMENT_FAILED,
-            $exception->getMessage(),
-            false
+        $bookingService->handleBookingPaymentFailed(
+            bookingId: $this->bookingId,
+            reason: $exception->getMessage(),
         );
     }
 }

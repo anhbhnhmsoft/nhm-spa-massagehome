@@ -89,6 +89,10 @@ return
                 'is_featured' => 'Nổi bật',
                 'type' => 'Loại',
                 'review_status' => 'Trạng thái review',
+                'from_date' => 'Từ ngày',
+                'to_date' => 'Đến ngày',
+                'from' => 'Từ',
+                'to' => 'Đến',
             ],
             'status' => [
                 'active' => 'Kích hoạt',
@@ -305,14 +309,16 @@ return
             ],
         ],
         'booking' => [
-            'label' => 'Dịch vụ trực tuyến',
+            'label' => 'Lịch đặt',
             'fields' => [
                 'user' => 'Khách hàng',
+                'ktv_user' => 'KTV',
                 'service' => 'Dịch vụ',
                 'coupon' => 'Mã giảm giá',
-                'duration' => 'Thời gian',
+                'duration' => 'Thời gian làm',
                 'booking_time' => 'Thời gian đặt',
                 'start_time' => 'Thời gian bắt đầu',
+                'time_range' => 'Bắt đầu - Kết thúc',
                 'end_time' => 'Thời gian kết thúc',
                 'price' => 'Giá',
                 'price_before_discount' => 'Giá trước khi giảm',
@@ -324,6 +330,12 @@ return
                 'rating' => 'Đánh giá',
                 'comment' => 'Bình luận',
                 'status' => 'Trạng thái',
+                'note_address' => 'Ghi chú địa chỉ',
+                'reason_cancel' => 'Lý do hủy',
+            ],
+            'sections' => [
+                'general_info' => 'Thông tin chung',
+                'detail' => 'Thông tin chi tiết',
             ],
             'status' => [
                 'pending' => 'Chờ xác nhận',
@@ -331,6 +343,7 @@ return
                 'ongoing' => 'Đang diễn ra',
                 'completed' => 'Đã hoàn thành',
                 'canceled' => 'Đã hủy',
+                'waiting_cancel' => 'Chờ hủy',
                 'payment_failed' => 'Thanh toán thất bại',
             ],
             'payment_type' => [
@@ -340,14 +353,24 @@ return
                 'withdrawal' => 'Rút tiền',
                 'by_points' => 'Thanh toán qua điểm',
                 'refund' => 'Hoàn tiền',
+                'wechat' => 'Thanh toán qua WeChat Pay',
             ],
             'actions' => [
                 'view' => [
-                    'label' => 'Xem',
+                    'label' => 'Xem chi tiết',
                     'heading' => 'Xem thông tin',
                     'description' => 'Xem thông tin chi tiết',
                 ],
+                'cancel' => [
+                    'heading' => 'Xác nhận hủy booking',
+                    'description' => 'Bạn có chắc chắn muốn hủy đơn này?',
+                ],
                 'view_location' => 'Xem vị trí',
+                'view_map' => 'Xem Google Map',
+                'confirm_cancel' => 'Xác nhận hủy',
+            ],
+            'success' => [
+                'cancel' => 'Hủy booking thành công',
             ],
         ],
         'setting' => [

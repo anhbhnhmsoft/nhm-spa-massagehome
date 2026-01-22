@@ -13,6 +13,7 @@ return [
         'end_date_min_date' => 'Ngày kết thúc phải sau ngày bắt đầu',
     ],
     'general_stat' => [
+        'title' => 'Tổng quan về doanh thu nền tảng',
         'total_booking' => 'Tổng số booking',
         'total_booking_desc' => 'Tổng số booking đã được tạo ~ đơn đã được đặt != đơn được tạo và đã hoàn thành',
         'completed_booking' => 'Tổng số đơn hoàn thành',

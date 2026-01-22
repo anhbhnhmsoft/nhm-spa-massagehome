@@ -6,14 +6,19 @@ use App\Enums\BookingStatus;
 use App\Enums\PaymentType;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
+use Filament\Actions\ViewAction;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Enums\RecordActionsPosition;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Carbon;
 
 class BookingsTable
 {
@@ -21,45 +26,40 @@ class BookingsTable
     {
         return $table
             ->columns([
+                TextColumn::make('id')
+                    ->label(__('admin.common.table.id'))
+                    ->searchable(),
+                TextColumn::make('ktvUser.name')
+                    ->label(__('admin.booking.fields.ktv_user'))
+                    ->searchable(),
                 TextColumn::make('user.name')
                     ->label(__('admin.booking.fields.user'))
                     ->searchable(),
                 TextColumn::make('service.name')
                     ->label(__('admin.booking.fields.service'))
                     ->searchable(),
-                TextColumn::make('duration')
-                    ->label(__('admin.booking.fields.duration')),
                 TextColumn::make('booking_time')
-                    ->label(__('admin.booking.fields.booking_time')),
-                TextColumn::make('start_time')
-                    ->label(__('admin.booking.fields.start_time')),
-                TextColumn::make('end_time')
-                    ->label(__('admin.booking.fields.end_time')),
-                TextColumn::make('price')
-                    ->label(__('admin.booking.fields.price'))
-                    ->searchable(),
-                TextColumn::make('price_before_discount')
-                    ->label(__('admin.booking.fields.price_before_discount'))
-                    ->searchable(),
-                TextColumn::make('coupon.name')
-                    ->label(__('admin.booking.fields.coupon'))
-                    ->searchable(),
-                TextColumn::make('payment_type')
-                    ->label(__('admin.booking.fields.payment_type'))
-                    ->formatStateUsing(fn($state) => PaymentType::getLabel($state)),
-                TextColumn::make('note')
-                    ->label(__('admin.booking.fields.note'))
-                    ->searchable()
-                    ->limit(50),
-                TextColumn::make('address')
-                    ->label(__('admin.booking.fields.address'))
-                    ->searchable(),
-                // TextColumn::make('latitude')
-                //     ->label(__('admin.booking.fields.latitude')),
-                // TextColumn::make('longitude')
-                //     ->label(__('admin.booking.fields.longitude')),
+                    ->sortable()
+                    ->label(__('admin.booking.fields.time_range')) // Nhãn chung: Thời gian
+                    ->alignCenter()
+                    ->formatStateUsing(function ($record) {
+                        if (!$record->start_time || !$record->end_time) return '-';
+                        $start = Carbon::parse($record->start_time)->format('H:i');
+                        $end = Carbon::parse($record->end_time)->format('H:i');
+                        // Hiển thị chính: 14:00 - 15:00
+                        return "{$start} - {$end}";
+                    })
+                    ->description(function ($record) {
+                        $date = Carbon::parse($record->booking_time)->format('d/m/Y');
+                        $duration = $record->duration;
+                        return "{$date} ({$duration} min)";
+                    })
+                    ->color('primary') // Làm nổi bật mốc giờ
+                    ->weight('bold'),  // Chữ đậm cho mốc giờ
                 TextColumn::make('status')
                     ->label(__('admin.booking.fields.status'))
+                    ->badge()
+                    ->color(fn ($state): string => BookingStatus::getColor($state))
                     ->formatStateUsing(fn($state) => BookingStatus::getLabel($state)),
             ])
             ->defaultSort('created_at', 'desc')
@@ -67,70 +67,42 @@ class BookingsTable
                 SelectFilter::make('status')
                     ->label(__('admin.booking.fields.status'))
                     ->options(BookingStatus::toOptions()),
-                SelectFilter::make('payment_type')
-                    ->label(__('admin.booking.fields.payment_type'))
-                    ->options(PaymentType::toOptions()),
+                Filter::make('booking_time')
+                    ->label(__('admin.booking.fields.booking_time'))
+                    ->columns(2)
+                    ->schema([
+                        DatePicker::make('from')
+                            ->label(__('admin.common.filter.from_date')) // Ví dụ: Từ ngày
+                            ->placeholder('DD/MM/YYYY'),
+                        DatePicker::make('until')
+                            ->label(__('admin.common.filter.to_date'))   // Ví dụ: Đến ngày
+                            ->placeholder('DD/MM/YYYY'),
+                    ])
+                    ->query(function ($query, array $data) {
+                        return $query
+                            ->when(
+                                $data['from'],
+                                fn ($query, $date) => $query->whereDate('booking_time', '>=', $date),
+                            )
+                            ->when(
+                                $data['until'],
+                                fn ($query, $date) => $query->whereDate('booking_time', '<=', $date),
+                            );
+                    })
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+                        if ($data['from'] ?? null) {
+                            $indicators[] = __('admin.common.filter.from') . ' ' . Carbon::parse($data['from'])->format('d/m/Y');
+                        }
+                        if ($data['until'] ?? null) {
+                            $indicators[] = __('admin.common.filter.to') . ' ' . Carbon::parse($data['until'])->format('d/m/Y');
+                        }
+                        return $indicators;
+                    }),
             ])
-            ->recordActions(
-                actions: [
-                    ActionGroup::make([
-                        Action::make('view')
-                            ->label(__('admin.booking.actions.view.label'))
-                            ->icon('heroicon-o-eye')
-                            ->modalHeading(__('admin.booking.actions.view.heading'))
-                            ->modalDescription(__('admin.booking.actions.view.description'))
-                            ->fillForm(fn($record) => $record->toArray())
-                            ->schema([
-                                Section::make()
-                                    ->columnSpanFull()
-                                    ->schema([
-                                        Grid::make(3)
-                                            ->schema([
-                                                TextInput::make('user.name')
-                                                    ->label(__('admin.booking.fields.user'))
-                                                    ->formatStateUsing(fn($record) => $record->user->name),
-                                                TextInput::make('service.name')
-                                                    ->label(__('admin.booking.fields.service'))
-                                                    ->formatStateUsing(fn($record) => $record->service->name),
-                                                TextInput::make('status')
-                                                    ->label(__('admin.booking.fields.status'))
-                                                    ->formatStateUsing(fn($record) => BookingStatus::tryFrom($record->status)?->label()),
-                                                TextInput::make('booking_time')
-                                                    ->label(__('admin.booking.fields.booking_time')),
-                                                TextInput::make('duration')
-                                                    ->label(__('admin.booking.fields.duration'))
-                                                    ->suffix('minutes'),
-                                            ]),
-                                        Grid::make(2)
-                                            ->schema([
-                                                TextInput::make('price')
-                                                    ->label(__('admin.booking.fields.price'))
-                                                    ->prefix('$'),
-                                                TextInput::make('payment_type')
-                                                    ->label(__('admin.booking.fields.payment_type'))
-                                                    ->formatStateUsing(fn($record) => PaymentType::tryFrom($record->payment_type)?->label()),
-                                            ]),
-                                        Textarea::make('address')
-                                            ->label(__('admin.booking.fields.address'))
-                                            ->columnSpanFull(),
-                                        Textarea::make('note')
-                                            ->label(__('admin.booking.fields.note'))
-                                            ->columnSpanFull(),
-                                    ])
-                            ])
-                            ->modalSubmitAction(false)
-                            ->modalCancelActionLabel(__('admin.common.action.close')),
-
-                        // Action::make('view_location')
-                        //     ->label(__('admin.booking.actions.view_location'))
-                        //     ->icon('heroicon-o-map-pin')
-                        //     ->url(fn($record) => "https://www.google.com/maps/search/?api=1&query={$record->latitude},{$record->longitude}")
-                        //     ->openUrlInNewTab()
-                        //     ->visible(fn($record) => $record->latitude && $record->longitude),
-                    ]),
-                ],
-                position: RecordActionsPosition::BeforeCells
-            )
-            ->poll('2s');
+            ->filtersLayout(FiltersLayout::AboveContent)
+            ->filtersFormColumns(5)
+            ->defaultSort('created_at', 'desc')
+            ->poll('1m');
     }
 }

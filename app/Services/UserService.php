@@ -110,15 +110,25 @@ class UserService extends BaseService
                 ->first();
 
             // 5. Lấy booking sắp tới (hoặc mới nhất)
-            // Lưu ý: Nếu là "sắp tới" thì nên dùng 'asc' và điều kiện >= now().
-            // Nhưng tôi giữ nguyên logic 'desc' của bạn.
             $booking = $this->bookingRepository->query()
                 ->where('ktv_user_id', $user->id)
-                ->whereIn('status', [BookingStatus::PENDING->value, BookingStatus::CONFIRMED->value])
-                ->orderBy('booking_time', 'desc')
+                ->whereIn('status', [
+                    BookingStatus::PENDING->value,
+                    BookingStatus::CONFIRMED->value
+                ])
+                ->where('booking_time', '>=', $todayStart)
+                ->where('booking_time', '<=', $todayEnd)
+                ->orderBy('booking_time', 'asc')
                 ->first();
 
-            // 6. Review mới nhất hôm nay
+            // 6. Lấy booking đang diễn ra
+            $bookingOnGoing = $this->bookingRepository->query()
+                ->where('ktv_user_id', $user->id)
+                ->where('status', BookingStatus::ONGOING->value)
+                ->first();
+
+
+            // 7. Review mới nhất hôm nay
             $reviewToday = $this->reviewRepository->query()
                 ->with('reviewer')
                 ->where('user_id', $user->id)
@@ -129,6 +139,7 @@ class UserService extends BaseService
             return ServiceReturn::success(
                 data: [
                     'booking' => $booking,
+                    'booking_ongoing' => $bookingOnGoing,
                     'total_revenue_today' => (float)($revenueStats->today ?? 0),
                     'total_revenue_yesterday' => (float)($revenueStats->yesterday ?? 0),
                     'total_booking_completed_today' => (int)($bookingStats->completed ?? 0),
