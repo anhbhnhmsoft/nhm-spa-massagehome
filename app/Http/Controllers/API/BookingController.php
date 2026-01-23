@@ -107,7 +107,7 @@ class BookingController extends BaseController
      */
     public function finishBooking(Request $request): JsonResponse
     {
-        $data = $request->validate(
+        $validateData = $request->validate(
             [
                 'booking_id' => 'required|numeric',
             ],
@@ -116,20 +116,17 @@ class BookingController extends BaseController
                 'booking_id.numeric' => __('booking.validate.invalid'),
             ]
         );
-        $result = $this->bookingService->finishBooking((int) $data['booking_id'], true);
+        $result = $this->bookingService->finishBooking(
+            bookingId: $validateData['booking_id'],
+            proactive: true
+        );
         if ($result->isError()) {
             return $this->sendError(
                 message: $result->getMessage()
             );
         }
         return $this->sendSuccess(
-            data: [
-                'booking_id' => (int)$data['booking_id'],
-                'status' => BookingStatus::COMPLETED->value,
-                'status_label' => BookingStatus::COMPLETED->label(),
-                'completed_at' => now()->format('Y-m-d H:i:s'),
-                'can_review' => true,
-            ],
+            data: $result->getData(),
             message: $result->getMessage()
         );
     }

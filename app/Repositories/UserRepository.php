@@ -286,4 +286,18 @@ class UserRepository extends BaseRepository
 
         return $paginator;
     }
+
+    /**
+     * Lấy số lượng người dùng theo vai trò
+     * @param UserRole $role
+     * @return int
+     */
+    public function countUserByRole(UserRole $role): int
+    {
+        return $this->queryUser()
+            ->where('role', $role->value)
+            ->count();
+    }
+
+
 }

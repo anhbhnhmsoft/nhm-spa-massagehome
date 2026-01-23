@@ -646,18 +646,31 @@ class BookingService extends BaseService
      */
     public function finishBooking(int $bookingId, bool $proactive = false)
     {
-        DB::beginTransaction();
         try {
-
             // Lock Booking Row
             $booking = $this->bookingRepository->query()
                 ->lockForUpdate()
                 ->where('id', $bookingId)
-                ->where('status', BookingStatus::ONGOING->value)
+                ->whereIn('status', [
+                    BookingStatus::ONGOING->value,
+                    BookingStatus::COMPLETED->value,
+                ])
                 ->first();
             if (!$booking) {
                 throw new ServiceException(message: __("booking.not_found"));
             }
+
+            // Kiểm tra trạng thái đơn hàng nếu hoàn thành rồi thì return luôn
+            if ($booking->status === BookingStatus::COMPLETED->value) {
+                return ServiceReturn::success(
+                    data: [
+                        'booking_id' => $booking->id,
+                        'end_time' => $booking->end_time,
+                        'already_finished' => true,
+                    ],
+                );
+            }
+
             $now = now();
             $startTime = Carbon::make($booking->start_time);
 
@@ -671,7 +684,8 @@ class BookingService extends BaseService
             }
 
             // Chỉ cho phép finish khi đã đến thời gian dự kiến hoặc đã qua
-            if ($now->lessThan($startTime->copy()->addMinutes($booking->duration))) {
+            // Cho phép finish 10 phút trước khi đến thời gian dự kiến
+            if ($now->lessThan($startTime->copy()->addMinutes($booking->duration)->subMinutes(10))) {
                 throw new ServiceException(
                     message: __("booking.not_permission_at_this_time")
                 );
@@ -691,18 +705,19 @@ class BookingService extends BaseService
                     'booking_id' => $booking->id,
                 ]
             );
-            DB::commit();
             return ServiceReturn::success(
-                message: __("booking.completed")
+                data: [
+                    'booking_id' => $booking->id,
+                    'end_time' => $now,
+                    'already_finished' => false,
+                ],
             );
         } catch (ServiceException $exception) {
-            DB::rollBack();
             return ServiceReturn::error(
                 message: $exception->getMessage()
             );
         }
         catch (\Exception $exception) {
-            DB::rollBack();
             LogHelper::error(
                 message: "Lỗi BookingService@finishBooking",
                 ex: $exception

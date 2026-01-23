@@ -37,611 +37,189 @@ class DashboardService extends BaseService
     ) {
         parent::__construct();
     }
-
     /**
-     * Lấy thống kê tổng quan dashboard
-     * @param string|null $startDate
-     * @param string|null $endDate
+     * Lấy thống kê tổng quan (dashboard admin)
      * @return ServiceReturn
      */
-    public function getDashboardStats(?string $startDate = null, ?string $endDate = null): ServiceReturn
+    public function getGeneralStats(): ServiceReturn
     {
         try {
-            $start = $startDate ? \Carbon\Carbon::parse($startDate)->startOfDay() : now()->startOfMonth();
-            $end = $endDate ? \Carbon\Carbon::parse($endDate)->endOfDay() : now()->endOfMonth();
+            // Lấy khoảng thời gian hiển thị (Là toàn bộ thời gian)
+            $dateRange = DateRangeDashboard::ALL->getDateRange();
+            $start = $dateRange['from'];
+            $end = $dateRange['to'];
 
-            // Revenue (Points) - Deposit only
-            $revenue = $this->walletTransactionRepository->query()
-                ->whereIn('type', [
-                    WalletTransactionType::DEPOSIT_QR_CODE,
-                    WalletTransactionType::DEPOSIT_ZALO_PAY,
-                    WalletTransactionType::DEPOSIT_MOMO_PAY
-                ])
-                ->where('status', WalletTransactionStatus::COMPLETED)
-                ->whereBetween('created_at', [$start, $end])
-                ->sum('money_amount');
+            $stats = $this->walletTransactionRepository->getFinancialDashboardStats($start, $end);
 
-            // Booking Value - Completed bookings
-            $bookingValue = $this->bookingRepository->query()
-                ->where('status', BookingStatus::COMPLETED)
-                ->whereBetween('created_at', [$start, $end])
-                ->sum('price');
+            // Lấy tổng số tiền nạp vào (Deposit)
+            $totalIncome   = (float) $stats->total_income;
+            // Tổng chi phí (Operation Cost)
+            $operationCost = (float) $stats->operation_cost;
+            // chi phí dành cho đại lý
+            $agencyCost    = (float) $stats->agency_cost;
+            // chi phí dành cho KTV
+            $ktvCost       = (float) $stats->ktv_cost;
+            // chi phí dành cho Affiliate
+            $affiliateCost = (float) $stats->affiliate_cost;
+            // Tính lợi nhuận
+            $profit = round($totalIncome - $operationCost, 2);
 
-            $newBookings = $this->bookingRepository->query()
-                ->whereBetween('created_at', [$start, $end])
-                ->count();
-
-            // New Users
-            $newUsers = $this->userRepository->query()
-                ->whereBetween('created_at', [$start, $end])
-                ->count();
-
-            // Pending Profiles
-            $pendingProfiles = $this->userReviewApplicationRepository->query()
-                ->where('status', ReviewApplicationStatus::PENDING)
-                ->count();
-
-            // Affiliate Commission
-            $affiliateCommission = 0;
-
-            return ServiceReturn::success(
-                data: [
-                    'revenue' => $revenue,
-                    'booking_value' => $bookingValue,
-                    'new_bookings' => $newBookings,
-                    'new_users' => $newUsers,
-                    'pending_profiles' => $pendingProfiles,
-                    'affiliate_commission' => $affiliateCommission,
-                ]
-            );
-        } catch (\Exception $exception) {
-            return ServiceReturn::error(
-                message: $exception->getMessage()
-            );
-        }
-    }
-
-    /**
-     * Lấy dữ liệu revenue trend theo khoảng thời gian
-     * @param string|null $startDate
-     * @param string|null $endDate
-     * @return ServiceReturn
-     */
-    public function getRevenueChart(?string $startDate = null, ?string $endDate = null): ServiceReturn
-    {
-        try {
-            $start = $startDate ? \Carbon\Carbon::parse($startDate)->startOfDay() : now()->startOfMonth();
-            $end = $endDate ? \Carbon\Carbon::parse($endDate)->endOfDay() : now()->endOfMonth();
-            $period = CarbonPeriod::create($start, $end);
-
-            $dates = [];
-            foreach ($period as $date) {
-                $dates[$date->format('Y-m-d')] = 0;
-            }
-
-            // Deposit Revenue
-            $depositsData = $this->walletTransactionRepository->query()
-                ->selectRaw('DATE(created_at) as date, SUM(money_amount) as total')
-                ->whereIn('type', [
-                    WalletTransactionType::DEPOSIT_QR_CODE,
-                    WalletTransactionType::DEPOSIT_ZALO_PAY,
-                    WalletTransactionType::DEPOSIT_MOMO_PAY
-                ])
-                ->where('status', WalletTransactionStatus::COMPLETED)
-                ->whereBetween('created_at', [$start, $end])
-                ->groupBy('date')
-                ->pluck('total', 'date')
-                ->toArray();
-
-            $deposits = array_merge($dates, $depositsData);
-
-            // Booking Revenue
-            $bookingsData = $this->bookingRepository->query()
-                ->selectRaw('DATE(created_at) as date, SUM(price) as total')
-                ->where('status', BookingStatus::COMPLETED)
-                ->whereBetween('created_at', [$start, $end])
-                ->groupBy('date')
-                ->pluck('total', 'date')
-                ->toArray();
-
-            $bookings = array_merge($dates, $bookingsData);
-
-            return ServiceReturn::success(
-                data: [
-                    'deposits' => array_values($deposits),
-                    'bookings' => array_values($bookings),
-                    'labels' => array_keys($dates),
-                ]
-            );
-        } catch (\Exception $exception) {
-            return ServiceReturn::error(
-                message: $exception->getMessage()
-            );
-        }
-    }
-
-    /**
-     * Lấy dữ liệu booking status chart
-     * @param string|null $startDate
-     * @param string|null $endDate
-     * @return ServiceReturn
-     */
-    public function getBookingStatusChart(?string $startDate = null, ?string $endDate = null): ServiceReturn
-    {
-        try {
-            $start = $startDate ? \Carbon\Carbon::parse($startDate)->startOfDay() : now()->startOfMonth();
-            $end = $endDate ? \Carbon\Carbon::parse($endDate)->endOfDay() : now()->endOfMonth();
-            $period = CarbonPeriod::create($start, $end);
-
-            $dates = [];
-            foreach ($period as $date) {
-                $dates[$date->format('Y-m-d')] = 0;
-            }
-
-            $statuses = BookingStatus::cases();
-            $datasets = [];
-
-            $colors = [
-                BookingStatus::PENDING->value => 'rgb(234, 179, 8)',
-                BookingStatus::ONGOING->value => 'rgb(168, 85, 247)',
-                BookingStatus::CONFIRMED->value => 'rgb(59, 130, 246)',
-                BookingStatus::COMPLETED->value => 'rgb(34, 197, 94)',
-                BookingStatus::CANCELED->value => 'rgb(239, 68, 68)',
-            ];
-
-            foreach ($statuses as $status) {
-                $countData = $this->bookingRepository->query()
-                    ->selectRaw('DATE(created_at) as date, count(*) as count')
-                    ->where('status', $status)
-                    ->whereBetween('created_at', [$start, $end])
-                    ->groupBy('date')
-                    ->pluck('count', 'date')
-                    ->toArray();
-
-                $filledData = array_merge($dates, $countData);
-
-                $datasets[] = [
-                    'label' => $status->label(),
-                    'data' => array_values($filledData),
-                    'backgroundColor' => $colors[$status->value] ?? '#cccccc',
-                    'fill' => true,
-                ];
-            }
-
-            return ServiceReturn::success(
-                data: [
-                    'datasets' => $datasets,
-                    'labels' => array_keys($dates),
-                ]
-            );
-        } catch (\Exception $exception) {
-            return ServiceReturn::error(
-                message: $exception->getMessage()
-            );
-        }
-    }
-
-    /**
-     * Lấy dữ liệu review rating chart
-     * @param string|null $startDate
-     * @param string|null $endDate
-     * @return ServiceReturn
-     */
-    public function getReviewRatingChart(?string $startDate = null, ?string $endDate = null): ServiceReturn
-    {
-        try {
-            $start = $startDate ? \Carbon\Carbon::parse($startDate)->startOfDay() : now()->startOfMonth();
-            $end = $endDate ? \Carbon\Carbon::parse($endDate)->endOfDay() : now()->endOfMonth();
-
-            $data = $this->reviewRepository->query()
-                ->select('rating', DB::raw('count(*) as count'))
-                ->whereBetween('created_at', [$start, $end])
-                ->groupBy('rating')
-                ->orderBy('rating')
-                ->get();
-
-            $ratings = [
-                1 => 0,
-                2 => 0,
-                3 => 0,
-                4 => 0,
-                5 => 0,
-            ];
-
-            foreach ($data as $item) {
-                $ratings[$item->rating] = $item->count;
-            }
-
-            return ServiceReturn::success(
-                data: [
-                    'data' => array_values($ratings),
-                    'labels' => array_keys($ratings),
-                ]
-            );
-        } catch (\Exception $exception) {
-            return ServiceReturn::error(
-                message: $exception->getMessage()
-            );
-        }
-    }
-
-    /**
-     * Lấy top services chart
-     * @param string|null $startDate
-     * @param string|null $endDate
-     * @return ServiceReturn
-     */
-    public function getTopServicesChart(?string $startDate = null, ?string $endDate = null): ServiceReturn
-    {
-        try {
-            $start = $startDate ? \Carbon\Carbon::parse($startDate)->startOfDay() : now()->startOfMonth();
-            $end = $endDate ? \Carbon\Carbon::parse($endDate)->endOfDay() : now()->endOfMonth();
-
-            $data = $this->bookingRepository->query()
-                ->select('service_id', DB::raw('count(*) as count'))
-                ->whereBetween('created_at', [$start, $end])
-                ->groupBy('service_id')
-                ->orderByDesc('count')
-                ->limit(10)
-                ->with('service')
-                ->get();
-
-            return ServiceReturn::success(
-                data: [
-                    'counts' => $data->pluck('count'),
-                    'labels' => $data->pluck('service.name'),
-                ]
-            );
-        } catch (\Exception $exception) {
-            return ServiceReturn::error(
-                message: $exception->getMessage()
-            );
-        }
-    }
-
-    /**
-     * Lấy user activity chart
-     * @param string|null $startDate
-     * @param string|null $endDate
-     * @return ServiceReturn
-     */
-    public function getUserActivityChart(?string $startDate = null, ?string $endDate = null): ServiceReturn
-    {
-        try {
-            $start = $startDate ? \Carbon\Carbon::parse($startDate)->startOfDay() : now()->startOfMonth();
-            $end = $endDate ? \Carbon\Carbon::parse($endDate)->endOfDay() : now()->endOfMonth();
-            $period = CarbonPeriod::create($start, $end);
-
-            $dates = [];
-            foreach ($period as $date) {
-                $dates[$date->format('Y-m-d')] = 0;
-            }
-
-            // New Users
-            $newUsersData = $this->userRepository->query()
-                ->selectRaw('DATE(created_at) as date, count(*) as count')
-                ->whereBetween('created_at', [$start, $end])
-                ->groupBy('date')
-                ->pluck('count', 'date')
-                ->toArray();
-
-            $newUsers = array_merge($dates, $newUsersData);
-
-            // Active Users (based on last_login_at)
-            $activeUsersData = $this->userRepository->query()
-                ->selectRaw('DATE(last_login_at) as date, count(*) as count')
-                ->whereNotNull('last_login_at')
-                ->whereBetween('last_login_at', [$start, $end])
-                ->groupBy('date')
-                ->pluck('count', 'date')
-                ->toArray();
-
-            $activeUsers = array_merge($dates, $activeUsersData);
-
-            return ServiceReturn::success(
-                data: [
-                    'new_users' => array_values($newUsers),
-                    'active_users' => array_values($activeUsers),
-                    'labels' => array_keys($dates),
-                ]
-            );
-        } catch (\Exception $exception) {
-            return ServiceReturn::error(
-                message: $exception->getMessage()
-            );
-        }
-    }
-
-    /**
-     * Lấy user role chart
-     * @return ServiceReturn
-     */
-    public function getUserRoleChart(): ServiceReturn
-    {
-        try {
-            $data = $this->userRepository->query()
-                ->select('role', DB::raw('count(*) as count'))
-                ->groupBy('role')
-                ->get();
-
-            return ServiceReturn::success(
-                data: [
-                    'counts' => $data->pluck('count'),
-                    'roles' => $data->pluck('role'),
-                ]
-            );
-        } catch (\Exception $exception) {
-            return ServiceReturn::error(
-                message: $exception->getMessage()
-            );
-        }
-    }
-
-    /**
-     * Get Operation Cost Stats
-     * @param string|null $startDate
-     * @param string|null $endDate
-     */
-    public function getOperationCostStats(?string $startDate = null, ?string $endDate = null): ServiceReturn
-    {
-        try {
-            $start = $startDate ? \Carbon\Carbon::parse($startDate)->startOfDay() : now()->startOfMonth();
-            $end = $endDate ? \Carbon\Carbon::parse($endDate)->endOfDay() : now()->endOfMonth();
-
-            $activeOrder = $this->bookingRepository->query()
-                ->whereBetween('created_at', [$start, $end])
-                ->where('status', BookingStatus::ONGOING->value)->count();
-            $refundAmount = $this->walletTransactionRepository->query()
-                ->where('type', WalletTransactionType::REFUND)
-                ->whereBetween('created_at', [$start, $end])
-                ->where('status', WalletTransactionStatus::COMPLETED->value)
-                ->sum('money_amount');
-            $feeAmount = $this->walletTransactionRepository->query()
-                ->where('type', WalletTransactionType::AFFILIATE->value)
-                ->whereBetween('created_at', [$start, $end])
-                ->where('status', WalletTransactionStatus::COMPLETED->value)
-                ->sum('money_amount');
-            $depositAmount = $this->walletTransactionRepository->query()
-                ->whereIn('type', [
-                    WalletTransactionType::DEPOSIT_MOMO_PAY->value,
-                    WalletTransactionType::DEPOSIT_QR_CODE->value,
-                    WalletTransactionType::DEPOSIT_ZALO_PAY->value,
-                    WalletTransactionType::DEPOSIT_WECHAT_PAY->value,
-                ])
-                ->whereBetween('created_at', [$start, $end])
-                ->where('status', WalletTransactionStatus::COMPLETED->value)
-                ->sum('money_amount');
-            $feeAmountForKtvForCustomer = $this->walletTransactionRepository->query()
-                ->where('type', WalletTransactionType::REFERRAL_KTV->value)
-                ->whereBetween('created_at', [$start, $end])
-                ->where('status', WalletTransactionStatus::COMPLETED->value)
-                ->sum('money_amount');
             return ServiceReturn::success([
-                'active_order_count' => $activeOrder,
-                'refund_amount' => $refundAmount,
-                'fee_amount_for_affiliate' => $feeAmount,
-                'fee_amount_for_ktv_for_customer' => $feeAmountForKtvForCustomer,
-                'deposit_amount' => $depositAmount,
+                'total_income' => $totalIncome,
+                'operation_cost' => $operationCost,
+                'agency_cost' => $agencyCost,
+                'ktv_cost' => $ktvCost,
+                'affiliate_cost' => $affiliateCost,
+                'profit' => $profit,
             ]);
-        } catch (\Exception $e) {
-            return ServiceReturn::error($e->getMessage());
+        } catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi DashboardService@getGeneralStats",
+                ex: $exception,
+            );
+            return ServiceReturn::error($exception->getMessage());
         }
     }
 
     /**
-     * Get General Stats
-     * @param string|null $startDate
-     * @param string|null $endDate
+     * Lấy thống kê tổng quan về đơn hàng (dashboard admin)
+     * @return ServiceReturn
      */
-    public function getGeneralStats(?string $startDate = null, ?string $endDate = null): ServiceReturn
+    public function getGeneralBookingStats(): ServiceReturn
     {
         try {
-            $start = $startDate ? \Carbon\Carbon::parse($startDate)->startOfDay() : now()->startOfMonth();
-            $end = $endDate ? \Carbon\Carbon::parse($endDate)->endOfDay() : now()->endOfMonth();
+            // Lấy khoảng thời gian hiển thị (Là toàn bộ thời gian)
+            $dateRange = DateRangeDashboard::ALL->getDateRange();
+            $start = $dateRange['from'];
+            $end = $dateRange['to'];
 
-            $totalBooking = $this->bookingRepository->query()
-                ->whereBetween('created_at', [$start, $end])
-                ->count();
+            $stats = $this->bookingRepository->getBookingStats($start, $end);
 
-            $completedBooking = $this->bookingRepository->query()
-                ->where('status', BookingStatus::COMPLETED)
-                ->whereBetween('created_at', [$start, $end])
-                ->count();
-
-            $canceledBooking = $this->bookingRepository->query()
-                ->where('status', BookingStatus::CANCELED)
-                ->whereBetween('created_at', [$start, $end])
-                ->count();
-
-            $grossRevenue = $this->walletTransactionRepository->query()
-                ->join('service_bookings as sb', 'sb.id', '=', 'wallet_transactions.foreign_key')
-                ->where('wallet_transactions.type', WalletTransactionType::PAYMENT)
-                ->where('wallet_transactions.status', WalletTransactionStatus::COMPLETED)
-                ->where('sb.status', '!=', BookingStatus::CANCELED)
-                ->whereBetween('wallet_transactions.created_at', [$start, $end])
-                ->sum(DB::raw('ABS(wallet_transactions.money_amount)'));
-
-            $netRevenue = $this->walletTransactionRepository->query()
-                ->join('service_bookings as sb', 'sb.id', '=', 'wallet_transactions.foreign_key')
-                ->whereIn('wallet_transactions.type', [WalletTransactionType::PAYMENT, WalletTransactionType::REFUND])
-                ->where('wallet_transactions.status', WalletTransactionStatus::COMPLETED)
-                ->where('sb.status', '!=', BookingStatus::CANCELED)
-                ->whereBetween('wallet_transactions.created_at', [$start, $end])
-                ->sum('wallet_transactions.money_amount');
-
-            $ktvCost = $this->walletTransactionRepository->query()
-                ->join('service_bookings as sb', 'sb.id', '=', 'wallet_transactions.foreign_key')
-                ->whereIn('wallet_transactions.type', [
-                    WalletTransactionType::PAYMENT_FOR_KTV,
-                    WalletTransactionType::RETRIEVE_PAYMENT_REFUND_KTV
-                ])
-                ->where('wallet_transactions.status', WalletTransactionStatus::COMPLETED)
-                ->where('sb.status', '!=', BookingStatus::CANCELED)
-                ->whereBetween('wallet_transactions.created_at', [$start, $end])
-                ->sum('wallet_transactions.money_amount');
-
-            $ktvCostMagnitude = abs($ktvCost);
-
-            $affiliateCost = $this->walletTransactionRepository->query()
-                ->join('service_bookings as sb', 'sb.id', '=', 'wallet_transactions.foreign_key')
-                ->where('wallet_transactions.type', WalletTransactionType::AFFILIATE)
-                ->where('wallet_transactions.status', WalletTransactionStatus::COMPLETED)
-                ->where('sb.status', '!=', BookingStatus::CANCELED)
-                ->whereBetween('wallet_transactions.created_at', [$start, $end])
-                ->sum('wallet_transactions.money_amount');
-            $paymentFailed = $this->bookingRepository->query()
-                ->where('status', BookingStatus::PAYMENT_FAILED)
-                ->whereBetween('created_at', [$start, $end])
-                ->count();
-
-            $bookingConfirm = $this->bookingRepository->query()
-                ->where('status', BookingStatus::CONFIRMED)
-                ->whereBetween('created_at', [$start, $end])
-                ->count();
-
-            $activeOrder = $this->bookingRepository->query()
-                ->where('status', BookingStatus::ONGOING)
-                ->whereBetween('created_at', [$start, $end])
-                ->count();
-
-            $affiliateCostMagnitude = abs($affiliateCost);
-
-            $netProfit = $grossRevenue - $ktvCostMagnitude - $affiliateCostMagnitude;
+            // Tổng số đơn hàng
+            $totalBooking     = $stats->total ?? 0;
+            // Số đơn hàng đang chờ
+            $pendingBooking   = $stats->pending ?? 0;
+            // Số đơn hàng đang tiến hành
+            $ongoingBooking   = $stats->ongoing ?? 0;
+            // Số đơn hàng đã hoàn thành
+            $completedBooking = $stats->completed ?? 0;
+            // Số đơn hàng đã hủy và hoàn tiền
+            $canceledBooking  = $stats->canceled ?? 0;
 
             return ServiceReturn::success([
                 'total_booking' => $totalBooking,
+                'pending_booking' => $pendingBooking,
+                'ongoing_booking' => $ongoingBooking,
                 'completed_booking' => $completedBooking,
                 'canceled_booking' => $canceledBooking,
-                'gross_revenue' => $grossRevenue,
-                'net_revenue' => $netRevenue,
-                'ktv_cost' => $ktvCostMagnitude,
-                'net_profit' => $netProfit,
-                'affiliate_cost' => $affiliateCostMagnitude,
-                'payment_failed' => $paymentFailed,
-                'booking_confirmed' => $bookingConfirm,
-                'active_order_count' => $activeOrder,
             ]);
-        } catch (\Exception $e) {
-            return ServiceReturn::error($e->getMessage());
+
+        }catch (\Exception $exception){
+            LogHelper::error(
+                message: "Lỗi DashboardService@getGeneralBookingStats",
+                ex: $exception,
+            );
+            return ServiceReturn::error($exception->getMessage());
         }
     }
 
     /**
-     * Get Technician Status Stats
-     * @param string|null $startDate
-     * @param string|null $endDate
+     * Lấy thống kê tổng quan về người dùng (dashboard admin)
+     * @return ServiceReturn
      */
-    public function getTechnicianStatusStats(?string $startDate = null, ?string $endDate = null): ServiceReturn
+    public function getGeneralUserStats(): ServiceReturn
     {
         try {
-            // Total KTVs
-            $totalKtv = \App\Models\User::where('role', \App\Enums\UserRole::KTV->value)->count();
+            // Lấy khoảng thời gian hiển thị (Là toàn bộ thời gian)
+            $dateRange = DateRangeDashboard::ALL->getDateRange();
+            $start = $dateRange['from'];
+            $end = $dateRange['to'];
 
-            // Online KTVs
-            // Ideally we should move this to repository too but sticking to service logic
-            $allKtvs = \App\Models\User::where('role', \App\Enums\UserRole::KTV->value)->get();
-            $onlineKtvCount = $allKtvs->filter(fn($user) => $user->is_online)->count();
-
-            // Working KTVs
-            $workingKtvIds = $this->bookingRepository->query()
-                ->where('status', BookingStatus::ONGOING)
-                ->distinct()
-                ->pluck('ktv_user_id')
-                ->toArray();
-            $workingKtvCount = count($workingKtvIds);
-
-            // Resting KTVs
-            $restingKtvCount = max($onlineKtvCount - $workingKtvCount, 0);
+            // Tổng số KTV
+            $totalKtv = $this->userRepository->countUserByRole(UserRole::KTV);
+            // Số KTV đang chờ duyệt
+            $pendingKtv = $this->userReviewApplicationRepository->countPendingApplicationByRole(UserRole::KTV);
+            // Tổng số Agency
+            $totalAgency = $this->userRepository->countUserByRole(UserRole::AGENCY);
+            // Số Agency đang chờ duyệt
+            $pendingAgency = $this->userReviewApplicationRepository->countPendingApplicationByRole(UserRole::AGENCY);
+            // Tổng số Customer
+            $totalCustomer = $this->userRepository->countUserByRole(UserRole::CUSTOMER);
+            // Yêu cầu rút tiền đang chờ duyệt
+            $withdrawRequests = $this->walletTransactionRepository->countTotalWithdrawPendingRequestTransaction($start, $end);
+            // Tổng số Review
+            $reviewCount = $this->reviewRepository->countTotalReview($start, $end);
 
             return ServiceReturn::success([
                 'total_ktv' => $totalKtv,
-                'online_ktv_count' => $onlineKtvCount,
-                'working_ktv_count' => $workingKtvCount,
-                'resting_ktv_count' => $restingKtvCount,
+                'pending_ktv' => $pendingKtv,
+                'total_agency' => $totalAgency,
+                'pending_agency' => $pendingAgency,
+                'total_customer' => $totalCustomer,
+                'withdraw_requests' => $withdrawRequests,
+                'review_count' => $reviewCount,
             ]);
-        } catch (\Exception $e) {
-            return ServiceReturn::error($e->getMessage());
+        }catch (\Exception $exception){
+            LogHelper::error(
+                message: "Lỗi DashboardService@getGeneralUserStats",
+                ex: $exception,
+            );
+            return ServiceReturn::error($exception->getMessage());
         }
     }
 
     /**
-     * Get Revenue Refund Chart Data
-     * @param string|null $startDate
-     * @param string|null $endDate
+     * Lấy biểu đồ thống kê tiền (dashboard admin)
+     * @param DateRangeDashboard $dateRange
+     * @return ServiceReturn
      */
-    public function getRevenueRefundChartData(?string $startDate = null, ?string $endDate = null): ServiceReturn
+    public function getTransactionChartData(DateRangeDashboard $dateRange): ServiceReturn
     {
         try {
-            $start = $startDate ? \Carbon\Carbon::parse($startDate)->startOfDay() : now()->startOfMonth();
-            $end = $endDate ? \Carbon\Carbon::parse($endDate)->endOfDay() : now()->endOfMonth();
-            $period = \Carbon\CarbonPeriod::create($start, $end);
+            $range = $dateRange->getDateRange();
+            $config = $dateRange->getGroupingConfig();
+            $start = $range['from'];
+            $end = $range['to'];
 
-            $dates = [];
+            $period = \Carbon\CarbonPeriod::between($start, $end)->interval("1 " . $config['unit']);
+            $labels = [];
+            $placeholderIncome = [];
+
             foreach ($period as $date) {
-                $dates[$date->format('Y-m-d')] = 0;
+                // Tạo Key để khớp với kết quả từ Database (PostgreSQL TO_CHAR)
+                $key = match ($config['unit']) {
+                    'hour'  => $date->format('H:00'),
+                    'week'  => $date->startOfWeek()->format('Y-m-d'), // Postgres week đưa về thứ 2
+                    'month' => $date->format('Y-m'),
+                    'year'  => $date->format('Y'),
+                    default => $date->format('Y-m-d'),
+                };
+
+                // Nếu đã tồn tại key (trường hợp week hoặc month trùng lặp trong chu kỳ) thì bỏ qua
+                if (!isset($placeholderIncome[$key])) {
+                    $placeholderIncome[$key] = 0;
+                    $labels[$key] = $date->format($config['format']);
+                }
             }
 
-            /// Revenue: Gross Revenue logic (PAYMENT, !CANCELED)
-            $revenueData = $this->walletTransactionRepository->query()
-                ->join('service_bookings as sb', 'sb.id', '=', 'wallet_transactions.foreign_key')
-                ->selectRaw('DATE(wallet_transactions.created_at) as date, SUM(ABS(wallet_transactions.money_amount)) as total')
-                ->where('wallet_transactions.type', WalletTransactionType::PAYMENT->value)
-                ->where('wallet_transactions.status', WalletTransactionStatus::COMPLETED->value)
-                ->where('sb.status', '!=', BookingStatus::CANCELED->value)
-                ->whereBetween('wallet_transactions.created_at', [$start, $end])
-                ->groupBy('date')
-                ->pluck('total', 'date')
-                ->toArray();
-
-            // Refund: REFUND, !CANCELED
-            $refundData = $this->walletTransactionRepository->query()
-                ->join('service_bookings as sb', 'sb.id', '=', 'wallet_transactions.foreign_key')
-                ->selectRaw('DATE(wallet_transactions.created_at) as date, SUM(wallet_transactions.money_amount) as total')
-                ->where('wallet_transactions.type', '=', WalletTransactionType::REFUND->value)
-                ->where('wallet_transactions.status', '=', WalletTransactionStatus::COMPLETED->value)
-                ->whereBetween('wallet_transactions.created_at', [$start, $end])
-                ->groupBy('date')
-                ->pluck('total', 'date')
-                ->toArray();
-
-            return ServiceReturn::success([
-                'revenue' => array_values(array_merge($dates, $revenueData)),
-                'refunds' => array_values(array_merge($dates, $refundData)),
-                'labels' => array_keys($dates),
-            ]);
-        } catch (\Exception $e) {
-            return ServiceReturn::error($e->getMessage());
-        }
-    }
-
-    /**
-     * Get Profit Chart Data
-     * @param string|null $startDate
-     * @param string|null $endDate
-     */
-    public function getProfitChartData(?string $startDate = null, ?string $endDate = null): ServiceReturn
-    {
-        try {
-            $start = $startDate ? \Carbon\Carbon::parse($startDate)->startOfDay() : now()->startOfMonth();
-            $end = $endDate ? \Carbon\Carbon::parse($endDate)->endOfDay() : now()->endOfMonth();
-            $period = \Carbon\CarbonPeriod::create($start, $end);
-
-            $dates = [];
-            foreach ($period as $date) {
-                $dates[$date->format('Y-m-d')] = 0;
-            }
-
-            $data = $this->bookingRepository->query()
-                ->selectRaw('DATE(created_at) as date, SUM(price) as total')
-                ->where('status', '=', BookingStatus::COMPLETED->value)
+            $incomeRaw = $this->walletTransactionRepository->query()
+                ->selectRaw("
+                    TO_CHAR(DATE_TRUNC(?, created_at), ?) as date_key,
+                    SUM(point_amount) as total
+                ", [$config['unit'], $config['pg_format']])
+                ->whereIn('type', WalletTransactionType::incomeStatus())
+                ->where('status', WalletTransactionStatus::COMPLETED->value)
                 ->whereBetween('created_at', [$start, $end])
-                ->groupBy('date')
-                ->pluck('total', 'date')
+                ->groupBy('date_key')
+                ->pluck('total', 'date_key')
                 ->toArray();
 
+            // 3. Hợp nhất dữ liệu
+            $incomeData = array_replace($placeholderIncome, $incomeRaw);
+
             return ServiceReturn::success([
-                'data' => array_values(array_merge($dates, $data)),
-                'labels' => array_keys($dates),
+                'labels' => array_values($labels),
+                'income' => array_values($incomeData),
             ]);
         } catch (\Exception $e) {
             return ServiceReturn::error($e->getMessage());

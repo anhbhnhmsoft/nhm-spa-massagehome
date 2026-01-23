@@ -65,4 +65,15 @@ class UserReviewApplicationRepository extends BaseRepository
             ->distinct('user_review_application.id')
             ->count('user_review_application.id');
     }
+
+    /**
+     * Đếm số lượng đơn hàng đang chờ duyệt của một KTV hoặc Agency
+     */
+    public function countPendingApplicationByRole(UserRole $role): int
+    {
+        return $this->query()
+            ->where('role', $role->value)
+            ->where('status', ReviewApplicationStatus::PENDING->value)
+            ->count();
+    }
 }

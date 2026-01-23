@@ -17,6 +17,30 @@ enum WalletTransactionType: int
     case REFERRAL_INVITE_KTV_REWARD = 11; // Nhận hoa hồng khi mời KTV thành công
     case DEPOSIT_WECHAT_PAY = 12; // Nạp tiền qua Wechat Pay
 
+
+    // Trạng thái nạp vào ví
+    public static function incomeStatus(): array
+    {
+        return [
+            self::DEPOSIT_QR_CODE->value,
+            self::DEPOSIT_ZALO_PAY->value,
+            self::DEPOSIT_MOMO_PAY->value,
+            self::DEPOSIT_WECHAT_PAY->value,
+        ];
+    }
+
+    // Trạng thái chi phí vận hành
+    public static function operationCostStatus()
+    {
+        return [
+            self::AFFILIATE->value,
+            self::PAYMENT_FOR_KTV->value,
+            self::REFERRAL_KTV->value,
+            self::REFERRAL_INVITE_KTV_REWARD->value,
+            self::WITHDRAWAL->value,
+        ];
+    }
+
     // Lấy danh sách trạng thái giao dịch nạp vào ví
     public static function statusIn()
     {

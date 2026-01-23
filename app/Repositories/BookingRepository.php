@@ -70,7 +70,26 @@ class BookingRepository extends BaseRepository
         return $query;
     }
 
-
+    public function getBookingStats(Carbon $from, Carbon $to)
+    {
+        return $this->query()
+            ->whereBetween('created_at', [$from, $to])
+            ->selectRaw("
+            COUNT(*) as total,
+            COUNT(CASE WHEN status IN (?, ?) THEN 1 END) as pending,
+            COUNT(CASE WHEN status = ? THEN 1 END) as ongoing,
+            COUNT(CASE WHEN status = ? THEN 1 END) as completed,
+            COUNT(CASE WHEN status IN (?, ?) THEN 1 END) as canceled
+        ", [
+                BookingStatus::PENDING->value,
+                BookingStatus::CONFIRMED->value,
+                BookingStatus::ONGOING->value,
+                BookingStatus::COMPLETED->value,
+                BookingStatus::CANCELED->value,
+                BookingStatus::PAYMENT_FAILED->value
+            ])
+            ->first();
+    }
     /**
      * Lấy số lượng khách hàng khác nhau đã đặt lịch trong khoảng thời gian
      * @param int $leadUserId - ID của KTV quản lý hoặc của Agency

@@ -547,11 +547,11 @@ return
                 'revenue_booking' => 'Đặt lịch',
                 'new_users' => 'Người dùng mới',
                 'active_users' => 'Đăng nhập',
-                'revenue_refund_trend' => 'Xu hướng doanh thu & Hoàn tiền',
+                'transaction_dashboard' => 'Biểu đồ giao dịch',
                 'profit_trend' => 'Xu hướng lợi nhuận (Đơn đã thanh toán)',
                 'profit' => 'Tổng tiền (Đã thanh toán)',
-                'revenue' => 'Doanh thu',
-                'refund' => 'Hoàn tiền',
+                'income' => 'Thu nhập',
+                'expense' => 'Chi phí',
             ],
             'time' => [
                 'today' => 'Hôm nay',
@@ -733,5 +733,13 @@ return
                 'type_unique' => 'Loại đã tồn tại',
                 'path_pdf_only' => 'Chỉ chấp nhận định dạng PDF.',
             ],
+        ],
+        'date_range' => [
+            'day' => 'Hôm nay',
+            'week' => 'Tuần này',
+            'month' => 'Tháng này',
+            'quarter' => 'Qúy này',
+            'year' => 'Năm này',
+            'all' => 'Tất cả',
         ],
     ];

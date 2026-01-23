@@ -2,22 +2,17 @@
 
 namespace App\Filament\Widgets;
 
+use App\Services\DashboardService;
 use Filament\Schemas\Components\Section;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class GeneralStats extends BaseWidget
 {
-    protected ?string $pollingInterval = null;
-    protected $listeners = ['dateRangeUpdated' => '$refresh'];
-
     protected function getStats(): array
     {
-        $startDate = session('dashboard_start_date');
-        $endDate = session('dashboard_end_date');
-
-        $dashboardService = app(\App\Services\DashboardService::class);
-        $result = $dashboardService->getGeneralStats($startDate, $endDate);
+        $dashboardService = app(DashboardService::class);
+        $result = $dashboardService->getGeneralStats();
 
         if (!$result->isSuccess()) {
             return [
@@ -32,26 +27,35 @@ class GeneralStats extends BaseWidget
                 ->columnSpanFull()
                 ->columns(3)
                 ->schema([
-                    Stat::make(__('dashboard.general_stat.total_booking'), $data['total_booking'])
-                        ->description(__('dashboard.general_stat.total_booking_desc'))
+                    // Tổng doanh thu
+                    Stat::make(__('dashboard.general_stat.total_income'), number_format($data['total_income'], 0, '.', ','))
+                        ->description(__('dashboard.general_stat.total_income_desc'))
                         ->color('primary'),
 
-                    Stat::make(__('dashboard.general_stat.completed_booking'), $data['completed_booking'])
-                        ->color('success'),
-
-                    Stat::make(__('dashboard.general_stat.booking_confirmed'), $data['booking_confirmed'])
-                        ->description(__('dashboard.general_stat.booking_confirmed_desc'))
-                        ->color('success'),
-
-                    Stat::make(__('dashboard.operation_cost.active_order_count'), $data['active_order_count'])
-                        ->color('primary'),
-
-                    Stat::make(__('dashboard.general_stat.canceled_booking'), $data['canceled_booking'])
+                    // Chi phí vận hành
+                    Stat::make(__('dashboard.general_stat.operation_cost'), number_format($data['operation_cost'], 0, '.', ','))
+                        ->description(__('dashboard.general_stat.operation_cost_desc'))
                         ->color('danger'),
 
-                    Stat::make(__('dashboard.general_stat.payment_failed'), $data['payment_failed'])
-                        ->description(__('dashboard.general_stat.payment_failed_desc'))
-                        ->color('danger'),
+                    // Lợi nhuận
+                    Stat::make(__('dashboard.general_stat.profit'), number_format($data['profit'], 0, '.', ','))
+                        ->description(__('dashboard.general_stat.profit_desc'))
+                        ->color('success'),
+
+                    // Chi phí đại lý
+                    Stat::make(__('dashboard.general_stat.agency_cost'), number_format($data['agency_cost'], 0, '.', ','))
+                        ->description(__('dashboard.general_stat.agency_cost_desc'))
+                        ->color('success'),
+
+                    // Chi phí KTV
+                    Stat::make(__('dashboard.general_stat.ktv_cost'), number_format($data['ktv_cost'], 0, '.', ','))
+                        ->description(__('dashboard.general_stat.ktv_cost_desc'))
+                        ->color('success'),
+
+                    // Chi phí Affiliate
+                    Stat::make(__('dashboard.general_stat.affiliate_cost'), number_format($data['affiliate_cost'], 0, '.', ','))
+                        ->description(__('dashboard.general_stat.affiliate_cost_desc'))
+                        ->color('success'),
                 ])
         ];
     }

@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Core\BaseRepository;
 use App\Models\Review;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
 
 class ReviewRepository extends BaseRepository
 {
@@ -52,5 +53,18 @@ class ReviewRepository extends BaseRepository
         $column = $sortBy ?? 'created_at';
         $query->orderBy($column, $direction);
         return $query;
+    }
+
+    /**
+     * Lấy tổng số review trong khoảng thời gian
+     * @param Carbon $from
+     * @param Carbon $to
+     * @return int
+     */
+    public function countTotalReview(Carbon $from, Carbon $to)
+    {
+        return $this->query()
+            ->whereBetween('created_at', [$from, $to])
+            ->count();
     }
 }
