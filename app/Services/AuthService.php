@@ -643,6 +643,11 @@ class AuthService extends BaseService
                 return ServiceReturn::error(message: __('error.unauthorized'));
             }
             $user->currentAccessToken()->delete();
+
+            // Xóa tất cả các thiết bị đã đăng nhập của user
+            $this->userDeviceRepository->query()
+                ->where('user_id', $user->id)
+                ->forceDelete(); // Xóa cứng (xóa luôn khỏi bảng)
             return ServiceReturn::success(
                 message: __('auth.success.logout'),
             );

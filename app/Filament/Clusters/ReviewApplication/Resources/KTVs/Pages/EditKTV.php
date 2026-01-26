@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Filament\Clusters\KTV\Resources\KTVs\Pages;
+namespace App\Filament\Clusters\ReviewApplication\Resources\KTVs\Pages;
 
 use App\Enums\ReviewApplicationStatus;
-use App\Filament\Clusters\KTV\Resources\KTVs\KTVResource;
+use App\Filament\Clusters\ReviewApplication\Resources\KTVs\KTVResource;
 use App\Enums\UserRole;
 use App\Enums\UserFileType;
 use App\Models\UserFile;
@@ -32,7 +32,6 @@ class EditKTV extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-
             // Hiển thị nút Approve nếu trạng thái là PENDING hoặc REJECTED
             Action::make('approve')
                 ->label(__('admin.ktv_apply.actions.approve.label'))
@@ -105,12 +104,7 @@ class EditKTV extends EditRecord
                     return redirect()->to($this->getResource()::getUrl('index'));
                 }),
 
-
             DeleteAction::make(),
-            ForceDeleteAction::make(),
-            RestoreAction::make(),
-
-
         ];
     }
 
@@ -223,7 +217,7 @@ class EditKTV extends EditRecord
             ->color($isLocked ? 'gray' : 'primary')
             ->icon($isLocked ? 'heroicon-m-lock-closed' : 'heroicon-m-check')
             // 4. Thêm Tooltip giải thích lý do
-            ->tooltip($isLocked ? 'Không thể lưu: Hồ sơ đang chờ duyệt hoặc đã bị từ chối' : null)
+            ->tooltip($isLocked ? __('admin.common.tooltip.cant_not_save_review_application') : null)
             ->disabled($isLocked);
     }
     protected function mutateFormDataBeforeValidate(array $data): array

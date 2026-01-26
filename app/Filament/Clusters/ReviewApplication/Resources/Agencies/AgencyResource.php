@@ -1,15 +1,16 @@
 <?php
 
-namespace App\Filament\Clusters\Agency\Resources\Agencies;
+namespace App\Filament\Clusters\ReviewApplication\Resources\Agencies;
 
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserRole;
-use App\Filament\Clusters\Agency\AgencyCluster;
-use App\Filament\Clusters\Agency\Resources\Agencies\Pages\CreateAgency;
-use App\Filament\Clusters\Agency\Resources\Agencies\Pages\EditAgency;
-use App\Filament\Clusters\Agency\Resources\Agencies\Pages\ListAgencies;
-use App\Filament\Clusters\Agency\Resources\Agencies\Schemas\AgencyForm;
-use App\Filament\Clusters\Agency\Resources\Agencies\Tables\AgenciesTable;
+use App\Filament\Clusters\ReviewApplication\Resources\Agencies\Pages\AgencyDashboard;
+use App\Filament\Clusters\ReviewApplication\Resources\Agencies\Pages\EditAgency;
+use App\Filament\Clusters\ReviewApplication\Resources\Agencies\Pages\ListAgencies;
+use App\Filament\Clusters\ReviewApplication\Resources\Agencies\Pages\ViewAgencies;
+use App\Filament\Clusters\ReviewApplication\Resources\Agencies\Schemas\AgencyForm;
+use App\Filament\Clusters\ReviewApplication\Resources\Agencies\Schemas\AgencyInfolist;
+use App\Filament\Clusters\ReviewApplication\Resources\Agencies\Tables\AgenciesTable;
 use App\Models\User;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -23,12 +24,12 @@ class AgencyResource extends Resource
 {
     protected static ?string $model = User::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::UserGroup;
 
 
     public static function getNavigationGroup(): \UnitEnum|string|null
     {
-        return __('filament.navigation.agency');
+        return __('admin.nav.review_application');
     }
 
     protected static ?string $recordTitleAttribute = 'User';
@@ -43,6 +44,12 @@ class AgencyResource extends Resource
         return AgenciesTable::configure($table);
     }
 
+    public static function infolist(Schema $schema): Schema
+    {
+        return AgencyInfolist::configure($schema);
+    }
+
+
     public static function getRelations(): array
     {
         return [
@@ -53,9 +60,12 @@ class AgencyResource extends Resource
     {
         $query = parent::getEloquentQuery();
 
-        $query = $query->where('role', UserRole::AGENCY->value)
-            ->with('reviewApplication', 'files')
-            ->whereRelation('reviewApplication', 'status', ReviewApplicationStatus::APPROVED->value)
+        $query = $query->with('profile', 'reviewApplication')
+            ->whereIn('role', [UserRole::AGENCY->value, UserRole::CUSTOMER->value])
+            ->whereHas('reviewApplication', function (Builder $query) {
+                $query->whereIn('status', ReviewApplicationStatus::values());
+                $query->where('role', UserRole::AGENCY->value);
+            })
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
@@ -76,8 +86,8 @@ class AgencyResource extends Resource
     {
         return [
             'index' => ListAgencies::route('/'),
-            'create' => CreateAgency::route('/create'),
             'edit' => EditAgency::route('/{record}/edit'),
+            'view' => ViewAgencies::route('/{record}'),
         ];
     }
 

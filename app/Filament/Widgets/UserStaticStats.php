@@ -3,7 +3,8 @@
 namespace App\Filament\Widgets;
 
 use App\Enums\ReviewApplicationStatus;
-use App\Filament\Clusters\KTV\Resources\KTVs\KTVResource;
+use App\Filament\Clusters\ReviewApplication\Resources\Agencies\AgencyResource;
+use App\Filament\Clusters\ReviewApplication\Resources\KTVs\KTVResource;
 use App\Services\DashboardService;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
@@ -64,10 +65,18 @@ class UserStaticStats extends BaseWidget
                                 ->schema([
                                     Stat::make(__('dashboard.user_static_stats.total_agency'), $data['total_agency'])
                                         ->icon(Heroicon::UserGroup)
+                                        ->url(AgencyResource::getUrl('index'))
                                         ->chart([7, 2, 10, 3, 15, 4, 17])
                                         ->color('info'),
                                     Stat::make(__('dashboard.user_static_stats.pending_agency'), $data['pending_agency'])
                                         ->icon(Heroicon::OutlinedUserGroup)
+                                        ->url(AgencyResource::getUrl('index',[
+                                            'filters' => [
+                                                'review_status' => [
+                                                    'value' => ReviewApplicationStatus::PENDING->value,
+                                                ],
+                                            ]
+                                        ]))
                                         ->chart([7, 2, 10, 3, 15, 4, 17])
                                         ->color('warning'),
                                 ])

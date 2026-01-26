@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Filament\Clusters\KTV\Resources\KTVs\Pages;
+namespace App\Filament\Clusters\ReviewApplication\Resources\KTVs\Pages;
 
-use App\Filament\Clusters\KTV\Resources\KTVs\KTVResource;
+use App\Filament\Clusters\ReviewApplication\Resources\KTVs\KTVResource;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 

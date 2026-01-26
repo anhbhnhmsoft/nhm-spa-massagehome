@@ -384,13 +384,12 @@ class UserService extends BaseService
                 );
             }
             // Tạo lịch làm việc mặc định cho KTV
-             if ($user->role === UserRole::KTV) {
+             if ($apply->role === UserRole::KTV) {
                 $user->schedule()->create([
                     'is_working' => true,
                     'working_schedule' => KTVConfigSchedules::getDefaultSchema(),
                 ]);
             }
-
 
             SendNotificationJob::dispatch(
                 userId: $user->id,

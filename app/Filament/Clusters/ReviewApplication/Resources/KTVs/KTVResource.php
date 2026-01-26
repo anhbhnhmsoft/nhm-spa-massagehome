@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Filament\Clusters\KTV\Resources\KTVs;
+namespace App\Filament\Clusters\ReviewApplication\Resources\KTVs;
 
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserRole;
-use App\Filament\Clusters\KTV\Resources\KTVs\Tables\KTVsTable;
-use App\Filament\Clusters\KTV\Resources\KTVs\Pages\ListKTVs;
-use App\Filament\Clusters\KTV\Resources\KTVs\Schemas\KTVForm;
-use App\Filament\Clusters\KTV\Resources\KTVs\Pages\EditKTV;
+use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Tables\KTVsTable;
+use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Pages\ListKTVs;
+use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Schemas\KTVForm;
+use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Pages\EditKTV;
 use App\Models\User;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -21,11 +21,11 @@ class KTVResource extends Resource
 {
     protected static ?string $model = User::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::User;
 
     public static function getNavigationGroup(): \UnitEnum|string|null
     {
-        return __('filament.navigation.ktv');
+        return __('admin.nav.review_application');
     }
 
     protected static ?string $recordTitleAttribute = 'User';

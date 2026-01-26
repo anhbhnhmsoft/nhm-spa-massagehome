@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Clusters\KTV\Resources\KTVs\Schemas;
+namespace App\Filament\Clusters\ReviewApplication\Resources\KTVs\Schemas;
 
 use App\Core\Helper;
 use App\Enums\DirectFile;

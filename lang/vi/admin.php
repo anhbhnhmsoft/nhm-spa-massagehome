@@ -3,7 +3,7 @@ return
     [
         'currency' => 'VND',
         "nav" => [
-            "ktv" => "Quản lý kỹ thuật viên",
+            "review_application" => "Quản lý hồ sơ",
             "category" => "Quản lý danh mục",
             'agency' => 'Quản lý đối tác',
             "service" => 'Quản lý dịch vụ',
@@ -67,6 +67,8 @@ return
                 'close' => 'Đóng',
                 'create' => 'Tạo mới',
                 'view_service' => 'Dịch vụ của KTV',
+                'view_ktv_manager_agency' => 'Danh sách KTV của đối tác',
+                'agency_dashboard' => 'Thống kê của đối tác',
             ],
             'tooltip' => [
                 'view' => 'Xem chi tiết ',
@@ -74,6 +76,7 @@ return
                 'delete' => 'Xóa này',
                 'restore' => 'Khôi phục đã xóa',
                 'force_delete' => 'Xóa vĩnh viễn khỏi hệ thống',
+                'cant_not_save_review_application' => 'Không thể lưu hồ sơ đang chờ duyệt hoặc đã bị từ chối',
             ],
             'modal' => [
                 'delete_title' => 'Xóa ',
@@ -205,7 +208,7 @@ return
             ],
         ],
         "ktv" => [
-            "label" => "Quản lý KTV",
+            "label" => "Kĩ thuật viên",
             "model_label" => "Kỹ thuật viên",
             "action" => [
                 "view_services" => "Xem dịch vụ"
@@ -263,26 +266,35 @@ return
                 'registration_info' => 'Thông tin đăng ký',
                 'system_info' => 'Thông tin hệ thống',
                 'file_type' => 'Loại file',
-                'bio' => 'Giới thiệu doanh nghiệp',
+                'bio_vi' => 'Giới thiệu doanh nghiệp (Tiếng Việt)',
+                'bio_en' => 'Giới thiệu doanh nghiệp (Tiếng Anh)',
+                'bio_cn' => 'Giới thiệu doanh nghiệp (Tiếng Trung)',
+                'location_info' => 'Thông tin địa điểm',
+                'location_info_desc' => 'Địa điểm mà Đối tác sẽ làm việc, hãy tìm kiếm địa chỉ hoặc tra thông tin địa chỉ trên Google Maps, lấy vĩ độ và kinh độ của vị trí đó.',
                 'status' => 'Trạng thái',
                 'note' => 'Ghi chú',
+                'latitude' => 'Vĩ độ',
+                'longitude' => 'Kinh độ',
+                'identity_card_front' => 'Hình ảnh mặt trước CCCD',
+                'identity_card_back' => 'Hình ảnh mặt sau CCCD',
+                'face_with_identity_card' => 'Hình ảnh chụp cùng CCCD',
             ],
             'actions' => [
-                'approve' => [
-                    'label' => 'Duyệt hồ sơ',
-                    'heading' => 'Duyệt hồ sơ Đối tác',
-                    'description' => 'Bạn có chắc chắn muốn duyệt hồ sơ này?',
-                    'reason_label' => 'Lý do từ chối',
-                    'success_title' => 'Duyệt hồ sơ thành công',
-                    'success_body' => 'Hồ sơ Đối tác đã được duyệt.',
+                "approve" => [
+                    "label" => "Duyệt hồ sơ",
+                    "heading" => "Duyệt hồ sơ Đối tác",
+                    "description" => "Bạn có chắc chắn muốn duyệt hồ sơ này?",
+                    "success_title" => "Duyệt hồ sơ thành công",
+                    "success_body" => "Hồ sơ Đối tác đã được duyệt.",
+                    "error_title" => "Duyệt hồ sơ thất bại",
                 ],
-                'reject' => [
-                    'label' => 'Từ chối hồ sơ',
-                    'heading' => 'Từ chối hồ sơ Đối tác',
-                    'description' => 'Bạn có chắc chắn muốn từ chối hồ sơ này?',
-                    'reason_label' => 'Lý do từ chối',
-                    'success_title' => 'Từ chối hồ sơ thành công',
-                    'success_body' => 'Hồ sơ Đối tác đã bị từ chối.',
+                "reject" => [
+                    "label" => "Từ chối hồ sơ",
+                    "heading" => "Từ chối hồ sơ Đối tác",
+                    "description" => "Bạn có chắc chắn muốn từ chối hồ sơ này?",
+                    "reason_label" => "Lý do từ chối",
+                    "success_title" => "Từ chối hồ sơ thành công",
+                    "success_body" => "Hồ sơ KTV đã bị từ chối.",
                 ],
             ],
         ],
