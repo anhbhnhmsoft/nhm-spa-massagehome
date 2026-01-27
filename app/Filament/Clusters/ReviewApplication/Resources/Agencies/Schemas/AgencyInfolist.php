@@ -10,7 +10,9 @@ class AgencyInfolist
 {
     public static function configure(Schema $schema): Schema
     {
-        return $schema->components([
+        return $schema
+            ->hidden()
+            ->components([
             Section::make()
                 ->schema([
 

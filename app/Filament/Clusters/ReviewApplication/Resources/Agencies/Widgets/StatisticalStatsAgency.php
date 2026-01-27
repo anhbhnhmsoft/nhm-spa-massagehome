@@ -1,16 +1,17 @@
 <?php
 
-namespace App\Filament\Clusters\ReviewApplication\Resources\KTVs\Widgets;
+namespace App\Filament\Clusters\ReviewApplication\Resources\Agencies\Widgets;
 
+use App\Enums\DateRangeDashboard;
 use App\Services\DashboardService;
 use App\Services\PaymentService;
 use Filament\Schemas\Components\Grid;
 use Filament\Support\Icons\Heroicon;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
-use Illuminate\Database\Eloquent\Model;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Illuminate\Database\Eloquent\Model;
 
-class StatisticalStatsKTV extends BaseWidget
+class StatisticalStatsAgency extends BaseWidget
 {
     public ?Model $record = null;
 
@@ -24,12 +25,13 @@ class StatisticalStatsKTV extends BaseWidget
             withTotal: true
         );
 
-        $generalKtvDashboard = $dashboardService->getGeneralKtvDashboard(
+        $generalAgencyDashboard = $dashboardService->getAgencyDashboardData(
             userId: $this->record?->id,
+            range: DateRangeDashboard::ALL
         );
 
         $dataWallet = $userWalletInfo->getData();
-        $dataDashboard = $generalKtvDashboard->getData();
+        $dataDashboard = $generalAgencyDashboard->getData();
 
         return [
             Grid::make()
@@ -37,21 +39,21 @@ class StatisticalStatsKTV extends BaseWidget
                 ->columns(3)
                 ->schema([
                     Stat::make(
-                        label: __('admin.ktv.infolist.balance'),
+                        label: __('admin.agency.infolist.balance'),
                         value: number_format(($dataWallet['wallet']->balance ?? 0), 2)
                     )
                         ->description(__('admin.currency'))
                         ->icon(Heroicon::Wallet)
                         ->color('info'),
                     Stat::make(
-                        label: __('admin.ktv.infolist.total_deposit'),
+                        label: __('admin.agency.infolist.total_deposit'),
                         value: number_format(($dataWallet['total_deposit'] ?? 0), 2)
                     )
                         ->icon(Heroicon::ArrowUp)
                         ->description(__('admin.currency'))
                         ->color('success'),
                     Stat::make(
-                        label: __('admin.ktv.infolist.total_withdrawal'),
+                        label: __('admin.agency.infolist.total_withdrawal'),
                         value: number_format(($dataWallet['total_withdrawal'] ?? 0), 2)
                     )
                         ->icon(Heroicon::ArrowDown)
@@ -60,52 +62,45 @@ class StatisticalStatsKTV extends BaseWidget
                 ]),
             Grid::make()
                 ->columnSpanFull()
-                ->columns(6)
+                ->columns(5)
                 ->schema([
                     Stat::make(
-                        label: __('admin.ktv.infolist.total_income'),
-                        value: number_format(($dataDashboard['total_income'] ?? 0), 2)
+                        label: __('admin.agency.infolist.total_profit_referral_ktv'),
+                        value: number_format(($dataDashboard['total_profit_referral_ktv'] ?? 0), 2)
                     )
-                        ->description(__('admin.ktv.infolist.total_income_desc'))
+                        ->description(__('admin.agency.infolist.total_profit_referral_ktv_desc'))
                         ->icon(Heroicon::CurrencyDollar)
                         ->color('info'),
                     Stat::make(
-                        label: __('admin.ktv.infolist.received_income'),
-                        value: number_format(($dataDashboard['received_income'] ?? 0), 2)
+                        label: __('admin.agency.infolist.total_profit_affiliate'),
+                        value: number_format(($dataDashboard['total_profit_affiliate'] ?? 0), 2)
                     )
-                        ->description(__('admin.ktv.infolist.received_income_desc'))
+                        ->description(__('admin.agency.infolist.total_profit_affiliate'))
                         ->icon(Heroicon::CurrencyDollar)
-                        ->color('success'),
+                        ->color('info'),
                     Stat::make(
-                        label: __('admin.ktv.infolist.total_customers'),
-                        value: number_format(($dataDashboard['total_customers'] ?? 0), 0)
+                        label: __('admin.agency.infolist.total_referral_customer'),
+                        value: number_format(($dataDashboard['total_referral_customer'] ?? 0), 2)
                     )
-                        ->description(__('admin.ktv.infolist.total_customers_desc'))
+                        ->description(__('admin.agency.infolist.total_referral_customer_desc'))
                         ->icon(Heroicon::UserGroup)
                         ->color('info'),
                     Stat::make(
-                        label: __('admin.ktv.infolist.total_bookings'),
-                        value: number_format(($dataDashboard['total_bookings'] ?? 0), 0)
+                        label: __('admin.agency.infolist.total_customer_order_ktv'),
+                        value: number_format(($dataDashboard['total_customer_order_ktv'] ?? 0), 2)
                     )
-                        ->description(__('admin.ktv.infolist.total_bookings_desc'))
-                        ->icon(Heroicon::Calendar)
+                        ->description(__('admin.agency.infolist.total_customer_order_ktv_desc'))
+                        ->icon(Heroicon::UserGroup)
                         ->color('info'),
                     Stat::make(
-                        label: __('admin.ktv.infolist.affiliate_income'),
-                        value: number_format(($dataDashboard['affiliate_income'] ?? 0), 0)
+                        label: __('admin.agency.infolist.total_customer_affiliate_order'),
+                        value: number_format(($dataDashboard['total_customer_affiliate_order'] ?? 0), 2)
                     )
-                        ->description(__('admin.ktv.infolist.affiliate_income_desc'))
-                        ->icon(Heroicon::ShoppingBag)
+                        ->description(__('admin.agency.infolist.total_customer_affiliate_order'))
+                        ->icon(Heroicon::UserGroup)
                         ->color('info'),
-                    Stat::make(
-                        label: __('admin.ktv.infolist.total_reviews'),
-                        value: number_format(($dataDashboard['total_reviews'] ?? 0), 0)
-                    )
-                        ->description(__('admin.ktv.infolist.total_reviews_desc'))
-                        ->icon(Heroicon::ChatBubbleBottomCenter)
-                        ->color('info'),
+
                 ])
         ];
     }
-
 }

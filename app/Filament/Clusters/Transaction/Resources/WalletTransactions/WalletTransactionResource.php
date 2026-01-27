@@ -65,6 +65,10 @@ class WalletTransactionResource extends Resource
     public static function getRecordRouteBindingEloquentQuery(): Builder
     {
         return parent::getRecordRouteBindingEloquentQuery()
+            ->with([
+                'wallet',
+                'wallet.user',
+            ])
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

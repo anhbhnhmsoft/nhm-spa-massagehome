@@ -15,6 +15,7 @@ use Filament\Actions\ActionGroup;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\ViewField;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
@@ -27,39 +28,43 @@ class WalletTransactionsTable
             ->columns([
                 TextColumn::make('wallet.user.name')
                     ->label(__('admin.transaction.fields.user'))
-                    ->searchable(),
-                TextColumn::make('transaction_code')
-                    ->label(__('admin.transaction.fields.code'))
+                    ->description(fn($record) => $record->wallet->user->phone)
                     ->searchable(),
                 TextColumn::make('type')
                     ->label(__('admin.transaction.fields.type'))
-                    ->formatStateUsing(fn($state) => WalletTransactionType::tryFrom($state)?->name ? __('admin.transaction.type.' . WalletTransactionType::tryFrom($state)->name) : '')
+                    ->formatStateUsing(fn($state) => WalletTransactionType::tryFrom($state)?->label())
                     ->badge(),
+                TextColumn::make('transaction_code')
+                    ->label(__('admin.transaction.fields.code'))
+                    ->searchable(),
                 TextColumn::make('point_amount')
                     ->label(__('admin.transaction.fields.amount'))
-                    ->numeric(2)
-                    ->suffix('vnd'),
+                    ->numeric(2),
                 TextColumn::make('status')
                     ->label(__('admin.transaction.fields.status'))
-                    ->formatStateUsing(fn($state) => WalletTransactionStatus::tryFrom($state)?->name ? __('admin.transaction.status.' . WalletTransactionStatus::tryFrom($state)->name) : '')
+                    ->formatStateUsing(fn($state) => WalletTransactionStatus::tryFrom($state)?->label() ?? "")
                     ->color(fn($state) => match (WalletTransactionStatus::tryFrom($state)) {
                         WalletTransactionStatus::PENDING => 'warning',
                         WalletTransactionStatus::COMPLETED => 'success',
-                        WalletTransactionStatus::FAILED => 'danger',
+                        WalletTransactionStatus::FAILED, WalletTransactionStatus::CANCELLED => 'danger',
+                        WalletTransactionStatus::REFUNDED => 'info',
                         default => 'secondary',
                     })
                     ->badge(),
                 TextColumn::make('created_at')
                     ->label(__('admin.transaction.fields.created_at'))
-                    ->dateTime()
+                    ->dateTime("d-M-Y H:i")
                     ->sortable(),
             ])
+            ->filtersLayout(FiltersLayout::AboveContent)
+            ->filtersFormColumns(5)
             ->filters([
-                TrashedFilter::make(),
                 SelectFilter::make('type')
-                    ->options(collect(WalletTransactionType::cases())->mapWithKeys(fn($case) => [$case->value => $case->name])),
+                    ->label(__('admin.transaction.fields.type'))
+                    ->options(WalletTransactionType::toOptions()),
                 SelectFilter::make('status')
-                    ->options(collect(WalletTransactionStatus::cases())->mapWithKeys(fn($case) => [$case->value => $case->name])),
+                    ->label(__('admin.transaction.fields.status'))
+                    ->options(WalletTransactionStatus::toOptions()),
             ])
             ->recordActions([
                 ActionGroup::make([
@@ -100,7 +105,7 @@ class WalletTransactionsTable
                         ->color('info')
                         ->visible(fn($record) => $record->type === WalletTransactionType::WITHDRAWAL->value)
                         ->action(function ($record) {
-                            $record->update(['status' => WalletTransactionStatus::COMPLETED]);
+                            $record->update(['status' => WalletTransactionStatus::COMPLETED->value]);
                         })
                         ->hidden(fn($record) => $record->status !== WalletTransactionStatus::PENDING->value)
                         ->modal(true)
@@ -133,7 +138,7 @@ class WalletTransactionsTable
                         ->requiresConfirmation(),
                 ])
             ])
-            ->defaultSort('created_at', 'desc')
-            ->poll('1s');
+            ->emptyStateHeading(__('admin.transaction.empty_state.heading'))
+            ->defaultSort('created_at', 'desc');
     }
 }

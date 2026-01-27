@@ -18,6 +18,34 @@ enum WalletTransactionType: int
     case DEPOSIT_WECHAT_PAY = 12; // Nạp tiền qua Wechat Pay
 
 
+    public function label(): string
+    {
+        return match ($this) {
+            self::DEPOSIT_QR_CODE => __('admin.transaction.type.DEPOSIT_QR_CODE'),
+            self::DEPOSIT_ZALO_PAY => __('admin.transaction.type.DEPOSIT_ZALO_PAY'),
+            self::DEPOSIT_MOMO_PAY => __('admin.transaction.type.DEPOSIT_MOMO_PAY'),
+            self::WITHDRAWAL => __('admin.transaction.type.WITHDRAWAL'),
+            self::PAYMENT => __('admin.transaction.type.PAYMENT'),
+            self::AFFILIATE => __('admin.transaction.type.AFFILIATE'),
+            self::PAYMENT_FOR_KTV => __('admin.transaction.type.PAYMENT_FOR_KTV'),
+            self::REFUND => __('admin.transaction.type.REFUND'),
+            self::RETRIEVE_PAYMENT_REFUND_KTV => __('admin.transaction.type.RETRIEVE_PAYMENT_REFUND_KTV'),
+            self::REFERRAL_KTV => __('admin.transaction.type.REFERRAL_KTV'),
+            self::REFERRAL_INVITE_KTV_REWARD => __('admin.transaction.type.REFERRAL_INVITE_KTV_REWARD'),
+            self::DEPOSIT_WECHAT_PAY => __('admin.transaction.type.DEPOSIT_WECHAT_PAY'),
+        };
+    }
+
+    public static function toOptions(): array
+    {
+        $options = [];
+        foreach (self::cases() as $case) {
+            $options[$case->value] = $case->label();
+        }
+        return $options;
+    }
+
+
     // Trạng thái nạp vào ví
     public static function incomeStatus(): array
     {

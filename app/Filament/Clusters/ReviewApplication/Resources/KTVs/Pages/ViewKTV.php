@@ -4,7 +4,9 @@ namespace App\Filament\Clusters\ReviewApplication\Resources\KTVs\Pages;
 
 use App\Enums\DateRangeDashboard;
 use App\Filament\Clusters\ReviewApplication\Resources\KTVs\KTVResource;
+use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Widgets\BookingListKtv;
 use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Widgets\StatisticalStatsKTV;
+use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Widgets\TransactionKtvTable;
 use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Widgets\UserReferralLeaderKtvTableWidget;
 use App\Services\DashboardService;
 use App\Services\PaymentService;
@@ -32,7 +34,9 @@ class ViewKTV extends ViewRecord
     {
         return [
             StatisticalStatsKTV::make(),
+            BookingListKtv::make(),
             UserReferralLeaderKtvTableWidget::make(),
+            TransactionKtvTable::make(),
         ];
     }
 }

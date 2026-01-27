@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Clusters\ReviewApplication\Resources\KTVs\Widgets;
+namespace App\Filament\Clusters\ReviewApplication\Resources\Agencies\Widgets;
 
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserRole;
@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class UserReferralLeaderKtvTableWidget extends TableWidget
+class UserReferralLeaderAgencyTableWidget extends TableWidget
 {
     public ?Model $record = null;
 
@@ -21,7 +21,7 @@ class UserReferralLeaderKtvTableWidget extends TableWidget
 
     protected function getTableHeading(): string|Htmlable|null
     {
-        return __('admin.ktv.infolist.list_referral_leader');
+        return __('admin.agency.infolist.list_referral_leader');
     }
 
     public function table(Table $table): Table

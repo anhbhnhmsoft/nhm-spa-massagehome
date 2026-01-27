@@ -112,11 +112,7 @@ class BookingRepository extends BaseRepository
                     ->where('role', UserRole::KTV->value);
             })
             ->whereBetween('created_at', [$from->format('Y-m-d H:i:s'), $to->format('Y-m-d H:i:s')])
-            ->whereIn('status', [
-                BookingStatus::CONFIRMED->value,
-                BookingStatus::ONGOING->value,
-                BookingStatus::COMPLETED->value
-            ])
+            ->where('status', BookingStatus::COMPLETED->value)
             ->distinct('user_id')
             ->count('user_id');
     }
@@ -136,11 +132,7 @@ class BookingRepository extends BaseRepository
                     ->where('role', UserRole::CUSTOMER->value);
             })
             ->whereBetween('created_at', [$from->format('Y-m-d H:i:s'), $to->format('Y-m-d H:i:s')])
-            ->whereIn('status', [
-                BookingStatus::CONFIRMED->value,
-                BookingStatus::ONGOING->value,
-                BookingStatus::COMPLETED->value
-            ])
+            ->where('status', BookingStatus::COMPLETED->value)
             ->distinct('user_id')
             ->count('user_id');
     }

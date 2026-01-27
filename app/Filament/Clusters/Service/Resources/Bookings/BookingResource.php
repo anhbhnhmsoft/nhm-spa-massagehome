@@ -66,6 +66,11 @@ class BookingResource extends Resource
     public static function getRecordRouteBindingEloquentQuery(): Builder
     {
         return parent::getRecordRouteBindingEloquentQuery()
+            ->with([
+                'ktvUser',
+                'user',
+                'service'
+            ])
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

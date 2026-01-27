@@ -4,6 +4,9 @@ namespace App\Filament\Clusters\ReviewApplication\Resources\Agencies\Pages;
 
 
 use App\Filament\Clusters\ReviewApplication\Resources\Agencies\AgencyResource;
+use App\Filament\Clusters\ReviewApplication\Resources\Agencies\Widgets\StatisticalStatsAgency;
+use App\Filament\Clusters\ReviewApplication\Resources\Agencies\Widgets\TransactionAgencyTable;
+use App\Filament\Clusters\ReviewApplication\Resources\Agencies\Widgets\UserReferralLeaderAgencyTableWidget;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewAgencies extends ViewRecord
@@ -18,7 +21,9 @@ class ViewAgencies extends ViewRecord
     public function getHeaderWidgets(): array
     {
         return [
-
+            StatisticalStatsAgency::make(),
+            TransactionAgencyTable::make(),
+            UserReferralLeaderAgencyTableWidget::make(),
         ];
     }
 }
