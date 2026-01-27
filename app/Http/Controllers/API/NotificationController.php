@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Core\Controller\BaseController;
 use App\Core\Controller\ListRequest;
+use App\Enums\NotificationStatus;
 use App\Http\Resources\Notification\NotificationResource;
 use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
@@ -23,14 +24,14 @@ class NotificationController extends BaseController
     public function list(ListRequest $request): JsonResponse
     {
         $dto = $request->getFilterOptions();
-        $result = $this->notificationService->getNotifications($dto);
-        
-        if ($result->isError()) {
-            return $this->sendError(
-                message: $result->getMessage(),
-            );
-        }
-        
+        $user = $request->user();
+        // Lọc theo user_id
+        $dto->addFilter('user_id', $user->id);
+        // Lọc theo nhiều status (chỉ lấy noti hợp để hiển thị)
+        $dto->addFilter('statuses', [NotificationStatus::SENT->value, NotificationStatus::READ->value]);
+
+        $result = $this->notificationService->getMobileNotificationPagination($dto);
+
         $data = $result->getData();
         return $this->sendSuccess(
             data: NotificationResource::collection($data)->response()->getData(),
@@ -42,14 +43,19 @@ class NotificationController extends BaseController
      */
     public function detail(Request $request, int|string $id): JsonResponse
     {
-        $result = $this->notificationService->getNotificationDetail($id);
-        
+        $user = $request->user();
+        // Lọc theo user_id
+        $result = $this->notificationService->getMobileNotificationDetail(
+            notificationId: $id,
+            userId: $user->id,
+        );
+
         if ($result->isError()) {
             return $this->sendError(
                 message: $result->getMessage(),
             );
         }
-        
+
         return $this->sendSuccess(
             data: new NotificationResource($result->getData()),
         );
@@ -60,14 +66,18 @@ class NotificationController extends BaseController
      */
     public function markAsRead(Request $request, int|string $id): JsonResponse
     {
-        $result = $this->notificationService->markAsRead($id);
-        
+        $user = $request->user();
+        $result = $this->notificationService->markAsReadNotificationMobile(
+            notificationId: $id,
+            userId: $user->id,
+        );
+
         if ($result->isError()) {
             return $this->sendError(
                 message: $result->getMessage(),
             );
         }
-        
+
         return $this->sendSuccess(
             data: new NotificationResource($result->getData()),
             message: __('notification.marked_as_read'),
@@ -77,16 +87,20 @@ class NotificationController extends BaseController
     /**
      * Lấy số lượng notifications chưa đọc
      */
-    public function unreadCount(): JsonResponse
+    public function unreadCount(Request $request): JsonResponse
     {
-        $result = $this->notificationService->getUnreadCount();
-        
+        $user = $request->user();
+
+        $result = $this->notificationService->getUnreadCountNotificationMobile(
+            userId: $user->id,
+        );
+
         if ($result->isError()) {
             return $this->sendError(
                 message: $result->getMessage(),
             );
         }
-        
+
         return $this->sendSuccess(
             data: $result->getData(),
         );

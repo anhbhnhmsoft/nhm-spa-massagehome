@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Clusters\Category\Resources\Categories\Schemas;
+namespace App\Filament\Clusters\Service\Resources\Categories\Schemas;
 
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;

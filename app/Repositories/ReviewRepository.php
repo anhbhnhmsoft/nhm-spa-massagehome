@@ -67,4 +67,19 @@ class ReviewRepository extends BaseRepository
             ->whereBetween('created_at', [$from, $to])
             ->count();
     }
+
+    /**
+     * Lấy tổng số review của user trong khoảng thời gian
+     * @param int $userId
+     * @param Carbon $from
+     * @param Carbon $to
+     * @return int
+     */
+    public function countReviewByUser(int $userId, Carbon $from, Carbon $to)
+    {
+        return $this->query()
+            ->where('user_id', $userId)
+            ->whereBetween('created_at', [$from, $to])
+            ->count();
+    }
 }

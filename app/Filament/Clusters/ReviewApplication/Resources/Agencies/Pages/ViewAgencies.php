@@ -14,4 +14,11 @@ class ViewAgencies extends ViewRecord
     {
         return __('admin.agency.label');
     }
+
+    public function getHeaderWidgets(): array
+    {
+        return [
+
+        ];
+    }
 }

@@ -15,8 +15,15 @@ return
             "label" => "Kỹ thuật viên"
         ],
         "common" => [
+            'yes' => 'Có',
+            'no' => 'Không',
             'back' => 'Quay lại',
             'minute' => 'phút',
+            'hour' => 'giờ',
+            'day' => 'ngày',
+            'week' => 'tuần',
+            'month' => 'tháng',
+            'year' => 'năm',
             'table' => [
                 'id' => 'ID',
                 'name' => 'Tên',
@@ -69,6 +76,7 @@ return
                 'view_service' => 'Dịch vụ của KTV',
                 'view_ktv_manager_agency' => 'Danh sách KTV của đối tác',
                 'agency_dashboard' => 'Thống kê của đối tác',
+                'ktv_dashboard' => 'Thống kê của KTV',
             ],
             'tooltip' => [
                 'view' => 'Xem chi tiết ',
@@ -209,6 +217,9 @@ return
         ],
         "ktv" => [
             "label" => "Kĩ thuật viên",
+            'relation_manager' => [
+                'reviews_received' => 'Đánh giá',
+            ],
             "model_label" => "Kỹ thuật viên",
             "action" => [
                 "view_services" => "Xem dịch vụ"
@@ -226,6 +237,31 @@ return
                 'upload_success' => 'Tải lên ảnh thành công.',
                 'delete_success' => 'Xóa ảnh thành công.',
             ],
+            'empty_state' => [
+                'heading' => 'Chưa có KTV nào',
+            ],
+            'infolist'=>[
+                'label_tab' => 'Thống kê',
+                'info_label' => 'Thông tin KTV',
+                'is_leader' => 'Là trưởng nhóm ?',
+                'wallet' => 'Ví tiền',
+                'balance' => 'Số dư',
+                'total_deposit' => 'Tổng số tiền vào',
+                'total_withdrawal' => 'Tổng số tiền rút',
+                'total_income' => 'Tổng số tiền thu từ dịch vụ',
+                'total_income_desc' => 'Tổng số tiền thu từ tất cả các dịch vụ đã hoàn thành.',
+                'received_income' => 'Số tiền thực tế thu được',
+                'received_income_desc' => 'Số tiền thực tế thu được từ tất cả các dịch vụ đã hoàn thành, sau khi trừ đi triết khấu.',
+                'total_customers' => 'Số KH đã làm',
+                'total_customers_desc' => 'Tổng số khách hàng đã đặt dịch vụ từ KTV này.',
+                'total_bookings' => 'Tổng số đơn đặt lịch',
+                'total_bookings_desc' => 'Tổng số đơn đặt lịch đã được KTV nhận.',
+                'affiliate_income' => 'Thu nhập Affiliate',
+                'affiliate_income_desc' => 'Số tiền thu được từ giới thiệu khách hàng.',
+                'total_reviews' => 'Tổng số lượt review',
+                'total_reviews_desc' => 'Tổng số lượt review đã được KTV nhận.',
+                'list_referral_leader' => 'Danh sách KTV giới thiệu',
+            ]
         ],
         "user_role" => [
             "customer" => "Khách hàng",
@@ -505,7 +541,7 @@ return
                 'service' => 'Dịch vụ',
                 'rating' => 'Đánh giá',
                 'comment' => 'Bình luận',
-                'hidden' => 'Ẩn',
+                'hidden' => 'Ẩn danh',
                 'created_at' => 'Ngày tạo',
                 'updated_at' => 'Ngày cập nhật',
                 'user' => 'Nhân viên',
@@ -712,9 +748,9 @@ return
             ],
         ],
         'static_contract' => [
-            'label' => 'Hợp đồng tĩnh',
-            'navigation_label' => 'Quản lý hợp đồng tĩnh',
-            'label_plural' => 'Hợp đồng tĩnh',
+            'label' => 'Quản lý chính sách',
+            'navigation_label' => 'Quản lý chính sách',
+            'label_plural' => 'Chính sách',
             'fields' => [
                 'contract' => 'Hợp đồng',
                 'note' => [

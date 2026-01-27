@@ -25,15 +25,6 @@ class StaticContractsTable
                 TextColumn::make('type')
                     ->label(__('admin.static_contract.fields.type'))
                     ->formatStateUsing(fn($state) => ContractFileType::getLabel($state)),
-                TextColumn::make('slug')
-                    ->label(__('admin.static_contract.fields.slug'))
-                    ->searchable()
-                    ->sortable(),
-                TextColumn::make('note')
-                    ->label(__('admin.static_contract.fields.note.label'))
-                    ->searchable()
-                    ->distinctList()
-                    ->sortable(),
                 TextColumn::make('created_at')
                     ->label(__('admin.static_contract.fields.created_at'))
                     ->dateTime()
@@ -42,11 +33,6 @@ class StaticContractsTable
             ->defaultSort('created_at', 'desc')
             ->recordActions([
                 ActionGroup::make([
-                    ViewAction::make()
-                        ->label(__('admin.common.action.view'))
-                        ->tooltip(__('admin.common.tooltip.view'))
-                        ->icon('heroicon-o-eye'),
-
                     EditAction::make()
                         ->label(__('admin.common.action.edit'))
                         ->tooltip(__('admin.common.tooltip.edit'))
@@ -68,9 +54,6 @@ class StaticContractsTable
                         ->icon('heroicon-o-arrow-path')
                         ->visible(fn($record) => $record->trashed()),
                 ]),
-            ])
-            ->filters([
-                TrashedFilter::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

@@ -70,6 +70,12 @@ class BookingRepository extends BaseRepository
         return $query;
     }
 
+    /**
+     * Lấy thống kê đặt lịch trong khoảng thời gian
+     * @param Carbon $from
+     * @param Carbon $to
+     * @return \stdClass|null
+     */
     public function getBookingStats(Carbon $from, Carbon $to)
     {
         return $this->query()
@@ -137,5 +143,55 @@ class BookingRepository extends BaseRepository
             ])
             ->distinct('user_id')
             ->count('user_id');
+    }
+
+    /**
+     * Lấy doanh thu tổng trong khoảng thời gian của KTV
+     * @param int $ktvId - ID của KTV
+     * @param Carbon $from
+     * @param Carbon $to
+     * @return int
+     */
+    public function getKtvTotalIncome(int $ktvId,Carbon $from, Carbon $to): int
+    {
+        return $this->query()
+            ->where('ktv_user_id', $ktvId)
+            ->whereBetween('created_at', [$from->format('Y-m-d H:i:s'), $to->format('Y-m-d H:i:s')])
+            ->where('status', BookingStatus::COMPLETED->value)
+            ->sum('price');
+    }
+
+
+    /**
+     * Lấy số lượng đơn đã đặt lịch KTV trong khoảng thời gian
+     * @param int $ktvId - ID của KTV
+     * @param Carbon $from
+     * @param Carbon $to
+     * @return int
+     */
+    public function getKtvTotalCustomerBooking(int $ktvId, Carbon $from, Carbon $to): int
+    {
+        return $this->query()
+            ->where('ktv_user_id', $ktvId)
+            ->where('status', BookingStatus::COMPLETED->value)
+            ->whereBetween('created_at', [$from->format('Y-m-d H:i:s'), $to->format('Y-m-d H:i:s')])
+            ->distinct('user_id')
+            ->count('user_id');
+    }
+
+    /**
+     * Lấy số lượng đơn đã đặt lịch KTV trong khoảng thời gian
+     * @param int $ktvId - ID của KTV
+     * @param Carbon $from
+     * @param Carbon $to
+     * @return int
+     */
+    public function getKtvTotalBooking(int $ktvId, Carbon $from, Carbon $to): int
+    {
+        return $this->query()
+            ->where('ktv_user_id', $ktvId)
+            ->whereBetween('created_at', [$from->format('Y-m-d H:i:s'), $to->format('Y-m-d H:i:s')])
+            ->where('status', BookingStatus::COMPLETED->value)
+            ->count();
     }
 }

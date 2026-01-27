@@ -8,6 +8,8 @@
   - job_batches
   - failed_jobs
   - personal_access_tokens
+  - notifications
+
 
 # provinces
     # note
@@ -458,9 +460,9 @@
     - softDeletes
     - timestamps
 
-# notifications
+# mobile_notifications
     # note
-    - Bảng notifications lưu trữ thông tin các thông báo gửi đến người dùng.
+    - Bảng mobile_notifications lưu trữ thông tin các thông báo gửi đến người dùng.
 
     # relations
     - Quan hệ 1-n với bảng users.
@@ -536,17 +538,16 @@
     - is_active (boolean, default true) -- Trạng thái kích hoạt
     - softDeletes
     - timestamps
-# static contract 
+
+# static_contract 
     # note
     - Bảng static_contracts lưu trữ thông tin hợp đồng tĩnh.
 
-    # relations
-
     # cấu trúc
     - id (bigint, primary key, auto-increment)
-    - title (json) -- Tiêu đề hợp đồng (lưu trữ dưới dạng JSON đa ngôn ngữ)
     - path (string) -- Đường dẫn file hợp đồng
+    - type (smallint) -- Kiểu hợp đồng (trong enum ContractFileType)
     - note (json, nullable) -- Ghi chú (lưu trữ dưới dạng JSON đa ngôn ngữ)
-    - slug (string, unique) -- Đường dẫn hợp đồng
+    - slug (string, nullable) -- Đường dẫn hợp đồng
     - softDeletes
     - timestamps

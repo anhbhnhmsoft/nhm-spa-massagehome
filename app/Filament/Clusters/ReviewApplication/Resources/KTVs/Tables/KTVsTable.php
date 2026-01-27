@@ -5,6 +5,7 @@ namespace App\Filament\Clusters\ReviewApplication\Resources\KTVs\Tables;
 use App\Enums\Gender;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserRole;
+use App\Filament\Clusters\ReviewApplication\Resources\KTVs\KTVResource;
 use App\Filament\Clusters\Service\Resources\Services\ServiceResource;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -15,13 +16,11 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
-use Filament\Forms\Components\Select;
-use Filament\Resources\Pages\ViewRecord;
+use Filament\Actions\ViewAction;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Filament\Tables\Enums\FiltersLayout;
 
@@ -51,6 +50,12 @@ class KTVsTable
                         return null;
                     })
                     ->label(__('admin.common.table.name')),
+                TextColumn::make('phone')
+                    ->searchable()
+                    ->label(__('admin.common.table.phone')),
+                TextColumn::make('profile.gender')
+                    ->label(__('admin.common.table.gender'))
+                    ->formatStateUsing(fn($state) => Gender::getLabel($state)),
                 TextColumn::make('reviewApplication.status')
                     ->label(__('admin.common.table.status_review'))
                     ->badge()
@@ -58,25 +63,23 @@ class KTVsTable
                     ->formatStateUsing(fn($state) => $state?->label())
                     ->color(fn($state) => $state?->color())
                     ->sortable(),
-                TextColumn::make('phone')
-                    ->searchable()
-                    ->label(__('admin.common.table.phone')),
-                TextColumn::make('profile.gender')
-                    ->label(__('admin.common.table.gender'))
-                    ->formatStateUsing(fn($state) => Gender::getLabel($state)),
-                TextColumn::make('reviewApplication.address')
-                    ->searchable()
-                    ->label(__('admin.common.table.address')),
             ])
             ->recordActions([
                 ActionGroup::make([
-                    EditAction::make('edit')
+                    Action::make('edit')
                         ->label(__('admin.common.action.detail'))
+                        ->url(fn($record): string => KTVResource::getUrl('edit', ['record' => $record]))
                         ->icon('heroicon-o-identification'),
                     Action::make('view_service')
+                        ->hidden(fn($record) => $record->reviewApplication->status !== ReviewApplicationStatus::APPROVED)
                         ->label(__('admin.common.action.view_service'))
                         ->icon('heroicon-o-inbox-stack')
                         ->url(fn($record): string => ServiceResource::getUrl('index', ['filters[user_id][value]' => $record->id])),
+                    Action::make('view')
+                        ->hidden(fn($record) => $record->reviewApplication->status !== ReviewApplicationStatus::APPROVED)
+                        ->label(__('admin.common.action.ktv_dashboard'))
+                        ->url(fn($record): string => KTVResource::getUrl('view', ['record' => $record]))
+                        ->icon(Heroicon::ChartBar),
                     DeleteAction::make()
                         ->label(__('admin.common.action.delete'))
                         ->tooltip(__('admin.common.tooltip.delete'))
@@ -158,7 +161,7 @@ class KTVsTable
                         ->modalSubmitActionLabel(__('admin.common.action.confirm_delete')),
                 ]),
             ])
-            ->defaultSort('reviewApplication.status', 'asc')
-            ->poll('1m');
+            ->emptyStateHeading(__('admin.ktv.empty_state.heading'))
+            ->defaultSort('reviewApplication.status', 'asc');
     }
 }

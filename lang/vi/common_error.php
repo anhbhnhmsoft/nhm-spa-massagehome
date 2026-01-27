@@ -26,4 +26,5 @@ return [
     'unauthenticated' => 'Bạn không có quyền truy cập tài nguyên này.',
     'invalid_role' => 'Vai trò không hợp lệ',
     'cannot_link_self' => 'Bạn không thể liên kết với chính mình',
+    'invalid_parameter' => 'Dữ liệu không hợp lệ',
 ];

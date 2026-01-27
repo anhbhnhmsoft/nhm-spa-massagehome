@@ -484,6 +484,8 @@ return
                 'profit' => '总金额 (已付款)',
                 'revenue' => '收入',
                 'refund' => '退款',
+                'transaction_dashboard' => '交易概览',
+                'income' => '收入',
             ],
             'time' => [
                 'today' => '今天',

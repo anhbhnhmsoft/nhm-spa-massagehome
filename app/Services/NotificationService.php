@@ -10,33 +10,31 @@ use App\Core\Service\ServiceReturn;
 use App\Enums\Language;
 use App\Enums\NotificationStatus;
 use App\Enums\NotificationType;
-use App\Models\Notification;
-use App\Models\User;
 use App\Repositories\NotificationRepository;
+use App\Repositories\UserRepository;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis as RedisFacade;
 
 class NotificationService extends BaseService
 {
     public function __construct(
         protected NotificationRepository $notificationRepository,
+        protected UserRepository         $userRepository,
     )
     {
         parent::__construct();
     }
 
     /**
-     * Lấy danh sách notifications của user với phân trang
+     * Lấy danh sách notifications mobile của user với phân trang
+     * @param FilterDTO $dto
+     * @return ServiceReturn
      */
-    public function getNotifications(FilterDTO $dto): ServiceReturn
+    public function getMobileNotificationPagination(FilterDTO $dto): ServiceReturn
     {
         try {
-            $user = Auth::user();
             $query = $this->notificationRepository->queryNotification();
-
-            // Lọc theo user_id
-            $dto->addFilter('user_id', $user->id);
 
             $query = $this->notificationRepository->filterQuery(
                 query: $query,
@@ -56,7 +54,7 @@ class NotificationService extends BaseService
             return ServiceReturn::success(data: $paginate);
         } catch (\Exception $exception) {
             LogHelper::error(
-                message: "Lỗi NotificationService@getNotifications",
+                message: "Lỗi NotificationService@getMobileNotificationPagination",
                 ex: $exception
             );
             return ServiceReturn::success(
@@ -71,15 +69,17 @@ class NotificationService extends BaseService
     }
 
     /**
-     * Lấy chi tiết notification
+     * Lấy chi tiết notification mobile
+     * @param int|string $notificationId
+     * @param int|string $userId
+     * @return ServiceReturn
      */
-    public function getNotificationDetail(int|string $notificationId): ServiceReturn
+    public function getMobileNotificationDetail($notificationId, $userId): ServiceReturn
     {
         try {
-            $user = Auth::user();
             $notification = $this->notificationRepository->queryNotification()
                 ->where('id', $notificationId)
-                ->where('user_id', $user->id)
+                ->where('user_id', $userId)
                 ->first();
 
             if (!$notification) {
@@ -95,7 +95,7 @@ class NotificationService extends BaseService
             );
         } catch (\Exception $exception) {
             LogHelper::error(
-                message: "Lỗi NotificationService@getNotificationDetail",
+                message: "Lỗi NotificationService@getMobileNotificationDetail",
                 ex: $exception
             );
             return ServiceReturn::error(
@@ -105,15 +105,17 @@ class NotificationService extends BaseService
     }
 
     /**
-     * Đánh dấu notification là đã đọc
+     * Đánh dấu notification mobile là đã đọc
+     * @param int|string $notificationId
+     * @param int|string $userId
+     * @return ServiceReturn
      */
-    public function markAsRead(int|string $notificationId): ServiceReturn
+    public function markAsReadNotificationMobile($notificationId, $userId): ServiceReturn
     {
         try {
-            $user = Auth::user();
             $notification = $this->notificationRepository->queryNotification()
                 ->where('id', $notificationId)
-                ->where('user_id', $user->id)
+                ->where('user_id', $userId)
                 ->first();
 
             if (!$notification) {
@@ -122,7 +124,7 @@ class NotificationService extends BaseService
                 );
             }
 
-            $notification->markAsRead();
+            $this->notificationRepository->setStatus($notificationId, NotificationStatus::READ);
 
             return ServiceReturn::success(data: $notification);
         } catch (ServiceException $exception) {
@@ -131,7 +133,7 @@ class NotificationService extends BaseService
             );
         } catch (\Exception $exception) {
             LogHelper::error(
-                message: "Lỗi NotificationService@markAsRead",
+                message: "Lỗi NotificationService@markAsReadNotificationMobile",
                 ex: $exception
             );
             return ServiceReturn::error(
@@ -141,21 +143,20 @@ class NotificationService extends BaseService
     }
 
     /**
-     * Lấy số lượng notifications chưa đọc
+     * Lấy số lượng notifications mobile chưa đọc
      */
-    public function getUnreadCount(): ServiceReturn
+    public function getUnreadCountNotificationMobile($userId): ServiceReturn
     {
         try {
-            $user = Auth::user();
             $count = $this->notificationRepository->queryNotification()
-                ->where('user_id', $user->id)
-                ->where('status', '!=', NotificationStatus::READ->value)
+                ->where('user_id', $userId)
+                ->where('status', NotificationStatus::SENT->value)
                 ->count();
 
             return ServiceReturn::success(data: ['count' => $count]);
         } catch (\Exception $exception) {
             LogHelper::error(
-                message: "Lỗi NotificationService@getUnreadCount",
+                message: "Lỗi NotificationService@getUnreadCountNotificationMobile",
                 ex: $exception
             );
             return ServiceReturn::success(data: ['count' => 0]);
@@ -163,45 +164,54 @@ class NotificationService extends BaseService
     }
 
     /**
-     * Gửi notification cho user
+     * Gửi notification mobile cho user
+     * @param int|string $userId
+     * @param NotificationType $type
+     * @param array $data
+     * @return ServiceReturn
+     * @throws \Throwable
      */
-    public function sendNotification(
-        int|string $userId,
+    public function sendMobileNotification(
+        int|string       $userId,
         NotificationType $type,
-        array $data = []
-    ): void {
-        $user = User::find($userId);
-        if (!$user) {
-            return;
-        }
-
-        // Lấy ngôn ngữ của user
-        $userLang = Language::tryFrom($user->language) ?? Language::VIETNAMESE;
-
-
-        // Lấy title và description theo ngôn ngữ của user
-        $title = $type->getTitleByLang($userLang);
-        $description = $type->getDescByLang($userLang);
-
-        // Tạo notification trong database
-        $notification = $this->notificationRepository->query()->create([
-            'user_id' => $user->id,
-            'title' => $title,
-            'description' => $description,
-            'type' => $type->value,
-            'status' => NotificationStatus::PENDING->value,
-            'data' => $data,
-        ]);
-
+        array            $data = []
+    )
+    {
+        DB::beginTransaction();
         try {
+            $user = $this->userRepository->query()->find($userId);
+            if (!$user) {
+                throw new ServiceException(
+                    message: __("error.user_not_found")
+                );
+            }
+
+            // Lấy ngôn ngữ của user
+            $userLang = Language::tryFrom($user->language) ?? Language::VIETNAMESE;
+
+            // Lấy title và description theo ngôn ngữ của user
+            $title = $type->getTitleByLang($userLang);
+            $description = $type->getDescByLang($userLang);
+
+            // Tạo notification trong database
+            $notification = $this->notificationRepository->query()->create([
+                'user_id' => $user->id,
+                'title' => $title,
+                'description' => $description,
+                'type' => $type->value,
+                'status' => NotificationStatus::PENDING->value,
+                'data' => $data,
+            ]);
+
             // Lấy device tokens của user để gửi push notification
             $tokens = $user->routeNotificationForExpo();
 
             // Nếu user không có device tokens thì không gửi push notification
             if (empty($tokens)) {
                 // Vẫn đánh dấu đã gửi vì đã lưu vào database
-                $notification->markAsSent();
-                return;
+                $this->notificationRepository->setStatus($notification->id, NotificationStatus::SENT);
+                DB::commit();
+                return ServiceReturn::success();
             }
 
             // Gửi thông báo qua Redis channel để Node server xử lý
@@ -217,20 +227,24 @@ class NotificationService extends BaseService
             ];
 
             // Gửi thông báo qua Redis pub/sub để Node server xử lý
-            $redis = RedisFacade::connection('pubsub');
+            $redis = RedisFacade::connection();
             $channel = config('services.node_server.channel_notification');
             $redis->publish($channel, json_encode($payload));
 
             // Đánh dấu đã gửi
-            $notification->markAsSent();
+            $this->notificationRepository->setStatus($notification->id, NotificationStatus::SENT);
+
+            DB::commit();
+            return ServiceReturn::success();
         } catch (\Throwable $e) {
-            // Đánh dấu gửi thất bại
-            $notification->markAsFailed();
+            DB::rollBack();
             LogHelper::error(
-                message: "Lỗi NotificationService@sendNotification",
+                message: "Lỗi NotificationService@sendMobileNotification",
                 ex: $e
             );
-            throw $e;
+            return ServiceReturn::error(
+                message: $e->getMessage()
+            );
         }
     }
 }

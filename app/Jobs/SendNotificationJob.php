@@ -29,7 +29,7 @@ class SendNotificationJob implements ShouldQueue
      */
     public function handle(NotificationService $notificationService): void
     {
-        $notificationService->sendNotification(
+        $notificationService->sendMobileNotification(
             userId: $this->userId,
             type: $this->type,
             data: $this->data

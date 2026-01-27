@@ -1,13 +1,12 @@
 <?php
 
-namespace App\Filament\Clusters\Category\Resources\Categories;
+namespace App\Filament\Clusters\Service\Resources\Categories;
 
-use App\Filament\Clusters\Category\CategoryCluster;
-use App\Filament\Clusters\Category\Resources\Categories\Pages\CreateCategory;
-use App\Filament\Clusters\Category\Resources\Categories\Pages\EditCategory;
-use App\Filament\Clusters\Category\Resources\Categories\Pages\ListCategories;
-use App\Filament\Clusters\Category\Resources\Categories\Schemas\CategoryForm;
-use App\Filament\Clusters\Category\Resources\Categories\Tables\CategoriesTable;
+use App\Filament\Clusters\Service\Resources\Categories\Pages\CreateCategory;
+use App\Filament\Clusters\Service\Resources\Categories\Pages\EditCategory;
+use App\Filament\Clusters\Service\Resources\Categories\Pages\ListCategories;
+use App\Filament\Clusters\Service\Resources\Categories\Schemas\CategoryForm;
+use App\Filament\Clusters\Service\Resources\Categories\Tables\CategoriesTable;
 use App\Models\Category;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -25,7 +24,7 @@ class CategoryResource extends Resource
 
     public static function getNavigationGroup(): \UnitEnum|string|null
     {
-        return __('filament.navigation.category');
+        return __('filament.navigation.service');
     }
 
 

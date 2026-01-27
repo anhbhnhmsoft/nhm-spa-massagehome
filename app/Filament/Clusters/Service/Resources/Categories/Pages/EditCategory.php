@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Filament\Clusters\Category\Resources\Categories\Pages;
+namespace App\Filament\Clusters\Service\Resources\Categories\Pages;
 
-use App\Filament\Clusters\Category\Resources\Categories\CategoryResource;
+use App\Filament\Clusters\Service\Resources\Categories\CategoryResource;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\RestoreAction;

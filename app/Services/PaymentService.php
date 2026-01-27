@@ -66,6 +66,7 @@ class PaymentService extends BaseService
                 ->whereIn('type', WalletTransactionType::statusIn())
                 ->where('status', WalletTransactionStatus::COMPLETED)
                 ->sum('point_amount');
+
             // Lấy tổng số điểm đã rút ra khỏi ví
             $totalWithdrawal = $this->walletTransactionRepository->queryTransaction()
                 ->where('wallet_id', $wallet->id)

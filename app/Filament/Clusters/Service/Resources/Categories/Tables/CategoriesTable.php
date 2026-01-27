@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Clusters\Category\Resources\Categories\Tables;
+namespace App\Filament\Clusters\Service\Resources\Categories\Tables;
 
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;

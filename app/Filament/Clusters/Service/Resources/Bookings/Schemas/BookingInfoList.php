@@ -46,8 +46,6 @@ class BookingInfoList
                             ->label(__('admin.booking.fields.service'))
                             ->color('primary')
                             ->weight('bold'),
-
-
                         TextEntry::make('price')
                             ->label(__('admin.booking.fields.price'))
                             ->formatStateUsing(fn ($state) => number_format($state, 0, '.', ','))

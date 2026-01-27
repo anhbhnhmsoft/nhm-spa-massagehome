@@ -3,14 +3,15 @@
 namespace App\Repositories;
 
 use App\Core\BaseRepository;
-use App\Models\Notification;
+use App\Enums\NotificationStatus;
+use App\Models\MobileNotification;
 use Illuminate\Database\Eloquent\Builder;
 
 class NotificationRepository extends BaseRepository
 {
     protected function getModel(): string
     {
-        return Notification::class;
+        return MobileNotification::class;
     }
 
     /**
@@ -18,8 +19,7 @@ class NotificationRepository extends BaseRepository
      */
     public function queryNotification(): Builder
     {
-        return $this->model->query()
-            ->with(['user']);
+        return $this->model->query()->with(['user']);
     }
 
     public function filterQuery(Builder $query, array $filters): Builder
@@ -34,6 +34,11 @@ class NotificationRepository extends BaseRepository
             $query->where('type', $filters['type']);
         }
 
+        // Lọc theo nhiều status
+        if (isset($filters['statuses'])) {
+            $query->whereIn('status', $filters['statuses']);
+        }
+
         // Lọc theo status
         if (isset($filters['status'])) {
             $query->where('status', $filters['status']);
@@ -44,6 +49,7 @@ class NotificationRepository extends BaseRepository
             $query->where('status', '!=', \App\Enums\NotificationStatus::READ->value);
         }
 
+
         return $query;
     }
 
@@ -51,8 +57,21 @@ class NotificationRepository extends BaseRepository
     {
         $sortBy = $sortBy ?? 'created_at';
         $direction = strtoupper($direction) === 'ASC' ? 'ASC' : 'DESC';
-        
+
         return $query->orderBy($sortBy, $direction);
+    }
+
+    /**
+     * Cập nhật status của notification
+     * @param int $notificationId
+     * @param NotificationStatus $status
+     * @return \Illuminate\Database\Eloquent\Model
+     */
+    public function setStatus(int $notificationId, NotificationStatus $status)
+    {
+        return $this->update($notificationId, [
+            'status' => $status->value,
+        ]);
     }
 }
 

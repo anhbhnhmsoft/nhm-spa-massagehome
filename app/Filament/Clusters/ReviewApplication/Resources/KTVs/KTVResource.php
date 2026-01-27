@@ -4,6 +4,8 @@ namespace App\Filament\Clusters\ReviewApplication\Resources\KTVs;
 
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserRole;
+use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Pages\ViewKTV;
+use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Schemas\KTVInfolist;
 use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Tables\KTVsTable;
 use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Pages\ListKTVs;
 use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Schemas\KTVForm;
@@ -38,6 +40,11 @@ class KTVResource extends Resource
     public static function table(Table $table): Table
     {
         return KTVsTable::configure($table);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return KTVInfolist::configure($schema);
     }
 
     public static function getEloquentQuery(): Builder
@@ -77,6 +84,7 @@ class KTVResource extends Resource
         return [
             'index' => ListKTVs::route('/'),
             'edit' => EditKTV::route('/{record}/edit'),
+            'view' => ViewKTV::route('/{record}'),
         ];
     }
 

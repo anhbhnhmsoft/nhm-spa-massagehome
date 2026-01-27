@@ -227,6 +227,96 @@ class DashboardService extends BaseService
     }
 
     /**
+     * Lấy thống kê tổng quan cho KTV (view ktv admin)
+     * @param $userId
+     * @return ServiceReturn
+     */
+    public function getGeneralKtvDashboard($userId): ServiceReturn
+    {
+        try {
+            $dateRange = DateRangeDashboard::ALL->getDateRange();
+            $fromDate = $dateRange['from'];
+            $toDate = $dateRange['to'];
+
+            if (!$userId) {
+               throw new ServiceException(__('common_error.invalid_parameter'));
+            }
+
+            $user = $this->userRepository->queryUser()
+                ->where('id', $userId)
+                ->where('role', UserRole::KTV->value)
+                ->first();
+            if (!$user) {
+                throw new ServiceException(__('error.user_not_found'));
+            }
+            $wallet = $user->wallet;
+            if (!$wallet) {
+                throw new ServiceException(__("error.wallet_not_found"));
+            };
+
+
+            // Tổng thu nhập (Kỳ này)
+            $totalIncome = $this->bookingRepository->getKtvTotalIncome(
+                ktvId: $user->id,
+                from: $fromDate,
+                to: $toDate,
+            );
+
+            // Doanh thu thực nhận
+            $receivedIncome = $this->walletTransactionRepository->sumRealIncomePaymentBooking(
+                ktvUserId: $user->id,
+                from: $fromDate,
+                to: $toDate,
+            );
+
+
+            // Số khách hàng đã đặt dịch vụ của KTV này
+            $totalCustomers = $this->bookingRepository->getKtvTotalCustomerBooking(
+                ktvId: $user->id,
+                from: $fromDate,
+                to: $toDate,
+            );
+
+            // Số lượng đơn đã đặt lịch KTV trong khoảng thời gian
+            $totalBookings = $this->bookingRepository->getKtvTotalBooking(
+                ktvId: $user->id,
+                from: $fromDate,
+                to: $toDate,
+            );
+
+            // Thu nhập Affiliate
+            $affiliateIncome = $this->walletTransactionRepository->sumAffiliateProfit(
+                walletId: $wallet->id,
+                from: $fromDate,
+                to: $toDate,
+            );
+
+            // Lượt review
+            $totalReviews = $this->reviewRepository->countReviewByUser(
+                userId: $user->id,
+                from: $fromDate,
+                to: $toDate,
+            );
+
+            return ServiceReturn::success([
+                'total_income' => $totalIncome,
+                'received_income' => $receivedIncome,
+                'total_customers' => $totalCustomers,
+                'total_bookings' => $totalBookings,
+                'affiliate_income' => $affiliateIncome,
+                'total_reviews' => $totalReviews,
+            ]);
+
+        }catch (\Exception $exception){
+            LogHelper::error(
+                message: "Lỗi DashboardService@getGeneralKtvDashboard",
+                ex: $exception,
+            );
+            return ServiceReturn::error(message: __("common_error.server_error"));
+        }
+    }
+
+    /**
      * Lấy dữ liệu dashboard tổng quan cho Agency
      * @param $userId
      * @param DateRangeDashboard $range
@@ -261,7 +351,7 @@ class DashboardService extends BaseService
                 to: $dateRange['to'],
             );
 
-            // Tổng lợi nhuận của mời Agency trong khoảng thời gian
+            // Tổng lợi nhuận của mời Khách hàng (Affiliate) trong khoảng thời gian
             $totalProfitAffiliate = $this->walletTransactionRepository->sumAffiliateProfit(
                 walletId: $walletData->id,
                 from: $dateRange['from'],
@@ -374,47 +464,40 @@ class DashboardService extends BaseService
             };
 
             // 1. Tổng thu nhập (Kỳ này)
-            $totalIncome = $this->bookingRepository->query()
-                ->where('ktv_user_id', $user->id)
-                ->where('status', BookingStatus::COMPLETED->value)
-                ->whereBetween('created_at', [$fromDate, $toDate])
-                ->sum('price');
+            $totalIncome = $this->bookingRepository->getKtvTotalIncome(
+                ktvId: $user->id,
+                from: $fromDate,
+                to: $toDate,
+            );
 
             // 2. Doanh thu thực nhận
-            $incomeData = $this->walletTransactionRepository->query()
-                ->where('wallet_id', $wallet->id)
-                ->where('status', WalletTransactionStatus::COMPLETED->value)
-                ->whereBetween('created_at', [$fromDate, $toDate])
-                ->selectRaw("
-                    SUM(point_amount) FILTER (WHERE type = ?) as total_received,
-                    SUM(point_amount) FILTER (WHERE type = ?) as total_retrieve
-                ", [
-                    WalletTransactionType::PAYMENT_FOR_KTV->value,
-                    WalletTransactionType::RETRIEVE_PAYMENT_REFUND_KTV->value
-                ])
-                ->first();
-            $receivedIncome = ($incomeData->total_received ?? 0) - ($incomeData->total_retrieve ?? 0);
+            $receivedIncome = $this->walletTransactionRepository->sumRealIncomePaymentBooking(
+                ktvUserId: $user->id,
+                from: $fromDate,
+                to: $toDate,
+            );
 
 
             // 3. Số khách hàng đã đặt trong khoảng thời gian
-            $totalCustomers = $this->bookingRepository->query()
-                ->where('ktv_user_id', $user->id)
-                ->where('status', BookingStatus::COMPLETED->value)
-                ->whereBetween('created_at', [$fromDate, $toDate])
-                ->count();
+            $totalCustomers = $this->bookingRepository->getKtvTotalCustomerBooking(
+                ktvId: $user->id,
+                from: $fromDate,
+                to: $toDate,
+            );
 
             // 4. Thu nhập Affiliate
-            $affiliateIncome = $this->walletTransactionRepository->query()
-                ->where('wallet_id', $wallet->id)
-                ->where('type', WalletTransactionType::AFFILIATE->value)
-                ->whereBetween('created_at', [$fromDate, $toDate])
-                ->sum('point_amount');
+            $affiliateIncome = $this->walletTransactionRepository->sumAffiliateProfit(
+                walletId: $wallet->id,
+                from: $fromDate,
+                to: $toDate,
+            );
 
             // 5. Lượt review
-            $totalReviews = $this->reviewRepository->query()
-                ->where('user_id', $user->id)
-                ->whereBetween('created_at', [$fromDate, $toDate])
-                ->count();
+            $totalReviews = $this->reviewRepository->countReviewByUser(
+                userId: $user->id,
+                from: $fromDate,
+                to: $toDate,
+            );
 
             // 6. Dữ liệu biểu đồ
             if ($range === DateRangeDashboard::DAY) {
@@ -434,7 +517,8 @@ class DashboardService extends BaseService
                     ->groupByRaw("date")
                     ->orderByRaw("MIN(booking_time) ASC")
                     ->get();
-            } else {
+            }
+            else {
                 // Điều chỉnh logic format ngày cho year, month, week
                 $format = match ($range) {
                     DateRangeDashboard::YEAR => "to_char(booking_time, 'YYYY-MM')", // Lấy theo tháng nếu là Year
@@ -468,11 +552,16 @@ class DashboardService extends BaseService
                 expire: 5,
             );
             return ServiceReturn::success(data: $resultData);
-        } catch (ServiceException $e) {
+        }
+        catch (ServiceException $e) {
             return ServiceReturn::error($e->getMessage());
-        } catch (\Exception $exception) {
+        }
+        catch (\Exception $exception) {
             LogHelper::error("Lỗi BookingService@totalIncome", $exception);
             return ServiceReturn::error(message: __("common_error.server_error"));
         }
     }
+
+
+
 }

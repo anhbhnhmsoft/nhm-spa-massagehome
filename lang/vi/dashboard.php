@@ -26,7 +26,6 @@ return [
         'ktv_cost_desc' => 'Tổng chi phí kỹ thuật viên',
         'affiliate_cost' => 'Chi phí Affiliate',
         'affiliate_cost_desc' => 'Tổng chi phí Affiliate, ',
-
     ],
     'general_booking_stat' => [
         'title' => 'Tổng quan về đơn hàng',

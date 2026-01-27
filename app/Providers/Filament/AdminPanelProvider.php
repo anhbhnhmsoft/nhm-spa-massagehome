@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Pages\Dashboard as PagesDashboard;
 use App\Filament\Pages\Login;
+use Filament\Enums\DatabaseNotificationsPosition;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -71,6 +72,8 @@ class AdminPanelProvider extends PanelProvider
                 fn(): View => view('livewire.language-switcher'),
             )
             ->databaseTransactions()
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('1m')
             ->maxContentWidth(Width::Full);
     }
 }

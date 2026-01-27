@@ -160,4 +160,29 @@ class WalletTransactionRepository extends BaseRepository
             ->whereBetween('created_at', [$from->format('Y-m-d H:i:s'), $to->format('Y-m-d H:i:s')])
             ->count();
     }
+
+    /**
+     * Tổng lợi nhuận thực tế từ các booking đã thanh toán của 1 KTV trong khoảng thời gian
+     * @param int $ktvUserId - ID của KTV
+     * @param Carbon $from
+     * @param Carbon $to
+     */
+    public function sumRealIncomePaymentBooking(int $ktvUserId, Carbon $from, Carbon $to)
+    {
+        $incomeData = $this->query()
+            ->whereHas('wallet.user', function (Builder $query) use ($ktvUserId) {
+                $query->where('user_id', $ktvUserId);
+            })
+            ->where('status', WalletTransactionStatus::COMPLETED->value)
+            ->whereBetween('created_at', [$from->format('Y-m-d H:i:s'), $to->format('Y-m-d H:i:s')])
+            ->selectRaw("
+                    SUM(point_amount) FILTER (WHERE type = ?) as total_received,
+                    SUM(point_amount) FILTER (WHERE type = ?) as total_retrieve
+                ", [
+                WalletTransactionType::PAYMENT_FOR_KTV->value,
+                WalletTransactionType::RETRIEVE_PAYMENT_REFUND_KTV->value
+            ])
+            ->first();
+        return ($incomeData->total_received ?? 0) - ($incomeData->total_retrieve ?? 0);
+    }
 }
