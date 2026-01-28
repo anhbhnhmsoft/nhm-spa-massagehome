@@ -147,7 +147,7 @@ class ZaloService
 
             // Send ZNS via HTTP request
             $response = Http::withHeaders([
-                'access_token' => $accessToken,
+                'access_token' => (string)$accessToken->getData(),
                 'Content-Type' => 'application/json',
             ])
                 ->post(ZaloEndPointExtends::API_OA_SEND_ZNS, $params);
