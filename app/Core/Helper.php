@@ -221,12 +221,24 @@ final class Helper
     }
 
     /**
-     * Lấy số lượng tối thiểu mà KTV phải có để trở thành trưởng KTV.
+     * Tính toán số tiền hoa hồng mà người giới thiệu sẽ nhận được.
+     * @param float $price Giá dịch vụ (sau khi trừ giảm giá của KTV).
+     * @param float $commissionPercent Tỷ lệ hoa hồng (ví dụ: 10, 20...).
+     * @param float $minCommission Giá trị hoa hồng tối thiểu.
+     * @param float $maxCommission Giá trị hoa hồng tối đa.
+     * @param int $precision Độ chính xác làm tròn (mặc định là 0 để lấy số nguyên).
+     * @return float
      */
-    public static function getConditionToBeLeaderKtv(): int
+    public static function calculatePriceAffiliate(float $price, float $commissionPercent, float $minCommission, float $maxCommission, int $precision = 0): float
     {
-        return 10;
+        // Tính số tiền hoa hồng mà người giới thiệu sẽ nhận được
+        $amount = $price * (100 - $commissionPercent) / 100;
+        // Clamp giá trị trong khoảng min/max
+        $amount = max($minCommission, min($amount, $maxCommission));
+        // Làm tròn số tiền hoa hồng
+        return round($amount, $precision);
     }
+
 
     public static function formatPhone($phone): string
     {

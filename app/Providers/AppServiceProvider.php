@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Enums\UserRole;
 use App\Filament\Pages\Dashboard;
 use App\Models\Banner;
 use App\Models\Category;
@@ -51,6 +52,7 @@ use App\Services\BookingService;
 use App\Services\ChatService;
 use App\Services\ConfigService;
 use App\Services\CouponService;
+use App\Services\Facades\TransactionJobService;
 use App\Services\NotificationService;
 use App\Services\PaymentService;
 use App\Services\PayOsService;
@@ -64,6 +66,7 @@ use App\Services\ReviewService;
 use App\Services\UserFileService;
 use App\Services\ZaloService;
 use Illuminate\Support\ServiceProvider;
+use Opcodes\LogViewer\Facades\LogViewer;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -77,6 +80,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Register services
         $this->registerService();
+
+        // Register facades services
+        $this->registerFacadesService();
     }
 
     /**
@@ -86,6 +92,12 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register observers
         $this->registerObservers();
+
+        LogViewer::auth(function ($request) {
+            $user = $request->user();
+
+            return $user->role === UserRole::ADMIN->value;
+        });
     }
 
     protected function registerRepository(): void
@@ -145,6 +157,16 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(UserFileService::class);
         $this->app->singleton(AgencyService::class);
         $this->app->singleton(ZaloService::class);
+    }
+
+
+    /**
+     * Đăng ký các service tổng (Facade).
+     * @return void
+     */
+    protected function registerFacadesService(): void
+    {
+        $this->app->singleton(TransactionJobService::class);
     }
 
     /**

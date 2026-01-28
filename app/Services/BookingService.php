@@ -11,13 +11,10 @@ use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
 use App\Enums\BookingStatus;
-use App\Enums\DateRangeDashboard;
+use App\Enums\Jobs\WalletTransBookingCase;
 use App\Enums\NotificationType;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserRole;
-use App\Enums\WalletTransactionStatus;
-use App\Enums\WalletTransactionType;
-use App\Jobs\PayCommissionFeeJob;
 use App\Jobs\RefundBookingCancelJob;
 use App\Jobs\SendNotificationJob;
 use App\Models\CategoryPrice;
@@ -31,13 +28,11 @@ use App\Repositories\ServiceRepository;
 use App\Enums\ConfigName;
 use App\Enums\PaymentType;
 use App\Jobs\WalletTransactionBookingJob;
-use App\Models\Config;
 use App\Repositories\ServiceOptionRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\UserReviewApplicationRepository;
 use App\Repositories\WalletRepository;
 use App\Repositories\WalletTransactionRepository;
-use Exception;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -62,6 +57,12 @@ class BookingService extends BaseService
     ) {
         parent::__construct();
     }
+
+    public function getBookingRepository(): BookingRepository
+    {
+        return $this->bookingRepository;
+    }
+
 
     /**
      * Lấy danh sách lịch hẹn dịch vụ của người dùng
@@ -154,12 +155,14 @@ class BookingService extends BaseService
                 startTime: $currentBookingStartTime,
                 duration: $serviceOption->duration
             );
+
             // Tính toán giá cuối cùng bao gồm giảm giá nếu có
             $priceData = $this->calculateFinalPrice(
                 serviceId: $serviceId,
                 price: $serviceOption->price,
                 couponId: $couponId,
             );
+
             // Lấy giá cuối cùng
             $finalPrice = $priceData['final_price'];
             // Lấy giá trước giảm giá
@@ -184,23 +187,6 @@ class BookingService extends BaseService
                     message: __("booking.wallet.not_enough")
                 );
             }
-            // Kiểm tra số dư ví của kỹ thuật viên có đủ không
-            $walletKtvCheck = $this->walletService->checkKtvWalletBalance(
-                ktvId: $service->user_id,
-                price: $finalPrice,
-            );
-            if (!$walletKtvCheck['is_enough']) {
-                SendNotificationJob::dispatch(
-                    userId: $user->id,
-                    type: NotificationType::TECHNICIAN_WALLET_NOT_ENOUGH,
-                    data: [
-                        'booking_time' => Carbon::parse($bookTime)->format('Y-m-d H:i:s'),
-                        'price' => $finalPrice,
-                    ]
-                );
-                // Nếu Kỹ thuật viên không đủ tiền chiết khấu (để hệ thống lấy lại)
-                throw new ServiceException(message: __("booking.wallet.tech_not_active"));
-            }
 
             // Tạo mới lịch hẹn
             // Phải để status là pending rồi bắn vào queue để xử lý thanh toán
@@ -224,36 +210,12 @@ class BookingService extends BaseService
                 'note_address' => $noteAddress ?? '',
             ]);
 
-            // Bắn notif cho người dùng khi đặt lịch thành công
-            SendNotificationJob::dispatch(
-                userId: $user->id,
-                type: NotificationType::BOOKING_SUCCESS,
-                data: [
-                    'booking_id' => $booking->id,
-                    'service_id' => $service->id,
-                    'booking_time' => $currentBookingStartTime->format('Y-m-d H:i:s'),
-                    'price' => $finalPrice,
-                ]
-            );
-
-            // Bắn notif cho KTV khi có lịch hẹn mới
-            SendNotificationJob::dispatch(
-                userId: $service->user_id, // KTV
-                type: NotificationType::NEW_BOOKING_REQUEST,
-                data: [
-                    'booking_id' => $booking->id,
-                    'customer_name' => $user->name,
-                    'booking_time' => $currentBookingStartTime->format('Y-m-d H:i:s'),
-                ]
-            );
             DB::commit();
 
             // xử lý giao dịch, ghi lại lịch sử dùng coupon
             WalletTransactionBookingJob::dispatch(
                 bookingId: $booking->id,
-                couponId: $couponId,
-                userId: $user->id,
-                serviceId: $serviceId,
+                case: WalletTransBookingCase::CONFIRM_BOOKING,
             );
 
             return ServiceReturn::success(
@@ -264,7 +226,8 @@ class BookingService extends BaseService
                     ]
                 ]
             );
-        } catch (ServiceException $exception) {
+        }
+        catch (ServiceException $exception) {
             DB::rollBack();
             return ServiceReturn::error(
                 message: $exception->getMessage()
@@ -405,59 +368,6 @@ class BookingService extends BaseService
         }
     }
 
-    /**
-     * Xử lý khi thanh toán thất bại
-     * @param string $bookingId
-     * @return void
-     */
-    public function handleBookingPaymentFailed(string $bookingId, $reason = null)
-    {
-        try {
-            $reasonCancel = "System: " . ($reason ?? __("booking.payment_failed"));
-            $booking = $this->bookingRepository->query()
-                ->lockForUpdate()
-                ->find($bookingId);
-            if (!$booking) {
-                throw new ServiceException(
-                    message: __("booking.not_found")
-                );
-            };
-
-            $booking->status = BookingStatus::PAYMENT_FAILED->value;
-            $booking->reason_cancel = $reasonCancel;
-            $booking->save();
-
-            // Gửi thông báo cho khách hàng
-            SendNotificationJob::dispatch(
-                userId: $booking->user_id,
-                type: NotificationType::BOOKING_CANCELLED,
-                data: [
-                    'booking_id' => $booking->id,
-                    'reason' => $reasonCancel,
-                ]
-            );
-
-            // Gửi thông báo cho KTV
-            SendNotificationJob::dispatch(
-                userId: $booking->ktv_user_id,
-                type: NotificationType::BOOKING_CANCELLED,
-                data: [
-                    'booking_id' => $booking->id,
-                    'reason' => $reasonCancel,
-                ]
-            );
-
-            // Hoàn tiền cho khách hàng
-            RefundBookingCancelJob::dispatch($booking->id, $reasonCancel);
-
-        }catch (\Exception $exception) {
-            LogHelper::error(
-                message: "Lỗi ServiceService@handleBookingPaymentFailed",
-                ex: $exception
-            );
-            throw $exception;
-        }
-    }
 
     /**
      * Kiểm tra booking
@@ -694,8 +604,12 @@ class BookingService extends BaseService
             $booking->status = BookingStatus::COMPLETED->value;
             $booking->end_time = $now;
             $booking->save();
+
             // tính toán phí hoa hồng và gửi tới các user khác
-            PayCommissionFeeJob::dispatch($bookingId);
+            WalletTransactionBookingJob::dispatch(
+                bookingId: $booking->id,
+                case: WalletTransBookingCase::FINISH_BOOKING,
+            );
 
             // gửi thông báo cho khách hàng biết rằng lịch đã hoàn thành
             SendNotificationJob::dispatch(
@@ -712,7 +626,8 @@ class BookingService extends BaseService
                     'already_finished' => false,
                 ],
             );
-        } catch (ServiceException $exception) {
+        }
+        catch (ServiceException $exception) {
             return ServiceReturn::error(
                 message: $exception->getMessage()
             );
@@ -728,74 +643,6 @@ class BookingService extends BaseService
         }
     }
 
-    /**
-     * Tính toán phí hoa hồng và gửi tới các user khác
-     * @param int $bookingId
-     * @return Exception
-     */
-    public function payCommissionFee(int $bookingId): void
-    {
-        DB::beginTransaction();
-        try {
-            $booking = $this->bookingRepository->query()
-                ->where('id', $bookingId)
-                ->where('status', BookingStatus::COMPLETED->value)
-                ->lockForUpdate()
-                ->first();
-            if (!$booking) {
-                throw new ServiceException(__("error.not_found_booking"));
-            }
-            // lấy mức chiết khấu của nhà cung cấp
-            $discountRate = floatval($this->configService->getConfigValue(ConfigName::DISCOUNT_RATE));
-
-            /**
-             * @var User $customer
-             * @var User $staff
-             */
-            $customer = $booking->user;
-            $staff = $booking->ktvUser;
-
-            // Giá trị thực tế hệ thống nhận về
-            $systemIncome = Helper::calculateSystemMinus($booking->price, $discountRate);
-
-            // Load configs
-            $configs = [
-                UserRole::AGENCY->value => $this->configService->getConfigAffiliate(UserRole::AGENCY),
-                UserRole::KTV->value    => $this->configService->getConfigAffiliate(UserRole::KTV),
-                UserRole::CUSTOMER->value => $this->configService->getConfigAffiliate(UserRole::CUSTOMER),
-            ];
-
-            foreach ($configs as $config) {
-                if ($config->isError()) {
-                    throw new ServiceException(__("error.config_wallet_error"));
-                }
-            }
-
-            // xử lý hoa hồng cho khách hàng
-            if ($customer->referrer) {
-                $this->processReferralCommissionAffiliate($customer->referrer, $systemIncome, $bookingId, $configs);
-            }
-
-            // xử lý hoa hồng cho nhân viên
-            if ($staff->referrer) {
-                $this->processReferralCommissionAffiliate($staff->referrer, $systemIncome, $bookingId, $configs);
-            }
-
-            // xử lý hoa hồng cho người giới thiệu kỹ thuật viên
-            if ($staff->reviewApplication->referrer){
-                $this->processReferralKtvCommission($staff->reviewApplication->referrer, $systemIncome, $bookingId);
-            }
-
-            DB::commit();
-        } catch (\Exception $exception) {
-            DB::rollBack();
-            LogHelper::error(
-                message: "Lỗi BookingService@payCommissionFee",
-                ex: $exception
-            );
-            throw $exception;
-        }
-    }
 
     /**
      * Lấy danh sách booking đang diễn ra (ONGOING)
@@ -1037,94 +884,6 @@ class BookingService extends BaseService
         }
     }
 
-
-    /**
-     * Xử lý hoa hồng khi có người giới thiệu
-     * @param User $referrer
-     * @param float $commissionFee
-     * @param int $bookingId
-     * @param array $configs
-     * @return void
-     * @throws ServiceException
-     */
-    protected function processReferralCommissionAffiliate(User $referrer, float $commissionFee, int $bookingId, array $configs): void
-    {
-        $role = $referrer->role;
-        $config = $configs[$role] ?? null;
-
-        if (!$config) {
-            return;
-        }
-
-        $data = $config->getData();
-        $amount = $this->calculateCommissionFee(
-            $commissionFee,
-            $data['commission_rate'],
-            $data['max_commission'],
-            $data['min_commission']
-        );
-        // Lưu hoa hồng vào ví của người giới thiệu
-        $this->walletService->paymentCommissionFeeForReferralAffiliate($amount, $referrer->id, $bookingId);
-    }
-
-    /**
-     * Tính hoa hồng dựa trên hệ số hoa hồng, mức hoa hồng tối đa, tối thiểu
-     * @param float $amountSystemReceive
-     * @param float $commissionPercent
-     * @param $maxCommission
-     * @param $minCommission
-     * @return int
-     */
-    protected function calculateCommissionFee(float $amountSystemReceive, float $commissionPercent, $maxCommission, $minCommission): int
-    {
-        $amount = $amountSystemReceive * (100 - $commissionPercent) / 100;
-        if ($amount > $maxCommission) {
-            return $maxCommission;
-        }
-        if ($amount < $minCommission) {
-            return $minCommission;
-        }
-        return round($amount, 3);
-    }
-
-    /**
-     * Xử lý hoa hồng của người giới thiệu kỹ thuật viên
-     * @param User $referrer
-     * @param float $price
-     * @throws ServiceException
-     */
-    protected function processReferralKtvCommission(User $referrer, float $price, int $bookingId)
-    {
-        switch ($referrer->role) {
-            case UserRole::KTV:
-                $isLeaderKtv = $this->reviewApplicationRepository
-                    ->query()
-                    ->where('referrer_id', $referrer->id)
-                    ->where('status', ReviewApplicationStatus::APPROVED->value)
-                    ->whereHas('user', function ($query){
-                        $query->where('role', UserRole::KTV->value);
-                    })
-                    ->count();
-                // Nếu KTV đã có đủ số lượng booking để trở thành trưởng KTV
-                if ($isLeaderKtv >= $this->configService->getKtvLeaderMinReferrals()){
-                    $rateDiscount = (float) $this->configService->getConfigValue(ConfigName::DISCOUNT_RATE_REFERRER_KTV_LEADER);
-                }else{
-                    $rateDiscount = (float) $this->configService->getConfigValue(ConfigName::DISCOUNT_RATE_REFERRER_KTV);
-                }
-                break;
-            case UserRole::AGENCY:
-                $rateDiscount = (float) $this->configService->getConfigValue(ConfigName::DISCOUNT_RATE_REFERRER_AGENCY);
-                break;
-            default:
-                return;
-        }
-
-        // Tính giá tiền hoa hồng cho người giới thiệu
-        $priceReferrer = Helper::calculatePriceReferrer($price, $rateDiscount);
-
-        // Lưu hoa hồng vào ví của người giới thiệu
-        $this->walletService->paymentCommissionFeeForReferral($priceReferrer, $referrer->id, $bookingId);
-    }
 
 
     /**

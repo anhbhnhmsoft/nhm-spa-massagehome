@@ -7,6 +7,8 @@ use App\Core\Cache\Caching;
 use App\Core\GenerateId\HasBigIntId;
 use App\Enums\UserRole;
 use App\Enums\UserFileType;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -15,7 +17,7 @@ use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
     use HasFactory, Notifiable, SoftDeletes, HasBigIntId, HasApiTokens;
 
@@ -49,6 +51,12 @@ class User extends Authenticatable
     ];
 
     protected $appends = ['is_online'];
+
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return true;
+    }
 
     public function getIsOnlineAttribute()
     {

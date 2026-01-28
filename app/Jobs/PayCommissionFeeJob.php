@@ -20,7 +20,7 @@ class PayCommissionFeeJob implements ShouldQueue
     public function __construct(
         public int $bookingId
     ) {
-        $this->onQueue(QueueKey::PAY_COMMISSION_FEE);
+        $this->onQueue(QueueKey::TRANSACTIONS_PAYMENT);
     }
 
     /**

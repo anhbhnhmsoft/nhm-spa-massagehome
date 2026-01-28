@@ -49,4 +49,10 @@ return [
     'could_not_send_otp' => 'Không thể gửi OTP, hãy thử lại sau vài phút',
     'zalo_service_configuration_error' => 'Hiện tại đang có trục trặc hệ thống, xin quý khách thông cảm và thử lại sau',
     'review_application_not_found' => 'Ứng tuyển review không tồn tại',
+    'booking_not_found' => 'Không tìm thấy lịch đặt hẹn này',
+    'wallet_customer_not_enough' => 'Số dư ví của quý khách không đủ để thanh toán dịch vụ này',
+    'wallet_technician_not_enough' => 'Số dư ví kĩ thuật viên không đủ để thanh toán triết khấu dịch vụ này',
+    'booking_already_failed' => 'Lịch đặt hẹn này đã bị hủy bởi hệ thống trước đó',
+    'system_booking_failed' => 'Lịch đặt hẹn này không thể được xác nhận bởi hệ thống, vui lòng liên hệ với bộ phận hỗ trợ',
+
 ];

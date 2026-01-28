@@ -315,7 +315,7 @@ class ConfigService extends BaseService
                 );
                 return ServiceReturn::success(data: $config);
             }else{
-                return ServiceReturn::success();
+                return ServiceReturn::error(message: __("error.config_not_found"));
             }
         } catch (\Exception $e) {
             LogHelper::error(

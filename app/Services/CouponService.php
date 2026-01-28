@@ -12,6 +12,7 @@ use App\Models\Coupon;
 use App\Models\User;
 use App\Repositories\CouponRepository;
 use App\Repositories\CouponUsedRepository;
+use App\Repositories\UserRepository;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -21,6 +22,7 @@ class CouponService extends BaseService
     public function __construct(
         protected CouponRepository $couponRepository,
         protected CouponUsedRepository $couponUsedRepository,
+        protected UserRepository $userRepository,
     ) {
         parent::__construct();
     }
@@ -196,7 +198,8 @@ class CouponService extends BaseService
                 'config' => $config
             ]);
             return ServiceReturn::success();
-        }catch (ServiceException $e) {
+        }
+        catch (ServiceException $e) {
             return ServiceReturn::error(
                 message: $e->getMessage()
             );
@@ -205,91 +208,75 @@ class CouponService extends BaseService
 
 
     /**
-     * Phương thức GHI (Write) - Kiểm tra, sử dụng, tăng used_count
+     * Kiểm tra, sử dụng, tăng used_count cho Coupon
      * @param string $couponId
      * @param string $userId
      * @param string $serviceId
      * @param string $bookingId
-     * @return ServiceReturn
      */
     public function useCoupon(
         string $couponId,
         string $userId,
         string $serviceId,
         string $bookingId,
-    ): ServiceReturn {
-        DB::beginTransaction();
-        try {
+    ) {
         // 1. Khóa dòng Coupon để đảm bảo tính Atomic cho used_count và config JSON
-            /** @var Coupon|null $coupon */
-            $coupon = $this->couponRepository->query()
-                ->where('id', $couponId)
-                ->lockForUpdate()
-                ->first();
+        $coupon = $this->couponRepository->query()
+            ->where('id', $couponId)
+            ->lockForUpdate()
+            ->first();
 
-            if (!$coupon) {
-                throw new ServiceException(__("booking.coupon.not_found"));
-            }
-
-            /** @var User $user */
-            $user = User::find($userId);
-
-            // 2. Kiểm tra sở hữu trong ví (coupon_users)
-            $userPivot = $user->collectionCoupons()
-                ->where('coupon_id', $couponId)
-                ->first();
-
-            // Nếu đã có trong ví và ĐÃ DÙNG rồi thì báo lỗi
-            if ($userPivot && $userPivot->pivot->is_used) {
-                throw new ServiceException(__("booking.coupon.used"));
-            }
-
-            // 3. Thực hiện GHI
-
-            // Trường hợp TH1: CHƯA sở hữu (Khách dùng trực tiếp từ coupon gợi ý)
-            if (!$userPivot) {
-                // Tăng số lượng thu thập trong ngày (vì họ vừa dùng vừa "nhặt")
-                $this->incrementCollectCount($coupon->id);
-
-                // Thêm vào ví và đánh dấu đã dùng
-                $user->collectionCoupons()->syncWithoutDetaching([
-                    $coupon->id => ['is_used' => true]
-                ]);
-            }
-            // Trường hợp TH2: ĐÃ sở hữu (Đã nhặt vào ví trước đó)
-            else {
-                // Cập nhật trạng thái trong ví thành đã dùng
-                $user->collectionCoupons()->updateExistingPivot($coupon->id, ['is_used' => true]);
-            }
-
-            // 4. Tăng lượt sử dụng thực tế (used_count + daily_used trong config)
-            // Lưu ý: Hàm này trong Repository của bạn đã xử lý JSON history và check usage_limit
-            $successIncrement = $this->incrementUsedCount($coupon->id);
-
-            if (!$successIncrement->isError()) {
-                throw new ServiceException(__("booking.coupon.usage_limit_reached_or_daily_full"));
-            }
-
-            // 5. Ghi lịch sử giao dịch (Bảng coupon_used)
-            $this->couponUsedRepository->create([
-                'coupon_id' => $coupon->id,
-                'user_id' => $userId,
-                'service_id' => $serviceId,
-                'booking_id' => $bookingId,
-            ]);
-
-            DB::commit();
-
-            return ServiceReturn::success(
-                message: __("booking.coupon.used_successfully")
-            );
-        } catch (ServiceException $e) {
-            DB::rollBack();
-            return ServiceReturn::error(message: $e->getMessage());
-        } catch (\Exception $e) {
-            DB::rollBack();
-            LogHelper::error("Lỗi useCouponAndSyncCache", $e);
-            throw $e;
+        if (!$coupon) {
+            throw new ServiceException(__("booking.coupon.not_found"));
         }
+
+        $user = $this->userRepository->find($userId);
+        if (!$user) {
+            throw new ServiceException(__("user.not_found"));
+        }
+
+        // 2. Kiểm tra sở hữu trong ví (coupon_users)
+        $userPivot = $user->collectionCoupons()
+            ->where('coupon_id', $couponId)
+            ->first();
+
+        // Nếu đã có trong ví và ĐÃ DÙNG rồi thì báo lỗi
+        if ($userPivot && $userPivot->pivot->is_used) {
+            throw new ServiceException(__("booking.coupon.used"));
+        }
+
+        // 3. Thực hiện GHI
+
+        // Trường hợp TH1: CHƯA sở hữu (Khách dùng trực tiếp từ coupon gợi ý)
+        if (!$userPivot) {
+            // Tăng số lượng thu thập trong ngày (vì họ vừa dùng vừa "nhặt")
+            $this->incrementCollectCount($coupon->id);
+
+            // Thêm vào ví và đánh dấu đã dùng
+            $user->collectionCoupons()->syncWithoutDetaching([
+                $coupon->id => ['is_used' => true]
+            ]);
+        }
+        // Trường hợp TH2: ĐÃ sở hữu (Đã nhặt vào ví trước đó)
+        else {
+            // Cập nhật trạng thái trong ví thành đã dùng
+            $user->collectionCoupons()->updateExistingPivot($coupon->id, ['is_used' => true]);
+        }
+
+        // 4. Tăng lượt sử dụng thực tế (used_count + daily_used trong config)
+        // Lưu ý: Hàm này trong Repository của bạn đã xử lý JSON history và check usage_limit
+        $successIncrement = $this->incrementUsedCount($coupon->id);
+
+        if (!$successIncrement->isError()) {
+            throw new ServiceException(__("booking.coupon.usage_limit_reached_or_daily_full"));
+        }
+
+        // 5. Ghi lịch sử giao dịch (Bảng coupon_used)
+        $this->couponUsedRepository->create([
+            'coupon_id' => $coupon->id,
+            'user_id' => $userId,
+            'service_id' => $serviceId,
+            'booking_id' => $bookingId,
+        ]);
     }
 }

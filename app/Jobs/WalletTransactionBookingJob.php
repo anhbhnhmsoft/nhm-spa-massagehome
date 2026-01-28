@@ -2,12 +2,9 @@
 
 namespace App\Jobs;
 
-use App\Core\LogHelper;
-use App\Enums\BookingStatus;
+use App\Enums\Jobs\WalletTransBookingCase;
 use App\Enums\QueueKey;
-use App\Services\BookingService;
-use App\Services\CouponService;
-use App\Services\WalletService;
+use App\Services\Facades\TransactionJobService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
@@ -15,7 +12,7 @@ class WalletTransactionBookingJob implements ShouldQueue
 {
     use Queueable;
 
-    public $tries = 3;
+    public $tries = 1;
 
     public function backoff(): array
     {
@@ -27,9 +24,7 @@ class WalletTransactionBookingJob implements ShouldQueue
      */
     public function __construct(
         protected int $bookingId,
-        protected int | null  $couponId,
-        protected int $userId,
-        protected int $serviceId
+        protected WalletTransBookingCase $case,
     ) {
         $this->onQueue(QueueKey::TRANSACTIONS_PAYMENT);
     }
@@ -37,38 +32,33 @@ class WalletTransactionBookingJob implements ShouldQueue
     /**
      * Thực hiện thanh toán booking sang trạng thái confirm, áp dụng coupon và cập nhật số lần sử dụng coupon.
      */
-    public function handle(WalletService $walletService, CouponService $couponService): void
+    public function handle(TransactionJobService $service): void
     {
-        // Gọi service để thanh toán booking
-        $walletService->paymentInitBooking($this->bookingId);
-        // Gọi service để áp dụng coupon (nếu có)
-        if (isset($this->couponId)) {
-            $couponService->useCoupon(
-                $this->couponId,
-                $this->userId,
-                $this->serviceId,
-                $this->bookingId
-            );
+        switch ($this->case) {
+            case WalletTransBookingCase::CONFIRM_BOOKING:
+                try {
+                    $result = $service->handleConfirmBooking($this->bookingId);
+                    if ($result->isError()){
+                        $service->handleFailedConfirmBooking(
+                            bookingId: $this->bookingId,
+                        );
+                    }
+                }catch (\Throwable $exception){
+                    $service->handleFailedConfirmBooking(
+                        bookingId: $this->bookingId,
+                    );
+                }
+                break;
+            case WalletTransBookingCase::FINISH_BOOKING:
+                try {
+                    $result = $service->handleFinishBooking($this->bookingId);
+                    if ($result->isError()){
+
+                    }
+                }catch (\Throwable $exception){
+
+                }
+                break;
         }
-    }
-
-    /**
-     * Xử lý khi job thất bại.
-     */
-    public function failed(\Throwable $exception): void
-    {
-        LogHelper::error('WalletTransactionBookingJob failed', $exception, [
-            'booking_id' => $this->bookingId,
-            'coupon_id' => $this->couponId,
-            'user_id' => $this->userId,
-            'service_id' => $this->serviceId,
-        ]);
-
-        // Gọi service để cancel booking
-        $bookingService = app(BookingService::class);
-        $bookingService->handleBookingPaymentFailed(
-            bookingId: $this->bookingId,
-            reason: $exception->getMessage(),
-        );
     }
 }

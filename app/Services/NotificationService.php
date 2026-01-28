@@ -247,5 +247,10 @@ class NotificationService extends BaseService
             );
         }
     }
+
+    public function sendAdminNotification()
+    {
+
+    }
 }
 
