@@ -8,6 +8,7 @@ use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
 use App\Enums\Language;
+use App\Enums\NotificationAdminType;
 use App\Enums\NotificationStatus;
 use App\Enums\NotificationType;
 use App\Repositories\NotificationRepository;
@@ -248,7 +249,7 @@ class NotificationService extends BaseService
         }
     }
 
-    public function sendAdminNotification()
+    public function sendAdminNotification(NotificationAdminType $type)
     {
 
     }

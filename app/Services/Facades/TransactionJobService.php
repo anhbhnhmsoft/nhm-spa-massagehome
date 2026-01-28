@@ -9,7 +9,6 @@ use App\Core\Service\ServiceReturn;
 use App\Enums\BookingStatus;
 use App\Enums\ConfigName;
 use App\Enums\NotificationType;
-use App\Enums\UserRole;
 use App\Jobs\SendNotificationJob;
 use App\Models\User;
 use App\Services\BookingService;
@@ -301,7 +300,7 @@ class TransactionJobService
         catch (\Exception $exception) {
             DB::rollBack();
             LogHelper::error(
-                message: "Lỗi BookingService@payCommissionFee",
+                message: "Lỗi TransactionJobService@handleFinishBooking",
                 ex: $exception
             );
             return ServiceReturn::error($exception->getMessage());
