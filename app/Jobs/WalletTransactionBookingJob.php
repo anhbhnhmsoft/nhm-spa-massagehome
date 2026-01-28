@@ -35,7 +35,7 @@ class WalletTransactionBookingJob implements ShouldQueue
     }
 
     /**
-     * Thực hiện thanh toán booking, áp dụng coupon và cập nhật số lần sử dụng coupon.
+     * Thực hiện thanh toán booking sang trạng thái confirm, áp dụng coupon và cập nhật số lần sử dụng coupon.
      */
     public function handle(WalletService $walletService, CouponService $couponService): void
     {

@@ -7,6 +7,7 @@ use App\Services\AuthService;
 use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
 use Filament\Auth\Http\Responses\LoginResponse;
 use Filament\Auth\Pages\Login as PagesLogin;
+use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Schema;
@@ -60,6 +61,8 @@ class Login extends PagesLogin
                 ->validationMessages([
                     'required' => __('common.error.required'),
                 ]),
+            Checkbox::make('remember')
+                ->label(__('auth.admin.remember'))
         ]);
     }
 

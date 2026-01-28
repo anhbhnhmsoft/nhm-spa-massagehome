@@ -24,7 +24,7 @@ Route::middleware('set-api-locale')->group(function () {
     // Authenticate routes
     Route::prefix('auth')->group(function () {
         // Guest middleware
-        Route::middleware(['throttle:5,1', 'guest:sanctum'])->group(function () {
+        Route::middleware(['throttle:5,1'])->group(function () {
             // Xác thực đăng nhập hay đăng ký.
             Route::post('authenticate', [AuthController::class, 'authenticate']);
             // Đăng nhập vào hệ thống.
@@ -130,7 +130,8 @@ Route::middleware('set-api-locale')->group(function () {
             // Lấy thông tin chi tiết dịch vụ
             Route::get('detail/{id}', [ServiceController::class, 'detailService'])->where('id', '[0-9]+');
             // Đặt lịch dịch vụ
-            Route::post('booking', [ServiceController::class, 'booking'])->middleware(['check-role:customer']); // Chỉ cho phép Customer đặt lịch
+            Route::post('booking', [ServiceController::class, 'booking'])
+                ->middleware(['check-role:customer']); // Chỉ cho phép Customer đặt lịch
             // Lấy danh sách lịch đã đặt hôm nay
             Route::get('today-booked/{id}', [ServiceController::class, 'getTodayBookedCustomers'])->where('id', '[0-9]+');
             // Lấy danh sách mã giảm giá

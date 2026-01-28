@@ -59,6 +59,7 @@ class StatisticalStatsAgency extends BaseWidget
                         ->icon(Heroicon::ArrowDown)
                         ->description(__('admin.currency'))
                         ->color('danger'),
+
                 ]),
             Grid::make()
                 ->columnSpanFull()

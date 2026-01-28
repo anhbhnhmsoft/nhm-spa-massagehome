@@ -312,13 +312,6 @@ class AuthService extends BaseService
             if (!Hash::check($password, $user->password)) {
                 return ServiceReturn::error(message: __('auth.error.invalid_login'));
             }
-            // // Kiểm tra user có bị khóa không
-            // if ($user->is_active == false) {
-            //     return ServiceReturn::error(message: __('auth.error.disabled'));
-            // }
-            // // Cập nhật last login time
-            // $user->last_login_at = now();
-            // $user->save();
 
             Auth::login($user);
 

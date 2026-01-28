@@ -16,12 +16,16 @@ use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Placeholder;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Schemas\Components\Image;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\HtmlString;
 
 class AgenciesTable
 {
@@ -74,7 +78,30 @@ class AgenciesTable
                     ViewAction::make('view')
                         ->label(__('admin.common.action.agency_dashboard'))
                         ->icon(Heroicon::ChartBar),
-                    DeleteAction::make()
+                    Action::make('qr_affiliate')
+                        ->label(__('admin.agency.infolist.affiliate_qr'))
+                        ->icon('heroicon-o-qr-code')
+                        ->modalHeading(__('admin.agency.infolist.affiliate_qr'))
+                        ->modalSubmitAction(false) // Ẩn nút Submit vì chỉ để xem
+                        ->modalWidth('sm')
+                        ->schema([
+                            TextEntry::make('qr_code_placeholder')
+                                ->hiddenLabel()
+                                ->state(function ($record) {
+                                    $url = route('affiliate.link', ['referrerId' => $record->id]);
+                                    $qrUrl = "https://quickchart.io/qr?text=" . urlencode($url) . "&size=250";
+                                    return new HtmlString("
+                                        <div class='flex flex-col items-center justify-center space-y-4'>
+                                              <img src='{$qrUrl}' alt='QR Code' class='w-64 h-64'>
+                                            <div class='text-center text-sm font-mono text-gray-500 break-all'>
+                                                {$url}
+                                            </div>
+                                        </div>
+                                    ");
+                                })
+                        ]),
+
+                    DeleteAction::make('delete')
                         ->label(__('admin.common.action.delete'))
                         ->tooltip(__('admin.common.tooltip.delete'))
                         ->icon('heroicon-o-trash')

@@ -307,20 +307,9 @@ return
                 'total_customer_order_ktv_desc' => 'Tổng số khách hàng đã đặt dịch vụ từ các KTV thuộc quản lý.',
                 'total_customer_affiliate_order' => 'Tổng số lượng khách hàng giới thiệu đặt dịch vụ',
                 'total_customer_affiliate_order_desc' => 'Tổng số khách hàng đối tác này giới thiệu và đặt dịch vụ.',
-
-                'received_income' => 'Số tiền thực tế thu được',
-                'received_income_desc' => 'Số tiền thực tế thu được từ tất cả các dịch vụ đã hoàn thành, sau khi trừ đi triết khấu.',
-                'total_customers' => 'Số KH đã làm',
-                'total_customers_desc' => 'Tổng số khách hàng đã đặt dịch vụ từ KTV này.',
-                'total_bookings' => 'Tổng số đơn đặt lịch',
-                'total_bookings_desc' => 'Tổng số đơn đặt lịch đã được KTV nhận.',
-                'affiliate_income' => 'Thu nhập Affiliate',
-                'affiliate_income_desc' => 'Số tiền thu được từ giới thiệu khách hàng.',
-                'total_reviews' => 'Tổng số lượt review',
-                'total_reviews_desc' => 'Tổng số lượt review đã được KTV nhận.',
                 'list_referral_leader' => 'Danh sách KTV giới thiệu',
                 'transaction_list' => 'Danh sách giao dịch',
-                'booking_list' => 'Danh sách đặt lịch',
+                'affiliate_qr' => 'Mã QR Giới thiệu',
             ]
         ],
         'agency_apply' => [

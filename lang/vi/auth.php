@@ -36,6 +36,7 @@ return [
     'admin' => [
         'phone' => 'Số điện thoại.',
         'password' => 'Mật khẩu.',
+        'remember' => 'Ghi nhớ đăng nhập'
     ],
     'validation' => [
         'name_required' => 'Tên không được để trống.',
