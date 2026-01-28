@@ -52,6 +52,7 @@ use App\Services\BookingService;
 use App\Services\ChatService;
 use App\Services\ConfigService;
 use App\Services\CouponService;
+use App\Services\Facades\BookingFacadeService;
 use App\Services\Facades\TransactionJobService;
 use App\Services\NotificationService;
 use App\Services\PaymentService;
@@ -167,6 +168,7 @@ class AppServiceProvider extends ServiceProvider
     protected function registerFacadesService(): void
     {
         $this->app->singleton(TransactionJobService::class);
+        $this->app->singleton(BookingFacadeService::class);
     }
 
     /**

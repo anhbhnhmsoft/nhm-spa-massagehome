@@ -2,10 +2,7 @@
 
 namespace App\Services;
 
-use App\Core\Cache\CacheKey;
-use App\Core\Cache\Caching;
 use App\Core\Controller\FilterDTO;
-use App\Core\Helper;
 use App\Core\LogHelper;
 use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
@@ -13,13 +10,11 @@ use App\Core\Service\ServiceReturn;
 use App\Enums\BookingStatus;
 use App\Enums\Jobs\WalletTransBookingCase;
 use App\Enums\NotificationType;
-use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserRole;
 use App\Jobs\RefundBookingCancelJob;
 use App\Jobs\SendNotificationJob;
 use App\Models\CategoryPrice;
 use App\Models\Service;
-use App\Models\User;
 use App\Repositories\BookingRepository;
 use App\Repositories\CategoryPriceRepository;
 use App\Repositories\CouponRepository;
@@ -605,7 +600,7 @@ class BookingService extends BaseService
             $booking->end_time = $now;
             $booking->save();
 
-            // tính toán phí hoa hồng và gửi tới các user khác
+            // Thanh toán cho KTV và tính phí hoa hồng cho các user khác
             WalletTransactionBookingJob::dispatch(
                 bookingId: $booking->id,
                 case: WalletTransBookingCase::FINISH_BOOKING,
@@ -640,91 +635,6 @@ class BookingService extends BaseService
             return ServiceReturn::error(
                 message: __("common_error.server_error")
             );
-        }
-    }
-
-
-    /**
-     * Lấy danh sách booking đang diễn ra (ONGOING)
-     * @return \Illuminate\Database\Eloquent\Collection
-     */
-    public function getOngoingBookings()
-    {
-        return $this->bookingRepository->query()
-            ->where('status', BookingStatus::ONGOING->value)
-            ->get();
-    }
-
-    /**
-     * Kiểm tra và xử lý booking quá hạn (Auto Finish hoặc Warning)
-     * @param \App\Models\ServiceBooking $booking
-     * @return void
-     */
-    public function processOvertimeBooking($booking): void
-    {
-        try {
-            $startTime = Carbon::parse($booking->start_time);
-            $expectedEndTime = $startTime->copy()->addMinutes($booking->duration);
-            $now = Carbon::now();
-
-            // Tính thời gian quá hạn (âm = quá hạn)
-            $overtimeMinutes = $now->diffInMinutes($expectedEndTime, false);
-
-            // Nếu quá hạn hơn 10 phút → Tự động finish
-            if ($overtimeMinutes <= -10) {
-                LogHelper::debug("Auto-finishing booking {$booking->id} - Overtime: " . abs($overtimeMinutes) . " minutes");
-
-                // Gửi thông báo cho KTV
-                SendNotificationJob::dispatch(
-                    userId: $booking->ktv_user_id,
-                    type: NotificationType::BOOKING_AUTO_FINISHED,
-                    data: [
-                        'booking_id' => $booking->id,
-                        'overtime_minutes' => abs($overtimeMinutes),
-                    ]
-                );
-
-                // Gửi thông báo cho customer
-                SendNotificationJob::dispatch(
-                    userId: $booking->user_id,
-                    type: NotificationType::BOOKING_AUTO_FINISHED,
-                    data: [
-                        'booking_id' => $booking->id,
-                        'overtime_minutes' => abs($overtimeMinutes),
-                    ]
-                );
-
-                // Auto finish booking
-                $result = $this->finishBooking($booking->id, false);
-
-                if ($result->isError()) {
-                    LogHelper::debug("Failed to auto-finish booking {$booking->id}: " . $result->getMessage());
-                } else {
-                    LogHelper::debug("Successfully auto-finished booking {$booking->id}");
-                }
-            }
-            // Nếu quá hạn 5-10 phút → Gửi cảnh báo (chỉ 1 lần)
-            elseif ($overtimeMinutes <= -5 && $overtimeMinutes > -10) {
-                // Kiểm tra đã gửi cảnh báo chưa
-                if (!$booking->overtime_warning_sent) {
-                    LogHelper::debug("Sending overtime warning for booking {$booking->id} - Overtime: " . abs($overtimeMinutes) . " minutes");
-
-                    SendNotificationJob::dispatch(
-                        userId: $booking->ktv_user_id,
-                        type: NotificationType::BOOKING_OVERTIME_WARNING,
-                        data: [
-                            'booking_id' => $booking->id,
-                            'overtime_minutes' => abs($overtimeMinutes),
-                        ]
-                    );
-
-                    // Đánh dấu đã gửi cảnh báo
-                    $booking->overtime_warning_sent = true;
-                    $booking->save();
-                }
-            }
-        } catch (\Exception $e) {
-            LogHelper::error("Error processing overtime booking {$booking->id}: " . $e->getMessage(), $e);
         }
     }
 

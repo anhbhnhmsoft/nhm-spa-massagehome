@@ -6,6 +6,7 @@ use App\Core\LogHelper;
 use App\Services\ConfigService;
 use App\Services\UserService;
 use Illuminate\Console\Command;
+use Symfony\Component\Console\Command\Command as CommandAlias;
 
 class UpdateAllKtvLeaderStatusCommand extends Command
 {
@@ -45,21 +46,21 @@ class UpdateAllKtvLeaderStatusCommand extends Command
 
             if ($result->isError()) {
                 $this->error("Lỗi: {$result->getMessage()}");
-                return Command::FAILURE;
+                return CommandAlias::FAILURE;
             }
 
             $data = $result->getData();
             $this->info("Tìm thấy {$data['total_checked']} KTV để kiểm tra.");
             $this->info("Hoàn thành! Đã cập nhật {$data['updated_count']} KTV, bỏ qua {$data['skipped_count']} KTV.");
 
-            return Command::SUCCESS;
+            return CommandAlias::SUCCESS;
         } catch (\Throwable $exception) {
             LogHelper::error(
                 message: 'Lỗi UpdateAllKtvLeaderStatusCommand@handle',
                 ex: $exception,
             );
             $this->error("Lỗi: {$exception->getMessage()}");
-            return Command::FAILURE;
+            return CommandAlias::FAILURE;
         }
     }
 }

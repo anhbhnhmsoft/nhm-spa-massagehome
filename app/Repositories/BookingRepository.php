@@ -153,7 +153,6 @@ class BookingRepository extends BaseRepository
             ->sum('price');
     }
 
-
     /**
      * Lấy số lượng đơn đã đặt lịch KTV trong khoảng thời gian
      * @param int $ktvId - ID của KTV
@@ -185,5 +184,19 @@ class BookingRepository extends BaseRepository
             ->whereBetween('created_at', [$from->format('Y-m-d H:i:s'), $to->format('Y-m-d H:i:s')])
             ->where('status', BookingStatus::COMPLETED->value)
             ->count();
+    }
+
+    /**
+     * Lấy danh sách các booking quá hạn mà KTV vẫn chưa hoàn thành
+     * @param int $minutes - Thời gian quá hạn (mặc định là 30 phút)
+     * (start_time + duration minutes + ? minutes) > now() (quá ? phút thì coi như là quá hạn)
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getOverdueBookings(int $minutes)
+    {
+        return $this->query()
+            ->where('status', BookingStatus::ONGOING->value)
+            ->whereRaw("start_time + make_interval(mins => duration) + interval '? minutes' > ?", [$minutes, now()])
+            ->get();
     }
 }

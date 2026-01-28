@@ -11,11 +11,16 @@ use App\Enums\Language;
 use App\Enums\NotificationAdminType;
 use App\Enums\NotificationStatus;
 use App\Enums\NotificationType;
+use App\Enums\UserRole;
+use App\Filament\Clusters\Service\Resources\Bookings\BookingResource;
 use App\Repositories\NotificationRepository;
 use App\Repositories\UserRepository;
+use Filament\Actions\Action;
+use Filament\Notifications\Notification;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis as RedisFacade;
+use function PHPUnit\Framework\matches;
 
 class NotificationService extends BaseService
 {
@@ -249,9 +254,55 @@ class NotificationService extends BaseService
         }
     }
 
-    public function sendAdminNotification(NotificationAdminType $type)
+    /**
+     * Gửi thông báo cho admin
+     * @param NotificationAdminType $type
+     * @param array $data
+     * @return ServiceReturn
+     */
+    public function sendAdminNotification(NotificationAdminType $type, array $data = [])
     {
+        try {
+            $admins = $this->userRepository->queryUser()
+                ->where('role', UserRole::ADMIN->value)
+                ->get();
+            $admins->each(function ($admin) use ($type, $data) {
+                switch ($type) {
+                    // Thông báo booking quá hạn
+                    case NotificationAdminType::OVERDUE_BOOKING:
+                        Notification::make()
+                            ->title(__('notification.overdue_booking.title'))
+                            ->warning()
+                            ->body(__('notification.overdue_booking.body', [
+                                'booking_id' => $data['booking_id'],
+                                'start_time' => $data['start_time'],
+                                'duration' => $data['duration'],
+                            ]))
+                            ->actions([
+                                Action::make(__('notification.detail'))
+                                    ->button()
+                                    ->color('primary')
+                                    ->url(BookingResource::getUrl('view', ['record' => $data['booking_id']]))
+                                    ->markAsRead(),
+                                Action::make(__('notification.marked_as_read'))
+                                    ->button()
+                                    ->markAsRead(),
 
+                            ])
+                            ->sendToDatabase($admin);
+                        break;
+                }
+            });
+            return ServiceReturn::success();
+        }catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi NotificationService@sendAdminNotification",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: __("common_error.server_error")
+            );
+        }
     }
 }
 

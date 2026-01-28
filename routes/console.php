@@ -1,13 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Schedule;
-use App\Jobs\CheckOvertimeBookingJob;
 
 
 // Cronjob kiểm tra booking quá hạn - chạy mỗi 5 phút
-Schedule::job(new CheckOvertimeBookingJob())
+Schedule::command('app:check-booking')
     ->everyFiveMinutes()
-    ->name('check-overtime-bookings')
     ->withoutOverlapping()
     ->onOneServer();
 
