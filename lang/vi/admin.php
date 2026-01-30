@@ -496,6 +496,8 @@ return
                 'zalo_oa_id_helper' => 'Mã OA ID Zalo hỗ trợ thanh toán qua Zalo Pay',
                 'zalo_template_id' => 'Mã template ID Zalo',
                 'zalo_template_id_helper' => 'Mã template ID Zalo hỗ trợ thanh toán qua Zalo Pay',
+                'price_transportation' => 'Phí di chuyển',
+                'price_transportation_helper' => 'Phí di chuyển trên mỗi km tính đường chim bay cho ktv, do khách hàng chi trả',
             ],
             'actions' => [
                 'save' => 'Lưu thay đổi',

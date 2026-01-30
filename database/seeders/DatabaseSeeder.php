@@ -488,6 +488,15 @@ class DatabaseSeeder extends Seeder
                 ]
             );
 
+            Config::query()->updateOrCreate(
+                ['config_key' => ConfigName::PRICE_TRANSPORTATION->value],
+                [
+                    'config_value' => '10000',
+                    'config_type' => ConfigType::NUMBER->value,
+                    'description' => 'Chi phí di chuyển của KTV do khách hàng trả trên mỗi km',
+                ]
+            );
+
         } catch (\Exception $e) {
             DB::rollBack();
             dump($e);

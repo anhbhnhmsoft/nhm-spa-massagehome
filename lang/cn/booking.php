@@ -4,6 +4,8 @@ return [
     'service' => [
         'not_active' => '服务已暂停',
         'not_found'  => '服务不存在',
+        'not_found_profile' => '未找到技术员个人资料',
+        'not_found_location' => '未找到技术员所在地'
     ],
     'not_found' => '预订不存在',
     'book_time_not_valid' => '预订时间无效，必须大于当前时间！',

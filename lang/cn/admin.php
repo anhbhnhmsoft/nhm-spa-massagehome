@@ -361,6 +361,8 @@ return
                 'zalo_oa_id_helper' => 'Zalo OA ID 支持 Zalo Pay',
                 'zalo_template_id' => 'Zalo Template ID',
                 'zalo_template_id_helper' => 'Zalo Template ID 支持 Zalo Pay',
+                'price_transportation' => '交通费',
+                'price_transportation_helper' => '交通费',
             ],
             'actions' => [
                 'save' => '保存更改',

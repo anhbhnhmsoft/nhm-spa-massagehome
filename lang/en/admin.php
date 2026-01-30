@@ -361,6 +361,8 @@ return
                 'zalo_oa_id_helper' => 'Zalo OA ID for Zalo Pay',
                 'zalo_template_id' => 'Zalo Template ID',
                 'zalo_template_id_helper' => 'Zalo Template ID for Zalo Pay',
+                'price_transportation' => 'Transportation Fee',
+                'price_transportation_helper' => 'Transportation fee per km calculated by bird\'s flight for KTV, paid by customer',
             ],
             'actions' => [
                 'save' => 'Save Changes',

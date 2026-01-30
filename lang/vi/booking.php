@@ -4,6 +4,8 @@ return [
     'service' => [
         'not_active' => 'Dịch vụ dừng phục vụ',
         'not_found' => 'Dịch vụ không tồn tại',
+        'not_found_profile' => 'Không tìm thấy hồ sơ kỹ thuật viên',
+        'not_found_location' => 'Không xác định được vị trí kỹ thuật viên'
     ],
     'ktv' => [
         'not_found' => 'Không tìm thấy kỹ thuật viên',

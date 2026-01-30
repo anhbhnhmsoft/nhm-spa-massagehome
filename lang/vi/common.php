@@ -23,6 +23,7 @@ return [
     ],
     'unit' => [
         'minute' => 'phút',
+        'vnd'    => 'vnđ',
     ],
     'user_withdraw_info' => [
         'bank' => [
