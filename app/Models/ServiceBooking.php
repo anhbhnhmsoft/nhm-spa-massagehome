@@ -3,12 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Core\GenerateId\HasBigIntId;
 
 class ServiceBooking extends Model
 {
-    use SoftDeletes, HasBigIntId;
+    use HasBigIntId;
 
     protected $fillable = [
         'user_id',

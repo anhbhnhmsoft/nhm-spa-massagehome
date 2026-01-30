@@ -15,6 +15,12 @@ return [
     'hero_cta_primary' => 'Book Now',
     'hero_cta_secondary' => 'View Services',
     'hero_badge' => '🔥 20% off for new customers',
+    'hero_tagline' => 'Comprehensive Event Organization & Management System',
+    'download_on' => 'Download on',
+    'feature_professional' => 'Professional',
+    'feature_convenient' => 'Convenient',
+    'feature_affordable' => 'Affordable',
+
 
     // Stats Section
     'stats_customers' => 'Customers',

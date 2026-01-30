@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Core\Controller\BaseController;
+use App\Enums\BannerType;
 use App\Http\Resources\Commercial\BannerResource;
 use App\Http\Resources\Commercial\ContractResource;
 use App\Services\CommercialService;
@@ -22,7 +23,7 @@ class CommercialController extends BaseController
      */
     public function getBanner()
     {
-        $result = $this->commercialService->getBanner();
+        $result = $this->commercialService->getBanner(BannerType::HOMEPAGE);
         if ($result->isError()) {
             return $this->sendError($result->getMessage());
         }

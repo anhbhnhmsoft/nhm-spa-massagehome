@@ -33,10 +33,7 @@ class TransactionAgencyTable extends TableWidget
                         'wallet',
                         'wallet.user',
                     ])
-                    ->where('wallet_id', $walletId)
-                    ->withoutGlobalScopes([
-                        SoftDeletingScope::class,
-                    ]);
+                    ->where('wallet_id', $walletId);
             });
     }
 }

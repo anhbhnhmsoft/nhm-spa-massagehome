@@ -56,10 +56,7 @@ class KTVResource extends Resource
             ->whereHas('reviewApplication', function (Builder $query) {
                 $query->whereIn('status', ReviewApplicationStatus::values());
                 $query->where('role', UserRole::KTV->value);
-            })
-            ->withoutGlobalScopes([
-                SoftDeletingScope::class,
-            ]);
+            });
         return $query;
     }
 

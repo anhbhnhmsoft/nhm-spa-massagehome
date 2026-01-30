@@ -3,13 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Core\GenerateId\HasBigIntId;
 use Spatie\Translatable\HasTranslations;
 
 class Category extends Model
 {
-    use SoftDeletes, HasBigIntId, HasTranslations;
+    use  HasBigIntId, HasTranslations;
 
     protected $translatable = [
         'name',

@@ -5,11 +5,10 @@ namespace App\Models;
 use App\Core\GenerateId\HasBigIntId;
 use App\Enums\UserFileType;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class UserFile extends Model
 {
-    use SoftDeletes, HasBigIntId;
+    use HasBigIntId;
 
     protected $fillable = [
         'user_id',

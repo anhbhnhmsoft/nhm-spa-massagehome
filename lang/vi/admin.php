@@ -774,6 +774,13 @@ return
                     'en' => 'Banner tiếng Anh',
                     'cn' => 'Banner tiếng Trung',
                 ],
+                'type' => 'Loại',
+            ],
+            'type' => [
+                'HOMEPAGE' => 'Trang chủ',
+                'AFFILIATE_CUSTOMER' => 'Trang affiliate customer',
+                'AFFILIATE_KTV' => 'Trang affiliate KTV',
+                'AFFILIATE_AGENCY' => 'Trang affiliate agency',
             ],
         ],
         'static_contract' => [
@@ -792,6 +799,8 @@ return
                 'title' => 'Tiêu đề',
                 'slug' => 'Đường dẫn',
                 'path' => [
+                    'label' => 'Tệp tin',
+                    'description' => 'Chọn tệp tin cho chính sách (chỉ chấp nhận định dạng PDF)',
                     'vi' => 'File tiếng Việt',
                     'en' => 'File tiếng Anh',
                     'cn' => 'File tiếng Trung',

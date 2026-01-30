@@ -4,11 +4,10 @@ namespace App\Models;
 
 use App\Core\GenerateId\HasBigIntId;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Review extends Model
 {
-    use SoftDeletes, HasBigIntId;
+    use HasBigIntId;
 
     protected $table = 'reviews';
 

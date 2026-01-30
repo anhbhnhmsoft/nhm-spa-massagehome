@@ -4,11 +4,10 @@ namespace App\Models;
 
 use App\Core\GenerateId\HasBigIntId;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CouponUser extends Model
 {
-    use HasBigIntId, SoftDeletes;
+    use HasBigIntId;
 
     protected $table = 'coupon_users';
 

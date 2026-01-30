@@ -6,6 +6,7 @@ use App\Core\LogHelper;
 use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
+use App\Enums\BannerType;
 use App\Repositories\BannerRepository;
 use App\Repositories\CouponRepository;
 use App\Repositories\StaticContractRepository;
@@ -24,12 +25,15 @@ class CommercialService extends BaseService
 
     /**
      * Lấy danh sách banner cho homepage
+     * @param BannerType $type
      * @return ServiceReturn
      */
-    public function getBanner(): ServiceReturn
+    public function getBanner(BannerType $type): ServiceReturn
     {
         try {
-            $banners = $this->bannerRepository->queryBanner()->get();
+            $banners = $this->bannerRepository->queryBanner()
+                ->where('type', $type)
+                ->get();
             return ServiceReturn::success(
                 data: $banners
             );

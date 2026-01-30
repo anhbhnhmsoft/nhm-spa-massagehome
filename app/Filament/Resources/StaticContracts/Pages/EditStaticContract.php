@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\StaticContracts\Pages;
 
 use App\Enums\ContractFileType;
+use App\Filament\Components\CommonActions;
 use App\Filament\Resources\StaticContracts\StaticContractResource;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ForceDeleteAction;
@@ -16,9 +17,8 @@ class EditStaticContract extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            CommonActions::backAction(static::getResource()),
             DeleteAction::make(),
-            ForceDeleteAction::make(),
-            RestoreAction::make(),
         ];
     }
 

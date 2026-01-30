@@ -39,7 +39,8 @@ class StaticContractForm
                                 'required' => __('admin.static_contract.errors.type_required'),
                             ]),
                     ]),
-                Section::make()
+                Section::make(__('admin.static_contract.fields.path.label'))
+                    ->description(__('admin.static_contract.fields.path.description'))
                     ->compact()
                     ->columns(3)
                     ->schema([

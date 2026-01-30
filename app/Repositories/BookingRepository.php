@@ -196,7 +196,11 @@ class BookingRepository extends BaseRepository
     {
         return $this->query()
             ->where('status', BookingStatus::ONGOING->value)
-            ->whereRaw("start_time + make_interval(mins => duration) + interval '? minutes' > ?", [$minutes, now()])
+            ->whereNotNull('start_time')
+            ->whereRaw(
+                "start_time + (duration * interval '1 minute') + (? * interval '1 minute') > ?",
+                [$minutes, now()]
+            )
             ->get();
     }
 }

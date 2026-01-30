@@ -8,6 +8,7 @@ use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Widgets\BookingListKt
 use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Widgets\StatisticalStatsKTV;
 use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Widgets\TransactionKtvTable;
 use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Widgets\UserReferralLeaderKtvTableWidget;
+use App\Filament\Components\CommonActions;
 use App\Services\DashboardService;
 use App\Services\PaymentService;
 use Filament\Forms\Components\Select;
@@ -19,6 +20,13 @@ use Filament\Schemas\Components\Section;
 class ViewKTV extends ViewRecord
 {
     protected static string $resource = KTVResource::class;
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            CommonActions::backAction(static::getResource()),
+        ];
+    }
 
     public function getTitle(): string
     {

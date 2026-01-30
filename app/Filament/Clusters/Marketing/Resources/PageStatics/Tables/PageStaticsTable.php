@@ -29,11 +29,6 @@ class PageStaticsTable
                 TextColumn::make('slug')
                     ->label(__('admin.page_static.slug'))
                     ->searchable(),
-                TextColumn::make('content')
-                    ->label(__('admin.page_static.content'))
-                    ->html()
-                    ->limit(50)
-                    ->searchable(),
                 ToggleColumn::make('is_active')
                     ->label(__('admin.page_static.is_active'))
                     ->searchable(),
@@ -59,17 +54,10 @@ class PageStaticsTable
                         ->modalHeading(__('admin.common.modal.delete_title'))
                         ->modalDescription(__('admin.common.modal.delete_confirm'))
                         ->modalSubmitActionLabel(__('admin.common.action.confirm_delete'))
-                        ->visible(fn($record) => ! $record->trashed()),
 
-                    RestoreAction::make()
-                        ->label(__('admin.common.action.restore'))
-                        ->tooltip(__('admin.common.tooltip.restore'))
-                        ->icon('heroicon-o-arrow-path')
-                        ->visible(fn($record) => $record->trashed()),
                 ]),
             ])
             ->filters([
-                TrashedFilter::make(),
                 SelectFilter::make('is_active')
                     ->options([
                         true => __('admin.common.status.active'),
@@ -86,17 +74,6 @@ class PageStaticsTable
                         ->modalDescription(__('admin.common.modal.delete_confirm'))
                         ->modalSubmitActionLabel(__('admin.common.action.confirm_delete')),
 
-                    RestoreBulkAction::make()
-                        ->label(__('admin.common.action.restore'))
-                        ->visible(fn($livewire) => $livewire->tableFilters['trashed']['value'] ?? null === 'only'),
-
-                    ForceDeleteBulkAction::make()
-                        ->label(__('admin.common.action.force_delete'))
-                        ->color('danger')
-                        ->requiresConfirmation()
-                        ->modalHeading(__('admin.common.modal.force_delete_title'))
-                        ->modalDescription(__('admin.common.modal.force_delete_confirm'))
-                        ->modalSubmitActionLabel(__('admin.common.action.confirm_delete')),
                 ]),
             ]);
     }

@@ -53,7 +53,7 @@
     - referred_by_user_id (bigint, nullable) -- id người giới thiệu
     - referred_at (timestamp, nullable) -- thời gian được giới thiệu
     - last_login_at (timestamp, nullable) -- thời gian đăng nhập cuối cùng
-    - softDeletes
+    
     - timestamps
 
 # user_devices
@@ -67,7 +67,7 @@
     - device_id (varchar) -- id thiết bị
     - device_type (varchar, nullable) -- loại thiết bị
     - unique(device_id, user_id) -- token và device_id phải là duy nhất
-    - softDeletes
+    
     - timestamps
 
 
@@ -97,7 +97,7 @@
     - application_date (timestamp, nullable) -- ngày nộp hồ sơ
     - role (smallint) -- vai trò muốn apply (trong enum UserRole)
     - is_leader (boolean, default false) -- đánh dấu trưởng nhóm KTV (job sẽ tự động set khi số KTV được giới thiệu >= điều kiện)
-    - softDeletes
+    
     - timestamps
 
 # user_profiles
@@ -115,7 +115,7 @@
     - gender (smallint, nullable) -- giới tính (trong enum Gender)
     - bio (text, nullable) -- thông tin cá nhân
     
-    - softDeletes
+    
     - timestamps
 
 # user_files
@@ -134,7 +134,7 @@
     - file_size (varchar, nullable) -- kích thước tệp tin (byte)
     - file_type (varchar) -- Loại tệp đính kèm, ví dụ: pdf, docx, jpg, v.v.
     - is_public (boolean) -- tệp tin có thể truy cập từ bên ngoài không
-    - softDeletes
+    
     - timestamps
 
 # user_address
@@ -151,7 +151,7 @@
     - latitude (decimal(10,8), nullable) -- vĩ độ
     - longitude (decimal(11,8), nullable) -- kinh độ
     - desc (text, nullable) -- ghi chú thêm
-    - softDeletes
+    
     - timestamps
 
 # user_ktv_schedules
@@ -180,7 +180,7 @@
     - user_id (bigint, foreign key to users.id) -- id người dùng
     - balance (decimal(15,2), default 0.00) -- số dư ví tiền -> là point riêng của hệ thống
     - is_active (boolean, default true) -- trạng thái hoạt động của ví tiền
-    - softDeletes
+    
     - timestamps
 
 # wallet_transactions
@@ -206,7 +206,7 @@
     - status (smallint) -- trạng thái giao dịch (trong enum TransactionStatus)
     - description (varchar, nullable) -- mô tả giao dịch
     - expired_at (timestamp, nullable) -- thời gian hết hạn (nếu có)
-    - softDeletes
+    
     - timestamps
 
 # user_withdraw_info
@@ -221,7 +221,7 @@
     - user_id (bigint, fk -> users.id)
     - type (smallint, enum UserWithdrawInfo: 1=bank, 2=momo, 3=zalo)
     - config (json, nullable) -- thông tin chi tiết theo type (bank_code/account_number/account_name hoặc phone/name)
-    - softDeletes
+    
     - timestamps
 
     # lưu ý
@@ -244,7 +244,7 @@
     - min_commission (decimal(15,2)) -- mức hoa hồng tối thiểu
     - max_commission (decimal(15,2)) -- mức hoa hồng tối đa
     - is_active (boolean) -- trạng thái kích hoạt
-    - softDeletes
+    
     - timestamps
 
 # affiliate_links
@@ -261,7 +261,7 @@
     - referred_user_id (bigint, foreign key to users.id, nullable) -- id người được giới thiệu (User mới đăng ký/đăng nhập)
     - is_matched (boolean) -- trạng thái khớp
     - expired_at (timestamp, nullable) -- thời gian hết hạn
-    - softDeletes
+    
     - timestamps
 
 # categories
@@ -276,7 +276,7 @@
     - is_featured (boolean, default false) -- có hiển thị nổi bật hay không
     - usage_count (bigint, default 0) -- số lần sử dụng
     - is_active (boolean) -- trạng thái kích hoạt
-    - softDeletes
+    
     - timestamps
 
 # category_prices
@@ -308,7 +308,7 @@
     - description (json, nullable) -- mô tả dịch vụ (đa ngôn ngữ, lưu trữ dưới dạng JSON)
     - is_active (boolean) -- trạng thái kích hoạt
     - image_url (varchar, nullable) -- URL hình ảnh dịch vụ
-    - softDeletes
+    
     - timestamps
 
 # service_options
@@ -322,7 +322,7 @@
     - id (bigint, primary key, auto-increment)
     - service_id (bigint, foreign key to services.id) -- id dịch vụ
     - category_price_id (bigint, nullable, foreign key to category_prices.id) -- id tùy chọn danh mục
-    - softDeletes
+    
     - timestamps
 
 # service_bookings
@@ -354,7 +354,7 @@
     - payment_type (smallint, nullable) -- hình thức thanh toán (trong enum PaymentType), null là khi dịch vụ chưa được xác nhận
     - reason_cancel (varchar, nullable) -- lý do hủy đặt lịch
     - overtime_warning_sent (boolean, default false) -- đã gửi thông báo về thời gian vượt quá không
-    - softDeletes
+    
     - timestamps
 
 # coupons
@@ -381,7 +381,7 @@
     - is_active (boolean) -- trạng thái kích hoạt
     - banners (json, nullable) -- danh sách banner đa ngôn ngữ
     - display_ads (boolean, default true) -- có hiển thị quảng cáo ở homepage không
-    - softDeletes
+    
     - timestamps
     - unique (code, created_by) -- mã giảm giá phải là duy nhất cho từng người dùng
     - config (jsonb, nullable) -- cấu hình điều kiện sử dụng
@@ -401,7 +401,7 @@
     - user_id (bigint, foreign key to users.id) -- id người dùng
     - service_id (bigint, foreign key to services.id) -- id dịch vụ
     - booking_id (bigint, foreign key to service_bookings.id) -- id đơn đặt lịch
-    - softDeletes
+    
     - timestamps
     - unique (booking_id, coupon_id) -- mã giảm giá phải là duy nhất cho từng đơn đặt lịch
 
@@ -418,7 +418,7 @@
     - coupon_id (bigint, foreign key to coupons.id) -- id mã giảm giá
     - user_id (bigint, foreign key to users.id) -- id người dùng
     - is_used (boolean) -- đã sử dụng hay chưa
-    - softDeletes
+    
     - timestamps
     - unique (user_id, coupon_id) -- mã giảm giá phải là duy nhất cho từng người dùng
 
@@ -439,7 +439,7 @@
     - comment (text, nullable) -- bình luận
     - review_at (timestamp) -- thời gian đánh giá
     - hidden (boolean, default false) -- có ẩn hay không
-    - softDeletes
+    
     - timestamps
 
 # configs
@@ -457,7 +457,7 @@
     - description (text, nullable) -- mô tả cấu hình
     - KTV_LEADER_MIN_REFERRALS (number) -- số lượng KTV tối thiểu cần giới thiệu để lên KTV trưởng
     - KTV_REFERRAL_REWARD_AMOUNT (number) -- số tiền (point) được nhận khi mời KTV thành công, nếu = 0 thì tắt tính năng
-    - softDeletes
+    
     - timestamps
 
 # mobile_notifications
@@ -475,7 +475,7 @@
     - data (text, nullable) -- Dữ liệu bổ sung (json format)
     - type (smallint) -- Loại thông báo (trong enum NotificationType)
     - status (smallint, default 0) -- Trạng thái thông báo (trong enum NotificationStatus)
-    - softDeletes
+    
     - timestamps
 
 # banners
@@ -484,6 +484,7 @@
 
     # cấu trúc
     - id (bigint, primary key, auto-increment)
+    - type (smallint) -- Loại banner (trong enum BannerType)
     - image_url (json) -- URL hình ảnh banner (lưu trữ dưới dạng JSON đa ngôn ngữ)
     - order (smallint, default 0) -- Sắp xếp banner
     - is_active (boolean, default true) -- Trạng thái kích hoạt
@@ -501,7 +502,7 @@
     - id (bigint, primary key, auto-increment)
     - customer_id (bigint, foreign key to users.id) -- ID khách hàng
     - ktv_id (bigint, foreign key to users.id) -- ID KTV
-    - softDeletes
+    
     - timestamps
 
 # messages
@@ -536,7 +537,7 @@
     - meta_keywords (json, nullable) -- Từ khóa meta (lưu trữ dưới dạng JSON đa ngôn ngữ)
     - og_image (string, nullable) -- Hình ảnh meta (lưu trữ dưới dạng JSON đa ngôn ngữ)
     - is_active (boolean, default true) -- Trạng thái kích hoạt
-    - softDeletes
+    
     - timestamps
 
 # static_contract 
@@ -549,5 +550,5 @@
     - type (smallint) -- Kiểu hợp đồng (trong enum ContractFileType)
     - note (json, nullable) -- Ghi chú (lưu trữ dưới dạng JSON đa ngôn ngữ)
     - slug (string, nullable) -- Đường dẫn hợp đồng
-    - softDeletes
+    
     - timestamps

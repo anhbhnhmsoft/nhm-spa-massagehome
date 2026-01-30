@@ -15,6 +15,12 @@ return [
     'hero_cta_primary' => '立即预订',
     'hero_cta_secondary' => '查看服务',
     'hero_badge' => '🔥 新客户优惠 20%',
+    'hero_tagline' => '综合活动组织与管理系统',
+    'download_on' => '下载于',
+    'feature_professional' => '专业',
+    'feature_convenient' => '便捷',
+    'feature_affordable' => '价格合理',
+
 
     // Stats Section
     'stats_customers' => '客户',

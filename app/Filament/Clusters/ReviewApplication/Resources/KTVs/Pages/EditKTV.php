@@ -6,6 +6,7 @@ use App\Enums\ReviewApplicationStatus;
 use App\Filament\Clusters\ReviewApplication\Resources\KTVs\KTVResource;
 use App\Enums\UserRole;
 use App\Enums\UserFileType;
+use App\Filament\Components\CommonActions;
 use App\Models\UserFile;
 use App\Services\UserService;
 use Filament\Actions\Action;
@@ -32,6 +33,7 @@ class EditKTV extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            CommonActions::backAction(static::getResource()),
             // Hiển thị nút Approve nếu trạng thái là PENDING hoặc REJECTED
             Action::make('approve')
                 ->label(__('admin.ktv_apply.actions.approve.label'))

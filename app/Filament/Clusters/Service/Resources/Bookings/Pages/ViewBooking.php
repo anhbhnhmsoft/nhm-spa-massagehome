@@ -4,6 +4,7 @@ namespace App\Filament\Clusters\Service\Resources\Bookings\Pages;
 
 use App\Enums\BookingStatus;
 use App\Filament\Clusters\Service\Resources\Bookings\BookingResource;
+use App\Filament\Components\CommonActions;
 use App\Services\BookingService;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
@@ -16,11 +17,7 @@ class ViewBooking extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Action::make('back')
-                ->label(__('admin.common.back')) // Hoặc "Quay lại"
-                ->color('gray')
-                ->url($this->getResource()::getUrl('index')) // Dẫn về trang danh sách của Resource này
-                ->icon('heroicon-m-chevron-left'),
+            CommonActions::backAction(static::getResource()),
 
             // Hiển thị nút "Hủy" nếu trạng thái là "Chờ hủy"
             Action::make('confirm_cancel')

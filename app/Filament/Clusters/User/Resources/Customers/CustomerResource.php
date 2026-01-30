@@ -62,10 +62,7 @@ class CustomerResource extends Resource
         $query = parent::getEloquentQuery();
 
         return $query->with('wallet', 'files', 'profile', 'bookings', 'reviewWrited')
-            ->where('role', UserRole::CUSTOMER->value)
-            ->withoutGlobalScopes([
-                SoftDeletingScope::class,
-            ]);
+            ->where('role', UserRole::CUSTOMER->value);
     }
 
     public static function getPages(): array

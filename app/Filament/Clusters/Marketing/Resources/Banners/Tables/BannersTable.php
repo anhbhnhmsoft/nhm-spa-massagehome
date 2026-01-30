@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\Marketing\Resources\Banners\Tables;
 
+use App\Enums\BannerType;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -17,12 +18,18 @@ class BannersTable
 {
     public static function configure(Table $table): Table
     {
-        $lang = App::getLocale();
         return $table
             ->columns([
+                TextColumn::make('id')
+                    ->label(__('admin.common.table.id'))
+                    ->sortable(),
+                TextColumn::make('type')
+                    ->label(__('admin.banner.fields.type'))
+                    ->formatStateUsing(fn ($state) => $state->label()),
                 ImageColumn::make('image_url')
                     ->label(__('admin.banner.fields.image_url.label'))
                     ->disk('public'),
+
                 TextColumn::make('order')
                     ->label(__('admin.banner.fields.order'))
                     ->sortable(),

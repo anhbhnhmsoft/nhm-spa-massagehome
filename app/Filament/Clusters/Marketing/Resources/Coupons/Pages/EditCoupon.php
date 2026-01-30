@@ -3,6 +3,7 @@
 namespace App\Filament\Clusters\Marketing\Resources\Coupons\Pages;
 
 use App\Filament\Clusters\Marketing\Resources\Coupons\CouponResource;
+use App\Filament\Components\CommonActions;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\RestoreAction;
@@ -15,9 +16,8 @@ class EditCoupon extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            CommonActions::backAction(static::getResource()),
             DeleteAction::make(),
-            ForceDeleteAction::make(),
-            RestoreAction::make(),
         ];
     }
 }

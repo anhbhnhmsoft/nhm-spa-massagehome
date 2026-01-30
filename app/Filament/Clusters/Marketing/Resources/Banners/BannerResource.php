@@ -51,7 +51,6 @@ class BannerResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
         ];
     }
 

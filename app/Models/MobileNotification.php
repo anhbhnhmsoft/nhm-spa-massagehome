@@ -6,12 +6,9 @@ use App\Enums\NotificationStatus;
 use App\Enums\NotificationType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class MobileNotification extends Model
 {
-    use SoftDeletes;
-
     protected $fillable = [
         'user_id',
         'title',

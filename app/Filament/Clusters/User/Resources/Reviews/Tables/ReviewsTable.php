@@ -50,7 +50,6 @@ class ReviewsTable
             ])
             ->recordActions([
                 DeleteAction::make(),
-                RestoreAction::make(),
             ])
             ->poll('5m');
     }

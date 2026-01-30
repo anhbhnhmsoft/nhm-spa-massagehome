@@ -36,10 +36,7 @@ class BookingListKtv extends TableWidget
                         'user',
                         'service'
                     ])
-                    ->where('ktv_user_id', $this->record?->id)
-                    ->withoutGlobalScopes([
-                        SoftDeletingScope::class,
-                    ]);
+                    ->where('ktv_user_id', $this->record?->id);
             });
     }
 

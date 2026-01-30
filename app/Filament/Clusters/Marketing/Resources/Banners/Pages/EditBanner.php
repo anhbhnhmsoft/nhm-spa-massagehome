@@ -3,6 +3,7 @@
 namespace App\Filament\Clusters\Marketing\Resources\Banners\Pages;
 
 use App\Filament\Clusters\Marketing\Resources\Banners\BannerResource;
+use App\Filament\Components\CommonActions;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 
@@ -13,6 +14,7 @@ class EditBanner extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            CommonActions::backAction(static::getResource()),
             DeleteAction::make(),
         ];
     }

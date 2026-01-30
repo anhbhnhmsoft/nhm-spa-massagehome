@@ -3,13 +3,11 @@
 namespace App\Models;
 
 use App\Core\GenerateId\HasBigIntId;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class AffiliateConfig extends Model
 {
-    use SoftDeletes, HasBigIntId;
+    use  HasBigIntId;
 
     /**
      * The table associated with the model.

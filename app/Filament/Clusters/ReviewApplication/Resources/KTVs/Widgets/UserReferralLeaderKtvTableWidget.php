@@ -37,10 +37,7 @@ class UserReferralLeaderKtvTableWidget extends TableWidget
                         $query->whereIn('status', ReviewApplicationStatus::values());
                         $query->where('role', UserRole::KTV->value);
                         $query->where('referrer_id', $this->record->id);
-                    })
-                    ->withoutGlobalScopes([
-                        SoftDeletingScope::class,
-                    ]);
+                    });
             });
     }
 }

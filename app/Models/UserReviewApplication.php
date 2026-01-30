@@ -5,11 +5,10 @@ namespace App\Models;
 use App\Core\GenerateId\HasBigIntId;
 use App\Enums\ReviewApplicationStatus;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Translatable\HasTranslations;
 class UserReviewApplication extends Model
 {
-    use SoftDeletes, HasBigIntId, HasTranslations;
+    use HasBigIntId, HasTranslations;
 
     protected $table = 'user_review_application';
 

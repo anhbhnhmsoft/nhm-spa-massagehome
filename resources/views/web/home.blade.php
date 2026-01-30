@@ -8,297 +8,176 @@
 @section('header_title', __('home.header_title'))
 
 @section('content')
-    {{-- Hero Section --}}
-    <section class="relative overflow-hidden bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 gradient-animated">
-        <div class="absolute inset-0 opacity-10">
-            <div class="absolute top-20 left-20 w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
-            <div class="absolute top-40 right-20 w-96 h-96 bg-indigo-300 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000"></div>
-            <div class="absolute -bottom-20 left-40 w-96 h-96 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000"></div>
+<style>
+    body {
+        background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 50%, #90CAF9 100%);
+        min-height: 100vh;
+    }
+
+    .language-switcher {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .language-switcher a {
+        padding: 0.5rem 1rem;
+        color: #1976D2;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border-radius: 0.5rem;
+    }
+
+    .language-switcher a:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+
+    .language-switcher a.active {
+        background: white;
+        color: #1565C0;
+    }
+
+    .download-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem 2rem;
+        background: white;
+        color: #1565C0;
+        font-weight: 600;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+
+    .download-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .download-btn svg {
+        width: 2rem;
+        height: 2rem;
+    }
+
+    .hero-content {
+        text-align: center;
+        padding: 4rem 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .brand-logo {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 2rem;
+    }
+
+    .brand-name {
+        font-size: 3rem;
+        font-weight: 800;
+        color: #1565C0;
+        margin-bottom: 1rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .tagline {
+        font-size: 1.5rem;
+        color: #1976D2;
+        margin-bottom: 3rem;
+        font-weight: 500;
+    }
+
+    .download-section {
+        display: flex;
+        gap: 1.5rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 3rem;
+    }
+</style>
+
+
+{{-- Hero Section --}}
+<section class="hero-content">
+    <div style="max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
+        <div class="">
+            <img src="{{ asset('images/logo.png') }}" alt="Masa Home Logo" style="width: 100%; height: 100%; object-fit: contain; max-width: 120px;">
         </div>
-
-        <div class="container mx-auto px-4 lg:px-8 py-24 lg:py-32">
-            <div class="grid lg:grid-cols-2 gap-12 items-center">
-                <!-- Left Content -->
-                <div class="relative z-10 animate-fade-in-up">
-                    {{-- Badge --}}
-                    <div class="inline-flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full shadow-lg mb-6">
-                        <span class="text-sm font-semibold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-pink-500">
-                            {{ __('home.hero_badge') }}
-                        </span>
-                    </div>
-
-                    {{-- Title --}}
-                    <h1 class="text-5xl lg:text-6xl font-extrabold text-slate-900 mb-6 leading-tight">
-                        {{ __('home.hero_title') }}
-                        <span class="block gradient-text">{{ __('home.hero_subtitle') }}</span>
-                    </h1>
-
-                    {{-- Description --}}
-                    <p class="text-xl text-slate-600 mb-8 leading-relaxed max-w-xl">
-                        {{ __('home.hero_description') }}
-                    </p>
-
-                    {{-- CTA Buttons --}}
-                    <div class="flex flex-wrap gap-4 mb-12">
-                        <a href="/services"
-                            class="btn-ripple inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
-                            {{ __('home.hero_cta_primary') }}
-                            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                            </svg>
-                        </a>
-                        <a href="/about-us"
-                            class="inline-flex items-center justify-center px-8 py-4 bg-white text-indigo-600 font-semibold rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
-                            {{ __('home.hero_cta_secondary') }}
-                        </a>
-                    </div>
-
-                    {{-- Stats --}}
-                    <div class="grid grid-cols-4 gap-8">
-                        @php
-                            $stats = [
-                                ['value' => '10K+', 'label' => 'home.stats_customers', 'delay' => '0.1s'],
-                                ['value' => '50+', 'label' => 'home.stats_therapists', 'delay' => '0.2s'],
-                                ['value' => '20+', 'label' => 'home.stats_services', 'delay' => '0.3s'],
-                                ['value' => '4.9', 'label' => 'home.stats_rating', 'delay' => '0.4s'],
-                            ];
-                        @endphp
-                        @foreach($stats as $stat)
-                            <div class="text-center animate-fade-in-up" style="animation-delay: {{ $stat['delay'] }}">
-                                <div class="text-3xl font-bold gradient-text">{{ $stat['value'] }}</div>
-                                <div class="text-sm text-slate-600 mt-1">{{ __($stat['label']) }}</div>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-
-                <!-- Right Image -->
-                <div class="relative lg:block hidden">
-                    <div class="relative z-10 rounded-3xl overflow-hidden shadow-2xl">
-                        <img src="https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800&h=1000&fit=crop" 
-                             alt="Spa Massage" 
-                             class="w-full h-[600px] object-cover">
-                    </div>
-                    <div class="absolute -bottom-10 -right-10 w-72 h-72 bg-gradient-to-br from-indigo-400 to-purple-400 rounded-3xl opacity-20 blur-2xl"></div>
-                </div>
-            </div>
+        <div class="language-switcher">
+            <a href="{{ route('locale.switch', 'vi') }}" class="{{ app()->getLocale() == 'vi' ? 'active' : '' }}">VI</a>
+            <span style="color: #1976D2;">|</span>
+            <a href="{{ route('locale.switch', 'en') }}" class="{{ app()->getLocale() == 'en' ? 'active' : '' }}">EN</a>
+            <span style="color: #1976D2;">|</span>
+            <a href="{{ route('locale.switch', 'zh') }}" class="{{ app()->getLocale() == 'zh' ? 'active' : '' }}">中文</a>
         </div>
-    </section>
+    </div>
+</div>
 
-    {{-- Services Section --}}
-    <section class="py-24 bg-white">
-        <div class="container mx-auto px-4 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-4xl lg:text-5xl font-bold text-slate-900 mb-4">{{ __('home.services_title') }}</h2>
-                <p class="text-xl text-slate-600 max-w-2xl mx-auto">{{ __('home.services_subtitle') }}</p>
+    {{-- Tagline --}}
+    <p class="tagline">{{ __('home.hero_tagline') }}</p>
+
+    {{-- Description --}}
+    <p style="font-size: 1.25rem; color: #424242; max-width: 800px; margin: 0 auto 3rem; line-height: 1.8;">
+        {{ __('home.hero_description') }}
+    </p>
+
+    {{-- Download Buttons --}}
+    <div class="download-section">
+        {{-- Android Download --}}
+        <a href="/app.apk" class="download-btn">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.523 15.341c-.538 0-.988.196-1.348.588-.36.392-.54.863-.54 1.413 0 .55.18 1.02.54 1.412.36.392.81.588 1.348.588s.988-.196 1.348-.588c.36-.392.54-.862.54-1.412s-.18-1.021-.54-1.413c-.36-.392-.81-.588-1.348-.588zm-11.046 0c-.538 0-.988.196-1.348.588-.36.392-.54.863-.54 1.413 0 .55.18 1.02.54 1.412.36.392.81.588 1.348.588s.988-.196 1.348-.588c.36-.392.54-.862.54-1.412s-.18-1.021-.54-1.413c-.36-.392-.81-.588-1.348-.588zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" />
+            </svg>
+            <div style="text-align: left;">
+                <div style="font-size: 0.75rem; color: #666;">{{ __('home.download_on') }}</div>
+                <div style="font-size: 1.125rem;">Google Play</div>
             </div>
+        </a>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                @php
-                    $services = [
-                        [
-                            'name' => 'home.service_1_name',
-                            'desc' => 'home.service_1_desc',
-                            'duration' => 'home.service_1_duration',
-                            'price' => 'home.service_1_price',
-                            'card_bg' => 'bg-gradient-to-br from-indigo-50 to-indigo-100',
-                            'icon_bg' => 'bg-gradient-to-br from-indigo-500 to-purple-600',
-                            'border' => 'border-indigo-200',
-                            'text_color' => 'text-indigo-600',
-                            'icon' => 'M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
-                            'delay' => '0s'
-                        ],
-                        [
-                            'name' => 'home.service_2_name',
-                            'desc' => 'home.service_2_desc',
-                            'duration' => 'home.service_2_duration',
-                            'price' => 'home.service_2_price',
-                            'card_bg' => 'bg-gradient-to-br from-purple-50 to-purple-100',
-                            'icon_bg' => 'bg-gradient-to-br from-purple-500 to-pink-600',
-                            'border' => 'border-purple-200',
-                            'text_color' => 'text-purple-600',
-                            'icon' => 'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z',
-                            'delay' => '0.1s'
-                        ],
-                        [
-                            'name' => 'home.service_3_name',
-                            'desc' => 'home.service_3_desc',
-                            'duration' => 'home.service_3_duration',
-                            'price' => 'home.service_3_price',
-                            'card_bg' => 'bg-gradient-to-br from-pink-50 to-pink-100',
-                            'icon_bg' => 'bg-gradient-to-br from-pink-500 to-rose-600',
-                            'border' => 'border-pink-200',
-                            'text_color' => 'text-pink-600',
-                            'icon' => 'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z',
-                            'delay' => '0.2s'
-                        ],
-                        [
-                            'name' => 'home.service_4_name',
-                            'desc' => 'home.service_4_desc',
-                            'duration' => 'home.service_4_duration',
-                            'price' => 'home.service_4_price',
-                            'card_bg' => 'bg-gradient-to-br from-orange-50 to-orange-100',
-                            'icon_bg' => 'bg-gradient-to-br from-orange-500 to-amber-600',
-                            'border' => 'border-orange-200',
-                            'text_color' => 'text-orange-600',
-                            'icon' => 'M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z',
-                            'delay' => '0.3s'
-                        ]
-                    ];
-                @endphp
-
-                @foreach($services as $service)
-                    <div class="card-hover {{ $service['card_bg'] }} rounded-3xl p-8 border {{ $service['border'] }}">
-                        <div class="w-16 h-16 {{ $service['icon_bg'] }} rounded-2xl flex items-center justify-center mb-6 float-animation" style="animation-delay: {{ $service['delay'] }}">
-                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $service['icon'] }}" />
-                            </svg>
-                        </div>
-                        <h3 class="text-2xl font-bold text-slate-900 mb-3">{{ __($service['name']) }}</h3>
-                        <p class="text-slate-600 mb-6 leading-relaxed">{{ __($service['desc']) }}</p>
-                        <div class="flex items-center justify-between mb-6">
-                            <div>
-                                <div class="text-sm text-slate-500">{{ __($service['duration']) }}</div>
-                                <div class="text-2xl font-bold {{ $service['text_color'] }}">{{ __($service['price']) }}</div>
-                            </div>
-                        </div>
-                        <a href="/services" class="block w-full text-center px-6 py-3 bg-white {{ $service['text_color'] }} font-semibold rounded-xl shadow-sm hover:shadow-lg transition-all">
-                            {{ __('home.service_book_now') }}
-                        </a>
-                    </div>
-                @endforeach
+        {{-- iOS Download --}}
+        <a href="https://apps.apple.com/vn/app/masa-home/id6756880834?l=vi" class="download-btn">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
+            </svg>
+            <div style="text-align: left;">
+                <div style="font-size: 0.75rem; color: #666;">{{ __('home.download_on') }}</div>
+                <div style="font-size: 1.125rem;">App Store</div>
             </div>
+        </a>
+    </div>
 
-            <div class="text-center mt-12">
-                <a href="/services" class="inline-flex items-center gap-2 text-indigo-600 font-semibold text-lg hover:gap-3 transition-all">
-                    {{ __('home.view_all') }}
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                </a>
+    {{-- Features Grid --}}
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; margin-top: 5rem; max-width: 900px; margin-left: auto; margin-right: auto;">
+        @php
+        $features = [
+        [
+        'icon' => 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z',
+        'title' => __('home.feature_professional'),
+        ],
+        [
+        'icon' => 'M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z',
+        'title' => __('home.feature_convenient'),
+        ],
+        [
+        'icon' => 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z',
+        'title' => __('home.feature_affordable'),
+        ],
+        ];
+        @endphp
+
+        @foreach($features as $feature)
+        <div style="background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); text-align: center;">
+            <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #1976D2, #42A5F5); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                <svg style="width: 32px; height: 32px; color: white;" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="{{ $feature['icon'] }}" />
+                </svg>
             </div>
+            <h3 style="font-size: 1.25rem; font-weight: 700; color: #1565C0;">{{ $feature['title'] }}</h3>
         </div>
-    </section>
-
-    {{-- Features Section --}}
-    <section class="py-24 bg-gradient-to-br from-slate-50 to-slate-100">
-        <div class="container mx-auto px-4 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-4xl lg:text-5xl font-bold text-slate-900 mb-4">{{ __('home.features_title') }}</h2>
-                <p class="text-xl text-slate-600 max-w-2xl mx-auto">{{ __('home.features_subtitle') }}</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                @php
-                    $features = [
-                        ['title' => 'home.feature_1_title', 'desc' => 'home.feature_1_desc', 'bg' => 'bg-gradient-to-br from-blue-500 to-cyan-500', 'icon' => 'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z'],
-                        ['title' => 'home.feature_2_title', 'desc' => 'home.feature_2_desc', 'bg' => 'bg-gradient-to-br from-green-500 to-emerald-500', 'icon' => 'M13 10V3L4 14h7v7l9-11h-7z'],
-                        ['title' => 'home.feature_3_title', 'desc' => 'home.feature_3_desc', 'bg' => 'bg-gradient-to-br from-purple-500 to-violet-500', 'icon' => 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z'],
-                        ['title' => 'home.feature_4_title', 'desc' => 'home.feature_4_desc', 'bg' => 'bg-gradient-to-br from-amber-500 to-orange-500', 'icon' => 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z'],
-                    ];
-                @endphp
-                @foreach($features as $feature)
-                    <div class="card-hover bg-white rounded-3xl p-8 shadow-lg text-center">
-                        <div class="w-16 h-16 {{ $feature['bg'] }} rounded-2xl flex items-center justify-center mb-6 mx-auto">
-                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $feature['icon'] }}" />
-                            </svg>
-                        </div>
-                        <h3 class="text-xl font-bold text-slate-900 mb-3">{{ __($feature['title']) }}</h3>
-                        <p class="text-slate-600 leading-relaxed">{{ __($feature['desc']) }}</p>
-                    </div>
-                @endforeach
-            </div>
-        </div>
-    </section>
-
-    {{-- Process Section --}}
-    <section class="py-24 bg-white">
-        <div class="container mx-auto px-4 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-4xl lg:text-5xl font-bold text-slate-900 mb-4">{{ __('home.process_title') }}</h2>
-                <p class="text-xl text-slate-600 max-w-2xl mx-auto">{{ __('home.process_subtitle') }}</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                @php
-                    $steps = [
-                        ['title' => 'home.process_step_1_title', 'desc' => 'home.process_step_1_desc', 'bg' => 'bg-gradient-to-r from-indigo-50 to-purple-50'],
-                        ['title' => 'home.process_step_2_title', 'desc' => 'home.process_step_2_desc', 'bg' => 'bg-gradient-to-r from-purple-50 to-pink-50'],
-                        ['title' => 'home.process_step_3_title', 'desc' => 'home.process_step_3_desc', 'bg' => 'bg-gradient-to-r from-pink-50 to-rose-50'],
-                    ];
-                @endphp
-                @foreach($steps as $index => $step)
-                    <div class="text-center">
-                        <div class="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-3xl shadow-lg mx-auto mb-6">
-                            {{ $index + 1 }}
-                        </div>
-                        <div class="{{ $step['bg'] }} rounded-2xl p-8">
-                            <h3 class="text-xl font-bold text-slate-900 mb-3">{{ __($step['title']) }}</h3>
-                            <p class="text-slate-600 leading-relaxed">{{ __($step['desc']) }}</p>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-        </div>
-    </section>
-
-    {{-- Testimonials Section --}}
-    <section class="py-24 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
-        <div class="container mx-auto px-4 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-4xl lg:text-5xl font-bold text-slate-900 mb-4">{{ __('home.testimonials_title') }}</h2>
-                <p class="text-xl text-slate-600 max-w-2xl mx-auto">{{ __('home.testimonials_subtitle') }}</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-                @php
-                    $testimonials = [
-                        ['name' => 'home.testimonial_1_name', 'role' => 'home.testimonial_1_role', 'content' => 'home.testimonial_1_content', 'initial' => 'L', 'bg' => 'bg-gradient-to-br from-indigo-500 to-purple-600'],
-                        ['name' => 'home.testimonial_2_name', 'role' => 'home.testimonial_2_role', 'content' => 'home.testimonial_2_content', 'initial' => 'M', 'bg' => 'bg-gradient-to-br from-purple-500 to-pink-600'],
-                        ['name' => 'home.testimonial_3_name', 'role' => 'home.testimonial_3_role', 'content' => 'home.testimonial_3_content', 'initial' => 'H', 'bg' => 'bg-gradient-to-br from-pink-500 to-rose-600'],
-                    ];
-                @endphp
-                @foreach($testimonials as $testimonial)
-                    <div class="card-hover bg-white rounded-3xl p-8 shadow-lg">
-                        <div class="flex items-center gap-4 mb-6">
-                            <div class="w-16 h-16 {{ $testimonial['bg'] }} rounded-full flex items-center justify-center text-white font-bold text-2xl shrink-0">
-                                {{ $testimonial['initial'] }}
-                            </div>
-                            <div>
-                                <div class="font-bold text-slate-900 text-lg">{{ __($testimonial['name']) }}</div>
-                                <div class="text-sm text-slate-500">{{ __($testimonial['role']) }}</div>
-                            </div>
-                        </div>
-                        <div class="flex gap-1 mb-4">
-                            @for ($i = 0; $i < 5; $i++)
-                                <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                </svg>
-                            @endfor
-                        </div>
-                        <p class="text-slate-600 leading-relaxed">{{ __($testimonial['content']) }}</p>
-                    </div>
-                @endforeach
-            </div>
-        </div>
-    </section>
-
-    {{-- CTA Section --}}
-    <section class="py-24 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 gradient-animated text-white">
-        <div class="container mx-auto px-4 lg:px-8 text-center">
-            <h2 class="text-4xl lg:text-5xl font-bold mb-6">{{ __('home.cta_title') }}</h2>
-            <p class="text-xl text-indigo-100 mb-12 max-w-2xl mx-auto">{{ __('home.cta_description') }}</p>
-            <div class="flex flex-wrap justify-center gap-4">
-                <a href="/services"
-                    class="btn-ripple inline-flex items-center justify-center px-10 py-5 bg-white text-indigo-600 font-bold text-lg rounded-2xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300">
-                    {{ __('home.cta_button') }}
-                    <svg class="w-6 h-6 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                </a>
-            </div>
-            <div class="mt-8 text-lg text-indigo-100">{{ __('home.cta_phone') }}</div>
-        </div>
-    </section>
+        @endforeach
+    </div>
+</section>
 @endsection

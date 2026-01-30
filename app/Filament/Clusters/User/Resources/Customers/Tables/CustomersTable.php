@@ -36,20 +36,7 @@ class CustomersTable
                     ->sortable(),
             ])
             ->filters([
-                TrashedFilter::make(),
             ])
-            ->actions([
-                EditAction::make(),
-                DeleteAction::make(),
-                RestoreAction::make(),
-            ])
-            ->bulkActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                    ForceDeleteBulkAction::make(),
-                    RestoreBulkAction::make(),
-                ]),
-            ])
-            ->poll('2s');
+            ->poll('5m');
     }
 }

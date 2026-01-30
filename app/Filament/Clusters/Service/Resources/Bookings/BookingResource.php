@@ -70,9 +70,6 @@ class BookingResource extends Resource
                 'ktvUser',
                 'user',
                 'service'
-            ])
-            ->withoutGlobalScopes([
-                SoftDeletingScope::class,
             ]);
     }
 }

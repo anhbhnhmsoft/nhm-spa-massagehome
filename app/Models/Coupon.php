@@ -4,14 +4,12 @@ namespace App\Models;
 
 use App\Core\GenerateId\HasBigIntId;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Spatie\Translatable\HasTranslations;
 
 class Coupon extends Model
 {
-    use HasFactory, SoftDeletes, HasBigIntId, HasTranslations;
+    use HasBigIntId, HasTranslations;
 
     protected $translatable = [
         'label',
@@ -57,7 +55,7 @@ class Coupon extends Model
         /**
          * Cấu trúc config dự kiến:
          * - per_day_global (int): Tổng mã tối đa được thu thập trong 1 ngày toàn hệ thống.
-         * - min_order_value (float): Giá trị đơn hàng tối thiểu để áp dụng mã. 
+         * - min_order_value (float): Giá trị đơn hàng tối thiểu để áp dụng mã.
          * - used_day (array): ['date' => 'Y-m-d', 'count' => int] - Theo dõi số lượng đã dùng theo ngày thực tế.
          * - collected_day (array): ['date' => 'Y-m-d', 'count' => int] - Theo dõi số lượng đã thu theo ngày thực tế.
          * - allowed_time_slots (array): Danh sách các khung giờ vàng cho phép sử dụng mã.

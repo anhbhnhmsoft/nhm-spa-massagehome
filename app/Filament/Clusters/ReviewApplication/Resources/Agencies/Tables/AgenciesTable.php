@@ -109,12 +109,6 @@ class AgenciesTable
                         ->modalHeading(__('admin.common.modal.delete_title'))
                         ->modalDescription(__('admin.common.modal.delete_confirm'))
                         ->modalSubmitActionLabel(__('admin.common.action.confirm_delete'))
-                        ->visible(fn($record) => ! $record->trashed()),
-                    RestoreAction::make()
-                        ->label(__('admin.common.action.restore'))
-                        ->tooltip(__('admin.common.tooltip.restore'))
-                        ->icon('heroicon-o-arrow-path')
-                        ->visible(fn($record) => $record->trashed()),
                 ]),
             ])
             ->filtersLayout(FiltersLayout::AboveContent)
@@ -145,18 +139,6 @@ class AgenciesTable
                         ->requiresConfirmation()
                         ->modalHeading(__('admin.common.modal.delete_title'))
                         ->modalDescription(__('admin.common.modal.delete_confirm'))
-                        ->modalSubmitActionLabel(__('admin.common.action.confirm_delete')),
-
-                    RestoreBulkAction::make()
-                        ->label(__('admin.common.action.restore'))
-                        ->visible(fn($livewire) => $livewire->tableFilters['trashed']['value'] ?? null === 'only'),
-
-                    ForceDeleteBulkAction::make()
-                        ->label(__('admin.common.action.force_delete'))
-                        ->color('danger')
-                        ->requiresConfirmation()
-                        ->modalHeading(__('admin.common.modal.force_delete_title'))
-                        ->modalDescription(__('admin.common.modal.force_delete_confirm'))
                         ->modalSubmitActionLabel(__('admin.common.action.confirm_delete')),
                 ]),
             ])

@@ -27,7 +27,9 @@ class BookingFacadeService
         try {
             // Lấy danh sách booking quá hạn mà KTV vẫn chưa hoàn thành
             $overdueBookings = $this->bookingService->getBookingRepository()->getOverdueBookings($overdueMinutes);
-
+            if ($overdueBookings->isEmpty()) {
+                return ServiceReturn::success();
+            }
             $overdueBookings->each(function ($booking) use ($overdueMinutes) {
                 // Gửi thông báo cho KTV
                 $this->notificationService->sendAdminNotification(
