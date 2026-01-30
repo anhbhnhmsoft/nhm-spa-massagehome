@@ -685,7 +685,7 @@ return
                 'chat' => '聊天',
                 'user' => '用户',
                 'ktv' => '技术员',
-
+                'load_older_messages' => '加载更多消息',
             ],
         ],
     ];

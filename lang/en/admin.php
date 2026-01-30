@@ -683,6 +683,7 @@ return
                 'chat' => 'Chat',
                 'user' => 'User',
                 'ktv' => 'Technician',
+                'load_older_messages' => 'Load older messages',
             ],
         ],
     ];

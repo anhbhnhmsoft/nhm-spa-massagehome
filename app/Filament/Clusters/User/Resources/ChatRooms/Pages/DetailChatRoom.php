@@ -26,16 +26,35 @@ class DetailChatRoom extends Page
     }
 
 
+    public $messageLimit = 20;
+
     public function mount(int | string $record): void
     {
         $this->record = $this->resolveRecord($record);
     }
+
     protected function getPollingInterval(): ?string
     {
         return '5s';
     }
+
+    public function loadMoreMessages()
+    {
+        $this->messageLimit += 20;
+    }
+
     public function getMessagesProperty()
     {
-        return $this->record->messages()->with('sender')->orderBy('created_at', 'asc')->get();
+        return $this->record->messages()
+            ->with('sender')
+            ->orderBy('created_at', 'desc')
+            ->take($this->messageLimit)
+            ->get()
+            ->reverse();
+    }
+
+    public function getHasMoreMessagesProperty()
+    {
+        return $this->record->messages()->count() > $this->messageLimit;
     }
 }
