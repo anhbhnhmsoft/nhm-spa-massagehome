@@ -21,6 +21,7 @@ enum ConfigName: string
     case DISCOUNT_RATE_REFERRER_KTV_LEADER = 'DISCOUNT_RATE_REFERRER_KTV_LEADER'; // Tỷ lệ chiết khấu dành cho kỹ thuật viên trưởng đối với 1 đơn hoàn thành của 1 KTV mà mình giới thiệu %
     case KTV_LEADER_MIN_REFERRALS = 'KTV_LEADER_MIN_REFERRALS'; // Số lượng KTV tối thiểu cần giới thiệu để trở thành trưởng nhóm KTV
     case KTV_REFERRAL_REWARD_AMOUNT = 'KTV_REFERRAL_REWARD_AMOUNT'; // Số tiền được nhận khi mời KTV thành công (nếu = 0 thì tắt tính năng)
+    case PRICE_TRANSPORTATION = 'PRICE_TRANSPORTATION'; // Chi phí di chuyển của KTV do khách hàng trả trên mỗi km
 
 
 

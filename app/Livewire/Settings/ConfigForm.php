@@ -230,6 +230,22 @@ class ConfigForm extends Component implements HasSchemas
                                             'image' => __('common.error.image'),
                                             'max' => __('common.error.max', ['max' => 2048]),
                                     ]),
+
+                                    TextInput::make((string)ConfigName::PRICE_TRANSPORTATION->value)
+                                        ->label(__('admin.setting.fields.price_transportation'))
+                                        ->numeric()
+                                        ->required()
+                                        ->suffix(__('common.unit.vnd'))
+                                        ->rules([
+                                            'required',
+                                            'numeric',
+                                            'min:0',
+                                        ])
+                                        ->validationMessages([
+                                            'required' => __('common.error.required'),
+                                            'numeric' => __('common.error.numeric'),
+                                            'min' => __('common.error.min', ['min' => 0]),
+                                        ]),
                                 ]),
                             Section::make(__('admin.setting.label_config_discount_rate'))
                                 ->columns(2)

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Core\Controller\FilterDTO;
+use App\Core\Helper;
 use App\Core\LogHelper;
 use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
@@ -14,7 +15,6 @@ use App\Enums\UserRole;
 use App\Jobs\RefundBookingCancelJob;
 use App\Jobs\SendNotificationJob;
 use App\Models\CategoryPrice;
-use App\Models\Service;
 use App\Repositories\BookingRepository;
 use App\Repositories\CategoryPriceRepository;
 use App\Repositories\CouponRepository;
@@ -151,17 +151,21 @@ class BookingService extends BaseService
                 duration: $serviceOption->duration
             );
 
-            // Tính toán giá cuối cùng bao gồm giảm giá nếu có
+            // Tính toán giá cuối cùng bao gồm giảm giá nếu có và chi phí di chuyển
             $priceData = $this->calculateFinalPrice(
                 serviceId: $serviceId,
                 price: $serviceOption->price,
                 couponId: $couponId,
+                longitude: $longitude,
+                latitude: $latitude,
+                ktvId: $service->user_id,
             );
 
             // Lấy giá cuối cùng
             $finalPrice = $priceData['final_price'];
             // Lấy giá trước giảm giá
             $priceBeforeDiscount = $priceData['price_before_discount'];
+            $priceTransportation = $priceData['price_transportation'];
 
             // Kiểm tra số dư ví của khách hàng có đủ không
             $walletUserCheck = $this->walletService->checkUserWalletBalance(
@@ -801,10 +805,13 @@ class BookingService extends BaseService
      * @param int $serviceId
      * @param $price
      * @param int|null $couponId
+     * @param string|float $longitude
+     * @param string|float $latitude
+     * @param int $ktvId
      * @return array
      * @throws ServiceException
      */
-    private function calculateFinalPrice(int $serviceId, $price, ?int $couponId): array
+    private function calculateFinalPrice(int $serviceId, $price, ?int $couponId, string|float $longitude, string|float $latitude, int $ktvId): array
     {
         $discountAmount = 0.0;
         if ($couponId) {
@@ -823,12 +830,72 @@ class BookingService extends BaseService
                 );
             }
         }
-
+        
+        $pricePerKm = $this->configService->getConfigValue(
+            ConfigName::PRICE_TRANSPORTATION
+        );
+        // Tính chi phí di chuyển
+        $priceTransportation = $this->calculateTransportationCost(
+            longitude: $longitude,
+            latitude: $latitude,
+            ktvId: $ktvId
+        ) * $pricePerKm;
+        
+        // cộng phí vào giá cuối cùng
+        $finalPrice = $price - $discountAmount + $priceTransportation;
         return [
             'price_before_discount' => $price,
-            'final_price' => $price - $discountAmount,
+            'price_transportation' => $priceTransportation,
+            'final_price' => $finalPrice,
             'discount_amount' => $discountAmount
         ];
+    }
+
+    /**
+     * Tính chi phí di chuyển
+     * @param string|float $longitude
+     * @param string|float $latitude
+     * @param int $ktvId
+     * @return float
+     * @throws ServiceException
+     */
+    private function calculateTransportationCost(string|float $longitude, string|float $latitude, int $ktvId): float
+    {
+        // Lấy thông tin kỹ thuật viên
+        $ktv = $this->userRepository->queryUser()
+            ->where('id', $ktvId)
+            ->where('role', UserRole::KTV->value)
+            ->first();
+        if (!$ktv) {
+            throw new ServiceException(
+                message: __("booking.ktv.not_found")
+            );
+        }
+
+        $apply = $ktv->reviewApplication;
+        if (!$apply) {
+            throw new ServiceException(
+                message: __("booking.ktv.not_found_profile")
+            );
+        }
+
+        $ktvLongitude = $apply->longitude;
+        $ktvLatitude = $apply->latitude;
+
+        if (!$ktvLongitude || !$ktvLatitude) {
+            throw new ServiceException(
+                message: __("booking.ktv.not_found_location")
+            );
+        }
+
+        $distance = Helper::getDistance(
+            $longitude,
+            $latitude,
+            $ktvLongitude,
+            $ktvLatitude
+        );
+
+        return $distance;
     }
 
 }

@@ -4,6 +4,8 @@ return [
     'service' => [
         'not_active' => 'Service is currently unavailable',
         'not_found'  => 'Service does not exist',
+        'not_found_profile' => 'Technician profile not found',
+        'not_found_location' => 'Technician location not found'
     ],
     'not_found' => 'Booking does not exist',
     'book_time_not_valid' => 'Booking time is invalid, must be greater than current time!',

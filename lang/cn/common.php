@@ -23,6 +23,7 @@ return [
     ],
     'unit' => [
         'minute' => '分钟',
+        'vnd'    => '越南盾'
     ],
     'user_withdraw_info' => [
         'bank' => [

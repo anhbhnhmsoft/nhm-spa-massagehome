@@ -23,6 +23,7 @@ return [
     ],
     'unit' => [
         'minute' => 'minutes',
+        'vnd'    => 'Vietnamese Dong'
     ],
     'user_withdraw_info' => [
         'bank' => [
