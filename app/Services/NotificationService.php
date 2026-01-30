@@ -269,13 +269,36 @@ class NotificationService extends BaseService
             $admins->each(function ($admin) use ($type, $data) {
                 switch ($type) {
                     // Thông báo booking quá hạn
-                    case NotificationAdminType::OVERDUE_BOOKING:
+                    case NotificationAdminType::OVERDUE_ONGOING_BOOKING:
                         Notification::make()
-                            ->title(__('notification.overdue_booking.title'))
+                            ->title(__('notification.overdue_ongoing_booking.title'))
                             ->warning()
-                            ->body(__('notification.overdue_booking.body', [
+                            ->body(__('notification.overdue_ongoing_booking.body', [
                                 'booking_id' => $data['booking_id'],
                                 'start_time' => $data['start_time'],
+                                'duration' => $data['duration'],
+                            ]))
+                            ->actions([
+                                Action::make(__('notification.detail'))
+                                    ->button()
+                                    ->color('primary')
+                                    ->url(BookingResource::getUrl('view', ['record' => $data['booking_id']]))
+                                    ->markAsRead(),
+                                Action::make(__('notification.marked_as_read'))
+                                    ->button()
+                                    ->markAsRead(),
+
+                            ])
+                            ->sendToDatabase($admin);
+                        break;
+                        // Thông báo booking quá hạn
+                    case NotificationAdminType::OVERDUE_CONFIRMED_BOOKING:
+                        Notification::make()
+                            ->title(__('notification.overdue_confirmed_booking.title'))
+                            ->warning()
+                            ->body(__('notification.overdue_confirmed_booking.body', [
+                                'booking_id' => $data['booking_id'],
+                                'booking_time' => $data['booking_time'],
                                 'duration' => $data['duration'],
                             ]))
                             ->actions([

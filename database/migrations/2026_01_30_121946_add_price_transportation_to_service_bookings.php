@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('service_bookings', function (Blueprint $table) {
-            $table->float('price_transportation')->nullable()->comment('Chi phí di chuyển của kỹ thuật viên do khách hàng chi trả');
+            $table->decimal('price_transportation', 15, 2)->nullable()->comment('Chi phí di chuyển của kỹ thuật viên do khách hàng chi trả');
         });
     }
 

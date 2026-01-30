@@ -22,7 +22,9 @@ class CheckBookingCommand extends Command
     public function handle(): int
     {
         // Kiểm tra các booking quá hạn
-        $this->bookingFacadeService->checkOverdueBookings();
+        $this->bookingFacadeService->checkOverdueOnGoingBookings();
+        // Kiểm tra các booking quá hạn đã xác nhận
+        $this->bookingFacadeService->checkOverdueConfirmedBookings();
 
         return CommandAlias::SUCCESS;
     }

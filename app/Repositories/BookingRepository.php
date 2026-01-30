@@ -187,18 +187,36 @@ class BookingRepository extends BaseRepository
     }
 
     /**
-     * Lấy danh sách các booking quá hạn mà KTV vẫn chưa hoàn thành
+     * Lấy danh sách các booking đang diễn ra mà quá hạn, KTV vẫn chưa hoàn thành
      * @param int $minutes - Thời gian quá hạn (mặc định là 30 phút)
      * (start_time + duration minutes + ? minutes) > now() (quá ? phút thì coi như là quá hạn)
      * @return \Illuminate\Database\Eloquent\Collection
      */
-    public function getOverdueBookings(int $minutes)
+    public function checkOverdueOnGoingBookings(int $minutes)
     {
         return $this->query()
             ->where('status', BookingStatus::ONGOING->value)
             ->whereNotNull('start_time')
             ->whereRaw(
                 "start_time + (duration * interval '1 minute') + (? * interval '1 minute') > ?",
+                [$minutes, now()]
+            )
+            ->get();
+    }
+
+     /**
+     * Lấy danh sách các booking đã xác nhận mà quá hạn, KTV vẫn chưa hoàn thành
+     * @param int $minutes - Thời gian quá hạn (mặc định là 30 phút)
+     * (start_time + duration minutes + ? minutes) > now() (quá ? phút thì coi như là quá hạn)
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function checkOverdueConfirmedBookings(int $minutes)
+    {
+        return $this->query()
+            ->where('status', BookingStatus::CONFIRMED->value)
+            ->whereNotNull('booking_time')
+            ->whereRaw(
+                "booking_time + (duration * interval '1 minute') + (? * interval '1 minute') > ?",
                 [$minutes, now()]
             )
             ->get();

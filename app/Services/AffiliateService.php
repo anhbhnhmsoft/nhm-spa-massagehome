@@ -1,5 +1,4 @@
 <?php
-// app/Services/AffiliateService.php
 
 namespace App\Services;
 
@@ -8,7 +7,11 @@ use App\Core\LogHelper;
 use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
+use App\Enums\BannerType;
+use App\Enums\UserRole;
+use App\Models\User;
 use App\Repositories\AffiliateLinkRepository;
+use App\Repositories\BannerRepository;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\DB;
 use Exception;
@@ -18,7 +21,8 @@ class AffiliateService extends BaseService
 {
     public function __construct(
         protected AffiliateLinkRepository $affiliateLinkRepository,
-        protected UserRepository $userRepository
+        protected UserRepository $userRepository,
+        protected BannerRepository $bannerRepository,
     ) {
         parent::__construct();
     }
@@ -193,7 +197,6 @@ class AffiliateService extends BaseService
      */
     public function listAffiliateReferred(FilterDTO $dto): ServiceReturn
     {
-
         try {
             $userId = Auth::user()->id;
             $list = $this->userRepository->query()
@@ -215,6 +218,50 @@ class AffiliateService extends BaseService
             );
             return ServiceReturn::error(
                 message: $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * Lấy cấu hình affiliate dựa trên vai trò của người dùng
+     * @param User $user
+     * @return ServiceReturn
+     */
+    public function getConfigAffiliate(User $user): ServiceReturn
+    {
+        try {
+            $role = UserRole::from($user->role);
+
+            $typeBanner = match ($role) {
+                UserRole::CUSTOMER => BannerType::AFFILIATE_CUSTOMER,
+                UserRole::KTV => BannerType::AFFILIATE_KTV,
+                UserRole::AGENCY => BannerType::AFFILIATE_AGENCY,
+                default => throw new ServiceException(
+                    message: __("error.unauthorized")
+                )
+            };
+
+            $banner = $this->bannerRepository->query()
+                ->where('type', $typeBanner)
+                ->first();
+
+            return ServiceReturn::success(
+                data: [
+                    'banner' => $banner ?? null,
+                ]
+            );
+        }catch (ServiceException $e) {
+            return ServiceReturn::error(
+                message: $e->getMessage()
+            );
+        }
+        catch (Exception $e) {
+            LogHelper::error(
+                message: "Lỗi AffiliateService@getConfigAffiliate",
+                ex: $e
+            );
+            return ServiceReturn::error(
+                message: __("common_error.server_error")
             );
         }
     }

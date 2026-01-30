@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Core\Controller\BaseController;
 use App\Core\Controller\ListRequest;
 use App\Http\Resources\Auth\AffiliateUserResource;
+use App\Http\Resources\Commercial\BannerResource;
 use App\Services\AffiliateService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -83,6 +84,28 @@ class AffiliateController extends BaseController
         }
         return $this->sendSuccess(
             data: AffiliateUserResource::collection($result->getData())->response()->getData(true),
+        );
+    }
+
+    /**
+     * Lấy cấu hình affiliate dựa trên vai trò của người dùng
+     * @return JsonResponse
+     */
+    public function getConfigAffiliate()
+    {
+        $user = Auth::user();
+        $result = $this->affiliateService->getConfigAffiliate($user);
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage()
+            );
+        }
+        $data = $result->getData();
+        return $this->sendSuccess(
+            data: [
+                'target_role' => $user->role,
+                'banner' => $data['banner'] ? new BannerResource($data['banner']) : null,
+            ],
         );
     }
 }

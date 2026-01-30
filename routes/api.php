@@ -221,7 +221,7 @@ Route::middleware('set-api-locale')->group(function () {
 
         Route::middleware(['auth:sanctum'])->group(function () {
             // Lấy thông tin cấu hình affiliate
-            Route::get('config', [ConfigController::class, 'getConfigAffiliate']);
+            Route::get('config', [AffiliateController::class, 'getConfigAffiliate']);
             // Lấy danh sách người dùng được giới thiệu
             Route::get('list-referred', [AffiliateController::class, 'listReferred']);
         });

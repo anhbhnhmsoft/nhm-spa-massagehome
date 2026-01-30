@@ -346,6 +346,7 @@
     - status (smallint) -- trạng thái đặt lịch (trong enum BookingStatus)
     - price (decimal(15,2)) -- giá dịch vụ (lưu trữ giá trị thực tế khi đặt lịch)
     - price_before_discount (decimal(15,2)) -- giá dịch vụ trước khi áp dụng mã giảm giá
+    - price_transportation (decimal(15,2), nullable) -- chi phí di chuyển của ktv do khách hàng trả
     - note (text, nullable) -- ghi chú
     - address (varchar, nullable) -- địa chỉ hẹn
     - note_address (varchar, nullable) -- ghi chú thêm (ví dụ: yêu cầu đặc biệt)
@@ -354,7 +355,6 @@
     - payment_type (smallint, nullable) -- hình thức thanh toán (trong enum PaymentType), null là khi dịch vụ chưa được xác nhận
     - reason_cancel (varchar, nullable) -- lý do hủy đặt lịch
     - overtime_warning_sent (boolean, default false) -- đã gửi thông báo về thời gian vượt quá không
-    - price_transportation (decimal(15,2), nullable) -- chi phí di chuyển của ktv do khách hàng trả
     
     - timestamps
 
