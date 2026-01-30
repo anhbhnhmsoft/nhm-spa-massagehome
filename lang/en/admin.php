@@ -668,4 +668,21 @@ return
                 'path_pdf_only' => 'Only PDF format is accepted.',
             ],
         ],
+        'chat_room' => [
+            'label' => 'Chat Room',
+            'navigation_label' => 'Chat Room',
+            'label_plural' => 'Chat Room',
+            'fields' => [
+                'customer_avatar' => 'Customer Avatar',
+                'customer_name' => 'Customer Name',
+                'ktv_avatar' => 'Technician Avatar',
+                'ktv_name' => 'Technician Name',
+                'last_message' => 'Last Message',
+                'started' => 'Started',
+                'chat_room' => 'Chat Room',
+                'chat' => 'Chat',
+                'user' => 'User',
+                'ktv' => 'Technician',
+            ],
+        ],
     ];

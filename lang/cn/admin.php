@@ -670,4 +670,22 @@ return
                 'path_pdf_only' => '仅接受 PDF 格式。',
             ],
         ],
+        'chat_room' => [
+            'label' => '聊天室',
+            'navigation_label' => '聊天室',
+            'label_plural' => '聊天室',
+            'fields' => [
+                'customer_avatar' => '客户头像',
+                'customer_name' => '客户姓名',
+                'ktv_avatar' => '技师头像',
+                'ktv_name' => '技师姓名',
+                'last_message' => '最后消息',
+                'started' => '开始时间',
+                'chat_room' => '聊天详情',
+                'chat' => '聊天',
+                'user' => '用户',
+                'ktv' => '技术员',
+
+            ],
+        ],
     ];

@@ -830,4 +830,21 @@ return
             'year' => 'Năm này',
             'all' => 'Tất cả',
         ],
+        'chat_room' => [
+            'label' => 'Phòng chat',
+            'navigation_label' => 'Phòng chat',
+            'label_plural' => 'Phòng chat',
+            'fields' => [
+                'customer_avatar' => 'Ảnh đại diện khách hàng',
+                'customer_name' => 'Tên khách hàng',
+                'ktv_avatar' => 'Ảnh đại diện KTV',
+                'ktv_name' => 'Tên KTV',
+                'last_message' => 'Tin nhắn cuối',
+                'started' => 'Ngày bắt đầu',
+                'chat_room' => 'Chi tiết đoạn chat',
+                'chat' => 'Chat',
+                'user' => 'Khách hàng',
+                'ktv' => 'KTV',
+            ],
+        ],
     ];
