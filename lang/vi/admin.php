@@ -845,6 +845,7 @@ return
                 'chat' => 'Chat',
                 'user' => 'Khách hàng',
                 'ktv' => 'KTV',
+                'load_older_messages' => 'Tải thêm tin nhắn',
             ],
         ],
     ];

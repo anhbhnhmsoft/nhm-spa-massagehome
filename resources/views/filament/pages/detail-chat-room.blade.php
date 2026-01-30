@@ -17,6 +17,13 @@
         </div>
 
         <div class="flex-1 overflow-y-auto p-6 space-y-6" id="chat-messages" wire:poll.5s>
+            @if($this->hasMoreMessages)
+            <div class="flex justify-center mb-4">
+                <button wire:click="loadMoreMessages" class="px-4 py-2 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-full dark:text-blue-400 dark:bg-gray-800 dark:hover:bg-gray-700 transition">
+                    {{ __('admin.chat_room.fields.load_older_messages') }}
+                </button>
+            </div>
+            @endif
             @forelse($this->messages as $message)
             @php
             $isKtv = $message->sender_by == $this->record->ktv_id;
