@@ -9,6 +9,7 @@ use App\Core\Service\ServiceReturn;
 use App\Enums\BookingStatus;
 use App\Enums\ConfigName;
 use App\Enums\NotificationType;
+use App\Enums\UserRole;
 use App\Jobs\SendNotificationJob;
 use App\Models\User;
 use App\Services\BookingService;
@@ -296,8 +297,7 @@ class TransactionJobService
                 ]
             );
             return ServiceReturn::success();
-        }
-        catch (\Exception $exception) {
+        } catch (\Exception $exception) {
             DB::rollBack();
             LogHelper::error(
                 message: "Lỗi TransactionJobService@handleFinishBooking",
@@ -307,5 +307,53 @@ class TransactionJobService
         }
     }
 
+    /**
+     * Xử lý Trả tiền thưởng cho người giới thiệu khi mời KTV thành công
+     * @param  $referrerId - Id người giới thiệu
+     * @param  $userId - Id nguời dc giới thiệu
+     * @return ServiceReturn
+     * @throws Throwable
+     */
+    public function handleRewardForKtvReferral(
+        $referrerId,
+        $userId
+    )
+    {
+
+        DB::beginTransaction();
+        try {
+            if (!$referrerId || !$userId) {
+                throw new ServiceException(__("error.invalid_data"));
+            }
+            // Lấy số tiền thưởng từ config
+            $rewardAmount = (float)$this->configService->getConfigValue(ConfigName::KTV_REFERRAL_REWARD_AMOUNT);
+            // Lấy tỷ giá đổi tiền
+            $exchangeRate = (float)$this->configService->getConfigValue(ConfigName::CURRENCY_EXCHANGE_RATE);
+            // Nếu = 0 thì tắt tính năng, không trả tiền
+            if ($rewardAmount <= 0) {
+                DB::commit();
+                return ServiceReturn::success(
+                    message: __('wallet.referral_reward_disabled')
+                );
+            }
+
+            // Xử lý hoa hồng thưởng của người giới thiệu kỹ thuật viên
+            $this->walletService->processRewardReferralKtvCommission(
+                referrerId: $referrerId,
+                userId: $userId,
+                rewardAmount: $rewardAmount,
+                exchangeRate: $exchangeRate,
+            );
+
+            DB::commit();
+            return ServiceReturn::success();
+        } catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi TransactionJobService@handleRewardForKtvReferral",
+                ex: $exception
+            );
+            return ServiceReturn::error($exception->getMessage());
+        }
+    }
 
 }

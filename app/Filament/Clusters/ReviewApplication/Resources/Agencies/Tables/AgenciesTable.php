@@ -79,9 +79,9 @@ class AgenciesTable
                         ->label(__('admin.common.action.agency_dashboard'))
                         ->icon(Heroicon::ChartBar),
                     Action::make('qr_affiliate')
-                        ->label(__('admin.agency.infolist.affiliate_qr'))
+                        ->label(__('admin.common.affiliate_qr'))
                         ->icon('heroicon-o-qr-code')
-                        ->modalHeading(__('admin.agency.infolist.affiliate_qr'))
+                        ->modalHeading(__('admin.common.affiliate_qr'))
                         ->modalSubmitAction(false) // Ẩn nút Submit vì chỉ để xem
                         ->modalWidth('sm')
                         ->schema([

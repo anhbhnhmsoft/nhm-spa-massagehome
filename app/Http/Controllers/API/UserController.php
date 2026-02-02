@@ -8,18 +8,14 @@ use App\Core\LogHelper;
 use App\Enums\UserRole;
 use App\Http\Requests\ApplyPartnerRequest;
 use App\Http\Requests\ListKTVRequest;
-use App\Http\Resources\Auth\UserResource;
 use App\Http\Resources\User\AddressResource;
 use App\Http\Resources\User\ItemKTVResource;
 use App\Http\Resources\User\ListAddressResource;
 use App\Http\Resources\User\ListKTVResource;
-use App\Rules\AgencyExistsRule;
 use App\Services\UserService;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class UserController extends BaseController
 {

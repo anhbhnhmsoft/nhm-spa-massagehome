@@ -115,7 +115,6 @@ class WalletService extends BaseService
         $walletKtv->balance += $ktvAmount;
         $walletKtv->save();
     }
-
     /**
      * Lấy ví của người dùng
      * @param $userId
@@ -220,8 +219,6 @@ class WalletService extends BaseService
 
             // Cộng số dư ví Người giới thiệu
             $wallet->increment('balance', $amount);
-
-
         }
     }
 
@@ -312,6 +309,69 @@ class WalletService extends BaseService
 
             // Cộng số dư ví Người giới thiệu
             $wallet->increment('balance', $amount);
+        }
+    }
+
+    /**
+     *
+     * Xử lý hoa hồng thưởng của người giới thiệu kỹ thuật viên
+     * @param $referrerId
+     * @param $userId
+     * @param $rewardAmount
+     * @param $exchangeRate
+     * @return void
+     * @throws ServiceException
+     */
+    public function processRewardReferralKtvCommission(
+        $referrerId,
+        $userId,
+        $rewardAmount,
+        $exchangeRate
+    )
+    {
+        // Lấy ví người giới thiệu
+        $walletRef = $this->walletRepository->queryWallet()
+            ->whereHas('user', function ($query) use ($referrerId) {
+                $query->where('id', $referrerId);
+                $query->whereIn('role', [UserRole::AGENCY->value, UserRole::KTV->value]);
+                $query->where('is_active', true);
+            })
+            ->lockForUpdate()
+            ->first();
+
+        if (!$walletRef) {
+            throw new ServiceException(
+                message: __("error.wallet_not_found")
+            );
+        }
+
+        // Kiểm tra xem hoa hồng KTV đã được thanh toán chưa
+        $existingReward = $this->walletTransactionRepository->query()
+            ->where('foreign_key', $userId)
+            ->where('wallet_id', $walletRef->id)
+            ->where('type', WalletTransactionType::REFERRAL_INVITE_KTV_REWARD->value)
+            ->exists();
+
+        // Nếu chưa thanh toán hoa hồng KTV thì tạo transaction và cộng số dư ví Người giới thiệu
+        if (!$existingReward) {
+            $this->walletTransactionRepository->create([
+                'wallet_id' => $walletRef->id,
+                'foreign_key' => (string) $userId,
+                'money_amount' => $rewardAmount * $exchangeRate,
+                'exchange_rate_point' => $exchangeRate,
+                'point_amount' => $rewardAmount,
+                'balance_after' => $walletRef->balance + $rewardAmount,
+                'type' => WalletTransactionType::REFERRAL_INVITE_KTV_REWARD->value,
+                'status' => WalletTransactionStatus::COMPLETED->value,
+                'transaction_code' => Helper::createDescPayment(PaymentType::BY_POINTS),
+                'description' => __('wallet.referral_ktv_reward'),
+                'expired_at' => now(),
+                'transaction_id' => null,
+                'metadata' => null,
+            ]);
+
+            // Cộng số dư ví Người giới thiệu
+            $walletRef->increment('balance', $rewardAmount);
         }
     }
 
@@ -510,78 +570,5 @@ class WalletService extends BaseService
             'is_enough' => $walletCustomer->balance >= $price,
         ];
     }
-
-    /**
-     * Trả tiền thưởng cho người giới thiệu khi mời KTV thành công
-     */
-    public function paymentRewardForKtvReferral(int $referrerId, int $invitedKtvId): ServiceReturn
-    {
-        try {
-            // Lấy số tiền thưởng từ config
-            $rewardAmount = (int) $this->configService->getConfigValue(ConfigName::KTV_REFERRAL_REWARD_AMOUNT);
-
-            // Nếu = 0 thì tắt tính năng, không trả tiền
-            if ($rewardAmount <= 0) {
-                return ServiceReturn::success(
-                    message: __('wallet.referral_reward_disabled')
-                );
-            }
-
-            $wallet = $this->walletRepository->query()
-                ->where('user_id', $referrerId)
-                ->lockForUpdate()
-                ->first();
-
-            if (!$wallet) {
-                throw new ServiceException(
-                    message: __("wallet.not_found")
-                );
-            }
-
-            $existingReward = $this->walletTransactionRepository->query()
-                ->where('foreign_key', (string) $invitedKtvId)
-                ->where('wallet_id', $wallet->id)
-                ->where('type', WalletTransactionType::REFERRAL_INVITE_KTV_REWARD->value)
-                ->exists();
-
-            if ($existingReward) {
-                return ServiceReturn::success(
-                    message: __("wallet.referral_reward_already_paid")
-                );
-            }
-
-            $exchangeRate = (int)$this->configService->getConfigValue(ConfigName::CURRENCY_EXCHANGE_RATE);
-
-            $this->walletTransactionRepository->create([
-                'wallet_id' => $wallet->id,
-                'foreign_key' => (string) $invitedKtvId,
-                'money_amount' => $rewardAmount * $exchangeRate,
-                'exchange_rate_point' => $exchangeRate,
-                'point_amount' => $rewardAmount,
-                'balance_after' => $wallet->balance + $rewardAmount,
-                'type' => WalletTransactionType::REFERRAL_KTV->value,
-                'status' => WalletTransactionStatus::COMPLETED->value,
-                'transaction_code' => Helper::createDescPayment(PaymentType::BY_POINTS),
-                'description' => __('wallet.referral_ktv_reward'),
-                'expired_at' => now(),
-                'transaction_id' => null,
-                'metadata' => null,
-            ]);
-
-            $wallet->balance += $rewardAmount;
-            $wallet->save();
-
-            return ServiceReturn::success(
-                message: __("wallet.referral_reward_paid_success")
-            );
-        } catch (\Exception $exception) {
-            LogHelper::error(
-                message: "Lỗi WalletService@paymentRewardForKtvReferral",
-                ex: $exception
-            );
-            throw $exception;
-        }
-    }
-
 
 }

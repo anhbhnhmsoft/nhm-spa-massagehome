@@ -14,6 +14,7 @@ use App\Enums\BookingStatus;
 use App\Enums\ConfigName;
 use App\Enums\ContractFileType;
 use App\Enums\DirectFile;
+use App\Enums\Jobs\WalletTransCase;
 use App\Enums\KTVConfigSchedules;
 use App\Enums\NotificationType;
 use App\Enums\ReviewApplicationStatus;
@@ -22,6 +23,7 @@ use App\Enums\UserRole;
 use App\Enums\WalletTransactionStatus;
 use App\Enums\WalletTransactionType;
 use App\Jobs\SendNotificationJob;
+use App\Jobs\WalletTransactionJob;
 use App\Repositories\BookingRepository;
 use App\Repositories\CouponUserRepository;
 use App\Repositories\ReviewRepository;
@@ -390,15 +392,6 @@ class UserService extends BaseService
                     'working_schedule' => KTVConfigSchedules::getDefaultSchema(),
                 ]);
             }
-
-            SendNotificationJob::dispatch(
-                userId: $user->id,
-                type: NotificationType::STAFF_APPLY_SUCCESS,
-                data: [
-                    'user_id' => $user->id,
-                    'role' => $user->role,
-                ]
-            );
             if ($user->wallet) {
                 $user->wallet->is_active = true;
                 $user->wallet->save();
@@ -410,6 +403,29 @@ class UserService extends BaseService
                 ]);
             }
             DB::commit();
+
+
+            // Gửi thông báo
+            SendNotificationJob::dispatch(
+                userId: $user->id,
+                type: NotificationType::STAFF_APPLY_SUCCESS,
+                data: [
+                    'user_id' => $user->id,
+                    'role' => $user->role,
+                ]
+            );
+
+            // Trả tiền thưởng cho người giới thiệu nếu có referrer_id và role = KTV
+            if (!empty($apply->referrer_id) && $apply->role == UserRole::KTV->value) {
+                WalletTransactionJob::dispatch(
+                    data: [
+                        'referral_id' => $apply->referrer_id,
+                        'user_id' => $user->id
+                    ],
+                    case: WalletTransCase::REWARD_FOR_KTV_REFERRAL
+                );
+            }
+
             return ServiceReturn::success(
                 message: __("common.success.data_updated")
             );
@@ -508,10 +524,18 @@ class UserService extends BaseService
                 ->query()
                 ->where('user_id', $user->id)
                 ->first();
+            // Nếu Khách hàng đã có review application thì không thể đăng ký lại
             if ($existingReview) {
-                throw new ServiceException(
-                    message: __("error.user_have_review_application")
-                );
+                // Nếu review application bị từ chối thì không thể đăng ký lại
+                if ($existingReview->status == ReviewApplicationStatus::REJECTED->value){
+                    throw new ServiceException(
+                        message: __("error.user_have_review_application_rejected")
+                    );
+                }else{
+                    throw new ServiceException(
+                        message: __("error.user_have_review_application")
+                    );
+                }
             }
 
             // Kiểm tra referrer_id có tồn tại
@@ -523,7 +547,7 @@ class UserService extends BaseService
                     ->first();
                 if (!$agency) {
                     throw new ServiceException(
-                        message: __("error.agency_not_found")
+                        message: __("error.referrer_not_found")
                     );
                 }
             }
@@ -549,11 +573,6 @@ class UserService extends BaseService
 
             // Lưu review application
             $this->userReviewApplicationRepository->create($reviewData);
-
-            // Trả tiền thưởng cho người giới thiệu nếu có referrer_id và role = KTV
-            if (!empty($data['referrer_id']) && $data['role'] === UserRole::KTV->value) {
-                $this->walletService->paymentRewardForKtvReferral($data['referrer_id'], $user->id);
-            }
 
             // Lưu file uploads
             foreach ($data['file_uploads'] as $fileUpload) {
@@ -1021,15 +1040,14 @@ class UserService extends BaseService
                 'referrer_id' => $referrer->id,
             ]);
 
-            // Trả tiền thưởng cho người giới thiệu nếu có config
-            // Chỉ trả khi KTV được mời có role = KTV
-            if ($ktv->role === UserRole::KTV->value) {
-                try {
-                    $this->walletService->paymentRewardForKtvReferral($referrer->id, $ktv->id);
-                } catch (\Exception $e) {
-                    LogHelper::error('Lỗi khi trả tiền thưởng mời KTV', $e);
-                }
-            }
+            // Phục vụ việc trả tiền giới thiệu cho KTV
+            WalletTransactionJob::dispatch(
+                data: [
+                    'referral_id' => $referrer->id,
+                    'user_id' => $ktv->id
+                ],
+                case: WalletTransCase::REWARD_FOR_KTV_REFERRAL
+            );
 
             return ServiceReturn::success(
                 message: __('common.success.data_updated')
@@ -1040,7 +1058,7 @@ class UserService extends BaseService
             );
         }
         catch (\Exception $e) {
-            LogHelper::error('Lỗi UserService@linkKtvToAgency', $e);
+            LogHelper::error('Lỗi UserService@linkKtvToReferrer', $e);
             return ServiceReturn::error(__('common_error.server_error'));
         }
     }
