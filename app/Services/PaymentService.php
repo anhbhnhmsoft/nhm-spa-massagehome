@@ -149,15 +149,10 @@ class PaymentService extends BaseService
             /**
              * Lấy tỉ giá giữa tiền tệ và đồng
              */
-            $currencyExchangeRate = $this->configService->getConfig(ConfigName::CURRENCY_EXCHANGE_RATE);
-            if ($currencyExchangeRate->isError()) {
-                throw new ServiceException(
-                    message: __("error.config_wallet_error")
-                );
-            }
+            $currencyExchangeRate = $this->configService->getConfigValue(ConfigName::EXCHANGE_RATE_VND_CNY);
             return ServiceReturn::success(
                 data: [
-                    'currency_exchange_rate' => $currencyExchangeRate->getData()['config_value'],
+                    'currency_exchange_rate' => $currencyExchangeRate,
                     'allow_payment' => [
                         'qrcode' => (bool)config('services.payment.qrcode'),
                         'zalopay' => (bool)config('services.payment.zalopay'),
