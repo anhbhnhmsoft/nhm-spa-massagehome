@@ -1233,13 +1233,14 @@ class UserService extends BaseService
     }
 
     /**
-     * Cập nhật trạng thái is_leader cho tất cả KTV
+     * Cập nhật trạng thái is_leader cho tất cả KTV có đủ số lượng giới thiệu
+     * @param int $minReferrals Số lượng giới thiệu tối thiểu để lên trưởng nhóm
      * @return ServiceReturn
      */
-    public function updateAllKtvLeaderStatus(): ServiceReturn
+    public function updateAllKtvLeaderStatus($minReferrals = 10): ServiceReturn
     {
+        DB::beginTransaction();
         try {
-            $minReferrals = $this->configService->getKtvLeaderMinReferrals();
 
             // Lấy tất cả KTV có giới thiệu người khác
             $ktvReferrers = $this->userRepository->query()
@@ -1253,7 +1254,6 @@ class UserService extends BaseService
             $updatedCount = 0;
             $skippedCount = 0;
 
-            DB::beginTransaction();
 
             foreach ($ktvReferrers as $referrer) {
                 // Đếm số KTV đã được duyệt mà KTV này giới thiệu

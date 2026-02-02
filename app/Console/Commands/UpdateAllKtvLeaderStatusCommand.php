@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Core\LogHelper;
+use App\Enums\ConfigName;
 use App\Services\ConfigService;
 use App\Services\UserService;
 use Illuminate\Console\Command;
@@ -39,10 +40,10 @@ class UpdateAllKtvLeaderStatusCommand extends Command
         $this->info('Kiểm tra và cập nhật trạng thái KTV trưởng...');
 
         try {
-            $minReferrals = $this->configService->getKtvLeaderMinReferrals();
+            $minReferrals = $this->configService->getConfigValue(ConfigName::KTV_LEADER_MIN_REFERRALS);
             $this->info("Số lượng KTV tối thiểu để lên trưởng nhóm: {$minReferrals}");
 
-            $result = $this->userService->updateAllKtvLeaderStatus();
+            $result = $this->userService->updateAllKtvLeaderStatus($minReferrals);
 
             if ($result->isError()) {
                 $this->error("Lỗi: {$result->getMessage()}");

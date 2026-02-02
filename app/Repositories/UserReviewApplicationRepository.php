@@ -60,8 +60,6 @@ class UserReviewApplicationRepository extends BaseRepository
             ->where('user_review_application.status', ReviewApplicationStatus::APPROVED->value)
             ->where('user_review_application.role', UserRole::KTV->value)
             ->where('users.role', UserRole::KTV->value)
-            ->whereNull('users.deleted_at')
-            ->whereNull('user_review_application.deleted_at')
             ->distinct('user_review_application.id')
             ->count('user_review_application.id');
     }
