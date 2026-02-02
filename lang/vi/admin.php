@@ -498,6 +498,8 @@ return
                 'zalo_template_id_helper' => 'Mã template ID Zalo hỗ trợ thanh toán qua Zalo Pay',
                 'price_transportation' => 'Phí di chuyển',
                 'price_transportation_helper' => 'Phí di chuyển trên mỗi km tính đường chim bay cho ktv, do khách hàng chi trả',
+                'exchange_rate_vnd_cny' => 'Tỷ giá VND/CNY ~ 1 CNY = X VND',
+                'exchange_rate_vnd_cny_helper' => 'Hệ thống sẽ tự động cập nhật tỷ giá này',
             ],
             'actions' => [
                 'save' => 'Lưu thay đổi',

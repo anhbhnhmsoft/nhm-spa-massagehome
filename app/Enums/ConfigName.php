@@ -22,7 +22,7 @@ enum ConfigName: string
     case KTV_LEADER_MIN_REFERRALS = 'KTV_LEADER_MIN_REFERRALS'; // Số lượng KTV tối thiểu cần giới thiệu để trở thành trưởng nhóm KTV
     case KTV_REFERRAL_REWARD_AMOUNT = 'KTV_REFERRAL_REWARD_AMOUNT'; // Số tiền được nhận khi mời KTV thành công (nếu = 0 thì tắt tính năng)
     case PRICE_TRANSPORTATION = 'PRICE_TRANSPORTATION'; // Chi phí di chuyển của KTV do khách hàng trả trên mỗi km
-
+    case EXCHANGE_RATE_VND_CNY = 'EXCHANGE_RATE_VND_CNY'; // Tỷ giá đổi tiền VNĐ -> CNY
 
 
 

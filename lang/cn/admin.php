@@ -363,6 +363,8 @@ return
                 'zalo_template_id_helper' => 'Zalo Template ID 支持 Zalo Pay',
                 'price_transportation' => '交通费',
                 'price_transportation_helper' => '交通费',
+                'exchange_rate_vnd_cny' => '汇率 VND/CNY ~ 1 CNY = X VND',
+                'exchange_rate_vnd_cny_helper' => '系统将自动更新此汇率',
             ],
             'actions' => [
                 'save' => '保存更改',

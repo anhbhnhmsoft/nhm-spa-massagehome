@@ -15,6 +15,7 @@ use App\Enums\UserRole;
 use App\Repositories\AffiliateConfigRepository;
 use App\Repositories\ConfigRepository;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 class ConfigService extends BaseService
 {
@@ -356,6 +357,43 @@ class ConfigService extends BaseService
             return $intValue > 0 ? $intValue : 10;
         } catch (\Throwable) {
             return 10;
+        }
+    }
+
+    public function getExchangeRateVndCny(): ServiceReturn
+    {
+        try {
+            $request = Http::get("https://api.exchangerate.host/live?access_key=2a50870c519a7d4ac51ed5cc2f67f893&currencies=CNY,VND");
+            $data = $request->json();
+            $exchangeRate = $data['quotes']['USDVND'] / $data['quotes']['USDCNY'] ;
+
+            $this->configRepository->query()->updateOrCreate(
+                [
+                    'config_key' => ConfigName::EXCHANGE_RATE_VND_CNY->value,
+                    'config_type' => ConfigType::NUMBER->value,
+                ],
+                [
+                    'config_value' => $exchangeRate,
+                    'description' => 'Tỷ giá hối đoái VND/CNY ~ 1 CNY = X VND',
+                ]
+            );
+
+            Caching::deleteCache(
+                key: CacheKey::CACHE_KEY_CONFIG,
+                uniqueKey: ConfigName::EXCHANGE_RATE_VND_CNY->value
+            );
+
+            return ServiceReturn::success(
+                data: [
+                    'exchange_rate' => $exchangeRate,
+                ]
+            );
+        } catch (\Exception $e) {
+            LogHelper::error(
+                message: "Lỗi ConfigService@getExchangeRateVndCny",
+                ex:  $e,
+            );
+            return ServiceReturn::error(message: $e->getMessage());
         }
     }
 

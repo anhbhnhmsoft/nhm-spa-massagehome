@@ -363,6 +363,8 @@ return
                 'zalo_template_id_helper' => 'Zalo Template ID for Zalo Pay',
                 'price_transportation' => 'Transportation Fee',
                 'price_transportation_helper' => 'Transportation fee per km calculated by bird\'s flight for KTV, paid by customer',
+                'exchange_rate_vnd_cny' => 'Exchange Rate VND/CNY ~ 1 CNY = X VND',
+                'exchange_rate_vnd_cny_helper' => 'The system will automatically update this exchange rate',
             ],
             'actions' => [
                 'save' => 'Save Changes',

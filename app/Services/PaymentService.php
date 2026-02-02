@@ -340,7 +340,8 @@ class PaymentService extends BaseService
                             'expire_at' => $expireTime,
                         ]
                     );
-
+                    $exchangeRate = $this->configService->getConfigValue(ConfigName::EXCHANGE_RATE_VND_CNY);
+                    $amountCNY = $amount / $exchangeRate;
                     DB::commit();
 
                     return ServiceReturn::success([
@@ -350,6 +351,8 @@ class PaymentService extends BaseService
                             'qr_image' => $wechatQrUrl,
                             'amount' => $amount,
                             'description' => $transaction->transaction_code,
+                            'amount_cny' => $amountCNY,
+                            'exchange_rate' => $exchangeRate,
                         ]
                     ]);
                 default:
