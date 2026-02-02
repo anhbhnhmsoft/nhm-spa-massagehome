@@ -3,6 +3,8 @@
 namespace App\Filament\Clusters\User\Resources\Customers\Pages;
 
 use App\Filament\Clusters\User\Resources\Customers\CustomerResource;
+use App\Filament\Clusters\User\Resources\Customers\Widgets\TransactionCustomerTable;
+use App\Filament\Clusters\User\Resources\Customers\Widgets\WalletCustomer;
 use App\Filament\Components\CommonActions;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ForceDeleteAction;
@@ -18,6 +20,14 @@ class EditCustomer extends EditRecord
         return [
             CommonActions::backAction(static::getResource()),
             DeleteAction::make(),
+        ];
+    }
+
+    protected function getFooterWidgets(): array
+    {
+        return [
+            WalletCustomer::class,
+            TransactionCustomerTable::class,
         ];
     }
 }

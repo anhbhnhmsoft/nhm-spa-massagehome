@@ -291,7 +291,7 @@ class NotificationService extends BaseService
                             ])
                             ->sendToDatabase($admin);
                         break;
-                        // Thông báo booking quá hạn
+                    // Thông báo booking quá hạn
                     case NotificationAdminType::OVERDUE_CONFIRMED_BOOKING:
                         Notification::make()
                             ->title(__('notification.overdue_confirmed_booking.title'))
@@ -317,7 +317,7 @@ class NotificationService extends BaseService
                 }
             });
             return ServiceReturn::success();
-        }catch (\Exception $exception) {
+        } catch (\Exception $exception) {
             LogHelper::error(
                 message: "Lỗi NotificationService@sendAdminNotification",
                 ex: $exception

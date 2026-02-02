@@ -2,15 +2,15 @@
 
 namespace App\Filament\Clusters\User\Resources\Customers\Schemas;
 
-use App\Enums\UserRole;
+use App\Enums\DirectFile;
+use App\Enums\Gender;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Resources\Pages\CreateRecord;
-use Filament\Schemas\Components\Flex;
-use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
@@ -20,25 +20,35 @@ class CustomerForm
     {
         return $schema
             ->components([
-                Section::make()
-                    ->columns(2)
+                // Thông tin cơ bản
+                Section::make(__('admin.common.table.basic_info'))
                     ->schema([
-                        Section::make(__('admin.customer.section.info'))
+                        Section::make()
                             ->schema([
-                                TextInput::make('name')
-                                    ->label(__('admin.customer.fields.name'))
-                                    ->required()
-                                    ->validationMessages([
-                                        'required' => __('common.error.required'),
-                                    ]),
+                                TextInput::make('id')
+                                    ->label(__('admin.common.table.id'))
+                                    ->hiddenOn("create")
+                                    ->disabled(),
                                 TextInput::make('phone')
-                                    ->label(__('admin.customer.fields.phone'))
+                                    ->label(__('admin.common.table.phone'))
                                     ->tel()
+                                    ->maxLength(20)
                                     ->required()
                                     ->unique()
+                                    ->disabled()
                                     ->validationMessages([
+                                        'max' => __('common.error.max_length', ['max' => 20]),
+                                        'max_digits' => __('common.error.max_digits', ['max' => 20]),
                                         'required' => __('common.error.required'),
                                         'unique' => __('common.error.unique'),
+                                    ]),
+                                TextInput::make('name')
+                                    ->label(__('admin.common.table.name'))
+                                    ->required()
+                                    ->maxLength(255)
+                                    ->validationMessages([
+                                        'required' => __('common.error.required'),
+                                        'max' => __('common.error.max_length', ['max' => 255])
                                     ]),
                                 TextInput::make('password')
                                     ->label(__('admin.common.table.password'))
@@ -48,102 +58,57 @@ class CustomerForm
                                     ->dehydrated(fn($state) => filled($state))
                                     ->revealable()
                                     ->maxLength(255)
+                                    ->helperText(__('admin.common.table.password_desc'))
                                     ->validationMessages([
                                         'required' => __('common.error.required'),
                                         'max' => __('common.error.max_length', ['max' => 255])
                                     ]),
-                                Section::make()
-                                    ->relationship('profile')
-                                    ->schema([
-                                        DatePicker::make('date_of_birth')
-                                            ->label(__('admin.customer.fields.dob')),
-                                    ]),
-                                Select::make('role')
-                                    ->label(__('admin.customer.fields.role'))
-                                    ->options(UserRole::class)
-                                    ->default(UserRole::CUSTOMER)
-                                    ->disabled()
-                                    ->dehydrated()
+                                Toggle::make('is_active')
+                                    ->label(__('admin.common.table.status'))
+                                    ->columnSpanFull()
+                                    ->default(true),
+                            ]),
+
+                        Section::make()
+                            ->relationship('profile')
+                            ->schema([
+                                FileUpload::make('avatar_url')
+                                    ->label(__('admin.common.table.avatar'))
+                                    ->image()
+                                    ->avatar()
+                                    ->imageEditor()
+                                    ->disk('public')
+                                    ->directory(DirectFile::KTVA->value)
+                                    ->required()
+                                    ->downloadable()
+                                    ->alignCenter()
+                                    ->maxSize(102400)
                                     ->validationMessages([
                                         'required' => __('common.error.required'),
                                     ]),
-                            ])->columns(2),
-
-                        Section::make('Wallet')
-                            ->label(__('admin.customer.section.wallet'))
-                            ->relationship('wallet')
-                            ->schema([
-                                TextInput::make('balance')
-                                    ->label(__('admin.customer.fields.balance'))
-                                    ->numeric()
-                                    ->disabled()
-                                    ->suffix(__('admin.currency'))
+                                Textarea::make('bio')
+                                    ->label(__('admin.common.table.bio'))
+                                    ->rows(3),
+                                Select::make('gender')
+                                    ->label(__('admin.common.table.gender'))
+                                    ->options(Gender::toOptions())
+                                    ->required()
+                                    ->validationMessages([
+                                        'required' => __('common.error.required'),
+                                    ]),
+                                DatePicker::make('date_of_birth')
+                                    ->label(__('admin.common.table.date_of_birth'))
+                                    ->required()
                                     ->validationMessages([
                                         'required' => __('common.error.required'),
                                     ]),
                             ]),
 
-                        Section::make(__('admin.customer.section.booking_history'))
-                            ->label(__('admin.customer.section.booking_history'))
-                            ->schema([
-                                Repeater::make('bookings')
-                                    ->relationship('bookings')
-                                    ->label(__('admin.customer.section.booking_history'))
-                                    ->schema([
-                                        Select::make('service_id')
-                                            ->relationship('service', 'name')
-                                            ->getOptionLabelFromRecordUsing(fn($record) => $record->name)
-                                            ->label(__('admin.booking.fields.service')),
-                                        DateTimePicker::make('booking_time')
-                                            ->label(__('admin.booking.fields.booking_time')),
-                                        TextInput::make('price')
-                                            ->label(__('admin.booking.fields.price'))
-                                            ->numeric()
-                                            ->validationMessages([
-                                                'required' => __('common.error.required'),
-                                            ]),
-                                        TextInput::make('status')
-                                            ->label(__('admin.booking.fields.status'))
-                                            ->formatStateUsing(fn($state) => \App\Enums\BookingStatus::tryFrom($state)?->label()),
-                                    ])
-                                    ->columns(2)
-                                    ->addable(false)
-                                    ->deletable(false)
-                                    ->disabled()
-                            ])
-                            ->visible(fn($record) => $record !== null),
-                        Section::make(__('admin.customer.section.reviews'))
-                            ->label(__('admin.customer.section.reviews'))
-                            ->schema([
-                                Repeater::make('reviews')
-                                    ->relationship('reviewWrited')
-                                    ->label(__('admin.customer.section.reviews'))
-                                    ->schema([
-                                        Grid::make()
-                                            ->schema([
-                                                Select::make('service_id')
-                                                    ->relationship('service', 'name')
-                                                    ->getOptionLabelFromRecordUsing(fn($record) => $record->name)
-                                                    ->label(__('admin.booking.fields.service')),
-                                                Select::make('user_id')
-                                                    ->relationship('recipient', 'name')
-                                                    ->getOptionLabelFromRecordUsing(fn($record) => $record->name)
-                                                    ->label(__('admin.booking.fields.user')),
-                                                TextInput::make('rating')
-                                                    ->label(__('admin.booking.fields.rating')),
-                                                TextInput::make('comment')
-                                                    ->label(__('admin.booking.fields.comment')),
-                                            ])
-                                            ->columns(2)
-                                    ])
-                                    ->columns(2)
-                                    ->addable(false)
-                                    ->deletable(false)
-                                    ->disabled()
-                            ])
-                            ->visible(fn($record) => $record !== null),
                     ])
-                    ->columnSpan('full')
+                    ->compact()
+                    ->columns(2)
+                    ->columnSpanFull()
+                ,
             ]);
     }
 }

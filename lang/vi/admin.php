@@ -24,6 +24,11 @@ return
             'week' => 'tuần',
             'month' => 'tháng',
             'year' => 'năm',
+            'affiliate_qr' => 'QR code giới thiệu',
+            'wallet' => 'Ví tiền',
+            'balance' => 'Số dư',
+            'total_deposit' => 'Tổng số tiền vào',
+            'total_withdrawal' => 'Tổng số tiền rút',
             'table' => [
                 'id' => 'ID',
                 'name' => 'Tên',
@@ -53,7 +58,7 @@ return
                 'application_date' => 'Ngày đăng ký',
                 'creator' => 'Tạo bởi',
                 'status_review' => 'Trạng thái hồ sơ',
-                'password_desc_ktv' => 'Mật khẩu phải có ít nhất 8 kí tự, bao gồm chữ hoa, chữ thường, số và kí tự đặc biệt, 1 khi thay đổi mật khẩu mới, KTV sẽ không được sử dụng mật khẩu cũ.',
+                'password_desc' => 'Mật khẩu phải có ít nhất 8 kí tự, bao gồm chữ hoa, chữ thường, số và kí tự đặc biệt, 1 khi thay đổi mật khẩu mới, Người dùng sẽ không được sử dụng mật khẩu cũ.',
             ],
             'action' => [
                 'view' => 'Xem',

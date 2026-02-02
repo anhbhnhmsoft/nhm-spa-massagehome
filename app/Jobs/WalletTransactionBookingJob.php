@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Enums\Jobs\WalletTransBookingCase;
+use App\Enums\Jobs\WalletTransCase;
 use App\Enums\QueueKey;
 use App\Services\Facades\TransactionJobService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -23,8 +23,8 @@ class WalletTransactionBookingJob implements ShouldQueue
      * Create a new job instance.
      */
     public function __construct(
-        protected int $bookingId,
-        protected WalletTransBookingCase $case,
+        protected int             $bookingId,
+        protected WalletTransCase $case,
     ) {
         $this->onQueue(QueueKey::TRANSACTIONS_PAYMENT);
     }
@@ -35,7 +35,7 @@ class WalletTransactionBookingJob implements ShouldQueue
     public function handle(TransactionJobService $service): void
     {
         switch ($this->case) {
-            case WalletTransBookingCase::CONFIRM_BOOKING:
+            case WalletTransCase::CONFIRM_BOOKING:
                 try {
                     $result = $service->handleConfirmBooking($this->bookingId);
                     if ($result->isError()){
@@ -49,7 +49,7 @@ class WalletTransactionBookingJob implements ShouldQueue
                     );
                 }
                 break;
-            case WalletTransBookingCase::FINISH_BOOKING:
+            case WalletTransCase::FINISH_BOOKING:
                 try {
                     $result = $service->handleFinishBooking($this->bookingId);
                     if ($result->isError()){

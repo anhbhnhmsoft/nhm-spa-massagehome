@@ -149,10 +149,10 @@ return [
         'in' => 'Vai trò không hợp lệ.',
         'invalid' => 'Vai trò không hợp lệ.',
     ],
-    'agency_id' => [
-        'required' => 'Vui lòng chọn Agency.',
-        'numeric' => 'ID Agency phải là số.',
-        'exists' => 'ID Agency không tồn tại.',
+    'referrer_id' => [
+        'required' => 'Vui lòng chọn Người giới thiệu.',
+        'numeric' => 'ID Người giới thiệu phải là số.',
+        'exists' => 'ID Người giới thiệu không tồn tại.',
     ],
     'province_code' => [
         'required' => 'Vui lòng chọn tỉnh/thành phố.',
@@ -271,9 +271,9 @@ return [
         'invalid' => 'Dữ liệu ảnh không đúng định dạng và tối đa 10MB mỗi ảnh.',
         'invalid_type' => 'Loại ảnh không hợp lệ.',
         'invalid_type_for_role' => 'Loại ảnh không hợp lệ cho vai trò này.',
-        'duplicate_type' => 'Chỉ có thể tải lên 1 ảnh cho mỗi loại.',
+        'duplicate_type' => 'Có ảnh đang bị trùng lặp.',
         'invalid_type_count' => 'Số lượng ảnh cho loại này không hợp lệ.',
-        'missing_type' => 'Vui lòng tải lên ảnh cho loại :type.',
+        'missing_type' => 'Thiếu yêu cầu ảnh cần có.',
     ],
      'is_working' => [
         'required' => 'Vui lòng chọn trạng thái.',

@@ -61,7 +61,7 @@ class CustomerResource extends Resource
     {
         $query = parent::getEloquentQuery();
 
-        return $query->with('wallet', 'files', 'profile', 'bookings', 'reviewWrited')
+        return $query
             ->where('role', UserRole::CUSTOMER->value);
     }
 
@@ -77,6 +77,7 @@ class CustomerResource extends Resource
     public static function getRecordRouteBindingEloquentQuery(): Builder
     {
         return parent::getRecordRouteBindingEloquentQuery()
+            ->with('profile')
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

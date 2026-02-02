@@ -107,7 +107,8 @@ Route::middleware('set-api-locale')->group(function () {
             // Lấy thông tin chi tiết KTV
             Route::get('ktv/{id}', [UserController::class, 'detailKtv'])->where('id', '[0-9]+');
             // User hiện tại đăng ký làm đối tác
-            Route::post('apply-partner', [UserController::class, 'applyPartner'])->middleware(['throttle:5,1']);
+            Route::post('apply-partner', [UserController::class, 'applyPartner'])
+                ->middleware(['throttle:5,1', 'check-role:customer']); // Chỉ cho phép Customer đăng ký
             // Lấy danh sách KTV được quản lý bởi Agency hoặc KTV
             Route::get('list-manage-ktv', [UserController::class, 'listKtvManager'])
                 ->middleware(['check-role:agency,ktv']); // Chỉ cho phép Agency hoặc KTV quản lý

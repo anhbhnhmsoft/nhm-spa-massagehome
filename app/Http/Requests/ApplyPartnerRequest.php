@@ -24,14 +24,11 @@ class ApplyPartnerRequest extends FormRequest
             ])],
             'referrer_id' => ['nullable', 'numeric', 'exists:users,id'],
             'province_code' => ['required', 'string', 'max:10'],
-            'experience' => ['nullable', 'integer'],
+            'experience' => [Rule::requiredIf($this->role == UserRole::KTV->value), 'nullable', 'integer'],
             'address' => ['required', 'string', 'max:255'],
             'latitude' => ['required', 'numeric', 'between:-90,90'],
             'longitude' => ['required', 'numeric', 'between:-180,180'],
             'is_leader' => ['nullable', 'boolean'],
-            // bio đa ngôn ngữ
-            'bio.vi' => ['required', 'string'],
-            'bio.en' => ['nullable', 'string'],
 
             'bio' => ['required', 'array', function ($attribute, $value, $fail) {
                 $this->validateMultilingual($value, $fail);
@@ -78,9 +75,8 @@ class ApplyPartnerRequest extends FormRequest
             'role.required' => __('validation.role.required'),
             'role.integer' => __('validation.role.invalid'),
             'role.in' => __('validation.role.invalid'),
-            'agency_id.required' => __('validation.agency_id.required'),
-            'agency_id.numeric' => __('validation.agency_id.invalid'),
-            'agency_id.exists' => __('validation.agency_id.invalid'),
+            'referrer_id.numeric' => __('validation.referrer_id.numeric'),
+            'referrer_id.exists' => __('validation.referrer_id.exists'),
             'bio.required' => __('validation.bio.required'),
             'bio.array' => __('validation.bio.invalid'),
             'province_code.required' => __('validation.province_code.required'),

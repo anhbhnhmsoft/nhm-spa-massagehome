@@ -83,7 +83,7 @@ class KTVForm
                                     ->dehydrated(fn($state) => filled($state))
                                     ->revealable()
                                     ->maxLength(255)
-                                    ->helperText(__('admin.common.table.password_desc_ktv'))
+                                    ->helperText(__('admin.common.table.password_desc'))
                                     ->validationMessages([
                                         'required' => __('common.error.required'),
                                         'max' => __('common.error.max_length', ['max' => 255])
@@ -106,6 +106,7 @@ class KTVForm
                                     ->directory(DirectFile::KTVA->value)
                                     ->required()
                                     ->downloadable()
+                                    ->alignCenter()
                                     ->maxSize(102400)
                                     ->validationMessages([
                                         'required' => __('common.error.required'),

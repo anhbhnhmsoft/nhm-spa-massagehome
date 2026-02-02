@@ -5,12 +5,18 @@ namespace App\Filament\Pages;
 use BackedEnum;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Contracts\Support\Htmlable;
 
 class Setting extends Page
 {
     protected static ?string $navigationLabel = null;
 
     public static function getNavigationLabel(): string
+    {
+        return __('admin.setting.label');
+    }
+
+    public function getTitle(): string|Htmlable
     {
         return __('admin.setting.label');
     }

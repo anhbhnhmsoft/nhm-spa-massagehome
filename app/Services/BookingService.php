@@ -9,7 +9,7 @@ use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
 use App\Enums\BookingStatus;
-use App\Enums\Jobs\WalletTransBookingCase;
+use App\Enums\Jobs\WalletTransCase;
 use App\Enums\NotificationType;
 use App\Enums\UserRole;
 use App\Jobs\RefundBookingCancelJob;
@@ -214,7 +214,7 @@ class BookingService extends BaseService
             // xử lý giao dịch, ghi lại lịch sử dùng coupon
             WalletTransactionBookingJob::dispatch(
                 bookingId: $booking->id,
-                case: WalletTransBookingCase::CONFIRM_BOOKING,
+                case: WalletTransCase::CONFIRM_BOOKING,
             );
 
             return ServiceReturn::success(
@@ -607,7 +607,7 @@ class BookingService extends BaseService
             // Thanh toán cho KTV và tính phí hoa hồng cho các user khác
             WalletTransactionBookingJob::dispatch(
                 bookingId: $booking->id,
-                case: WalletTransBookingCase::FINISH_BOOKING,
+                case: WalletTransCase::FINISH_BOOKING,
             );
 
             // gửi thông báo cho khách hàng biết rằng lịch đã hoàn thành
@@ -830,7 +830,7 @@ class BookingService extends BaseService
                 );
             }
         }
-        
+
         $pricePerKm = $this->configService->getConfigValue(
             ConfigName::PRICE_TRANSPORTATION
         );
@@ -840,7 +840,7 @@ class BookingService extends BaseService
             latitude: $latitude,
             ktvId: $ktvId
         ) * $pricePerKm;
-        
+
         // cộng phí vào giá cuối cùng
         $finalPrice = $price - $discountAmount + $priceTransportation;
         return [
