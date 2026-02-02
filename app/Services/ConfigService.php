@@ -15,14 +15,14 @@ use App\Enums\UserRole;
 use App\Repositories\AffiliateConfigRepository;
 use App\Repositories\ConfigRepository;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 class ConfigService extends BaseService
 {
     public function __construct(
         protected ConfigRepository $configRepository,
         protected AffiliateConfigRepository $affiliateConfigRepository,
-    )
-    {
+    ) {
         parent::__construct();
     }
 
@@ -43,7 +43,7 @@ class ConfigService extends BaseService
         try {
             $config = $this->configRepository->query()
                 ->where('config_key', $key->value)
-                ->select('config_key', 'config_value','config_type')
+                ->select('config_key', 'config_value', 'config_type')
                 ->first();
             if ($config) {
                 $config = $config->toArray();
@@ -54,13 +54,13 @@ class ConfigService extends BaseService
                     expire: 60 * 24 // Cache for 24 hours
                 );
                 return ServiceReturn::success(data: $config);
-            }else{
+            } else {
                 return ServiceReturn::success();
             }
         } catch (\Exception $e) {
             LogHelper::error(
                 message: "Lỗi ConfigService@getConfig",
-                ex:  $e,
+                ex: $e,
             );
             return ServiceReturn::error(message: $e->getMessage());
         }
@@ -303,7 +303,7 @@ class ConfigService extends BaseService
         try {
             $config = $this->affiliateConfigRepository->query()
                 ->where('target_role', $role->value)
-                ->select('commission_rate', 'min_commission','max_commission')
+                ->select('commission_rate', 'min_commission', 'max_commission')
                 ->first();
             if ($config) {
                 $config = $config->toArray();
@@ -314,13 +314,13 @@ class ConfigService extends BaseService
                     expire: 60 * 24 // Cache for 24 hours
                 );
                 return ServiceReturn::success(data: $config);
-            }else{
+            } else {
                 return ServiceReturn::error(message: __("error.config_not_found"));
             }
         } catch (\Exception $e) {
             LogHelper::error(
                 message: "Lỗi ConfigService@getConfig",
-                ex:  $e,
+                ex: $e,
             );
             return ServiceReturn::error(message: $e->getMessage());
         }
@@ -358,5 +358,4 @@ class ConfigService extends BaseService
             return 10;
         }
     }
-
 }

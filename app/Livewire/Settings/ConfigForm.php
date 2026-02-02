@@ -246,6 +246,22 @@ class ConfigForm extends Component implements HasSchemas
                                             'numeric' => __('common.error.numeric'),
                                             'min' => __('common.error.min', ['min' => 0]),
                                         ]),
+
+                                    TextInput::make((string)ConfigName::EXCHANGE_RATE_VND_CNY->value)
+                                        ->label(__('admin.setting.fields.exchange_rate_vnd_cny'))
+                                        ->helperText(__('admin.setting.fields.exchange_rate_vnd_cny_helper'))
+                                        ->numeric()
+                                        ->required()
+                                        ->rules([
+                                            'required',
+                                            'numeric',
+                                            'min:0',
+                                        ])
+                                        ->validationMessages([
+                                            'required' => __('common.error.required'),
+                                            'numeric' => __('common.error.numeric'),
+                                            'min' => __('common.error.min', ['min' => 0]),
+                                        ]),
                                 ]),
                             Section::make(__('admin.setting.label_config_discount_rate'))
                                 ->columns(2)
