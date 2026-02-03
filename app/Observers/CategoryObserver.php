@@ -31,9 +31,7 @@ class CategoryObserver
      */
     public function deleted(Category $category): void
     {
-        if ($category->isForceDeleting()) {
-            Helper::deleteFile($category->image_url);
-        }
+        Helper::deleteFile($category->image_url);
     }
 
     /**
@@ -44,11 +42,5 @@ class CategoryObserver
         //
     }
 
-    /**
-     * Handle the Category "force deleted" event.
-     */
-    public function forceDeleted(Category $category): void
-    {
-        Helper::deleteFile($category->image_url);
-    }
+
 }

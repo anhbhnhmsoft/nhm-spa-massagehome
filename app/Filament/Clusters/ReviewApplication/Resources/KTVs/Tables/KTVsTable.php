@@ -7,6 +7,7 @@ use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserRole;
 use App\Filament\Clusters\ReviewApplication\Resources\KTVs\KTVResource;
 use App\Filament\Clusters\Service\Resources\Services\ServiceResource;
+use App\Filament\Components\CommonColumns;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
@@ -34,10 +35,7 @@ class KTVsTable
         return $table
             ->recordUrl(null)
             ->columns([
-                TextColumn::make('id')
-                    ->searchable()
-                    ->width('80px')
-                    ->label(__('admin.common.table.id')),
+                CommonColumns::IdColumn(),
                 ImageColumn::make('profile.avatar_url')
                     ->label(__('admin.common.table.avatar'))
                     ->width('80px')

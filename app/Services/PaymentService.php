@@ -10,6 +10,7 @@ use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
 use App\Enums\BankBin;
 use App\Enums\ConfigName;
+use App\Enums\NotificationAdminType;
 use App\Enums\PaymentType;
 use App\Enums\NotificationType;
 use App\Enums\WalletTransactionStatus;
@@ -30,6 +31,7 @@ class PaymentService extends BaseService
         protected ConfigService               $configService,
         protected PayOsService                $payOsService,
         protected ZaloService                 $zaloService,
+        protected NotificationService        $notificationService,
     )
     {
         parent::__construct();
@@ -150,24 +152,14 @@ class PaymentService extends BaseService
              * Lấy tỉ giá giữa point và tiền thực
              */
             $currencyExchangeRate = $this->configService->getConfigValue(ConfigName::CURRENCY_EXCHANGE_RATE);
-            if ($currencyExchangeRate->isError()) {
-                throw new ServiceException(
-                    message: __("error.config_wallet_error")
-                );
-            }
             /**
              * Lấy tỉ giá giữa tiền tệ và đồng
              */
             $exchangeRateVndCny = $this->configService->getConfigValue(ConfigName::EXCHANGE_RATE_VND_CNY);
-            if ($exchangeRateVndCny->isError()) {
-                throw new ServiceException(
-                    message: __("error.config_wallet_error")
-                );
-            }
             return ServiceReturn::success(
                 data: [
-                    'currency_exchange_rate' => $currencyExchangeRate->getData(),
-                    'exchange_rate_vnd_cny' => $exchangeRateVndCny->getData(),
+                    'currency_exchange_rate' => $currencyExchangeRate,
+                    'exchange_rate_vnd_cny' => $exchangeRateVndCny,
                     'allow_payment' => [
                         'qrcode' => (bool)config('services.payment.qrcode'),
                         'zalopay' => (bool)config('services.payment.zalopay'),
@@ -352,6 +344,15 @@ class PaymentService extends BaseService
                     );
                     $exchangeRate = $this->configService->getConfigValue(ConfigName::EXCHANGE_RATE_VND_CNY);
                     $amountCNY = $amount / $exchangeRate;
+
+                    // Thông báo tới admin
+                    $this->notificationService->sendAdminNotification(
+                        type: NotificationAdminType::CONFIRM_WECHAT_PAYMENT,
+                        data: [
+                            'transaction_id' => $transaction->id,
+                        ]
+                    );
+
                     DB::commit();
 
                     return ServiceReturn::success([
@@ -557,9 +558,20 @@ class PaymentService extends BaseService
         try {
             $record->update(['status' => WalletTransactionStatus::COMPLETED]);
             // Kiểm tra xem transaction có phải là nạp tiền hay không
-            if (in_array($record->type, WalletTransactionType::statusIn())) {
+            if (in_array($record->type, WalletTransactionType::incomeStatus())) {
                 $record->wallet->increment('balance', (float)$record->point_amount);
+                // Thông báo tới người dùng khi nạp tiền thành công
+                SendNotificationJob::dispatch(
+                    userId: $record->wallet->user_id,
+                    type: NotificationType::DEPOSIT_SUCCESS,
+                    data: [
+                        'transaction_id' => $record->id,
+                        'amount' => $record->point_amount,
+                        'deposit_time' => $record->created_at->format('Y-m-d H:i:s'),
+                    ]
+                );
             }
+
         }catch (\Exception $exception){
             LogHelper::error(
                 message: "Lỗi WalletService@handleAdminConfirmTransaction",

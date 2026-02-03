@@ -96,7 +96,9 @@ class AppServiceProvider extends ServiceProvider
 
         LogViewer::auth(function ($request) {
             $user = $request->user();
-
+            if (!$user) {
+                return false;
+            }
             return $user->role === UserRole::ADMIN->value;
         });
     }

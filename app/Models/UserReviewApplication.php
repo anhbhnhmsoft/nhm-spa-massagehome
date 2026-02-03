@@ -18,6 +18,7 @@ class UserReviewApplication extends Model
     protected $fillable = [
         'user_id',
         'referrer_id',
+        'nickname',
         'status', // Cast Enum
         'province_code',
         'address',

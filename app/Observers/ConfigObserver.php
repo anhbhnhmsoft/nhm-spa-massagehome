@@ -29,8 +29,4 @@ class ConfigObserver
 
     }
 
-    public function forceDeleted(Config $config): void
-    {
-
-    }
 }

@@ -106,6 +106,9 @@ Route::middleware('set-api-locale')->group(function () {
             Route::get('dashboard-profile', [UserController::class, 'dashboardProfile']);
             // Lấy thông tin chi tiết KTV
             Route::get('ktv/{id}', [UserController::class, 'detailKtv'])->where('id', '[0-9]+');
+            // Kiểm tra quyền đăng ký đối tác
+            Route::get('check-apply-partner', [UserController::class, 'checkApplyPartner'])
+                ->middleware(['check-role:customer']);
             // User hiện tại đăng ký làm đối tác
             Route::post('apply-partner', [UserController::class, 'applyPartner'])
                 ->middleware(['throttle:5,1', 'check-role:customer']); // Chỉ cho phép Customer đăng ký

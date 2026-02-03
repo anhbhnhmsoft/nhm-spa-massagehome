@@ -64,6 +64,26 @@ class UserController extends BaseController
     }
 
     /**
+     * Kiểm tra thông tin đăng ký đối tác (KTV hoặc Agency)
+     * @return JsonResponse
+     */
+    public function checkApplyPartner()
+    {
+        $result = $this->userService->checkApplyPartnerForCurrentUser();
+
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage(),
+            );
+        }
+
+        return $this->sendSuccess(
+            data: $result->getData(),
+            message: $result->getMessage() ?? __('common.success.data_created')
+        );
+    }
+
+    /**
      * Lấy danh sách KTV
      * @param ListKTVRequest $request
      * @return JsonResponse

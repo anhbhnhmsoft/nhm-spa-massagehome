@@ -28,6 +28,7 @@ use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Builder;
 
 class KTVForm
 {
@@ -111,9 +112,6 @@ class KTVForm
                                     ->validationMessages([
                                         'required' => __('common.error.required'),
                                     ]),
-                                Textarea::make('bio')
-                                    ->label(__('admin.common.table.bio'))
-                                    ->rows(3),
                                 Select::make('gender')
                                     ->label(__('admin.common.table.gender'))
                                     ->options(Gender::toOptions())
@@ -157,17 +155,31 @@ class KTVForm
                             ->label(__('admin.ktv_apply.fields.is_leader'))
                             ->onIcon('heroicon-m-user-group')
                             ->offIcon('heroicon-m-user')
-                            ->onColor('success')
-                            ->columnSpanFull(),
+                            ->onColor('success'),
+
+                        TextInput::make('nickname')
+                            ->label(__('admin.ktv_apply.fields.nickname'))
+                            ->maxLength(255)
+                            ->required()
+                            ->validationMessages([
+                                'required' => __('common.error.required'),
+                                'max' => __('common.error.max_length', ['max' => 255]),
+                            ]),
 
                         Select::make('referrer_id')
                             ->label(__('admin.ktv_apply.fields.agency'))
                             ->relationship(
                                 name: 'referrer', // Tên function quan hệ trong Model
                                 titleAttribute: 'name', // Cột dùng để hiển thị và tìm kiếm
-                                modifyQueryUsing: fn ($query) => $query
-                                    ->whereIn('role', [UserRole::AGENCY->value, UserRole::KTV->value])
-                                    ->where('is_active', true)
+                                modifyQueryUsing: function (Builder $query, $get) {
+                                    $currentId = $get('user_id') ?? null;
+                                    $query->whereIn('role', [UserRole::AGENCY->value, UserRole::KTV->value])
+                                        ->where('is_active', true);
+                                    if ($currentId) {
+                                        $query->where('id', '!=', $currentId);
+                                    }
+                                    return $query;
+                                }
                             )
                             ->searchable() // Filament sẽ tự động search theo titleAttribute (name)
                             ->preload() // Load trước một ít dữ liệu để chọn nhanh

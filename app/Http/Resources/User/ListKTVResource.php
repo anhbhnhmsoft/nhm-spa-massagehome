@@ -20,7 +20,7 @@ class ListKTVResource extends JsonResource
         $workingSchedule = $this->schedule ?? null;
         return [
             'id' => $this->id,
-            'name' => $this->name,
+            'name' => $reviewApplication->nickname ?? $this->name,
             'phone' => $this->phone,
             'role' => $this->role,
             'language' => $this->language,

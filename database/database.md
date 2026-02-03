@@ -83,7 +83,7 @@
     - user_id (bigint, foreign key to users.id) -- id người dùng
     - referrer_id (bigint, nullable, foreign key to users.id) -- id người giới thiệu (người mời apply)
     - status (smallint) -- trạng thái ứng dụng (trong enum ReviewApplicationStatus)
-
+    - nickname (varchar, nullable) -- tên hiển thị
     - province_code (varchar, nullable, foreign key to provinces.code) -- mã tỉnh thành
     - address (varchar, nullable) -- địa chỉ chi tiết
     - latitude (decimal(10,8), nullable) -- vĩ độ

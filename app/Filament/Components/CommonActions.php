@@ -14,4 +14,5 @@ class CommonActions
             ->url($resource::getUrl('index'))
             ->icon('heroicon-m-chevron-left');
     }
+
 }

@@ -20,10 +20,8 @@ class UserProfileObserver
      */
     public function updated(UserProfile $userProfile): void
     {
-        if ($userProfile->isDirty('avatar_url')) {
-            $original = $userProfile->getRawOriginal('avatar_url');
-            Helper::deleteFile($original, 'public');
-        }
+//        $original = $userProfile->getRawOriginal('avatar_url');
+//        Helper::deleteFile($original, 'public');
     }
 
     /**
@@ -31,9 +29,7 @@ class UserProfileObserver
      */
     public function deleted(UserProfile $userProfile): void
     {
-        if ($userProfile->isForceDeleting()) {
-            Helper::deleteFile($userProfile->avatar_url, 'public');
-        }
+        Helper::deleteFile($userProfile->avatar_url, 'public');
     }
 
     /**
@@ -44,11 +40,4 @@ class UserProfileObserver
         //
     }
 
-    /**
-     * Handle the UserProfileObserver "force deleted" event.
-     */
-    public function forceDeleted(UserProfile $userProfile): void
-    {
-        Helper::deleteFile($userProfile->avatar_url, 'public');
-    }
 }
