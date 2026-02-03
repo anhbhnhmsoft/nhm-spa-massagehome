@@ -10,6 +10,7 @@ use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
 use App\Enums\ConfigName;
 use App\Enums\ZaloEndPointExtends;
+use App\Models\ZaloToken;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Zalo\Exceptions\ZaloSDKException;
@@ -39,9 +40,8 @@ class ZaloService
 
     public function __construct(
         protected ConfigService $configService,
-    )
-    {
-    }
+        protected ZaloToken $zaloToken,
+    ) {}
 
     /**
      * Lấy access token từ cache (nếu có) hoặc refresh token (nếu có)
@@ -60,7 +60,7 @@ class ZaloService
             }
             $refreshToken = Caching::getCache(CacheKey::CACHE_KEY_ZALO_REFRESH_TOKEN);
             if (!$refreshToken) {
-                throw new ServiceException('Zalo refresh token not found');
+                $refreshToken = $this->zaloToken->query()->latest()->first()->refresh_token;
             }
             $result = $this->requestToken([
                 'grant_type' => 'refresh_token',
@@ -364,6 +364,13 @@ class ZaloService
             value: $refreshToken,
             expire: now()->addDays(12)
         );
+
+        $this->zaloToken->query()->create([
+            'access_token' => $accessToken,
+            'refresh_token' => $refreshToken,
+            'expires_in' => $expiresIn,
+            'expires_at' => now()->addSeconds($expiresIn - self::ACCESS_TOKEN_EXPIRE_BUFFER),
+        ]);
     }
 
 }
