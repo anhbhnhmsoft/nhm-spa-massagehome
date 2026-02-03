@@ -22,21 +22,21 @@ class CouponObserver
      */
     public function updated(Coupon $coupon): void
     {
-        if ($coupon->isDirty('banners')) {
-            $original = $coupon->getRawOriginal('banners');
-            $current = $coupon->getAttributes()['banners'] ?? null;
-
-            $originalFiles = is_array($original) ? $original : (is_string($original) && Str::isJson($original) ? json_decode($original, true) : [$original]);
-            $currentFiles = is_array($current) ? $current : (is_string($current) && Str::isJson($current) ? json_decode($current, true) : [$current]);
-
-            $flatCurrent = Arr::flatten($currentFiles ?? []);
-
-            foreach ($originalFiles as $key => $file) {
-                if (!in_array($file, $flatCurrent) && !empty($file)) {
-                    Helper::deleteFile($file);
-                }
-            }
-        }
+//        if ($coupon->isDirty('banners')) {
+//            $original = $coupon->getRawOriginal('banners');
+//            $current = $coupon->getAttributes()['banners'] ?? null;
+//
+//            $originalFiles = is_array($original) ? $original : (is_string($original) && Str::isJson($original) ? json_decode($original, true) : [$original]);
+//            $currentFiles = is_array($current) ? $current : (is_string($current) && Str::isJson($current) ? json_decode($current, true) : [$current]);
+//
+//            $flatCurrent = Arr::flatten($currentFiles ?? []);
+//
+//            foreach ($originalFiles as $key => $file) {
+//                if (!in_array($file, $flatCurrent) && !empty($file)) {
+//                    Helper::deleteFile($file);
+//                }
+//            }
+//        }
     }
 
     /**
@@ -44,10 +44,8 @@ class CouponObserver
      */
     public function deleted(Coupon $coupon): void
     {
-        if ($coupon->isForceDeleting()) {
-            $banners = $coupon->getAttributes()['banners'] ?? null;
-            Helper::deleteFile($banners);
-        }
+        $banners = $coupon->getAttributes()['banners'] ?? null;
+        Helper::deleteFile($banners);
     }
 
     /**
@@ -56,14 +54,5 @@ class CouponObserver
     public function restored(Coupon $coupon): void
     {
         //
-    }
-
-    /**
-     * Handle the Coupon "force deleted" event.
-     */
-    public function forceDeleted(Coupon $coupon): void
-    {
-        $banners = $coupon->getAttributes()['banners'] ?? null;
-        Helper::deleteFile($banners);
     }
 }

@@ -304,4 +304,10 @@ return [
         'integer' => 'Loại hợp đồng phải không hợp lệ.',
         'in' => 'Loại hợp đồng không hợp lệ.',
     ],
+    'nickname' => [
+        'required_if' => 'Vui lòng nhập tên hiển thị.',
+        'nullable' => 'Tên hiển thị phải là chuỗi.',
+        'string' => 'Tên hiển thị phải là chuỗi.',
+        'max' => 'Tên hiển thị quá dài (tối đa 255 ký tự).',
+    ],
 ];

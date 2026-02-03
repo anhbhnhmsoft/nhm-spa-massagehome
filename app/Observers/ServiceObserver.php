@@ -31,9 +31,7 @@ class ServiceObserver
      */
     public function deleted(Service $service): void
     {
-        if ($service->isForceDeleting()) {
-            Helper::deleteFile($service->image_url);
-        }
+        Helper::deleteFile($service->image_url);
     }
 
     /**
@@ -44,11 +42,4 @@ class ServiceObserver
         //
     }
 
-    /**
-     * Handle the Service "force deleted" event.
-     */
-    public function forceDeleted(Service $service): void
-    {
-        Helper::deleteFile($service->image_url);
-    }
 }

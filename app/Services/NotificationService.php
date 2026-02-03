@@ -12,7 +12,10 @@ use App\Enums\NotificationAdminType;
 use App\Enums\NotificationStatus;
 use App\Enums\NotificationType;
 use App\Enums\UserRole;
+use App\Filament\Clusters\ReviewApplication\Resources\Agencies\AgencyResource;
+use App\Filament\Clusters\ReviewApplication\Resources\KTVs\KTVResource;
 use App\Filament\Clusters\Service\Resources\Bookings\BookingResource;
+use App\Filament\Clusters\Transaction\Resources\WalletTransactions\WalletTransactionResource;
 use App\Repositories\NotificationRepository;
 use App\Repositories\UserRepository;
 use Filament\Actions\Action;
@@ -196,8 +199,8 @@ class NotificationService extends BaseService
             $userLang = Language::tryFrom($user->language) ?? Language::VIETNAMESE;
 
             // Lấy title và description theo ngôn ngữ của user
-            $title = $type->getTitleByLang($userLang);
-            $description = $type->getDescByLang($userLang);
+            $title = $type->getTitle($userLang, $data);
+            $description = $type->getBody($userLang, $data);
 
             // Tạo notification trong database
             $notification = $this->notificationRepository->query()->create([
@@ -260,7 +263,7 @@ class NotificationService extends BaseService
      * @param array $data
      * @return ServiceReturn
      */
-    public function sendAdminNotification(NotificationAdminType $type, array $data = [])
+    public function sendAdminNotification(NotificationAdminType $type, array $data = []): ServiceReturn
     {
         try {
             $admins = $this->userRepository->queryUser()
@@ -287,7 +290,6 @@ class NotificationService extends BaseService
                                 Action::make(__('notification.marked_as_read'))
                                     ->button()
                                     ->markAsRead(),
-
                             ])
                             ->sendToDatabase($admin);
                         break;
@@ -311,6 +313,69 @@ class NotificationService extends BaseService
                                     ->button()
                                     ->markAsRead(),
 
+                            ])
+                            ->sendToDatabase($admin);
+                        break;
+                    // Thông báo đăng ký làm đối tác KTV
+                    case NotificationAdminType::USER_APPLY_KTV_PARTNER:
+                        Notification::make()
+                            ->title(__('notification.user_apply_ktv_partner.title'))
+                            ->info()
+                            ->body(__('notification.user_apply_ktv_partner.body', [
+                                'user_id' => $data['user_id'],
+                            ]))
+                            ->actions([
+                                Action::make(__('notification.detail'))
+                                    ->button()
+                                    ->color('primary')
+                                    ->url(KTVResource::getUrl('edit', ['record' => $data['user_id']]))
+                                    ->markAsRead(),
+                                Action::make(__('notification.marked_as_read'))
+                                    ->button()
+                                    ->color('secondary')
+                                    ->markAsRead(),
+
+                            ])
+                            ->sendToDatabase($admin);
+                        break;
+                    // Thông báo đăng ký làm đối tác đại lý
+                    case NotificationAdminType::USER_APPLY_AGENCY_PARTNER:
+                        Notification::make()
+                            ->title(__('notification.user_apply_agency_partner.title'))
+                            ->info()
+                            ->body(__('notification.user_apply_agency_partner.body', [
+                                'user_id' => $data['user_id'],
+                            ]))
+                            ->actions([
+                                Action::make(__('notification.detail'))
+                                    ->button()
+                                    ->color('primary')
+                                    ->url(AgencyResource::getUrl('edit', ['record' => $data['user_id']]))
+                                    ->markAsRead(),
+                                Action::make(__('notification.marked_as_read'))
+                                    ->button()
+                                    ->markAsRead(),
+
+                            ])
+                            ->sendToDatabase($admin);
+                        break;
+                    // Thông báo xác nhận thanh toán wechat
+                    case NotificationAdminType::CONFIRM_WECHAT_PAYMENT:
+                        Notification::make()
+                            ->title(__('notification.confirm_wechat_payment.title'))
+                            ->info()
+                            ->body(__('notification.confirm_wechat_payment.body', [
+                                'transaction_id' => $data['transaction_id'],
+                            ]))
+                            ->actions([
+                                Action::make(__('notification.detail'))
+                                    ->button()
+                                    ->color('primary')
+                                    ->url(WalletTransactionResource::getUrl('index', ['search' => $data['transaction_id']]))
+                                    ->markAsRead(),
+                                Action::make(__('notification.marked_as_read'))
+                                    ->button()
+                                    ->markAsRead(),
                             ])
                             ->sendToDatabase($admin);
                         break;

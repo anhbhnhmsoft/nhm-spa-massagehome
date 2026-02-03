@@ -6,6 +6,7 @@ use App\Enums\ConfigName;
 use App\Enums\NotificationType;
 use App\Enums\WalletTransactionStatus;
 use App\Enums\WalletTransactionType;
+use App\Filament\Components\CommonColumns;
 use App\Jobs\SendNotificationJob;
 use App\Services\ConfigService;
 use App\Services\PaymentService;
@@ -26,10 +27,11 @@ class WalletTransactionsTable
     {
         return $table
             ->columns([
+                CommonColumns::IdColumn(),
+
                 TextColumn::make('wallet.user.name')
                     ->label(__('admin.transaction.fields.user'))
-                    ->description(fn($record) => $record->wallet->user->phone)
-                    ->searchable(),
+                    ->description(fn($record) => $record->wallet->user->phone),
                 TextColumn::make('type')
                     ->label(__('admin.transaction.fields.type'))
                     ->formatStateUsing(fn($state) => WalletTransactionType::tryFrom($state)?->label())
@@ -73,7 +75,9 @@ class WalletTransactionsTable
                         ->label(__('admin.transaction.actions.approve'))
                         ->icon('heroicon-o-check')
                         ->color('success')
-                        ->visible(fn($record) => $record->status === WalletTransactionStatus::PENDING->value)
+                        ->visible(function ($record) {
+                           return $record->status === WalletTransactionStatus::PENDING->value;
+                        })
                         ->action(function ($record, PaymentService $paymentService) {
                             $paymentService->handleAdminConfirmTransaction($record);
                         })

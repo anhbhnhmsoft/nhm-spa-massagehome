@@ -20,10 +20,8 @@ class UserFileObserver
      */
     public function updated(UserFile $userFile): void
     {
-        if ($userFile->isDirty('file_path')) {
-            $original = $userFile->getRawOriginal('file_path');
-            Helper::deleteFile($original, $userFile->is_public ? 'public' : 'private');
-        }
+        $original = $userFile->getRawOriginal('file_path');
+        Helper::deleteFile($original, $userFile->is_public ? 'public' : 'private');
     }
 
     /**
@@ -32,9 +30,7 @@ class UserFileObserver
     public function deleted(UserFile $userFile): void
     {
         //
-        if ($userFile->isForceDeleting()) {
-            Helper::deleteFile($userFile->file_path, $userFile->is_public ? 'public' : 'private');
-        }
+        Helper::deleteFile($userFile->file_path, $userFile->is_public ? 'public' : 'private');
     }
 
     /**
@@ -43,13 +39,5 @@ class UserFileObserver
     public function restored(UserFile $userFile): void
     {
         //
-    }
-
-    /**
-     * Handle the UserFile "force deleted" event.
-     */
-    public function forceDeleted(UserFile $userFile): void
-    {
-        Helper::deleteFile($userFile->file_path, $userFile->is_public ? 'public' : 'private');
     }
 }

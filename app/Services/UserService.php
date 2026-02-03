@@ -16,6 +16,7 @@ use App\Enums\ContractFileType;
 use App\Enums\DirectFile;
 use App\Enums\Jobs\WalletTransCase;
 use App\Enums\KTVConfigSchedules;
+use App\Enums\NotificationAdminType;
 use App\Enums\NotificationType;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserFileType;
@@ -61,7 +62,8 @@ class UserService extends BaseService
         protected ReviewRepository                $reviewRepository,
         protected UserKtvScheduleRepository       $userKtvScheduleRepository,
         protected StaticContractRepository        $staticContractRepository,
-        protected WalletService                   $walletService
+        protected WalletService                   $walletService,
+        protected NotificationService             $notificationService,
     ) {
         parent::__construct();
     }
@@ -386,7 +388,7 @@ class UserService extends BaseService
                 );
             }
             // Tạo lịch làm việc mặc định cho KTV
-             if ($apply->role === UserRole::KTV) {
+             if ($apply->role === UserRole::KTV->value) {
                 $user->schedule()->create([
                     'is_working' => true,
                     'working_schedule' => KTVConfigSchedules::getDefaultSchema(),
@@ -557,6 +559,7 @@ class UserService extends BaseService
                 'referrer_id' => $data['referrer_id'] ?? null,
                 'status' => ReviewApplicationStatus::PENDING->value,
                 'province_code' => $data['province_code'],
+                'nickname' => $data['nickname'] ?? null,
                 'address' => $data['address'],
                 'experience' => $data['experience'] ?? 0,
                 'latitude' => $data['latitude'],
@@ -567,7 +570,7 @@ class UserService extends BaseService
             $reviewData['bio'] = Helper::multilingualPayload($data, 'bio');
 
             // Kiểm tra nếu user dki làm và role = KTV thì set is_leader = true
-            if (isset($data['is_leader']) && $data['role'] === UserRole::KTV->value) {
+            if (isset($data['is_leader']) && $data['role'] == UserRole::KTV->value) {
                 $reviewData['is_leader'] = true;
             }
 
@@ -602,7 +605,31 @@ class UserService extends BaseService
                     'role' => $data['role'],
                 ]);
             }
+
+            // Gửi thông báo cho quản trị viên
+            if ($data['role'] == UserRole::KTV->value) {
+                $this->notificationService->sendAdminNotification(
+                    type: NotificationAdminType::USER_APPLY_KTV_PARTNER,
+                    data: [
+                        'user_id' => $user->id,
+                        'user_name' => $user->name,
+                        'phone' => $user->phone,
+                    ]
+                );
+            }
+            // Thông báo đăng ký làm đối tác đại lý
+            else if ($data['role'] == UserRole::AGENCY->value) {
+                $this->notificationService->sendAdminNotification(
+                    type: NotificationAdminType::USER_APPLY_AGENCY_PARTNER,
+                    data: [
+                        'user_id' => $user->id,
+                        'user_name' => $user->name,
+                        'phone' => $user->phone,
+                    ]
+                );
+            }
             DB::commit();
+
 
             return ServiceReturn::success(
                 data: $user->load('reviewApplication', 'files'),
@@ -625,6 +652,42 @@ class UserService extends BaseService
             }
             LogHelper::error(
                 message: "Lỗi UserService@applyPartnerForCurrentUser",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: __("common_error.server_error")
+            );
+        }
+    }
+
+    /**
+     * Kiểm tra người dùng hiện tại đã nộp đơn ứng tuyển chưa ?
+     * @return ServiceReturn
+     */
+    public function checkApplyPartnerForCurrentUser(): ServiceReturn
+    {
+        $user = Auth::user();
+        try {
+            $checkApply = $this->userReviewApplicationRepository->query()
+                ->where('user_id', $user->id)
+                ->first();
+            if (!$checkApply) {
+                return ServiceReturn::success(
+                    data: [
+                        'can_apply' => true,
+                    ]
+                );
+            }
+            return ServiceReturn::success(
+                data: [
+                    'can_apply' => false,
+                    'apply_role' => $checkApply->role,
+                    'apply_status' => $checkApply->status,
+                ]
+            );
+        } catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi UserService@checkApplyPartnerForCurrentUser",
                 ex: $exception
             );
             return ServiceReturn::error(

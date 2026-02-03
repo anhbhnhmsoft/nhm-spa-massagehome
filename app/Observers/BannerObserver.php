@@ -64,12 +64,5 @@ class BannerObserver
         //
     }
 
-    /**
-     * Handle the Banner "force deleted" event.
-     */
-    public function forceDeleted(Banner $banner): void
-    {
-        $image = $banner->getAttributes()['image_url'] ?? null;
-        Helper::deleteFile($image);
-    }
+
 }

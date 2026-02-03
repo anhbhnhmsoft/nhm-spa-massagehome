@@ -31,9 +31,7 @@ class PageObserver
      */
     public function deleted(Page $page): void
     {
-        if ($page->isForceDeleting()) {
-            Helper::deleteFile($page->og_image);
-        }
+        Helper::deleteFile($page->og_image);
     }
 
     /**
@@ -42,13 +40,5 @@ class PageObserver
     public function restored(Page $page): void
     {
         //
-    }
-
-    /**
-     * Handle the Page "force deleted" event.
-     */
-    public function forceDeleted(Page $page): void
-    {
-        Helper::deleteFile($page->og_image);
     }
 }

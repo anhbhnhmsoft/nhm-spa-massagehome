@@ -39,6 +39,8 @@ final class Helper
             PaymentType::MOMO_PAY => "MMPY" . self::getTimestampAsId(),
             PaymentType::BY_POINTS => "BYP" . self::getTimestampAsId(),
             PaymentType::WITHDRAWAL => "WDL" . self::getTimestampAsId(),
+            PaymentType::REFUND => "RFD" . self::getTimestampAsId(),
+            PaymentType::WECHAT => "WCT" . self::getTimestampAsId(),
             default => "UNKNOWN" . self::getTimestampAsId(),
         };
     }
