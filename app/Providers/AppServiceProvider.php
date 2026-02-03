@@ -46,6 +46,7 @@ use App\Repositories\WalletRepository;
 use App\Repositories\WalletTransactionRepository;
 use App\Repositories\ChatRoomRepository;
 use App\Repositories\MessageRepository;
+use App\Repositories\ZaloTokenRepository;
 use App\Services\AgencyService;
 use App\Services\AuthService;
 use App\Services\BookingService;
@@ -131,6 +132,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(StaticContractRepository::class);
         $this->app->singleton(UserKtvScheduleRepository::class);
         $this->app->singleton(CategoryPriceRepository::class);
+        $this->app->singleton(ZaloTokenRepository::class);
     }
 
     /**

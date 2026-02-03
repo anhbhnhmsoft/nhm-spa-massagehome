@@ -10,6 +10,18 @@
   - personal_access_tokens
   - notifications
 
+# zalo_tokens
+    # note
+    - Bảng zalo_tokens lưu trữ thông tin token của Zalo.
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - access_token (varchar) -- token truy cập
+    - refresh_token (varchar) -- token làm mới
+    - expires_in (integer) -- thời gian hết hạn (giây)
+    - expires_at (timestamp) -- thời gian hết hạn thực tế
+    - timestamps
+
 
 # provinces
     # note

@@ -10,7 +10,7 @@ use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
 use App\Enums\ConfigName;
 use App\Enums\ZaloEndPointExtends;
-use App\Models\ZaloToken;
+use App\Repositories\ZaloTokenRepository;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Zalo\Exceptions\ZaloSDKException;
@@ -40,7 +40,7 @@ class ZaloService
 
     public function __construct(
         protected ConfigService $configService,
-        protected ZaloToken $zaloToken,
+        protected ZaloTokenRepository $zaloTokenRepository,
     ) {}
 
     /**
@@ -60,7 +60,7 @@ class ZaloService
             }
             $refreshToken = Caching::getCache(CacheKey::CACHE_KEY_ZALO_REFRESH_TOKEN);
             if (!$refreshToken) {
-                $refreshToken = $this->zaloToken->query()->latest()->first()->refresh_token;
+                $refreshToken = $this->zaloTokenRepository->query()->latest()->first()->refresh_token;
             }
             $result = $this->requestToken([
                 'grant_type' => 'refresh_token',
@@ -365,7 +365,7 @@ class ZaloService
             expire: now()->addDays(12)
         );
 
-        $this->zaloToken->query()->create([
+        $this->zaloTokenRepository->query()->create([
             'access_token' => $accessToken,
             'refresh_token' => $refreshToken,
             'expires_in' => $expiresIn,
