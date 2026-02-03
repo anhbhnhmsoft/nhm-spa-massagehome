@@ -11,6 +11,7 @@ use App\Enums\Language;
 use App\Enums\NotificationAdminType;
 use App\Enums\NotificationStatus;
 use App\Enums\NotificationType;
+use App\Enums\RecieverNotification;
 use App\Enums\UserRole;
 use App\Filament\Clusters\ReviewApplication\Resources\Agencies\AgencyResource;
 use App\Filament\Clusters\ReviewApplication\Resources\KTVs\KTVResource;
@@ -392,5 +393,58 @@ class NotificationService extends BaseService
             );
         }
     }
-}
 
+    /**
+     * Gửi notification global cho user
+     * @param array $data
+     * @param RecieverNotification $receiver
+     * @return ServiceReturn
+     */
+    public function sendGlobalNotification(array $data, RecieverNotification $receiver): ServiceReturn
+    {
+        try {
+            $query = $this->userRepository->queryUser();
+            switch ($receiver) {
+                case RecieverNotification::CLIENT:
+                    $query->where('role', UserRole::CUSTOMER->value);
+                    break;
+                case RecieverNotification::KTV:
+                    $query->where('role', UserRole::KTV->value);
+                    break;
+                case RecieverNotification::AGENCY:
+                    $query->where('role', UserRole::AGENCY->value);
+                    break;
+                case RecieverNotification::ALL:
+                default:
+                    break;
+            }
+
+            $query->chunk(100, function ($users) use ($data) {
+                foreach ($users as $user) {
+                    try {
+                        $this->sendMobileNotification(
+                            userId: $user->id,
+                            type: NotificationType::NOTIFICATION_MARKETING,
+                            data: $data
+                        );
+                    } catch (\Throwable $e) {
+                        LogHelper::error(
+                            message: "Lỗi gửi notification cho user {$user->id}",
+                            ex: $e
+                        );
+                    }
+                }
+            });
+
+            return ServiceReturn::success();
+        } catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi NotificationService@sendGlobalNotification",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: __("common_error.server_error")
+            );
+        }
+    }
+}

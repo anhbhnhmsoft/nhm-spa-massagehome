@@ -29,12 +29,22 @@ enum NotificationType: int
     case DEPOSIT_SUCCESS = 20; // Thông báo nạp tiền thành công
     case DEPOSIT_FAILED = 21; // Thông báo nạp tiền thất bại
 
+        // Notification Marketing
+
+    case NOTIFICATION_MARKETING = 22; // Thông báo marketing
+
     public function getTitle(Language $lang, array $data = []): string
     {
+        if ($this === self::NOTIFICATION_MARKETING) {
+            return $data["title_{$lang->value}"] ?? $data['title_vi'] ?? '';
+        }
         return __("notification.type.{$this->value}.title", $data, $lang->value);
     }
     public function getBody(Language $lang, array $data = []): string
     {
+        if ($this === self::NOTIFICATION_MARKETING) {
+            return $data["description_{$lang->value}"] ?? $data['description_vi'] ?? '';
+        }
         return __("notification.type.{$this->value}.body", $data, $lang->value);
     }
 }

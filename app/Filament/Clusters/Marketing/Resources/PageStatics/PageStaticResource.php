@@ -2,7 +2,6 @@
 
 namespace App\Filament\Clusters\Marketing\Resources\PageStatics;
 
-use App\Filament\Clusters\Marketing\MarketingCluster;
 use App\Filament\Clusters\Marketing\Resources\PageStatics\Pages\CreatePageStatic;
 use App\Filament\Clusters\Marketing\Resources\PageStatics\Pages\EditPageStatic;
 use App\Filament\Clusters\Marketing\Resources\PageStatics\Pages\ListPageStatics;
@@ -14,8 +13,6 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class PageStaticResource extends Resource
 {

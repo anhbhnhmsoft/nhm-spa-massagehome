@@ -689,5 +689,48 @@ return
                 'ktv' => '技术员',
                 'load_older_messages' => '加载更多消息',
             ],
+
         ],
+        'mobile_notification' => [
+            'label' => '移动通知',
+            'navigation_label' => '移动通知',
+            'label_plural' => '移动通知',
+            'fields' => [
+                'user' => '用户',
+                'title' => '标题',
+                'description' => '描述',
+                'type' => '类型',
+                'created_at' => '发送时间',
+                'status' => '状态',
+                'title_vi' => '越南语标题',
+                'title_en' => '英语标题',
+                'title_cn' => '中文标题',
+                'description_vi' => '越南语描述',
+                'description_en' => '英语描述',
+                'description_cn' => '中文描述',
+            ],
+            'status' => [
+                'pending' => '待处理',
+                'sent' => '已发送',
+                'failed' => '发送失败',
+                'read' => '已读',
+            ],
+            'action' => [
+                'create' => '创建通知',
+                'modal_description' => '填写信息以创建通知。',
+                'success_notification_title' => '通知正在陆续发送给用户。'
+            ],
+            'receiver' => [
+                'label' => '接收者',
+                'all' => '全部',
+                'client' => '客户',
+                'ktv' => 'KTV',
+                'agency' => '合作伙伴',
+            ],
+            'validation_messages' => [
+                'required' => '请输入信息',
+                'max_length' => '最大长度为 :max 个字符',
+            ],
+        ],
+
     ];

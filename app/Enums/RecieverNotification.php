@@ -2,23 +2,19 @@
 
 namespace App\Enums;
 
-/**
- * Enum cho trạng thái thông báo.
- */
-enum NotificationStatus: int
-{
-    case PENDING = 0;      // Chờ gửi
-    case SENT = 1;        // Đã gửi
-    case FAILED = 2;      // Gửi thất bại
-    case READ = 3;        // Đã đọc
+enum RecieverNotification : int {
+    case ALL = 1;
+    case CLIENT = 2;
+    case KTV = 3;
+    case AGENCY = 4;
 
     public function label(): string
     {
         return match ($this) {
-            self::PENDING => __('admin.mobile_notification.status.pending'),
-            self::SENT => __('admin.mobile_notification.status.sent'),
-            self::FAILED => __('admin.mobile_notification.status.failed'),
-            self::READ => __('admin.mobile_notification.status.read'),
+            self::ALL => __('admin.mobile_notification.receiver.all'),
+            self::CLIENT => __('admin.mobile_notification.receiver.client'),
+            self::KTV => __('admin.mobile_notification.receiver.ktv'),
+            self::AGENCY => __('admin.mobile_notification.receiver.agency'),
         };
     }
 
@@ -41,5 +37,3 @@ enum NotificationStatus: int
         return self::tryFrom($value)?->label() ?? '';
     }
 }
-
-
