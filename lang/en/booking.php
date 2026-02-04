@@ -76,4 +76,5 @@ return [
     'status_not_completed' => 'Booking is not in completed status',
     'not_permission_at_this_time' => 'You do not have permission to complete this booking at this time',
     'booking_time_not_yet' => 'Booking start time has not arrived yet',
+    'waiting_cancel' => 'Waiting cancel',
 ];

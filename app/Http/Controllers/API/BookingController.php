@@ -164,8 +164,8 @@ class BookingController extends BaseController
         return $this->sendSuccess(
             data: [
                 'booking_id' => (int)$data['booking_id'],
-                'status' => BookingStatus::CANCELED->value,
-                'status_label' => BookingStatus::CANCELED->label(),
+                'status' => BookingStatus::WAITING_CANCEL->value,
+                'status_label' => BookingStatus::WAITING_CANCEL->label(),
                 'canceled_at' => now()->format('Y-m-d H:i:s'),
                 'reason' => $data['reason'] ?? null,
             ],

@@ -368,6 +368,7 @@
     - payment_type (smallint, nullable) -- hình thức thanh toán (trong enum PaymentType), null là khi dịch vụ chưa được xác nhận
     - reason_cancel (varchar, nullable) -- lý do hủy đặt lịch
     - overtime_warning_sent (boolean, default false) -- đã gửi thông báo về thời gian vượt quá không
+    - cancel_by (smallint, nullable) -- ai hủy đặt lịch (trong enum UserRole)
     
     - timestamps
 

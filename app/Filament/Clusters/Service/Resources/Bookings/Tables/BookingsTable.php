@@ -2,8 +2,11 @@
 
 namespace App\Filament\Clusters\Service\Resources\Bookings\Tables;
 
+use App\Core\Service\ServiceReturn;
 use App\Enums\BookingStatus;
 use App\Enums\PaymentType;
+use App\Enums\UserRole;
+use App\Services\BookingService;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\ViewAction;
@@ -59,7 +62,7 @@ class BookingsTable
                 TextColumn::make('status')
                     ->label(__('admin.booking.fields.status'))
                     ->badge()
-                    ->color(fn ($state): string => BookingStatus::getColor($state))
+                    ->color(fn($state): string => BookingStatus::getColor($state))
                     ->formatStateUsing(fn($state) => BookingStatus::getLabel($state)),
             ])
             ->defaultSort('created_at', 'desc')
@@ -82,11 +85,11 @@ class BookingsTable
                         return $query
                             ->when(
                                 $data['from'],
-                                fn ($query, $date) => $query->whereDate('booking_time', '>=', $date),
+                                fn($query, $date) => $query->whereDate('booking_time', '>=', $date),
                             )
                             ->when(
                                 $data['until'],
-                                fn ($query, $date) => $query->whereDate('booking_time', '<=', $date),
+                                fn($query, $date) => $query->whereDate('booking_time', '<=', $date),
                             );
                     })
                     ->indicateUsing(function (array $data): array {
@@ -98,6 +101,47 @@ class BookingsTable
                             $indicators[] = __('admin.common.filter.to') . ' ' . Carbon::parse($data['until'])->format('d/m/Y');
                         }
                         return $indicators;
+                    }),
+            ])
+            ->recordActions([
+                Action::make('approveCancel')
+                    ->label(__('admin.booking.actions.confirm_cancel'))
+                    ->icon('heroicon-o-check-circle')
+                    ->color('warning')
+                    ->schema(fn($record) => [
+                        Section::make()
+                            ->columns(2)
+                            ->description(__('admin.booking.actions.confirm_cancel_helper_text'))
+                            ->schema([
+                                TextInput::make('amount_pay_back_to_client')
+                                    ->label(__('admin.booking.fields.amount_pay_back_to_client'))
+                                    ->numeric(),
+                                TextInput::make('reason_cancel')
+                                    ->label(__('admin.booking.fields.reason_cancel'))
+                                    ->disabled()
+                                    ->dehydrated()
+                                    ->default($record->reason_cancel),
+                                TextInput::make('amount_pay_to_ktv')
+                                    ->label(__('admin.booking.fields.amount_pay_to_ktv'))
+                                    ->numeric(),
+                                TextInput::make('cancel_by')
+                                    ->label(__('admin.booking.fields.cancel_by'))
+                                    ->dehydrated()
+                                    ->formatStateUsing(fn() => UserRole::getLabel($record->cancel_by)),
+                            ])
+
+                    ])
+                    ->action(function ($record, $data) {
+                        $bookingService = app(BookingService::class);
+                        /**
+                         * @var ServiceReturn $result
+                         */
+                        $result = $bookingService->approveCancel($record, $data);
+                        if ($result->isSuccess()) {
+                        }
+                    })
+                    ->visible(function ($record) {
+                        return $record->status == BookingStatus::WAITING_CANCEL->value;
                     }),
             ])
             ->filtersLayout(FiltersLayout::AboveContent)

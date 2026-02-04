@@ -76,4 +76,5 @@ return [
     'status_not_completed' => '预订非完成状态',
     'not_permission_at_this_time' => '您目前没有权限完成此预订',
     'booking_time_not_yet' => '预订开始时间尚未到达',
+    'waiting_cancel' => '等待取消',
 ];
