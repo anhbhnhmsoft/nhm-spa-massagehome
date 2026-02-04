@@ -191,6 +191,7 @@
     - id (bigint, primary key, auto-increment)
     - user_id (bigint, foreign key to users.id) -- id người dùng
     - balance (decimal(15,2), default 0.00) -- số dư ví tiền -> là point riêng của hệ thống
+    - frozen_balance (decimal(15,2), default 0.00) -- số dư đóng băng -> là point bị tạm khóa khi người dùng rút tiền (hoặc khi có giao dịch khác bổ sung sau này)
     - is_active (boolean, default true) -- trạng thái hoạt động của ví tiền
     
     - timestamps

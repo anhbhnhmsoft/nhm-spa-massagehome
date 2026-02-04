@@ -12,8 +12,9 @@ class WalletTransactionBookingJob implements ShouldQueue
 {
     use Queueable;
 
-    public $tries = 1;
+    public $tries = 3;
 
+    // Thời gian chờ giữa các lần thử lại (giây)
     public function backoff(): array
     {
         return [30, 60, 90];
@@ -50,14 +51,7 @@ class WalletTransactionBookingJob implements ShouldQueue
                 }
                 break;
             case WalletTransCase::FINISH_BOOKING:
-                try {
-                    $result = $service->handleFinishBooking($this->bookingId);
-                    if ($result->isError()){
-
-                    }
-                }catch (\Throwable $exception){
-
-                }
+                $service->handleFinishBooking($this->bookingId);
                 break;
         }
     }

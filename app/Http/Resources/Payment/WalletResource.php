@@ -23,6 +23,7 @@ class WalletResource extends JsonResource
             'id' => $this->id,
             'user_id' => $this->user_id,
             'balance' => $this->balance,
+            'frozen_balance' => $this->frozen_balance,
             'is_active' => $this->is_active,
             'total_deposit' => (string)($this->total_deposit ?? 0),
             'total_withdrawal' => (string)($this->total_withdrawal ?? 0),

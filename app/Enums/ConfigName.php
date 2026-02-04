@@ -23,8 +23,7 @@ enum ConfigName: string
     case KTV_REFERRAL_REWARD_AMOUNT = 'KTV_REFERRAL_REWARD_AMOUNT'; // Số tiền được nhận khi mời KTV thành công (nếu = 0 thì tắt tính năng)
     case PRICE_TRANSPORTATION = 'PRICE_TRANSPORTATION'; // Chi phí di chuyển của KTV do khách hàng trả trên mỗi km
     case EXCHANGE_RATE_VND_CNY = 'EXCHANGE_RATE_VND_CNY'; // Tỷ giá đổi tiền VNĐ -> CNY
-
-
+    case FEE_WITHDRAW_PERCENTAGE = 'FEE_WITHDRAW_PERCENTAGE'; // Phí rút tiền %
 
     /**
      * ---  Các config liên quan đến Zalo

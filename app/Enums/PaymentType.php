@@ -8,7 +8,7 @@ enum PaymentType: int
     case ZALO_PAY = 2; // Thanh toán qua Zalo Pay
     case MOMO_PAY = 3; // Thanh toán qua Momo Pay
     case BY_POINTS = 4; // Thanh toán qua điểm wallet_transactions
-    case WITHDRAWAL = 5; // Rút tiềnwallets
+    case WITHDRAWAL = 5; // Rút tiền wallets
     case REFUND = 6; // Hoàn tiền
     case WECHAT = 7; // Thanh toán qua Wechat Pay
     public function label(): string

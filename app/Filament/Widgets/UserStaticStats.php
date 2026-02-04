@@ -81,53 +81,19 @@ class UserStaticStats extends BaseWidget
                                         ->color('warning'),
                                 ])
                         ]),
-                    Section::make()
-                        ->columnSpanFull()
+                    Grid::make()
+                        ->columns(3)
                         ->schema([
-                            Grid::make()
-                                ->columns(2)
-                                ->schema([
-                                    TextEntry::make('label')
-                                        ->weight(FontWeight::Medium)
-                                        ->hiddenLabel()
-                                        ->icon(Heroicon::UserGroup)
-                                        ->state(__('dashboard.user_static_stats.total_customer')),
-                                    TextEntry::make('value')
-                                        ->state($data['total_customer'])
-                                        ->size('lg')
-                                        ->hiddenLabel()
-                                        ->alignEnd(),
-                                ]),
-                            Grid::make()
-                                ->columns(2)
-                                ->schema([
-                                    TextEntry::make('label')
-                                        ->weight(FontWeight::Medium)
-                                        ->hiddenLabel()
-                                        ->icon(Heroicon::Banknotes)
-                                        ->state(__('dashboard.user_static_stats.withdraw_requests')),
-                                    TextEntry::make('value')
-                                        ->state($data['withdraw_requests'])
-                                        ->size('lg')
-                                        ->hiddenLabel()
-                                        ->alignEnd(),
-                                ]),
-                            Grid::make()
-                                ->columns(2)
-                                ->schema([
-                                    TextEntry::make('label')
-                                        ->weight(FontWeight::Medium)
-                                        ->hiddenLabel()
-                                        ->icon(Heroicon::ChatBubbleOvalLeft)
-                                        ->state(__('dashboard.user_static_stats.review')),
-                                    TextEntry::make('value')
-                                        ->state($data['review_count'])
-                                        ->size('lg')
-                                        ->hiddenLabel()
-                                        ->alignEnd(),
-                                ]),
-                        ])
-
+                            Stat::make(__('dashboard.user_static_stats.total_customer'), $data['total_customer'])
+                                ->icon(Heroicon::UserGroup)
+                                ->color('primary'),
+                            Stat::make(__('dashboard.user_static_stats.withdraw_requests'), $data['withdraw_requests'])
+                                ->icon(Heroicon::Banknotes)
+                                ->color('info'),
+                            Stat::make(__('dashboard.user_static_stats.review'), $data['review_count'])
+                                ->icon(Heroicon::ChatBubbleOvalLeft)
+                                ->color('warning'),
+                        ]),
                 ])
         ];
     }

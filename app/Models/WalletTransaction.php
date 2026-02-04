@@ -56,7 +56,4 @@ class WalletTransaction extends Model
         return $this->belongsTo(Wallet::class, 'wallet_id', 'id');
     }
 
-    public function drawInfo() {
-        return $this->belongsTo(UserWithdrawInfo::class, 'foreign_key', 'id');
-    }
 }

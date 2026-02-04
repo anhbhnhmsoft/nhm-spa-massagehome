@@ -461,6 +461,7 @@ return
             'label' => 'Cài đặt hệ thống',
             'label_setting' => 'Hệ thống',
             'label_config_discount_rate' => 'Chiết khấu',
+            'label_fee' => 'Các loại phí - vận hành hệ thống',
             'section' => [
                 'system_config' => 'Cấu hình hệ thống',
                 'affiliate_config' => 'Cấu hình Affiliate',
@@ -512,6 +513,8 @@ return
                 'price_transportation_helper' => 'Phí di chuyển trên mỗi km tính đường chim bay cho ktv, do khách hàng chi trả',
                 'exchange_rate_vnd_cny' => 'Tỷ giá VND/CNY ~ 1 CNY = X VND',
                 'exchange_rate_vnd_cny_helper' => 'Hệ thống sẽ tự động cập nhật tỷ giá này',
+                'fee_withdraw_percentage' => 'Phí rút tiền %',
+                'fee_withdraw_percentage_helper' => 'Phí rút tiền % cho mỗi lần rút tiền',
             ],
             'actions' => [
                 'save' => 'Lưu thay đổi',
@@ -543,6 +546,7 @@ return
                 'REFERRAL_KTV' => 'Nhận hoa hồng từ người giới thiệu KTV',
                 'REFERRAL_INVITE_KTV_REWARD' => 'Nhận hoa hồng khi mời KTV thành công',
                 'DEPOSIT_WECHAT_PAY' => 'Nạp tiền qua Wechat Pay',
+                'FEE_WITHDRAW' => 'Phí rút tiền',
             ],
             'status' => [
                 'PENDING' => 'Chờ xử lý',
@@ -555,6 +559,10 @@ return
                 'approve' => 'Duyệt',
                 'cancel' => 'Hủy bỏ',
                 'transfer' => 'Chuyển tiền ',
+                'fee_transfer' => '(thuộc giao dịch ID: :transaction_id)',
+            ],
+            'errors' => [
+                'withdraw_info_not_found' => 'Thông tin rút tiền không tồn tại',
             ],
         ],
         'customer' => [

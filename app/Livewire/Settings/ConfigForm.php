@@ -102,21 +102,7 @@ class ConfigForm extends Component implements HasSchemas
                                             'numeric' => __('common.error.numeric'),
                                             'min' => __('common.error.min', ['min' => 0]),
                                         ]),
-                                    TextInput::make((string)ConfigName::BREAK_TIME_GAP->value)
-                                        ->label(__('admin.setting.fields.break_time_gap'))
-                                        ->numeric()
-                                        ->required()
-                                        ->suffix(__('common.unit.minute'))
-                                        ->rules([
-                                            'required',
-                                            'numeric',
-                                            'min:0',
-                                        ])
-                                        ->validationMessages([
-                                            'required' => __('common.error.required'),
-                                            'numeric' => __('common.error.numeric'),
-                                            'min' => __('common.error.min', ['min' => 0]),
-                                        ]),
+
                                     TextInput::make((string)ConfigName::SP_ZALO->value)
                                         ->label(__('admin.setting.fields.sp_zalo'))
                                         ->default('')
@@ -231,37 +217,9 @@ class ConfigForm extends Component implements HasSchemas
                                             'max' => __('common.error.max', ['max' => 2048]),
                                     ]),
 
-                                    TextInput::make((string)ConfigName::PRICE_TRANSPORTATION->value)
-                                        ->label(__('admin.setting.fields.price_transportation'))
-                                        ->numeric()
-                                        ->required()
-                                        ->suffix(__('common.unit.vnd'))
-                                        ->rules([
-                                            'required',
-                                            'numeric',
-                                            'min:0',
-                                        ])
-                                        ->validationMessages([
-                                            'required' => __('common.error.required'),
-                                            'numeric' => __('common.error.numeric'),
-                                            'min' => __('common.error.min', ['min' => 0]),
-                                        ]),
 
-                                    TextInput::make((string)ConfigName::EXCHANGE_RATE_VND_CNY->value)
-                                        ->label(__('admin.setting.fields.exchange_rate_vnd_cny'))
-                                        ->helperText(__('admin.setting.fields.exchange_rate_vnd_cny_helper'))
-                                        ->numeric()
-                                        ->required()
-                                        ->rules([
-                                            'required',
-                                            'numeric',
-                                            'min:0',
-                                        ])
-                                        ->validationMessages([
-                                            'required' => __('common.error.required'),
-                                            'numeric' => __('common.error.numeric'),
-                                            'min' => __('common.error.min', ['min' => 0]),
-                                        ]),
+
+
                                 ]),
                             Section::make(__('admin.setting.label_config_discount_rate'))
                                 ->columns(2)
@@ -352,6 +310,70 @@ class ConfigForm extends Component implements HasSchemas
                                         ->numeric()
                                         ->required()
                                         ->suffix(__('admin.currency'))
+                                        ->rules([
+                                            'required',
+                                            'numeric',
+                                            'min:0',
+                                        ])
+                                        ->validationMessages([
+                                            'required' => __('common.error.required'),
+                                            'numeric' => __('common.error.numeric'),
+                                            'min' => __('common.error.min', ['min' => 0]),
+                                        ]),
+                                ]),
+                            Section::make(__('admin.setting.label_fee'))
+                                ->columns(2)
+                                ->schema([
+                                    TextInput::make((string)ConfigName::BREAK_TIME_GAP->value)
+                                        ->label(__('admin.setting.fields.break_time_gap'))
+                                        ->numeric()
+                                        ->required()
+                                        ->suffix(__('common.unit.minute'))
+                                        ->rules([
+                                            'required',
+                                            'numeric',
+                                            'min:0',
+                                        ])
+                                        ->validationMessages([
+                                            'required' => __('common.error.required'),
+                                            'numeric' => __('common.error.numeric'),
+                                            'min' => __('common.error.min', ['min' => 0]),
+                                        ]),
+                                    TextInput::make((string)ConfigName::EXCHANGE_RATE_VND_CNY->value)
+                                        ->label(__('admin.setting.fields.exchange_rate_vnd_cny'))
+                                        ->numeric()
+                                        ->required()
+                                        ->rules([
+                                            'required',
+                                            'numeric',
+                                            'min:0',
+                                        ])
+                                        ->validationMessages([
+                                            'required' => __('common.error.required'),
+                                            'numeric' => __('common.error.numeric'),
+                                            'min' => __('common.error.min', ['min' => 0]),
+                                        ]),
+                                    TextInput::make((string)ConfigName::PRICE_TRANSPORTATION->value)
+                                        ->label(__('admin.setting.fields.price_transportation'))
+                                        ->numeric()
+                                        ->required()
+                                        ->suffix(__('admin.currency'))
+                                        ->rules([
+                                            'required',
+                                            'numeric',
+                                            'min:0',
+                                        ])
+                                        ->validationMessages([
+                                            'required' => __('common.error.required'),
+                                            'numeric' => __('common.error.numeric'),
+                                            'min' => __('common.error.min', ['min' => 0]),
+                                        ]),
+                                    TextInput::make((string)ConfigName::FEE_WITHDRAW_PERCENTAGE->value)
+                                        ->label(__('admin.setting.fields.fee_withdraw_percentage'))
+                                        ->helperText(__('admin.setting.fields.fee_withdraw_percentage_helper'))
+                                        ->numeric()
+                                        ->required()
+                                        ->suffix("%")
                                         ->rules([
                                             'required',
                                             'numeric',

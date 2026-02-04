@@ -241,6 +241,30 @@ final class Helper
         return round($amount, $precision);
     }
 
+    /**
+     * Tính toán số tiền mà người dùng sẽ nhận được khi rút tiền.
+     * @param float $amount Số tiền Point cần rút.
+     * @param float $exchangeRate Tỷ giá đổi từ Point sang VND.
+     * @param float $feePercent Phí rút tiền (ví dụ: 1%...).
+     * @return array{withdraw_money: float, fee_withdraw: float}
+     */
+    public static function calculateWithdrawAmount(float $amount, float $exchangeRate, float $feePercent): array
+    {
+        // Quy đổi Point ra tiền mặt (Gross)
+        $grossAmount = $amount * $exchangeRate;
+
+        // Tính số tiền phí
+        $feeAmount = ($grossAmount * $feePercent) / 100;
+
+        // Số tiền thực nhận (Phải dùng floor để khớp với frontend)
+        $withdrawMoney = floor($grossAmount - $feeAmount);
+
+        return [
+            'withdraw_money' => $withdrawMoney,
+            'fee_withdraw' => $feeAmount,
+        ];
+    }
+
 
     public static function formatPhone($phone): string
     {

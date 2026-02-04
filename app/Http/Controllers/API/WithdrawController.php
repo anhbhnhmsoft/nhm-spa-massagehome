@@ -119,7 +119,7 @@ class WithdrawController extends BaseController
             'user_withdraw_info_id.exists' => __('validation.user_withdraw_info.invalid'),
             'amount.required' => __('validation.amount.required'),
             'amount.numeric' => __('validation.amount.numeric'),
-            'amount.gt' => __('validation.amount.gt'),
+            'amount.gt' => __('validation.amount.min'),
             'note.max' => __('validation.note.max'),
         ]);
         $userId = Auth::id();
@@ -130,13 +130,10 @@ class WithdrawController extends BaseController
             amount: (float)$data['amount'],
             note: $data['note'] ?? null,
         );
-
         if ($result->isError()) {
             return $this->sendError($result->getMessage());
         }
-
         return $this->sendSuccess(
-            data: $result->getData(),
             message: $result->getMessage()
         );
     }
