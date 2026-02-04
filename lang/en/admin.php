@@ -688,4 +688,47 @@ return
                 'load_older_messages' => 'Load older messages',
             ],
         ],
+        'mobile_notification' => [
+            'label' => 'Mobile Notification',
+            'navigation_label' => 'Mobile Notification',
+            'label_plural' => 'Mobile Notification',
+            'fields' => [
+                'title' => 'Title',
+                'body' => 'Body',
+                'user' => 'User',
+                'status' => 'Status',
+                'description' => 'Description',
+                'created_at' => 'Created At',
+                'updated_at' => 'Updated At',
+                'title_vi' => 'Vietnamese Title',
+                'title_en' => 'English Title',
+                'title_cn' => 'Chinese Title',
+                'description_vi' => 'Vietnamese Description',
+                'description_en' => 'English Description',
+                'description_cn' => 'Chinese Description',
+            ],
+            'status' => [
+                'pending' => 'Pending',
+                'sent' => 'Sent',
+                'failed' => 'Failed',
+                'read' => 'Read',
+            ],
+            'action' => [
+                'create' => 'Create Notification',
+                'modal_description' => 'Fill in the information to create a notification',
+                'success_notification_title' => 'Notifications are being sent to users gradually.',
+            ],
+            'receiver' => [
+                'label' => 'Receiver',
+                'all' => 'All',
+                'client' => 'Client',
+                'ktv' => 'KTV',
+                'agency' => 'Agency',
+            ],
+            'validation_messages' => [
+                'required' => 'Please enter information',
+                'max_length' => 'Maximum length is :max characters',
+
+            ],
+        ],
     ];
