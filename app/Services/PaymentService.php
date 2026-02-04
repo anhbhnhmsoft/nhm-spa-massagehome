@@ -72,7 +72,7 @@ class PaymentService extends BaseService
             // Lấy tổng số điểm đã rút ra khỏi ví
             $totalWithdrawal = $this->walletTransactionRepository->queryTransaction()
                 ->where('wallet_id', $wallet->id)
-                ->whereIn('type', WalletTransactionType::statusOut())
+                ->whereIn('type', WalletTransactionType::outComeStatus())
                 ->where('status', WalletTransactionStatus::COMPLETED)
                 ->sum('point_amount');
 
@@ -156,10 +156,16 @@ class PaymentService extends BaseService
              * Lấy tỉ giá giữa tiền tệ và đồng
              */
             $exchangeRateVndCny = $this->configService->getConfigValue(ConfigName::EXCHANGE_RATE_VND_CNY);
+
+            /**
+             * Lấy phí rút tiền %
+             */
+            $feeWithdrawPercentage = $this->configService->getConfigValue(ConfigName::FEE_WITHDRAW_PERCENTAGE);
             return ServiceReturn::success(
                 data: [
                     'currency_exchange_rate' => $currencyExchangeRate,
                     'exchange_rate_vnd_cny' => $exchangeRateVndCny,
+                    'fee_withdraw_percentage' => $feeWithdrawPercentage,
                     'allow_payment' => [
                         'qrcode' => (bool)config('services.payment.qrcode'),
                         'zalopay' => (bool)config('services.payment.zalopay'),
@@ -553,12 +559,18 @@ class PaymentService extends BaseService
         }
     }
 
-    public function handleAdminConfirmTransaction(WalletTransaction $record): void
+    /**
+     * Xử lý xác nhận giao dịch (admin).
+     * @param WalletTransaction $record
+     * @throws \Exception
+     */
+    public function handleAdminConfirmTransaction(WalletTransaction $record)
     {
+        DB::beginTransaction();
         try {
             $record->update(['status' => WalletTransactionStatus::COMPLETED]);
             // Kiểm tra xem transaction có phải là nạp tiền hay không
-            if (in_array($record->type, WalletTransactionType::incomeStatus())) {
+            if (in_array($record->type, WalletTransactionType::statusIn())) {
                 $record->wallet->increment('balance', (float)$record->point_amount);
                 // Thông báo tới người dùng khi nạp tiền thành công
                 SendNotificationJob::dispatch(
@@ -571,13 +583,17 @@ class PaymentService extends BaseService
                     ]
                 );
             }
+            return ServiceReturn::success();
 
-        }catch (\Exception $exception){
+        } catch (\Exception $exception) {
+            DB::rollBack();
             LogHelper::error(
                 message: "Lỗi WalletService@handleAdminConfirmTransaction",
                 ex: $exception
             );
-            throw $exception;
+            return ServiceReturn::error(
+                message: __("common_error.server_error")
+            );
         }
     }
 

@@ -185,4 +185,18 @@ class WalletTransactionRepository extends BaseRepository
             ->first();
         return ($incomeData->total_received ?? 0) - ($incomeData->total_retrieve ?? 0);
     }
+
+    /**
+     * Lấy thông tin transaction rút tiền đang chờ duyệt theo ID
+     * @param int $transactionId
+     * @return WalletTransaction|null
+     */
+    public function getWithdrawPendingTransactionById(int $transactionId)
+    {
+        return $this->query()
+            ->where('id', $transactionId)
+            ->where('status', WalletTransactionStatus::PENDING->value)
+            ->where('type', WalletTransactionType::WITHDRAWAL->value)
+            ->first();
+    }
 }

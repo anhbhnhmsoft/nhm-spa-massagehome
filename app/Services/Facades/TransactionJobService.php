@@ -10,10 +10,12 @@ use App\Enums\BookingStatus;
 use App\Enums\ConfigName;
 use App\Enums\NotificationType;
 use App\Enums\UserRole;
+use App\Enums\WalletTransactionType;
 use App\Jobs\SendNotificationJob;
 use App\Models\User;
 use App\Services\BookingService;
 use App\Services\CouponService;
+use App\Services\UserWithdrawInfoService;
 use App\Services\WalletService;
 use App\Services\ConfigService;
 use Illuminate\Support\Facades\DB;
@@ -22,10 +24,11 @@ use Throwable;
 class TransactionJobService
 {
     public function __construct(
-        protected BookingService $bookingService,
-        protected WalletService  $walletService,
-        protected ConfigService  $configService,
-        protected CouponService  $couponService,
+        protected BookingService          $bookingService,
+        protected WalletService           $walletService,
+        protected ConfigService           $configService,
+        protected CouponService           $couponService,
+        protected UserWithdrawInfoService $userWithdrawInfoService,
     )
     {
     }
@@ -356,4 +359,199 @@ class TransactionJobService
         }
     }
 
+    /**
+     * Xử lý tạo thông tin rút tiền
+     * @param $userId - Id người dùng
+     * @param $withdrawInfoId - Id thông tin rút tiền
+     * @param $amount - Số tiền cần rút
+     * @param $withdrawMoney - Số tiền thực nhận
+     * @param $feeWithdraw - Số tiền phí rút
+     * @param $exchangeRate - Tỷ giá đổi tiền
+     * @param $note - Ghi chú
+     * @return ServiceReturn
+     */
+    public function handleCreateWithdrawRequest(
+        $userId,
+        $withdrawInfoId,
+        $amount,
+        $withdrawMoney,
+        $feeWithdraw,
+        $exchangeRate,
+        $note = null
+    ): ServiceReturn
+    {
+        DB::beginTransaction();
+        try {
+            if (!$userId || !$withdrawInfoId || !$amount || !$withdrawMoney || !$feeWithdraw || !$exchangeRate) {
+                throw new ServiceException(__("error.invalid_data"));
+            }
+
+            // Lấy wallet
+            $wallet = $this->walletService->getWalletByUserId(
+                userId: $userId,
+                lockForUpdate: true
+            );
+            if (!$wallet) {
+                throw new ServiceException(message: __("error.wallet_not_found"));
+            }
+
+            // Tạo transaction pending
+            $transactionWithdraw = $this->walletService->createWithdraw(
+                walletCustomer: $wallet,
+                withdrawInfoId: $withdrawInfoId,
+                withdrawMoney: $withdrawMoney,
+                exchangeRate: $exchangeRate,
+                note: $note,
+            );
+
+            // Tạo transaction phí rút
+            $this->walletService->createWithdrawFee(
+                walletCustomer: $wallet,
+                transactionId: $transactionWithdraw->id,
+                feeAmount: $feeWithdraw,
+                exchangeRate: $exchangeRate,
+            );
+
+            DB::commit();
+
+            return ServiceReturn::success();
+        } catch (\Throwable $exception) {
+            LogHelper::error(
+                message: "Lỗi TransactionJobService@handleCreateWithdrawRequest",
+                ex: $exception
+            );
+            DB::rollBack();
+            return ServiceReturn::error($exception->getMessage());
+        }
+    }
+
+    /**
+     * Xử lý xác nhận rút tiền
+     * @param $transactionId - Id transaction rút tiền
+     * @return ServiceReturn
+     */
+    public function handleConfirmWithdrawRequest($transactionId)
+    {
+        DB::beginTransaction();
+        try {
+            if (!$transactionId) {
+                throw new ServiceException(__("error.invalid_data"));
+            }
+
+            // Lấy transaction rút tiền
+            $transactionWithdraw = $this->walletService->getTransactionRepository()->getWithdrawPendingTransactionById(
+                transactionId: $transactionId,
+            );
+
+            // Kiểm tra transaction rút tiền có tồn tại không và có phải là transaction rút tiền đang chờ duyệt không
+            if (!$transactionWithdraw) {
+                throw new ServiceException(message: __("error.transaction_not_found"));
+            }
+            // Lấy ví của người dùng
+            $wallet = $this->walletService->getWalletByUserId(
+                userId: $transactionWithdraw->wallet->user_id,
+                lockForUpdate: true
+            );
+            if (!$wallet) {
+                throw new ServiceException(message: __("error.wallet_not_found"));
+            }
+
+            // Lấy giao dịch phí rút tiền
+            $transactionWithdrawFee = $this->walletService->getTransactionRepository()->query()
+                ->where('wallet_id', $wallet->id)
+                ->where('foreign_key', $transactionWithdraw->id)
+                ->where('type', WalletTransactionType::FEE_WITHDRAW->value)
+                ->first();
+
+            // Kiểm tra transaction phí rút tiền có tồn tại không
+            if (!$transactionWithdrawFee) {
+                throw new ServiceException(message: __("error.transaction_not_found"));
+            }
+
+            // Xử lý xác nhận rút tiền
+            $this->walletService->confirmWithdraw(
+                transactionWithdraw: $transactionWithdraw,
+                transactionWithdrawFee: $transactionWithdrawFee,
+                wallet: $wallet,
+            );
+
+            DB::commit();
+
+            SendNotificationJob::dispatch(
+                userId: $wallet->user_id,
+                type: NotificationType::WALLET_WITHDRAW,
+            );
+
+            return ServiceReturn::success();
+        } catch (\Throwable $exception) {
+            LogHelper::error(
+                message: "Lỗi TransactionJobService@handleConfirmWithdrawRequest",
+                ex: $exception
+            );
+            DB::rollBack();
+            return ServiceReturn::error($exception->getMessage());
+        }
+    }
+
+    /**
+     * Xử lý hủy rút tiền
+     * @param $transactionId - Id transaction rút tiền
+     * @return ServiceReturn
+     */
+    public function handleCancelWithdrawRequest($transactionId)
+    {
+        DB::beginTransaction();
+        try {
+            if (!$transactionId) {
+                throw new ServiceException(__("error.invalid_data"));
+            }
+            // Lấy transaction rút tiền
+            $transactionWithdraw = $this->walletService->getTransactionRepository()->getWithdrawPendingTransactionById(
+                transactionId: $transactionId,
+            );
+
+            // Kiểm tra transaction rút tiền có tồn tại không và có phải là transaction rút tiền đang chờ duyệt không
+            if (!$transactionWithdraw) {
+                throw new ServiceException(message: __("error.transaction_not_found"));
+            }
+            // Lấy ví của người dùng
+            $wallet = $this->walletService->getWalletByUserId(
+                userId: $transactionWithdraw->wallet->user_id,
+                lockForUpdate: true
+            );
+            if (!$wallet) {
+                throw new ServiceException(message: __("error.wallet_not_found"));
+            }
+
+            // Lấy giao dịch phí rút tiền
+            $transactionWithdrawFee = $this->walletService->getTransactionRepository()->query()
+                ->where('wallet_id', $wallet->id)
+                ->where('foreign_key', $transactionWithdraw->id)
+                ->where('type', WalletTransactionType::FEE_WITHDRAW->value)
+                ->first();
+
+            // Kiểm tra transaction phí rút tiền có tồn tại không
+            if (!$transactionWithdrawFee) {
+                throw new ServiceException(message: __("error.transaction_not_found"));
+            }
+
+            // Xử lý hủy rút tiền
+            $this->walletService->cancelWithdraw(
+                transactionWithdraw: $transactionWithdraw,
+                transactionWithdrawFee: $transactionWithdrawFee,
+                wallet: $wallet,
+            );
+
+            DB::commit();
+
+            return ServiceReturn::success();
+        } catch (\Throwable $exception) {
+            LogHelper::error(
+                message: "Lỗi TransactionJobService@handleCancelWithdrawRequest",
+                ex: $exception
+            );
+            DB::rollBack();
+            return ServiceReturn::error($exception->getMessage());
+        }
+    }
 }

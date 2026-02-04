@@ -49,7 +49,7 @@ return [
         ],
         NotificationType::WALLET_WITHDRAW->value => [
             'title' => 'Rút tiền từ ví',
-            'body'  => 'Yêu cầu rút tiền từ ví đã được tạo thành công.',
+            'body'  => 'Yêu cầu rút tiền từ ví của bạn đã được duyệt thành công, vui lòng kiểm tra số dư trong ngân hàng của bạn.',
         ],
         NotificationType::CHAT_MESSAGE->value => [
             'title' => 'Tin nhắn mới',

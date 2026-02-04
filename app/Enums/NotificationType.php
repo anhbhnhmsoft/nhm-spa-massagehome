@@ -28,9 +28,6 @@ enum NotificationType: int
     case PAYMENT_SERVICE_FOR_TECHNICIAN = 19; // Thông báo thanh toán cho kỹ thuật viên
     case DEPOSIT_SUCCESS = 20; // Thông báo nạp tiền thành công
     case DEPOSIT_FAILED = 21; // Thông báo nạp tiền thất bại
-
-        // Notification Marketing
-
     case NOTIFICATION_MARKETING = 22; // Thông báo marketing
 
     public function getTitle(Language $lang, array $data = []): string

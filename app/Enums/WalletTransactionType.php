@@ -16,6 +16,7 @@ enum WalletTransactionType: int
     case REFERRAL_KTV = 10; // Nhận hoa hồng từ người giới thiệu KTV
     case REFERRAL_INVITE_KTV_REWARD = 11; // Nhận hoa hồng khi mời KTV thành công
     case DEPOSIT_WECHAT_PAY = 12; // Nạp tiền qua Wechat Pay
+    case FEE_WITHDRAW = 13; // Chi phí rút tiền
 
 
     public function label(): string
@@ -33,6 +34,7 @@ enum WalletTransactionType: int
             self::REFERRAL_KTV => __('admin.transaction.type.REFERRAL_KTV'),
             self::REFERRAL_INVITE_KTV_REWARD => __('admin.transaction.type.REFERRAL_INVITE_KTV_REWARD'),
             self::DEPOSIT_WECHAT_PAY => __('admin.transaction.type.DEPOSIT_WECHAT_PAY'),
+            self::FEE_WITHDRAW => __('admin.transaction.type.FEE_WITHDRAW'),
         };
     }
 
@@ -46,7 +48,7 @@ enum WalletTransactionType: int
     }
 
 
-    // Trạng thái nạp vào ví
+    // Trạng thái nạp vào hệ thống
     public static function incomeStatus(): array
     {
         return [
@@ -54,6 +56,15 @@ enum WalletTransactionType: int
             self::DEPOSIT_ZALO_PAY->value,
             self::DEPOSIT_MOMO_PAY->value,
             self::DEPOSIT_WECHAT_PAY->value,
+            self::FEE_WITHDRAW->value,
+        ];
+    }
+
+    // Trạng thái rút ra khỏi hệ thống
+    public static function outComeStatus()
+    {
+        return [
+            self::WITHDRAWAL->value,
         ];
     }
 
@@ -84,11 +95,5 @@ enum WalletTransactionType: int
         ];
     }
 
-    // Lấy danh sách trạng thái giao dịch rút ra khỏi ví
-    public static function statusOut()
-    {
-        return [
-            self::WITHDRAWAL->value,
-        ];
-    }
+
 }

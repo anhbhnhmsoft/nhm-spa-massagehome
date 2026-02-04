@@ -24,6 +24,7 @@ class Wallet extends Model
     protected $fillable = [
         'user_id',
         'balance',
+        'frozen_balance',
         'is_active',
     ];
 
@@ -37,6 +38,7 @@ class Wallet extends Model
         'user_id' => 'string',
         'is_active' => 'boolean',
         'balance' => 'decimal:2',
+        'frozen_balance' => 'decimal:2',
     ];
 
     /**

@@ -19,10 +19,12 @@ use App\Jobs\SendNotificationJob;
 use App\Models\User;
 use App\Models\Wallet;
 
+use App\Models\WalletTransaction;
 use App\Repositories\BookingRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\WalletRepository;
 use App\Repositories\WalletTransactionRepository;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 class WalletService extends BaseService
@@ -35,6 +37,11 @@ class WalletService extends BaseService
         protected ConfigService $configService,
     ) {
         parent::__construct();
+    }
+
+    public function getTransactionRepository(): WalletTransactionRepository
+    {
+        return $this->walletTransactionRepository;
     }
 
     /**
@@ -115,6 +122,143 @@ class WalletService extends BaseService
         $walletKtv->balance += $ktvAmount;
         $walletKtv->save();
     }
+
+    /**
+     * Tạo transaction rút tiền
+     * @param Wallet $walletCustomer
+     * @param $withdrawInfoId - Id của thông tin rút tiền
+     * @param $withdrawMoney - Số tiền rút (tiền đã trừ phí rút)
+     * @param $exchangeRate - Tỷ giá đổi tiền
+     * @param null $note - Ghi chú
+     * @return Model
+     */
+    public function createWithdraw(
+        Wallet $walletCustomer,
+        $withdrawInfoId,
+        $withdrawMoney,
+        $exchangeRate,
+        $note = null,
+    )
+    {
+        // Tạo transaction pending
+        $transaction = $this->walletTransactionRepository->create([
+            'wallet_id' => $walletCustomer->id,
+            'foreign_key' => $withdrawInfoId,
+            'money_amount' => $withdrawMoney * $exchangeRate,
+            'exchange_rate_point' => $exchangeRate,
+            'point_amount' => $withdrawMoney,
+            'balance_after' => $walletCustomer->balance - $withdrawMoney,
+            'type' => WalletTransactionType::WITHDRAWAL->value,
+            'status' => WalletTransactionStatus::PENDING->value,
+            'transaction_code' => Helper::createDescPayment(PaymentType::WITHDRAWAL),
+            'description' => $note ?? null,
+            'metadata' => null,
+            'expired_at' => now()->addDays(7),
+        ]);
+
+        // Trừ số dư khả dụng
+        $walletCustomer->decrement('balance', $withdrawMoney);
+
+        // Cộng vào số dư đóng băng
+        $walletCustomer->increment('frozen_balance', $withdrawMoney);
+
+        return $transaction;
+    }
+
+    /**
+     * Tạo transaction phí rút tiền
+     * @param Wallet $walletCustomer
+     * @param $transactionId
+     * @param $feeAmount
+     * @param $exchangeRate
+     * @return void
+     */
+    public function createWithdrawFee(
+        Wallet $walletCustomer,
+        $transactionId,
+        $feeAmount,
+        $exchangeRate,
+    )
+    {
+        // Tạo transaction phí rút
+        $this->walletTransactionRepository->create([
+            'wallet_id' => $walletCustomer->id,
+            'foreign_key' => $transactionId,
+            'money_amount' => $feeAmount * $exchangeRate,
+            'exchange_rate_point' => $exchangeRate,
+            'point_amount' => $feeAmount,
+            'balance_after' => $walletCustomer->balance - $feeAmount,
+            'type' => WalletTransactionType::FEE_WITHDRAW->value,
+            'status' => WalletTransactionStatus::PENDING->value, // Chờ xử lý
+            'transaction_code' => Helper::createDescPayment(PaymentType::WITHDRAWAL),
+            'description' => null,
+            'metadata' => null,
+            'expired_at' => null,
+        ]);
+
+        // Trừ số dư khả dụng
+        $walletCustomer->decrement('balance', $feeAmount);
+        // Cộng vào số dư đóng băng
+        $walletCustomer->increment('frozen_balance', $feeAmount);
+    }
+
+    /**
+     * Xác nhận rút tiền
+     * @param WalletTransaction $transactionWithdraw
+     * @param WalletTransaction $transactionWithdrawFee
+     * @param Wallet $wallet
+     * @return void
+     */
+    public function confirmWithdraw(
+        WalletTransaction $transactionWithdraw,
+        WalletTransaction $transactionWithdrawFee,
+        Wallet $wallet,
+    )
+    {
+        // Cập nhật transaction thành công
+        $transactionWithdraw->update([
+            'status' => WalletTransactionStatus::COMPLETED->value,
+        ]);
+
+        // Cập nhật transaction phí rút thành công
+        $transactionWithdrawFee->update([
+            'status' => WalletTransactionStatus::COMPLETED->value,
+        ]);
+
+        // Trừ số tiền phí rút từ số dư đóng băng
+        $wallet->decrement('frozen_balance', $transactionWithdraw->point_amount);
+        // Trừ luôn phí rút tiền từ số dư đóng băng
+        $wallet->decrement('frozen_balance', $transactionWithdrawFee->point_amount);
+    }
+
+    public function cancelWithdraw(
+        WalletTransaction $transactionWithdraw,
+        WalletTransaction $transactionWithdrawFee,
+        Wallet $wallet,
+    )
+    {
+        // Cập nhật transaction thành công
+        $transactionWithdraw->update([
+            'status' => WalletTransactionStatus::CANCELLED->value,
+        ]);
+
+        // Cập nhật transaction phí rút thành công
+        $transactionWithdrawFee->update([
+            'status' => WalletTransactionStatus::CANCELLED->value,
+        ]);
+
+        // Trừ số tiền phí rút từ số dư đóng băng
+        $wallet->decrement('frozen_balance', $transactionWithdraw->point_amount);
+        // Trừ luôn phí rút tiền từ số dư đóng băng
+        $wallet->decrement('frozen_balance', $transactionWithdrawFee->point_amount);
+
+        // Cộng lại số tiền phí rút vào số dư
+        $wallet->increment('balance', $transactionWithdraw->point_amount);
+        // Cộng lại luôn phí rút tiền vào số dư
+        $wallet->increment('balance', $transactionWithdrawFee->point_amount);
+    }
+
+
     /**
      * Lấy ví của người dùng
      * @param $userId
@@ -131,6 +275,7 @@ class WalletService extends BaseService
         }
         return $query->first();
     }
+
 
     /**
      * Xử lý thanh toán hoa hồng Affiliate
@@ -313,7 +458,6 @@ class WalletService extends BaseService
     }
 
     /**
-     *
      * Xử lý hoa hồng thưởng của người giới thiệu kỹ thuật viên
      * @param $referrerId
      * @param $userId
