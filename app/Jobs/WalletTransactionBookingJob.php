@@ -26,7 +26,9 @@ class WalletTransactionBookingJob implements ShouldQueue
     public function __construct(
         protected int             $bookingId,
         protected WalletTransCase $case,
-    ) {
+        protected array           $data = []
+    )
+    {
         $this->onQueue(QueueKey::TRANSACTIONS_PAYMENT);
     }
 
@@ -39,12 +41,12 @@ class WalletTransactionBookingJob implements ShouldQueue
             case WalletTransCase::CONFIRM_BOOKING:
                 try {
                     $result = $service->handleConfirmBooking($this->bookingId);
-                    if ($result->isError()){
+                    if ($result->isError()) {
                         $service->handleFailedConfirmBooking(
                             bookingId: $this->bookingId,
                         );
                     }
-                }catch (\Throwable $exception){
+                } catch (\Throwable $exception) {
                     $service->handleFailedConfirmBooking(
                         bookingId: $this->bookingId,
                     );
@@ -52,6 +54,10 @@ class WalletTransactionBookingJob implements ShouldQueue
                 break;
             case WalletTransCase::FINISH_BOOKING:
                 $service->handleFinishBooking($this->bookingId);
+                break;
+            case WalletTransCase::CONFIRM_CANCEL_BOOKING:
+                $service->handleConfirmCancelBooking(
+                    $this->bookingId, $this->data);
                 break;
         }
     }

@@ -300,7 +300,8 @@ class UserService extends BaseService
 
                 ]
             );
-        } catch (\Exception $exception) {
+        }
+        catch (\Exception $exception) {
             LogHelper::error(
                 message: "Lỗi UserService@getKtvById",
                 ex: $exception

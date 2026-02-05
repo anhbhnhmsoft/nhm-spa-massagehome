@@ -8,6 +8,8 @@ enum WalletTransCase
 
     case FINISH_BOOKING ; // Phục vụ việc hoàn thành check booking
 
+    case CONFIRM_CANCEL_BOOKING; // Phục vụ việc hủy check booking
+
     case REWARD_FOR_KTV_REFERRAL; // Phục vụ việc trả tiền giới thiệu cho KTV
 
     case CREATE_WITHDRAW_REQUEST; // Phục vụ việc tạo thông tin rút tiền

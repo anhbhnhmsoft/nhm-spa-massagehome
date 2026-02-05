@@ -420,7 +420,8 @@ return
                 'reason_cancel' => 'Lý do hủy',
                 'amount_pay_to_ktv' => 'Số tiền trả cho KTV',
                 'amount_pay_back_to_client' => 'Số tiền trả lại khách hàng',
-                'cancel_by' => 'Người hủy',
+                'cancel_by' => 'Bên hủy',
+                'price_cancel_helper_text' => 'Số tiền của đơn dịch vụ, nếu bạn không điền số tiền trả lại khách hàng thì sẽ hoàn toàn bộ số tiền này cho khách hàng',
             ],
             'sections' => [
                 'general_info' => 'Thông tin chung',
@@ -458,8 +459,8 @@ return
                 'view_map' => 'Xem Google Map',
                 'confirm_cancel' => 'Xác nhận hủy',
                 'confirm_cancel_helper_text' => 'Nếu không đặt số tiền trả cho khách hàng thì sẽ hoàn toàn bộ số tiền cho khách hàng',
-                'cancel_success_title' => '预订已成功取消',
-                'cancel_error_title' => '预订取消失败，发生错误',
+                'cancel_success_title' => 'Đơn đặt lịch đã được hủy thành công',
+                'cancel_error_title' => 'Hủy đơn đặt lịch thất bại, xảy ra lỗi',
             ],
             'success' => [
                 'cancel' => 'Hủy booking thành công',
