@@ -416,6 +416,9 @@ return
                 'status' => 'Trạng thái',
                 'note_address' => 'Ghi chú địa chỉ',
                 'reason_cancel' => 'Lý do hủy',
+                'amount_pay_to_ktv' => 'Số tiền trả cho KTV',
+                'amount_pay_back_to_client' => 'Số tiền trả lại khách hàng',
+                'cancel_by' => 'Người hủy',
             ],
             'sections' => [
                 'general_info' => 'Thông tin chung',
@@ -452,6 +455,7 @@ return
                 'view_location' => 'Xem vị trí',
                 'view_map' => 'Xem Google Map',
                 'confirm_cancel' => 'Xác nhận hủy',
+                'confirm_cancel_helper_text' => 'Nếu không đặt số tiền trả cho khách hàng thì sẽ hoàn toàn bộ số tiền cho khách hàng',
             ],
             'success' => [
                 'cancel' => 'Hủy booking thành công',

@@ -290,6 +290,9 @@ return
                 'rating' => 'Rating',
                 'comment' => 'Comment',
                 'status' => 'Status',
+                'amount_pay_to_ktv' => 'Amount Pay To KTV',
+                'amount_pay_back_to_client' => 'Amount Pay Back To Client',
+                'cancel_by' => 'Cancel By'
             ],
             'status' => [
                 'pending' => 'Pending',
@@ -314,6 +317,7 @@ return
                     'description' => 'View Details',
                 ],
                 'view_location' => 'View Location',
+                'confirm_cancel_helper_text' => 'If you do not set the amount to refund to the customer, the entire amount will be refunded to the customer',
             ],
         ],
         'setting' => [

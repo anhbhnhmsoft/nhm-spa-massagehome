@@ -22,7 +22,10 @@ use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
 use App\Enums\ConfigName;
 use App\Enums\PaymentType;
+use App\Enums\WalletTransactionStatus;
+use App\Enums\WalletTransactionType;
 use App\Jobs\WalletTransactionBookingJob;
+use App\Models\ServiceBooking;
 use App\Repositories\ServiceOptionRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\UserReviewApplicationRepository;
@@ -225,8 +228,7 @@ class BookingService extends BaseService
                     ]
                 ]
             );
-        }
-        catch (ServiceException $exception) {
+        } catch (ServiceException $exception) {
             DB::rollBack();
             return ServiceReturn::error(
                 message: $exception->getMessage()
@@ -279,17 +281,17 @@ class BookingService extends BaseService
             // Cập nhật trạng thái booking thành WAITING_CANCEL để admin có thể xử lý hủy
             $booking->status = BookingStatus::WAITING_CANCEL->value;
             $booking->reason_cancel = $reason;
+            $booking->cancel_by = $userCurrent->id == $booking->user_id ? UserRole::CUSTOMER->value : UserRole::KTV->value;
             $booking->save();
 
             return ServiceReturn::success(
-                message: __("booking.cancelled")
+                message: __("booking.waiting_cancel")
             );
-        }catch (ServiceException $exception) {
+        } catch (ServiceException $exception) {
             return ServiceReturn::error(
                 message: $exception->getMessage()
             );
-        }
-        catch (\Exception $exception) {
+        } catch (\Exception $exception) {
             LogHelper::error(
                 message: "Lỗi ServiceService@cancelBooking",
                 ex: $exception
@@ -355,8 +357,7 @@ class BookingService extends BaseService
             return ServiceReturn::error(
                 message: $exception->getMessage()
             );
-        }
-        catch (\Exception $exception) {
+        } catch (\Exception $exception) {
             LogHelper::error(
                 message: "Lỗi ServiceService@confirmCancelBooking",
                 ex: $exception
@@ -527,14 +528,12 @@ class BookingService extends BaseService
                     'booking' => $booking,
                 ]
             );
-        }
-        catch (ServiceException $exception) {
+        } catch (ServiceException $exception) {
             DB::rollBack();
             return ServiceReturn::error(
                 message: $exception->getMessage()
             );
-        }
-        catch (\Exception $exception) {
+        } catch (\Exception $exception) {
             DB::rollBack();
             LogHelper::error(
                 message: "Lỗi ServiceService@startBooking",
@@ -625,15 +624,179 @@ class BookingService extends BaseService
                     'already_finished' => false,
                 ],
             );
-        }
-        catch (ServiceException $exception) {
+        } catch (ServiceException $exception) {
             return ServiceReturn::error(
                 message: $exception->getMessage()
             );
-        }
-        catch (\Exception $exception) {
+        } catch (\Exception $exception) {
             LogHelper::error(
                 message: "Lỗi BookingService@finishBooking",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: __("common_error.server_error")
+            );
+        }
+    }
+
+    /**
+     * Summary of approveCancel
+     * @param ServiceBooking $booking
+     * @param array $data
+     * @return ServiceReturn
+     */
+    public function approveCancel(ServiceBooking $booking, array $data): ServiceReturn
+    {
+        try {
+            DB::beginTransaction();
+            // chuyển trạng thái đơn hàng sang đã hủy
+            $booking->status = BookingStatus::CANCELED->value;
+            $booking->save();
+            // tiến hành hoàn tiền cho khách hàng
+            $client = $booking->user;
+            $ktv = $booking->ktvUser;
+            $amountPayBackToClient = $data['amount_pay_back_to_client'] ?? 0;
+            $amountPayToKtv = $data['amount_pay_to_ktv'] ?? 0;
+            // nếu số tiền quản trị viên nhập thì trả amount đó cho khách hàng
+            $clientWallet = $client->wallet;
+            // Lấy transaction gốc để tham khảo (chỉ đọc, không sửa)
+            $transactionOfCustomer = $this->walletTransactionRepository->query()
+                ->where("foreign_key", $booking->id)
+                ->where('type', WalletTransactionType::PAYMENT->value)
+                ->first();
+            $exchange = $transactionOfCustomer->exchange_rate_point;
+
+            if ($amountPayBackToClient > 0) {
+                // lấy wallet khách
+                if (!$clientWallet) {
+                    throw new ServiceException(
+                        message: __("common_error.server_error")
+                    );
+                }
+                // tạo transaction hoàn số tiền admin muốn trả cho khách hàng
+                $transaction  = $this->walletTransactionRepository->create([
+                    'wallet_id' => $clientWallet->id,
+                    'type' => WalletTransactionType::REFUND->value,
+                    'point_amount' => $amountPayBackToClient * $exchange,
+                    'balance_after' => $clientWallet->balance + $amountPayBackToClient,
+                    'money_amount' => $amountPayBackToClient,
+                    'exchange_rate_point' => $exchange,
+                    'status' => WalletTransactionStatus::COMPLETED->value,
+                    'transaction_code' => Helper::createDescPayment(PaymentType::REFUND),
+                    'foreign_key' => $booking->id,
+                    'description' => "Hoàn tiền booking #{$booking->id} - lý do: {$data['reason_cancel']}",
+                    'expired_at' => now(),
+                    'transaction_id' => null,
+                ]);
+                $clientWallet->balance += $amountPayBackToClient;
+                $clientWallet->save();
+            } else {
+                // nếu không nhập số tiền thì hoàn tiền toàn bộ cho client
+                if (!$clientWallet) {
+                    throw new ServiceException(
+                        message: __("common_error.server_error")
+                    );
+                }
+
+                // tạo transaction 
+                $transaction  = $this->walletTransactionRepository->create([
+                    'wallet_id' => $clientWallet->id,
+                    'type' => WalletTransactionType::REFUND->value,
+                    'point_amount' => $transactionOfCustomer->point_amount,
+                    'balance_after' => $clientWallet->balance + $transactionOfCustomer->money_amount,
+                    'money_amount' => $transactionOfCustomer->money_amount,
+                    'exchange_rate_point' => $exchange,
+                    'status' => WalletTransactionStatus::COMPLETED->value,
+                    'transaction_code' => Helper::createDescPayment(PaymentType::REFUND),
+                    'foreign_key' => $booking->id,
+                    'description' => "Hoàn tiền booking #{$booking->id} - lý do: {$data['reason_cancel']}",
+                    'expired_at' => now(),
+                    'transaction_id' => null,
+                ]);
+                $clientWallet->balance += $transactionOfCustomer->total_amount;
+                $clientWallet->save();
+            }
+            if ($amountPayToKtv > 0) {
+                // lấy wallet ktv
+                $ktvWallet = $ktv->wallet;
+                if (!$ktvWallet) {
+                    throw new ServiceException(
+                        message: __("common_error.server_error")
+                    );
+                }
+                $transaction  = $this->walletTransactionRepository->create([
+                    'wallet_id' => $ktvWallet->id,
+                    'type' => WalletTransactionType::REFUND->value,
+                    'point_amount' => $amountPayToKtv * $exchange,
+                    'balance_after' => $ktvWallet->balance + $amountPayToKtv,
+                    'money_amount' => $amountPayToKtv,
+                    'exchange_rate_point' => $exchange,
+                    'status' => WalletTransactionStatus::COMPLETED->value,
+                    'transaction_code' => Helper::createDescPayment(PaymentType::REFUND),
+                    'foreign_key' => $booking->id,
+                    'description' => "Hoàn tiền booking #{$booking->id}",
+                    'expired_at' => now(),
+                    'transaction_id' => null,
+                ]);
+                $ktvWallet->balance += $amountPayToKtv;
+                $ktvWallet->save();
+            }
+
+            DB::commit();
+            // Gửi thông báo cho khách hàng
+            SendNotificationJob::dispatch(
+                userId: $booking->user_id,
+                type: NotificationType::BOOKING_CANCELLED,
+                data: [
+                    'booking_id' => $booking->id,
+                    'reason' => $data['reason_cancel'],
+                ]
+            );
+
+            // Gửi thông báo cho KTV
+            SendNotificationJob::dispatch(
+                userId: $booking->ktv_user_id,
+                type: NotificationType::BOOKING_CANCELLED,
+                data: [
+                    'booking_id' => $booking->id,
+                    'reason' => $data['reason_cancel'],
+                ]
+            );
+
+            // Gửi thông báo hoàn tiền cho khách hàng
+            SendNotificationJob::dispatch(
+                userId: $booking->user_id,
+                type: NotificationType::BOOKING_REFUNDED,
+                data: [
+                    'booking_id' => $booking->id,
+                    'amount' => $amountPayBackToClient ?? $booking->price,
+                ]
+            );
+
+            // Gửi thông báo hoàn tiền cho KTV
+            if ($amountPayToKtv > 0) {
+                SendNotificationJob::dispatch(
+                    userId: $booking->ktv_user_id,
+                    type: NotificationType::BOOKING_REFUNDED,
+                    data: [
+                        'booking_id' => $booking->id,
+                        'amount' => $amountPayToKtv,
+                    ]
+                );
+            }
+
+            return ServiceReturn::success(
+                data: $booking
+            );
+        } catch (ServiceException $exception) {
+            DB::rollBack();
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            LogHelper::error(
+                message: "Lỗi BookingService@approveCancel",
                 ex: $exception
             );
             return ServiceReturn::error(
@@ -741,7 +904,7 @@ class BookingService extends BaseService
                 );
             }
             // Kiểm tra xem kỹ thuật viên có làm việc vào ngày này không
-            if ($schedule->working_schedule){
+            if ($schedule->working_schedule) {
                 // Lấy ra ngày trong tuần của thời gian book (1-7)
                 // Nếu là thứ 8 (0) thì coi như là thứ 8 (8) để hợp với array key KTVConfigSchedules
                 $dayKey = $startTime->dayOfWeek === 0 ? 8 : $startTime->dayOfWeek + 1;
@@ -824,7 +987,7 @@ class BookingService extends BaseService
 
             if (!$couponValidation->isError()) {
                 $discountAmount = $couponValidation->getData()['discount_amount'];
-            }else{
+            } else {
                 throw new ServiceException(
                     message: $couponValidation->getMessage()
                 );
@@ -897,5 +1060,4 @@ class BookingService extends BaseService
 
         return $distance;
     }
-
 }

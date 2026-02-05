@@ -290,6 +290,9 @@ return
                 'rating' => '评分',
                 'comment' => '评论',
                 'status' => '状态',
+                'amount_pay_to_ktv' => '支付给KTV的金额',
+                'amount_pay_back_to_client' => '退还给客户的金额',
+                'cancel_by' => '取消人',
             ],
             'status' => [
                 'pending' => '待确认',
@@ -314,6 +317,7 @@ return
                     'description' => '查看详情',
                 ],
                 'view_location' => '查看位置',
+                'confirm_cancel_helper_text' => '如果您不设置退还给客户的金额，则全额退还给客户',
             ],
         ],
         'setting' => [
