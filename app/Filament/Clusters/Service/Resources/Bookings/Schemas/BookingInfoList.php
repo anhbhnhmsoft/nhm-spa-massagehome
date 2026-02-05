@@ -3,12 +3,10 @@
 namespace App\Filament\Clusters\Service\Resources\Bookings\Schemas;
 
 use App\Enums\BookingStatus;
-use App\Enums\PaymentType;
 use Filament\Actions\Action;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Filament\Tables\Columns\Layout\Grid;
 use Illuminate\Support\Carbon;
 class BookingInfoList
 {

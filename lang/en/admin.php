@@ -318,6 +318,8 @@ return
                 ],
                 'view_location' => 'View Location',
                 'confirm_cancel_helper_text' => 'If you do not set the amount to refund to the customer, the entire amount will be refunded to the customer',
+                'cancel_success_title' => 'Booking Cancelled Successfully',
+                'cancel_error_title' => 'Booking Cancelled Failed, An Error Occurred',
             ],
         ],
         'setting' => [
