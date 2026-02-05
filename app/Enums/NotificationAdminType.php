@@ -9,4 +9,5 @@ enum NotificationAdminType
     case USER_APPLY_KTV_PARTNER; // Người dùng đăng ký làm đối tác KTV
     case USER_APPLY_AGENCY_PARTNER; // Người dùng đăng ký làm đối tác Agency
     case CONFIRM_WECHAT_PAYMENT; // Thanh toán qua wechat
+    case EMERGENCY_SUPPORT; // Người dùng yêu cầu hỗ trợ khẩn cấp
 }

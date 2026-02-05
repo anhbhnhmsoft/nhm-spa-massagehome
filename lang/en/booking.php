@@ -7,9 +7,17 @@ return [
         'not_found_profile' => 'Technician profile not found',
         'not_found_location' => 'Technician location not found'
     ],
+    'ktv' => [
+        'not_found' => 'Technician not found',
+        'not_working' => 'Technician is not working at the moment, please choose another technician!',
+    ],
+    'book_time' => [
+        'break_time_gap_not_found' => 'Error getting break time gap, please contact administrator!',
+        'book_time_not_valid' => 'Invalid booking time, you can book from :time onwards!',
+        'not_working' => 'Technician is not working during this time, please choose another time!',
+        'overlapping' => 'Another booking exists during this time. Please choose another time! The earliest you can book is :time',
+    ],
     'not_found' => 'Booking does not exist',
-    'book_time_not_valid' => 'Booking time is invalid, must be greater than current time!',
-    'ktv_is_busy_at_this_time' => 'Technician is busy at this time!',
     'status_not_confirmed' => 'Booking is not confirmed yet',
     'already_started' => 'Booking has started',
     'not_permission' => 'You do not have permission to cancel this booking',
@@ -17,14 +25,15 @@ return [
     'not_canceled' => 'Booking has not been canceled',
     'cancelled' => 'Booking has been canceled',
     'completed' => 'Booking has been completed',
-
+    'not_paid' => 'Booking not paid',
+    'not_paid_for_ktv' => 'Booking not paid for KTV',
+    'refunded_for_ktv' => 'Booking has been refunded for KTV',
 
     'wallet' => [
         'not_active' => 'Account is not active',
         'not_enough' => 'Insufficient balance',
         'tech_not_enough' => 'Technician balance insufficient',
         'tech_not_active' => 'Technician account is not active'
-
     ],
     'service_option' => [
         'not_found'  => 'Service option does not exist',
@@ -32,9 +41,6 @@ return [
     ],
     'discount_rate' => [
         'not_found' => 'conversion rate does not exist',
-    ],
-    'break_time_gap' => [
-        'not_found' => 'break time gap not found',
     ],
     'time_slot_not_available' => 'Technician has a scheduled service during this time, please choose another time',
     'coupon' => [
@@ -60,6 +66,9 @@ return [
         'wallet_technician_not_found' => 'Technician wallet account not found',
         'booking_not_found' => 'Booking not found',
         'wallet_referred_staff' => 'Commission payment for referrer',
+        'exchange_rate_not_found' => 'Exchange rate not found',
+        'wallet_referred_staff_ktv' => 'Commission payment for KTV referrer',
+        'wallet_referred_staff_affiliate' => 'Commission payment for Affiliate referrer',
     ],
     'validate' => [
         'required' => 'Booking ID cannot be empty',
@@ -75,6 +84,7 @@ return [
     'refunded' => 'Booking has been refunded',
     'status_not_completed' => 'Booking is not in completed status',
     'not_permission_at_this_time' => 'You do not have permission to complete this booking at this time',
-    'booking_time_not_yet' => 'Booking start time has not arrived yet',
+    'only_start_today_bookings' => 'Can only start service today',
+    'payment_failed' => 'Payment failed',
     'waiting_cancel' => 'Waiting cancel',
 ];

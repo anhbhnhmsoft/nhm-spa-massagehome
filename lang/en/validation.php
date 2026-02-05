@@ -46,14 +46,18 @@ return [
     'address' => [
         'required' => 'Please enter address.',
         'string' => 'Address must be a string.',
+        'max' => 'Address must be at least :max characters.',
+        'invalid' => 'Invalid address.',
     ],
     'lat' => [
         'required' => 'Please enter latitude.',
         'numeric' => 'Latitude must be a number.',
+        'invalid' => 'Latitude must be between -90 and 90.',
     ],
     'lng' => [
         'required' => 'Please enter longitude.',
         'numeric' => 'Longitude must be a number.',
+        'invalid' => 'Longitude must be between -180 and 180.',
     ],
     'agency_not_found' => 'Agency code not found or Agency is inactive.',
     'duration' => [
@@ -143,6 +147,17 @@ return [
     'role' => [
         'required' => 'Please select role.',
         'in' => 'Invalid role.',
+        'invalid' => 'Invalid role.',
+    ],
+    'referrer_id' => [
+        'required' => 'Please select Referrer.',
+        'numeric' => 'Referrer ID must be a number.',
+        'exists' => 'Referrer ID does not exist.',
+    ],
+    'province_code' => [
+        'required' => 'Please select province/city.',
+        'string' => 'Province/city must be a string.',
+        'max' => 'Province/city cannot exceed 10 characters.',
     ],
     'type_withdraw_info' => [
         'required' => 'Please select withdrawal type.',
@@ -177,15 +192,8 @@ return [
     ],
     'option_service' => [
         'required' => 'Please add at least 1 service option.',
-        'price' => [
-            'required' => 'Please enter price for service package.',
-            'min'      => 'Price cannot be less than 0.',
-        ],
-        'duration' => [
-            'required' => 'Please select duration.',
-            'enum'     => 'Invalid service duration.',
-            'invalid' => 'Invalid service duration.',
-        ],
+        'invalid' => 'Service price selection data does not match package category.',
+        'distinct' => 'Service price selection data must not be duplicated.',
     ],
     'files' => [
         'required_with' => 'Please upload at least 1 image.',
@@ -204,9 +212,9 @@ return [
     'direction' => [
         'in' => 'Invalid sort direction.',
     ],
-    'type' => [
-        'in' => 'Invalid statistic type.',
-        'required' => 'Please select statistic type.',
+    'type_date_range' => [
+        'in' => 'Invalid display time type.',
+        'required' => 'Please select display time type.',
     ],
     'images' => [
         'required' => 'Please upload at least 1 image.',
@@ -231,21 +239,75 @@ return [
         'string' => 'New password must be a string.',
     ],
     'bio' => [
+        'required' => 'Please enter description in at least 1 language.',
+        'invalid' => 'Invalid description format.',
         'vi' => [
             'required' => 'Please enter Vietnamese description.',
             'string' => 'Vietnamese description must be a string.',
+            'max' => 'Vietnamese description too long (max 1000 characters).',
+            'invalid' => 'Invalid Vietnamese description.',
         ],
         'cn' => [
             'required' => 'Please enter Chinese description.',
             'string' => 'Chinese description must be a string.',
+            'max' => 'Chinese description too long (max 1000 characters).',
+            'invalid' => 'Invalid Chinese description.',
         ],
         'en' => [
             'required' => 'Please enter English description.',
             'string' => 'English description must be a string.',
+            'max' => 'English description too long (max 1000 characters).',
+            'invalid' => 'Invalid English description.',
         ],
     ],
     'experience' => [
         'required' => 'Please enter experience.',
         'integer' => 'Experience must be an integer.',
+        'min' => 'Experience must be greater than or equal to 0.',
+    ],
+    'file_apply_partner_uploads' => [
+        'required' => 'Please upload at least 1 image.',
+        'array' => 'Image list must be an array.',
+        'invalid' => 'Invalid image format and max 10MB per image.',
+        'invalid_type' => 'Invalid image type.',
+        'invalid_type_for_role' => 'Invalid image type for this role.',
+        'duplicate_type' => 'Some images are duplicated.',
+        'invalid_type_count' => 'Invalid number of images for this type.',
+        'missing_type' => 'Missing required image type.',
+    ],
+    'is_working' => [
+        'required' => 'Please select status.',
+        'invalid' => 'Invalid status.',
+    ],
+    'working_schedule' => [
+        'required' => 'Please enter working schedule.',
+        'array' => 'Working schedule must be an array.',
+        'size' => 'Working schedule must have 7 elements.',
+        'day_key' => [
+            'required' => 'Please select day.',
+        ],
+        'active' => [
+            'required' => 'Please select status.',
+        ],
+        'start_time' => [
+            'required_if' => 'Please enter start time.',
+            'date_format' => 'Invalid start time.',
+        ],
+        'end_time' => [
+            'required_if' => 'Please enter end time.',
+            'date_format' => 'Invalid end time.',
+            'after' => 'End time must be after start time.',
+        ],
+    ],
+    'type_contract' => [
+        'required' => 'Please select contract type.',
+        'integer' => 'Invalid contract type.',
+        'in' => 'Invalid contract type.',
+    ],
+    'nickname' => [
+        'required_if' => 'Please enter display name.',
+        'nullable' => 'Display name must be a string.',
+        'string' => 'Display name must be a string.',
+        'max' => 'Display name too long (max 255 characters).',
     ],
 ];

@@ -7,7 +7,7 @@ use Filament\Widgets\ChartWidget;
 
 class TransactionChart extends ChartWidget
 {
-    protected int | string | array $columnSpan = 1;
+    protected int | string | array $columnSpan = 3;
 
     protected ?string $pollingInterval = "5m";
 

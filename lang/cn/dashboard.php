@@ -56,4 +56,27 @@ return [
         'review' => '评价数量',
         'total_customer' => '用户总数',
     ],
+    'danger_support_stat' => [
+        'pending_danger_supports' => '紧急求助请求数',
+        'pending_danger_supports_desc' => '有紧急求助请求!',
+        'no_pending_danger_supports' => '没有紧急求助请求',
+    ],
+    'danger_support_table' => [
+        'title' => '紧急求助请求列表',
+        'user' => '用户',
+        'empty_title' => '没有紧急求助请求',
+        'created_at' => '时间',
+        'ktv' => 'KTV',
+        'address' => '地址',
+        'content' => '原因 / 内容',
+        'booking' => '订单',
+        'booking_start_time' => '最近订单',
+        'no_booking' => '无订单',
+        'status' => '状态',
+        'confirm' => '确认已处理',
+        'confirm_modal_heading' => '确认已处理',
+        'confirm_modal_description' => '您确定已处理此事件吗？',
+        'confirm_success' => '已确认处理',
+        'view_on_map' => '查看地图'
+    ],
 ];

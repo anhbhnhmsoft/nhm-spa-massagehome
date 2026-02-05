@@ -36,6 +36,7 @@ return [
     'admin' => [
         'phone' => 'Phone number.',
         'password' => 'Password.',
+        'remember' => 'Remember me',
     ],
     'validation' => [
         'name_required' => 'Name consists cannot be empty.',

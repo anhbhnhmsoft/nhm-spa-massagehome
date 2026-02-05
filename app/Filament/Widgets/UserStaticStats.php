@@ -6,10 +6,8 @@ use App\Enums\ReviewApplicationStatus;
 use App\Filament\Clusters\ReviewApplication\Resources\Agencies\AgencyResource;
 use App\Filament\Clusters\ReviewApplication\Resources\KTVs\KTVResource;
 use App\Services\DashboardService;
-use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
-use Filament\Support\Enums\FontWeight;
 use Filament\Support\Icons\Heroicon;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
@@ -17,7 +15,7 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 class UserStaticStats extends BaseWidget
 {
 
-    protected int|string|array $columnSpan = 1;
+    protected int|string|array $columnSpan = 3;
 
     protected function getStats(): array
     {

@@ -113,6 +113,8 @@ return
             'status' => [
                 'active' => 'Kích hoạt',
                 'inactive' => 'Tắt',
+                'pending' => 'Chờ xử lý',
+                'confirmed' => 'Đã xử lý',
             ],
             'empty' => 'Không có dữ liệu',
             'form' => [

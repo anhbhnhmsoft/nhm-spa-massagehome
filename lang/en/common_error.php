@@ -26,4 +26,5 @@ return [
     'unauthenticated' => 'You do not have permission to access this resource.',
     'invalid_role' => 'Invalid role',
     'cannot_link_self' => 'You cannot link with yourself',
+    'invalid_parameter' => 'Invalid parameter',
 ];
