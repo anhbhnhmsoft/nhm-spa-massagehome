@@ -583,6 +583,7 @@ class PaymentService extends BaseService
                     ]
                 );
             }
+            DB::commit();
             return ServiceReturn::success();
 
         } catch (\Exception $exception) {

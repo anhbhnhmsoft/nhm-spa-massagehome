@@ -307,7 +307,7 @@ Route::middleware('set-api-locale')->group(function () {
         // Link KTV to Referrer via QR
         Route::post('link-referrer', [KTVController::class, 'linkReferrer']);
         // Cancel booking
-        Route::post('cancel-booking/', [BookingController::class, 'cancelBooking']);
+        Route::post('cancel-booking', [BookingController::class, 'cancelBooking']);
         // Gửi hỗ trợ nguy hiểm
         Route::post('danger-support', [KTVController::class, 'dangerSupport']);
     });
@@ -315,7 +315,7 @@ Route::middleware('set-api-locale')->group(function () {
     // Dành cho agency
     Route::prefix('agency')->middleware(['auth:sanctum','check-role:agency'])->group(function () {
         // Lấy thông tin dashboard
-        Route::get('/dashboard', [AgencyController::class, 'dashboard']);
+        Route::get('dashboard', [AgencyController::class, 'dashboard']);
         // Lấy danh sách KTV Performance
         Route::get('list-ktv-performance', [AgencyController::class, 'listKtvPerformance']);
         // Lấy thông tin profile Agency

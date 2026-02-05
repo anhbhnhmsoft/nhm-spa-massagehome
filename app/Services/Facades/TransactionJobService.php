@@ -311,6 +311,33 @@ class TransactionJobService
     }
 
     /**
+     * Xử lý khi hủy booking
+     * @param string $bookingId
+     * @param array $data
+     * @return ServiceReturn
+     * @throws Throwable
+     */
+    public function handleConfirmCancelBooking(
+        string $bookingId,
+        array $data
+    ): ServiceReturn
+    {
+        try {
+            $booking = $this->bookingService->getBookingRepository()->query()
+                ->where('id', $bookingId)
+                ->where('status', BookingStatus::WAITING_CANCEL->value)
+                ->first();
+            if (!$booking) {
+                throw new ServiceException(__("error.not_found_booking"));
+            }
+
+
+        }catch (\Exception $exception){
+
+        }
+    }
+
+    /**
      * Xử lý Trả tiền thưởng cho người giới thiệu khi mời KTV thành công
      * @param  $referrerId - Id người giới thiệu
      * @param  $userId - Id nguời dc giới thiệu

@@ -4,8 +4,10 @@ namespace App\Services\Facades;
 
 use App\Core\LogHelper;
 use App\Core\Service\ServiceReturn;
+use App\Enums\ConfigName;
 use App\Enums\NotificationAdminType;
 use App\Services\BookingService;
+use App\Services\ConfigService;
 use App\Services\NotificationService;
 
 class BookingFacadeService
@@ -13,6 +15,7 @@ class BookingFacadeService
     public function __construct(
         protected BookingService      $bookingService,
         protected NotificationService $notificationService,
+        protected ConfigService $configService,
     )
     {
     }
@@ -61,8 +64,10 @@ class BookingFacadeService
     public function checkOverdueConfirmedBookings(int $overdueMinutes = 30): ServiceReturn
     {
         try {
+            // Lấy khoảng thời gian nghỉ giữa các booking
+            $breakTimeGap = $this->configService->getConfigValue(ConfigName::BREAK_TIME_GAP);
             // Lấy danh sách booking quá hạn mà KTV vẫn chưa hoàn thành
-            $overdueBookings = $this->bookingService->getBookingRepository()->checkOverdueConfirmedBookings($overdueMinutes);
+            $overdueBookings = $this->bookingService->getBookingRepository()->checkOverdueConfirmedBookings($overdueMinutes + $breakTimeGap);
             if ($overdueBookings->isEmpty()) {
                 return ServiceReturn::success();
             }
