@@ -335,6 +335,10 @@ class AuthService extends BaseService
     {
         try {
             $user = Auth::user();
+            if (!$user->is_active) {
+                $this->logout();
+                return ServiceReturn::error(message: __('auth.error.unauthorized'));
+            }
             $user->last_login_at = now();
             $user->save();
             return ServiceReturn::success(data: [

@@ -471,4 +471,30 @@ class KTVController extends BaseController
 
         return $this->sendSuccess();
     }
+
+    /**
+     * Gửi hỗ trợ nguy hiểm
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function dangerSupport(Request $request): JsonResponse
+    {
+        $data = $request->validate(
+            [
+                'message' => 'nullable|string',
+                'lat' => 'nullable|numeric',
+                'lng' => 'nullable|numeric',
+            ],
+            [
+                'message.required' => __('danger_support.validate.message.required'),
+                'message.string' => __('danger_support.validate.message.string'),
+                'message.max' => __('danger_support.validate.message.max', ['max' => 255]),
+            ]
+        );
+        $result = $this->userService->handleSendDangerSupport($data);
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage());
+        }
+        return $this->sendSuccess();
+    }
 }

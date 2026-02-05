@@ -308,6 +308,8 @@ Route::middleware('set-api-locale')->group(function () {
         Route::post('link-referrer', [KTVController::class, 'linkReferrer']);
         // Cancel booking
         Route::post('cancel-booking/', [BookingController::class, 'cancelBooking']);
+        // Gửi hỗ trợ nguy hiểm
+        Route::post('danger-support', [KTVController::class, 'dangerSupport']);
     });
 
     // Dành cho agency
