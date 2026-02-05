@@ -18,4 +18,8 @@ class CreateService extends CreateRecord
         ];
     }
 
+    public function getBreadcrumb(): string
+    {
+        return __('common.breadcrumb.create');
+    }
 }

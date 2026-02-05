@@ -23,4 +23,9 @@ class CreateStaticContract extends CreateRecord
         $data['slug'] = ContractFileType::getSlug($data['type']);
         return $data;
     }
+
+    public function getBreadcrumb(): string
+    {
+        return __('common.breadcrumb.create');
+    }
 }

@@ -15,7 +15,11 @@ class EditService extends EditRecord
     {
         return [
             CommonActions::backAction(static::getResource()),
-            DeleteAction::make(),
         ];
+    }
+
+    public function getBreadcrumb(): string
+    {
+        return __('common.breadcrumb.edit');
     }
 }

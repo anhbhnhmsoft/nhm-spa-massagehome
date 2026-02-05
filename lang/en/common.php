@@ -34,5 +34,12 @@ return [
     ],
     'notice' => [
         'image_gallery' => 'Do not post fake or revealing photos. Photos should be clear, face-forward, serious, and appropriate for work. Personal information (Phone number, Personal page, Detailed address, etc.) is strictly prohibited.'
+    ],
+    'empty_state_description' => 'No data found',
+    'action' => [
+        'create' => 'Create',
+    ],
+    'breadcrumb' => [
+        'list' => 'List',
     ]
 ];

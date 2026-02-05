@@ -34,5 +34,12 @@ return [
     ],
     'notice' => [
         'image_gallery'=> 'Không đăng ảnh ảo, hở hang. Ảnh cần rõ mặt, rõ nét, chính diện, nghiêm túc, phù hợp đi làm. Nghiêm cấm để thông tin cá nhân (Số điện thoại, Trang cá nhân, Địa chỉ chi tiết,...).'
+    ],
+    'empty_state_description' => 'Chưa có dữ liệu',
+    'action' => [
+        'create' => 'Thêm mới',
+    ],
+    'breadcrumb' => [
+        'list' => 'Danh sách',
     ]
 ];

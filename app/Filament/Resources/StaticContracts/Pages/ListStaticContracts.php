@@ -9,11 +9,15 @@ use Filament\Resources\Pages\ListRecords;
 class ListStaticContracts extends ListRecords
 {
     protected static string $resource = StaticContractResource::class;
-
+    public function getBreadcrumb(): string
+    {
+        return __('common.breadcrumb.list');
+    }
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make(),
+            CreateAction::make()
+                ->label(__('common.action.create')),
         ];
     }
 }

@@ -2,22 +2,18 @@
 
 namespace App\Filament\Clusters\ReviewApplication\Resources\KTVs\Pages;
 
-use App\Enums\NotificationAdminType;
 use App\Enums\ReviewApplicationStatus;
 use App\Filament\Clusters\ReviewApplication\Resources\KTVs\KTVResource;
 use App\Enums\UserRole;
 use App\Enums\UserFileType;
 use App\Filament\Components\CommonActions;
 use App\Models\UserFile;
-use App\Services\NotificationService;
 use App\Services\UserService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Model;
 use Filament\Actions\DeleteAction;
-use Filament\Actions\ForceDeleteAction;
-use Filament\Actions\RestoreAction;
 use Filament\Resources\Pages\EditRecord;
 
 class EditKTV extends EditRecord
@@ -28,6 +24,12 @@ class EditKTV extends EditRecord
 
     protected UserService $userService;
 
+
+    public function getBreadcrumb(): string
+    {
+        return __('common.breadcrumb.edit');
+    }
+    
     public function boot(UserService $userService): void
     {
         $this->userService = $userService;

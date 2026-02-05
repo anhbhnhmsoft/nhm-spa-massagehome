@@ -14,4 +14,9 @@ class ListWalletTransactions extends ListRecords
     {
         return [];
     }
+
+    public function getBreadcrumb(): string
+    {
+        return __('common.breadcrumb.list');
+    }
 }

@@ -16,4 +16,10 @@ class ListServices extends ListRecords
             CreateAction::make(),
         ];
     }
+
+
+    public function getBreadcrumb(): string
+    {
+        return __('common.breadcrumb.list');
+    }
 }

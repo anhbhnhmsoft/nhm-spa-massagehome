@@ -23,4 +23,9 @@ class CreateCoupon extends CreateRecord
         $data['created_by'] = Auth::user()->id;
         return $data;
     }
+
+    public function getBreadcrumb(): string
+    {
+        return __('common.breadcrumb.create');
+    }
 }

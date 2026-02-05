@@ -20,4 +20,9 @@ class EditPageStatic extends EditRecord
             DeleteAction::make(),
         ];
     }
+
+    public function getBreadcrumb(): string
+    {
+        return __('common.breadcrumb.edit');
+    }
 }

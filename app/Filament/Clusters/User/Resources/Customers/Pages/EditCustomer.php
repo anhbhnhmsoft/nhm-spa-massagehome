@@ -30,4 +30,10 @@ class EditCustomer extends EditRecord
             TransactionCustomerTable::class,
         ];
     }
+
+
+    public function getBreadcrumb(): string
+    {
+        return __('common.breadcrumb.edit');
+    }
 }

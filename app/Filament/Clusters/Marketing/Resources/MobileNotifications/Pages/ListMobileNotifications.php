@@ -15,6 +15,11 @@ class ListMobileNotifications extends ListRecords
 {
     protected static string $resource = MobileNotificationResource::class;
 
+    public function getBreadcrumb(): string
+    {
+        return __('common.breadcrumb.list');
+    }
+
     protected function getHeaderActions(): array
     {
         return [

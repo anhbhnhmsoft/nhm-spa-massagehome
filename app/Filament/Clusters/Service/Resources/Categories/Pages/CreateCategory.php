@@ -18,4 +18,9 @@ class CreateCategory extends CreateRecord
             CommonActions::backAction(static::getResource())
         ];
     }
+
+    public function getBreadcrumb(): string
+    {
+        return __('common.breadcrumb.create');
+    }
 }
