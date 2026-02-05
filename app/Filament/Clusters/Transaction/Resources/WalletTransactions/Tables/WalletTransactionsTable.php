@@ -13,17 +13,14 @@ use App\Jobs\WalletTransactionJob;
 use App\Services\ConfigService;
 use App\Services\PaymentService;
 use App\Services\UserWithdrawInfoService;
-use App\Services\WalletService;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\ViewField;
-use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Text;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 

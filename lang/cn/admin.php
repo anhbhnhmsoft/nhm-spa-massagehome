@@ -318,6 +318,8 @@ return
                 ],
                 'view_location' => '查看位置',
                 'confirm_cancel_helper_text' => '如果您不设置退还给客户的金额，则全额退还给客户',
+                'cancel_success_title' => '取消成功',
+                'cancel_error_title' => '取消失败',
             ],
         ],
         'setting' => [
