@@ -567,3 +567,18 @@
     - slug (string, nullable) -- Đường dẫn hợp đồng
     
     - timestamps
+
+# danger_support
+    # note
+    - Bảng danger_supports lưu trữ thông tin hỗ trợ khẩn cấp.
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - user_id (bigint, foreign key to users.id) -- ID người dùng hỗ trợ khẩn cấp
+    - content (text) -- Nội dung hỗ trợ khẩn cấp
+    - status (smallint, default 0) -- Trạng thái hỗ trợ khẩn cấp (trong enum DangerSupportStatus)
+    - latitude (decimal(10,8)) -- vĩ độ
+    - longitude (decimal(11,8)) -- kinh độ
+    - address (string, nullable) -- Địa chỉ hỗ trợ khẩn cấp
+    - booking_id (bigint, foreign key to service_bookings.id, nullable) -- ID đặt chỗ liên quan
+    - timestamps

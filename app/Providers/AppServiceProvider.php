@@ -30,6 +30,7 @@ use App\Repositories\ConfigRepository;
 use App\Repositories\CouponRepository;
 use App\Repositories\CouponUsedRepository;
 use App\Repositories\CouponUserRepository;
+use App\Repositories\DangerSupportRepository;
 use App\Repositories\NotificationRepository;
 use App\Repositories\ProvinceRepository;
 use App\Repositories\ReviewRepository;
@@ -133,6 +134,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(UserKtvScheduleRepository::class);
         $this->app->singleton(CategoryPriceRepository::class);
         $this->app->singleton(ZaloTokenRepository::class);
+        $this->app->singleton(DangerSupportRepository::class);
     }
 
     /**

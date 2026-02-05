@@ -11,11 +11,13 @@ class ItemKTVResource extends ListKTVResource
 {
 
     private int $breakTimeGap;
+    private int $priceTransportation;
 
-    public function __construct($resource, $breakTimeGap = 0)
+    public function __construct($resource, $breakTimeGap = 0, $priceTransportation = 0)
     {
         parent::__construct($resource);
         $this->breakTimeGap = $breakTimeGap;
+        $this->priceTransportation = $priceTransportation;
     }
 
     public function toArray(Request $request): array
@@ -33,7 +35,7 @@ class ItemKTVResource extends ListKTVResource
         } else {
             $data['booking_soon'] = null;
         }
-
+        $data['price_transportation'] = $this->priceTransportation;
         $files = $this->files;
         $review = $this->whenLoaded('reviewsReceived') ? $this->reviewsReceived->first() : null;
         $reviewer = $review ? $review->reviewer : null;

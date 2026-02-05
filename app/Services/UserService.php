@@ -21,12 +21,11 @@ use App\Enums\NotificationType;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserFileType;
 use App\Enums\UserRole;
-use App\Enums\WalletTransactionStatus;
-use App\Enums\WalletTransactionType;
 use App\Jobs\SendNotificationJob;
 use App\Jobs\WalletTransactionJob;
 use App\Repositories\BookingRepository;
 use App\Repositories\CouponUserRepository;
+use App\Repositories\DangerSupportRepository;
 use App\Repositories\ReviewRepository;
 use App\Repositories\StaticContractRepository;
 use App\Repositories\UserAddressRepository;
@@ -64,6 +63,7 @@ class UserService extends BaseService
         protected StaticContractRepository        $staticContractRepository,
         protected WalletService                   $walletService,
         protected NotificationService             $notificationService,
+        protected DangerSupportRepository         $dangerSupportRepository,
     ) {
         parent::__construct();
     }
@@ -261,14 +261,10 @@ class UserService extends BaseService
     {
         try {
             // Lấy config khoảng thời gian nghỉ giữa 2 buổi
-            $breakTimeGapReturn = $this->configService->getConfig(ConfigName::BREAK_TIME_GAP);
-            if ($breakTimeGapReturn->isError()) {
-                return ServiceReturn::error(
-                    message: __("booking.break_time_gap.not_found")
-                );
-            }
-            $breakTimeGap = $breakTimeGapReturn->getData();
-
+            $breakTimeGap = $this->configService->getConfigValue(ConfigName::BREAK_TIME_GAP);
+            // Lấy config giá di chuyển / km
+            $priceTransportation = $this->configService->getConfigValue(ConfigName::PRICE_TRANSPORTATION);
+            // Lấy thông tin KTV
             $ktv = $this->userRepository->queryKTV()
                 ->with([
                     'files' => function ($query) {
@@ -298,10 +294,13 @@ class UserService extends BaseService
             return ServiceReturn::success(
                 data: [
                     'ktv' => $ktv,
-                    'break_time_gap' => $breakTimeGap['config_value'],
+                    'break_time_gap' => $breakTimeGap,
+                    'price_transportation' => $priceTransportation,
+
                 ]
             );
-        } catch (\Exception $exception) {
+        }
+        catch (\Exception $exception) {
             LogHelper::error(
                 message: "Lỗi UserService@getKtvById",
                 ex: $exception
@@ -1357,6 +1356,23 @@ class UserService extends BaseService
             LogHelper::error('Lỗi UserService@updateAllKtvLeaderStatus', $e);
             return ServiceReturn::error(__('common_error.server_error'));
         }
+    }
+
+    /**
+     * Gửi hỗ trợ nguy hiểm
+     * @param array $data
+     * @return ServiceReturn
+     */
+    public function handleSendDangerSupport(array $data): ServiceReturn
+    {
+        $result = $this->dangerSupportRepository->create([
+            'user_id' => Auth::user()->id,
+            'message' => $data['message'],
+        ]);
+        if ($result->isError()) {
+            return ServiceReturn::error($result->getMessage());
+        }
+        return ServiceReturn::success();
     }
 
 }
