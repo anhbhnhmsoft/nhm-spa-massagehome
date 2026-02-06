@@ -160,7 +160,7 @@ class CouponForm
                                             ->required()
                                             ->numeric()
                                             ->minValue(0)
-                                            ->suffix(__('admin.point'))
+                                            ->suffix(__('common.unit.vnd'))
                                             ->validationMessages([
                                                 'required' => __("common.error.required"),
                                                 'numeric' => __("common.error.numeric"),

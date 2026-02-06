@@ -38,8 +38,16 @@ return [
     'empty_state_description' => 'Chưa có dữ liệu',
     'action' => [
         'create' => 'Thêm mới',
+        'create_another' => 'Thêm mới và tiếp tục',
+        'cancel' => 'Hủy',
+        'save' => 'Lưu',
+        'delete' => 'Xóa',
+        'view' => 'Xem'
     ],
     'breadcrumb' => [
         'list' => 'Danh sách',
+        'create' => 'Thêm mới',
+        'edit' => 'Cập nhật',
+        'view' => 'Xem chi tiết',
     ]
 ];

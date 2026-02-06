@@ -17,7 +17,8 @@ class EditPageStatic extends EditRecord
     {
         return [
             CommonActions::backAction(static::getResource()),
-            DeleteAction::make(),
+            DeleteAction::make()
+                ->label(__('common.action.delete')),
         ];
     }
 

@@ -17,6 +17,16 @@ class CreateBanner extends CreateRecord
         ];
     }
 
+    protected function getFormActions(): array
+    {
+        return [
+            $this->getSaveFormAction()
+                ->label(__('common.action.save')),
+            $this->getCancelFormAction()
+                ->label(__('common.action.cancel')),
+        ];
+    }
+    
     public function getBreadcrumb(): string
     {
         return __('common.breadcrumb.create');

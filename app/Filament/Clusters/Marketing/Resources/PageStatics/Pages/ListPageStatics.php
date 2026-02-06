@@ -14,7 +14,7 @@ class ListPageStatics extends ListRecords
     {
         return [
             CreateAction::make()
-                ->label(__('admin.common.action.create')),
+                ->label(__('common.action.create')),
         ];
     }
 

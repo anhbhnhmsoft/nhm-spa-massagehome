@@ -104,7 +104,8 @@ class EditAgency extends EditRecord
                     return redirect()->to($this->getResource()::getUrl('index'));
                 }),
 
-            DeleteAction::make(),
+            DeleteAction::make()
+                ->label(__('common.action.delete')),
         ];
     }
 
@@ -162,5 +163,16 @@ class EditAgency extends EditRecord
             // 4. Thêm Tooltip giải thích lý do
             ->tooltip($isLocked ? __('admin.common.tooltip.cant_not_save_review_application') : null)
             ->disabled($isLocked);
+    }
+
+
+    protected function getFormActions(): array
+    {
+        return [
+            $this->getSaveFormAction()
+                ->label(__('common.action.save')),
+            $this->getCancelFormAction()
+                ->label(__('common.action.cancel')),
+        ];
     }
 }

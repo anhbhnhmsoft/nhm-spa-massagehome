@@ -6,13 +6,10 @@ use App\Enums\ContractFileType;
 use App\Enums\Language;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Resources\Pages\EditRecord;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
-use Illuminate\Support\Facades\App;
 use Illuminate\Support\Str;
 
 class StaticContractForm
@@ -31,6 +28,7 @@ class StaticContractForm
                             ->afterStateUpdated(function ($state, Get $get, Set $set) {
                                 $set('slug', Str::slug(ContractFileType::getSlug($state)));
                             })
+                            ->placeholder(__('admin.static_contract.fields.type'))
                             ->live()
                             ->required()
                             ->unique('static_contract', 'type')

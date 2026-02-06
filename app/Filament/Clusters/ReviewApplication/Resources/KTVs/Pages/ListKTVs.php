@@ -18,6 +18,6 @@ class ListKTVs extends ListRecords
 
     public function getBreadcrumb(): string
     {
-        return __('common.breadcrumb.create');
+        return __('common.breadcrumb.list');
     }
 }
