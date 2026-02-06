@@ -110,7 +110,8 @@ class EditKTV extends EditRecord
                     return redirect()->to($this->getResource()::getUrl('index'));
                 }),
 
-            DeleteAction::make(),
+            DeleteAction::make()
+                ->label(__('common.action.delete')),
         ];
     }
 
@@ -247,5 +248,16 @@ class EditKTV extends EditRecord
         }
 
         return $data;
+    }
+
+
+    protected function getFormActions(): array
+    {
+        return [
+            $this->getSaveFormAction()
+                ->label(__('common.action.save')),
+            $this->getCancelFormAction()
+                ->label(__('common.action.cancel')),
+        ];
     }
 }

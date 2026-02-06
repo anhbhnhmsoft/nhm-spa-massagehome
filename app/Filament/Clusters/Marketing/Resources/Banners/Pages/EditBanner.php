@@ -15,10 +15,21 @@ class EditBanner extends EditRecord
     {
         return [
             CommonActions::backAction(static::getResource()),
-            DeleteAction::make(),
+            DeleteAction::make()
+                ->label(__('common.action.delete')),
         ];
     }
 
+    protected function getFormActions(): array
+    {
+        return [
+            $this->getSaveFormAction()
+                ->label(__('common.action.save')),
+            $this->getCancelFormAction()
+                ->label(__('common.action.cancel')),
+        ];
+    }
+    
     public function getBreadcrumb(): string
     {
         return __('common.breadcrumb.edit');

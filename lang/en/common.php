@@ -38,8 +38,16 @@ return [
     'empty_state_description' => 'No data found',
     'action' => [
         'create' => 'Create',
+        'create_another' => 'Create and continue',
+        'cancel' => 'Cancel',
+        'save' => 'Save',
+        'delete' => 'Delete',
+        'view' => 'View',
     ],
     'breadcrumb' => [
         'list' => 'List',
+        'create' => 'Create',
+        'edit' => 'Edit',
+        'view' => 'View',
     ]
 ];

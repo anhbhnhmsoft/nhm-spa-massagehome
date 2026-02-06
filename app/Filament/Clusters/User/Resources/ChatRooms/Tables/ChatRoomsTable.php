@@ -45,7 +45,8 @@ class ChatRoomsTable
             ])
             ->defaultSort('created_at', 'desc')
             ->recordActions([
-                ViewAction::make()->url(fn($record) => ChatRoomResource::getUrl('detail', ['record' => $record])),
+                ViewAction::make()->url(fn($record) => ChatRoomResource::getUrl('detail', ['record' => $record]))
+                    ->label(__('common.action.view')),
 
             ]);
     }

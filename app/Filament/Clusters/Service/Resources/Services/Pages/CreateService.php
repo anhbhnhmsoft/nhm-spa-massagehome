@@ -17,7 +17,18 @@ class CreateService extends CreateRecord
             CommonActions::backAction(static::getResource()),
         ];
     }
-
+    
+    protected function getFormActions(): array
+    {
+        return [
+            $this->getCreateFormAction()
+                ->label(__('common.action.create')),
+            $this->getCreateAnotherFormAction()
+                ->label(__('common.action.create_another')),
+            $this->getCancelFormAction()
+                ->label(__('common.action.cancel')),
+        ];
+    }
     public function getBreadcrumb(): string
     {
         return __('common.breadcrumb.create');

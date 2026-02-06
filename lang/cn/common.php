@@ -38,8 +38,16 @@ return [
     'empty_state_description' => '暂无数据',
     'action' => [
         'create' => '创建',
+        'cancel' => '取消',
+        'create_another' => '创建并继续',
+        'save' => '保存',
+        'delete' => '删除',
+        'view' => '查看',
     ],
     'breadcrumb' => [
         'list' => '列表',
+        'create' => '创建',
+        'edit' => '编辑',
+        'view' => '查看详情',
     ]
 ];

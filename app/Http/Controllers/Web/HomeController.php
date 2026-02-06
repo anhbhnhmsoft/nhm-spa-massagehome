@@ -9,6 +9,8 @@ class HomeController extends BaseController
 
     public function index()
     {
-        return view('web.home');
+        $chplay = config('services.store.chplay');
+        $appstore = config('services.store.appstore');
+        return view('web.home', compact('chplay', 'appstore'));
     }
 }
