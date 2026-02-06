@@ -380,6 +380,25 @@ class NotificationService extends BaseService
                             ])
                             ->sendToDatabase($admin);
                         break;
+                    case NotificationAdminType::EMERGENCY_SUPPORT:
+                        Notification::make()
+                            ->title(__('notification.emergency_support.title')) 
+                            ->danger()
+                            ->body(__('notification.emergency_support.body', [
+                                'booking_id' => $data['booking_id'],
+                            ]))
+                            ->actions([
+                                Action::make(__('notification.detail'))
+                                    ->button()
+                                    ->color('primary')
+                                    ->url(BookingResource::getUrl('view', ['record' => $data['booking_id']]))
+                                    ->markAsRead(),
+                                Action::make(__('notification.marked_as_read'))
+                                    ->button()
+                                    ->markAsRead(),
+                            ])
+                            ->sendToDatabase($admin);
+                        break;
                 }
             });
             return ServiceReturn::success();

@@ -30,4 +30,10 @@ class CreateCustomer extends CreateRecord
             ]);
         }
     }
+
+
+    public function getBreadcrumb(): string
+    {
+        return __('common.breadcrumb.create');
+    }
 }

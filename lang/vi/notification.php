@@ -25,7 +25,10 @@ return [
         'title' => 'Xác nhận thanh toán wechat',
         'body' => 'Xác nhận thanh toán wechat ID :transaction_id.',
     ],
-
+    'emergency_support' => [
+        'title' => 'Yêu cầu hỗ trợ khẩn cấp',
+        'body' => 'Yêu cầu hỗ trợ khẩn cấp cho dịch vụ ID :booking_id.',
+    ],
     'type' => [
         NotificationType::PAYMENT_COMPLETE->value => [
             'title' => 'Thanh toán thành công',

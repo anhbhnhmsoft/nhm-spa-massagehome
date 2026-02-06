@@ -36,6 +36,7 @@ return [
     'admin' => [
         'phone' => '手机号码。',
         'password' => '密码。',
+        'remember' => '记住我',
     ],
     'validation' => [
         'name_required' => '姓名不能为空。',

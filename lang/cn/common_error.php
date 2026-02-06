@@ -26,4 +26,5 @@ return [
     'unauthenticated' => '您没有权限访问此资源。',
     'invalid_role' => '角色无效',
     'cannot_link_self' => '您不能链接到您自己',
+    'invalid_parameter' => '参数无效',
 ];

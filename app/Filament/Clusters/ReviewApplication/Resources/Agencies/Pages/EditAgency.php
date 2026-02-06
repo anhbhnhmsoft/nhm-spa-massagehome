@@ -11,8 +11,6 @@ use App\Services\UserFileService;
 use App\Services\UserService;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
-use Filament\Actions\ForceDeleteAction;
-use Filament\Actions\RestoreAction;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
@@ -24,6 +22,11 @@ class EditAgency extends EditRecord
     protected array $tempFiles = [];
 
     protected UserService $userService;
+
+    public function getBreadcrumb(): string
+    {
+        return __('common.breadcrumb.edit');
+    }
 
     protected function getHeaderActions(): array
     {

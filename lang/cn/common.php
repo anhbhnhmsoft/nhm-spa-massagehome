@@ -34,5 +34,12 @@ return [
     ],
     'notice' => [
         'image_gallery' => '请勿发布虚假、暴露的照片。照片需清晰、正面、正规，适合工作。严禁发布个人信息（电话号码、个人主页、详细地址等）。'
+    ],
+    'empty_state_description' => '暂无数据',
+    'action' => [
+        'create' => '创建',
+    ],
+    'breadcrumb' => [
+        'list' => '列表',
     ]
 ];

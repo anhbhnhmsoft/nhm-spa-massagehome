@@ -46,14 +46,18 @@ return [
     'address' => [
         'required' => '请输入地址。',
         'string' => '地址必须是字符串。',
+        'max' => '地址必须至少包含 :max 个字符。',
+        'invalid' => '无效的地址。',
     ],
     'lat' => [
         'required' => '请输入纬度。',
         'numeric' => '纬度必须是数字。',
+        'invalid' => '纬度必须在 -90 到 90 之间。',
     ],
     'lng' => [
         'required' => '请输入经度。',
         'numeric' => '经度必须是数字。',
+        'invalid' => '经度必须在 -180 到 180 之间。',
     ],
     'agency_not_found' => '未找到此 Agency 代码或 Agency 未激活。',
     'duration' => [
@@ -143,6 +147,17 @@ return [
     'role' => [
         'required' => '请选择角色。',
         'in' => '无效的角色。',
+        'invalid' => '无效的角色。',
+    ],
+    'referrer_id' => [
+        'required' => '请选择推荐人。',
+        'numeric' => '推荐人 ID 必须是数字。',
+        'exists' => '推荐人 ID 不存在。',
+    ],
+    'province_code' => [
+        'required' => '请选择省/市。',
+        'string' => '省/市必须是字符串。',
+        'max' => '省/市不能超过 10 个字符。',
     ],
     'type_withdraw_info' => [
         'required' => '请选择提现类型。',
@@ -177,15 +192,8 @@ return [
     ],
     'option_service' => [
         'required' => '请添加至少 1 个服务选项。',
-        'price' => [
-            'required' => '请输入服务套餐价格。',
-            'min'      => '价格不能小于 0。',
-        ],
-        'duration' => [
-            'required' => '请选择时长。',
-            'enum'     => '无效的服务时长。',
-            'invalid' => '无效的服务时长。',
-        ],
+        'invalid' => '服务价格选择数据与包类别不匹配。',
+        'distinct' => '服务价格选择数据不得重复。',
     ],
     'files' => [
         'required_with' => '请上传至少 1 张图片。',
@@ -204,9 +212,9 @@ return [
     'direction' => [
         'in' => '无效的排序方向。',
     ],
-    'type' => [
-        'in' => '无效的统计类型。',
-        'required' => '请选择统计类型。',
+    'type_date_range' => [
+        'in' => '无效的显示时间类型。',
+        'required' => '请选择显示时间类型。',
     ],
     'images' => [
         'required' => '请上传至少 1 张图片。',
@@ -231,21 +239,75 @@ return [
         'string' => '新密码必须是字符串。',
     ],
     'bio' => [
+        'required' => '请输入至少 1 种语言的描述。',
+        'invalid' => '描述格式无效。',
         'vi' => [
             'required' => '请输入越南语描述。',
             'string' => '越南语描述必须是字符串。',
+            'max' => '越南语描述太长（最多 1000 个字符）。',
+            'invalid' => '越南语描述无效。',
         ],
         'cn' => [
             'required' => '请输入中文描述。',
             'string' => '中文描述必须是字符串。',
+            'max' => '中文描述太长（最多 1000 个字符）。',
+            'invalid' => '中文描述无效。',
         ],
         'en' => [
             'required' => '请输入英语描述。',
             'string' => '英语描述必须是字符串。',
+            'max' => '英语描述太长（最多 1000 个字符）。',
+            'invalid' => '英语描述无效。',
         ],
     ],
     'experience' => [
         'required' => '请输入经验。',
         'integer' => '经验必须是整数。',
+        'min' => '经验必须大于或等于 0。',
+    ],
+    'file_apply_partner_uploads' => [
+        'required' => '请上传至少 1 张图片。',
+        'array' => '图片列表必须是数组。',
+        'invalid' => '图片格式无效，每张图片最大 10MB。',
+        'invalid_type' => '无效的图片类型。',
+        'invalid_type_for_role' => '此角色的图片类型无效。',
+        'duplicate_type' => '某些图片重复。',
+        'invalid_type_count' => '此类型的图片数量无效。',
+        'missing_type' => '缺少所需的图片类型。',
+    ],
+    'is_working' => [
+        'required' => '请选择状态。',
+        'invalid' => '无效的状态。',
+    ],
+    'working_schedule' => [
+        'required' => '请输入工作时间表。',
+        'array' => '工作时间表必须是数组。',
+        'size' => '工作时间表必须有 7 个元素。',
+        'day_key' => [
+            'required' => '请选择日期。',
+        ],
+        'active' => [
+            'required' => '请选择状态。',
+        ],
+        'start_time' => [
+            'required_if' => '请输入开始时间。',
+            'date_format' => '开始时间无效。',
+        ],
+        'end_time' => [
+            'required_if' => '请输入结束时间。',
+            'date_format' => '结束时间无效。',
+            'after' => '结束时间必须在开始时间之后。',
+        ],
+    ],
+    'type_contract' => [
+        'required' => '请选择合同类型。',
+        'integer' => '合同类型无效。',
+        'in' => '合同类型无效。',
+    ],
+    'nickname' => [
+        'required_if' => '请输入显示名称。',
+        'nullable' => '显示名称必须是字符串。',
+        'string' => '显示名称必须是字符串。',
+        'max' => '显示名称太长（最多 255 个字符）。',
     ],
 ];

@@ -7,9 +7,17 @@ return [
         'not_found_profile' => '未找到技术员个人资料',
         'not_found_location' => '未找到技术员所在地'
     ],
+    'ktv' => [
+        'not_found' => '未找到技师',
+        'not_working' => '技师当前未在工作，请选择其他技师！',
+    ],
+    'book_time' => [
+        'break_time_gap_not_found' => '获取休息时间间隔时出错，请联系管理员！',
+        'book_time_not_valid' => '预订时间无效，您可以预订 :time 之后的时间！',
+        'not_working' => '技师在此时间段未工作，请选择其他时间！',
+        'overlapping' => '此时间段已有其他预订。请选择其他时间！您最早可以预订 :time',
+    ],
     'not_found' => '预订不存在',
-    'book_time_not_valid' => '预订时间无效，必须大于当前时间！',
-    'ktv_is_busy_at_this_time' => '技师在此时间段已忙！',
     'status_not_confirmed' => '预订尚未确认',
     'already_started' => '预订已开始',
     'not_permission' => '您没有权限取消此预订',
@@ -17,14 +25,15 @@ return [
     'not_canceled' => '预订尚未取消',
     'cancelled' => '预订已取消',
     'completed' => '预订已完成',
-
+    'not_paid' => '预订未支付',
+    'not_paid_for_ktv' => '预订尚未支付给技师',
+    'refunded_for_ktv' => '预订已退款给技师',
 
     'wallet' => [
         'not_active' => '账户未激活',
         'not_enough' => '余额不足',
         'tech_not_enough' => '技师余额不足',
         'tech_not_active' => '技师账户未激活'
-
     ],
     'service_option' => [
         'not_found'  => '服务选项不存在',
@@ -32,9 +41,6 @@ return [
     ],
     'discount_rate' => [
         'not_found' => '转换率不存在',
-    ],
-    'break_time_gap' => [
-        'not_found' => '未找到休息时间间隔',
     ],
     'time_slot_not_available' => '技师在此时间段已安排服务，请选择其他时间',
     'coupon' => [
@@ -60,6 +66,9 @@ return [
         'wallet_technician_not_found' => '未找到技师钱包账户',
         'booking_not_found' => '未找到预订',
         'wallet_referred_staff' => '向推荐人支付佣金',
+        'exchange_rate_not_found' => '未找到汇率',
+        'wallet_referred_staff_ktv' => '支付技师推荐人佣金',
+        'wallet_referred_staff_affiliate' => '支付联盟推荐人佣金',
     ],
     'validate' => [
         'required' => '预订 ID 不能为空',
@@ -75,6 +84,7 @@ return [
     'refunded' => '预订已退款',
     'status_not_completed' => '预订非完成状态',
     'not_permission_at_this_time' => '您目前没有权限完成此预订',
-    'booking_time_not_yet' => '预订开始时间尚未到达',
+    'only_start_today_bookings' => '只能开始今天的服务',
+    'payment_failed' => '支付失败',
     'waiting_cancel' => '等待取消',
 ];

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Core\GenerateId\HasBigIntId;
+use App\Enums\DangerSupportStatus;
 use Illuminate\Database\Eloquent\Model;
 
 class DangerSupport extends Model
@@ -27,7 +28,7 @@ class DangerSupport extends Model
         'booking_id' => 'string',
         'user_id' => 'string',
         'content' => 'string',
-        'status' => 'string',
+        'status' => DangerSupportStatus::class,
         'latitude' => 'string',
         'longitude' => 'string',
         'address' => 'string',
@@ -43,5 +44,3 @@ class DangerSupport extends Model
         return $this->belongsTo(ServiceBooking::class);
     }
 }
-
-

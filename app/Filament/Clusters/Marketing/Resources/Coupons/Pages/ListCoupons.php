@@ -17,4 +17,9 @@ class ListCoupons extends ListRecords
                 ->label(__('admin.common.action.create')),
         ];
     }
+
+    public function getBreadcrumb(): string
+    {
+        return __('common.breadcrumb.list');
+    }
 }

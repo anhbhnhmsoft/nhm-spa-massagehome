@@ -56,4 +56,26 @@ return [
         'review' => 'Số đánh giá',
         'total_customer' => 'Tổng số người dùng'
     ],
+    'danger_support_stat' => [
+        'pending_danger_supports' => 'Số yêu cầu trợ giúp khẩn cấp',
+        'pending_danger_supports_desc' => 'Có yêu cầu trợ giúp khẩn cấp!',
+        'no_pending_danger_supports' => 'Không có yêu cầu trợ giúp khẩn cấp',
+    ],
+    'danger_support_table' => [
+        'title' => 'Danh sách yêu cầu trợ giúp khẩn cấp',
+        'empty_title' => 'Không có yêu cầu trợ giúp khẩn cấp',
+        'created_at' => 'Thời gian',
+        'user' => 'Người dùng cần hỗ trợ',
+        'address' => 'Địa chỉ',
+        'booking' => 'Đơn hàng',
+        'content' => 'Lý do / Nội dung',
+        'booking_start_time' => 'Lịch đặt gần nhất',
+        'no_booking' => 'Không có lịch',
+        'status' => 'Trạng thái',
+        'confirm' => 'Xác nhận đã xử lý',
+        'confirm_modal_heading' => 'Xác nhận xử lý vụ việc',
+        'confirm_modal_description' => 'Bạn có chắc chắn đã xử lý xong vụ việc này không?',
+        'confirm_success' => 'Đã xác nhận xử lý',
+        'view_on_map' => 'Xem trên bản đồ',
+    ],
 ];

@@ -9,21 +9,20 @@ use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
 use App\Enums\BookingStatus;
+use App\Enums\DangerSupportStatus;
 use App\Enums\DateRangeDashboard;
-use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserRole;
 use App\Enums\WalletTransactionType;
 use App\Enums\WalletTransactionStatus;
 use App\Models\User;
 use App\Repositories\BookingRepository;
+use App\Repositories\DangerSupportRepository;
 use App\Repositories\ReviewRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\UserReviewApplicationRepository;
 use App\Repositories\WalletRepository;
 use App\Repositories\WalletTransactionRepository;
-use Carbon\CarbonPeriod;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 
 class DashboardService extends BaseService
 {
@@ -34,6 +33,7 @@ class DashboardService extends BaseService
         protected WalletTransactionRepository     $walletTransactionRepository,
         protected ReviewRepository                $reviewRepository,
         protected WalletRepository                $walletRepository,
+        protected DangerSupportRepository         $dangerSupportRepository,
     ) {
         parent::__construct();
     }
@@ -562,6 +562,21 @@ class DashboardService extends BaseService
         }
     }
 
-
+    /**
+     * Lấy số lượng yêu cầu trợ giúp khẩn cấp
+     */
+    public function getDangerSupportStats(): ServiceReturn
+    {
+        try {
+            $pendingCount = $this->dangerSupportRepository->query()->where('status', DangerSupportStatus::PENDING->value)->count();
+            return ServiceReturn::success(data:[
+                'pending_danger_supports' => $pendingCount,
+            ]);
+        }
+        catch (\Exception $exception) {
+            LogHelper::error("Lỗi DashboardService@getDangerSupportStats", $exception);
+            return ServiceReturn::error(message: __("common_error.server_error"));
+        }
+    }
 
 }

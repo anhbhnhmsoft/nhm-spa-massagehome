@@ -37,6 +37,7 @@ use App\Repositories\UserReviewApplicationRepository;
 use App\Repositories\WalletRepository;
 use App\Repositories\WalletTransactionRepository;
 use App\Services\WalletService;
+use Filament\Notifications\Notification;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
@@ -381,13 +382,13 @@ class UserService extends BaseService
                 $user->role = $apply->role;
                 $apply->save();
                 $user->save();
-            }else{
+            } else {
                 throw new ServiceException(
                     message: __("common_error.data_not_found")
                 );
             }
             // Tạo lịch làm việc mặc định cho KTV
-             if ($apply->role === UserRole::KTV->value) {
+            if ($apply->role === UserRole::KTV->value) {
                 $user->schedule()->create([
                     'is_working' => true,
                     'working_schedule' => KTVConfigSchedules::getDefaultSchema(),
@@ -435,8 +436,7 @@ class UserService extends BaseService
             return ServiceReturn::error(
                 message: $exception->getMessage()
             );
-        }
-        catch (\Exception $exception) {
+        } catch (\Exception $exception) {
             DB::rollBack();
             LogHelper::error(
                 message: "Lỗi UserService@activeStaffApply",
@@ -465,7 +465,7 @@ class UserService extends BaseService
                 $apply->effective_date = now();
                 $apply->save();
                 $user->save();
-            }else{
+            } else {
                 throw new ServiceException(
                     message: __("common_error.data_not_found")
                 );
@@ -484,13 +484,12 @@ class UserService extends BaseService
             return ServiceReturn::success(
                 message: __("common.success.data_updated")
             );
-        }catch (ServiceException $exception) {
+        } catch (ServiceException $exception) {
             DB::rollBack();
             return ServiceReturn::error(
                 message: $exception->getMessage()
             );
-        }
-        catch (\Exception $exception) {
+        } catch (\Exception $exception) {
             DB::rollBack();
             LogHelper::error(
                 message: "Lỗi UserService@rejectStaffApply",
@@ -528,11 +527,11 @@ class UserService extends BaseService
             // Nếu Khách hàng đã có review application thì không thể đăng ký lại
             if ($existingReview) {
                 // Nếu review application bị từ chối thì không thể đăng ký lại
-                if ($existingReview->status == ReviewApplicationStatus::REJECTED->value){
+                if ($existingReview->status == ReviewApplicationStatus::REJECTED->value) {
                     throw new ServiceException(
                         message: __("error.user_have_review_application_rejected")
                     );
-                }else{
+                } else {
                     throw new ServiceException(
                         message: __("error.user_have_review_application")
                     );
@@ -634,8 +633,7 @@ class UserService extends BaseService
                 data: $user->load('reviewApplication', 'files'),
                 message: __("common.success.data_created")
             );
-        }
-        catch (ServiceException $exception) {
+        } catch (ServiceException $exception) {
             DB::rollBack();
             foreach ($tempFiles as $file) {
                 Storage::disk($file['disk'])->delete($file['path']);
@@ -643,8 +641,7 @@ class UserService extends BaseService
             return ServiceReturn::error(
                 message: $exception->getMessage()
             );
-        }
-        catch (\Throwable $exception) {
+        } catch (\Throwable $exception) {
             DB::rollBack();
             foreach ($tempFiles as $file) {
                 Storage::disk($file['disk'])->delete($file['path']);
@@ -926,7 +923,7 @@ class UserService extends BaseService
                 throw new ServiceException(__("error.user_not_found"));
             }
             $updateData = [];
-            if (isset($data['bio'])){
+            if (isset($data['bio'])) {
                 $updateData['bio'] = Helper::multilingualPayload($data, 'bio');
             }
             if (isset($data['experience'])) $updateData['experience'] = $data['experience'];
@@ -1007,7 +1004,7 @@ class UserService extends BaseService
                 throw new ServiceException(__("error.user_not_found"));
             }
             $updateData = [];
-            if (isset($data['bio'])){
+            if (isset($data['bio'])) {
                 $updateData['bio'] = Helper::multilingualPayload($data, 'bio');
             }
             if (isset($data['lat'])) $updateData['latitude'] = (float) $data['lat'];
@@ -1118,8 +1115,7 @@ class UserService extends BaseService
             return ServiceReturn::error(
                 message: $exception->getMessage()
             );
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             LogHelper::error('Lỗi UserService@linkKtvToReferrer', $e);
             return ServiceReturn::error(__('common_error.server_error'));
         }
@@ -1144,7 +1140,7 @@ class UserService extends BaseService
                 ->where('ktv_id', $ktvId)
                 ->first();
             // Nếu không có config, tạo config mặc định
-             if (!$schedules) {
+            if (!$schedules) {
                 $schedules = $this->userKtvScheduleRepository->create([
                     'ktv_id' => $ktvId,
                     'working_schedule' => KTVConfigSchedules::getDefaultSchema(),
@@ -1155,12 +1151,11 @@ class UserService extends BaseService
             return ServiceReturn::success(
                 data: $schedules,
             );
-        }catch (ServiceException $exception) {
+        } catch (ServiceException $exception) {
             return ServiceReturn::error(
                 message: $exception->getMessage()
             );
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             LogHelper::error('Lỗi UserService@handleGetScheduleKtv', $e);
             return ServiceReturn::error(__('common_error.server_error'));
         }
@@ -1199,12 +1194,11 @@ class UserService extends BaseService
             return ServiceReturn::success(
                 data: $schedules,
             );
-        }catch (ServiceException $exception) {
+        } catch (ServiceException $exception) {
             return ServiceReturn::error(
                 message: $exception->getMessage()
             );
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             LogHelper::error('Lỗi UserService@handleUpdateScheduleKtv', $e);
             return ServiceReturn::error(__('common_error.server_error'));
         }
@@ -1365,14 +1359,57 @@ class UserService extends BaseService
      */
     public function handleSendDangerSupport(array $data): ServiceReturn
     {
-        $result = $this->dangerSupportRepository->create([
-            'user_id' => Auth::user()->id,
-            'message' => $data['message'],
-        ]);
-        if ($result->isError()) {
-            return ServiceReturn::error($result->getMessage());
-        }
-        return ServiceReturn::success();
-    }
+        try {
+            DB::beginTransaction();
+            $user = Auth::user();
+            $payload = [
+                'user_id' => $user->id,
+                'content' => $data['message'] ?? null,
+                'status' => \App\Enums\DangerSupportStatus::PENDING,
+            ];
 
+            // 1. Logic location Default
+            if (isset($data['lat']) && isset($data['lng'])) {
+                $payload['latitude'] = $data['lat'];
+                $payload['longitude'] = $data['lng'];
+                if (isset($data['address'])) {
+                    $payload['address'] = $data['address'];
+                }
+            } else {
+                $primaryAddress = $user->primaryAddress;
+                if ($primaryAddress) {
+                    $payload['latitude'] = $primaryAddress->latitude;
+                    $payload['longitude'] = $primaryAddress->longitude;
+                    $payload['address'] = $primaryAddress->address;
+                }
+            }
+
+            $nearestBooking = $this->bookingRepository->query()
+                ->where('ktv_user_id', $user->id)
+                ->orWhere('user_id', $user->id)
+                ->where('status', BookingStatus::ONGOING)
+                ->orderBy('start_time', 'desc')
+                ->first();
+
+            if ($nearestBooking) {
+                $payload['booking_id'] = null;
+            }
+
+            $dangerSupport = $this->dangerSupportRepository->create($payload);
+
+            if ($dangerSupport) {
+                $this->notificationService->sendAdminNotification(NotificationAdminType::EMERGENCY_SUPPORT, [
+                    'danger_support_id' => $dangerSupport->id,
+                ]);
+                DB::commit();
+                return ServiceReturn::success();
+            }
+
+            return ServiceReturn::error(__('common_error.server_error'));
+        } catch (\Exception $e) {
+            DB::rollBack();
+            LogHelper::error('Lỗi UserService@handleSendDangerSupport', $e);
+            return ServiceReturn::error(__('common_error.server_error'));
+        }
+    }
 }

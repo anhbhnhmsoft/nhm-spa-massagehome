@@ -8,4 +8,10 @@ use Filament\Resources\Pages\ListRecords;
 class ListReviews extends ListRecords
 {
     protected static string $resource = ReviewResource::class;
+
+
+    public function getBreadcrumb(): string
+    {
+        return __('common.breadcrumb.list');
+    }
 }
