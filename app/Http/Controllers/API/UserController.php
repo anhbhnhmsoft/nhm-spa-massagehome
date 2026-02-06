@@ -12,6 +12,7 @@ use App\Http\Resources\User\AddressResource;
 use App\Http\Resources\User\ItemKTVResource;
 use App\Http\Resources\User\ListAddressResource;
 use App\Http\Resources\User\ListKTVResource;
+use App\Http\Resources\User\UserReviewApplicationResource;
 use App\Services\UserService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\JsonResponse;
@@ -21,7 +22,9 @@ class UserController extends BaseController
 {
     public function __construct(
         protected UserService $userService
-    ) {}
+    )
+    {
+    }
 
     /**
      * Lấy thông tin dashboard profile của user hiện tại
@@ -49,6 +52,13 @@ class UserController extends BaseController
     public function applyPartner(ApplyPartnerRequest $request): JsonResponse
     {
         $data = $request->validated();
+        LogHelper::action(
+            message: "Test action apply partner",
+            context: [
+                'data' => $data
+            ]
+        );
+        dd("test");
         $result = $this->userService->applyPartnerForCurrentUser($data);
 
         if ($result->isError()) {
@@ -76,9 +86,12 @@ class UserController extends BaseController
                 message: $result->getMessage(),
             );
         }
-
+        $reviewApplication = $result->getData();
         return $this->sendSuccess(
-            data: $result->getData(),
+            data: [
+                'can_apply' => !$reviewApplication,
+                'review_application' => $reviewApplication ? new UserReviewApplicationResource($reviewApplication) : null,
+            ],
             message: $result->getMessage() ?? __('common.success.data_created')
         );
     }
@@ -145,7 +158,6 @@ class UserController extends BaseController
             'latitude' => ['required', 'numeric', 'between:-90,90'],
             'longitude' => ['required', 'numeric', 'between:-180,180'],
             'desc' => ['nullable', 'string'],
-            'is_primary' => ['nullable', 'boolean'],
         ], [
             'address.required' => __('validation.location.address_required'),
             'address.string' => __('validation.location.address_string'),
@@ -156,7 +168,6 @@ class UserController extends BaseController
             'longitude.numeric' => __('validation.location.longitude_numeric'),
             'longitude.between' => __('validation.location.longitude_between'),
             'desc.string' => __('validation.location.desc_string'),
-            'is_primary.boolean' => __('validation.location.is_primary_boolean'),
         ]);
         $validate['user_id'] = $request->user()->id;
 
@@ -186,7 +197,6 @@ class UserController extends BaseController
             'latitude' => ['required', 'numeric', 'between:-90,90'],
             'longitude' => ['required', 'numeric', 'between:-180,180'],
             'desc' => ['nullable', 'string'],
-            'is_primary' => ['nullable', 'boolean'],
         ], [
             'address.required' => __('validation.location.address_required'),
             'address.string' => __('validation.location.address_string'),
@@ -197,7 +207,6 @@ class UserController extends BaseController
             'longitude.numeric' => __('validation.location.longitude_numeric'),
             'longitude.between' => __('validation.location.longitude_between'),
             'desc.string' => __('validation.location.desc_string'),
-            'is_primary.boolean' => __('validation.location.is_primary_boolean'),
         ]);
         $result = $this->userService->editAddress(id: $id, data: $validate);
         if ($result->isError()) {
@@ -210,6 +219,7 @@ class UserController extends BaseController
             data: new AddressResource($data)
         );
     }
+
     /**
      * Xóa địa chỉ
      * @param string $id
@@ -250,6 +260,43 @@ class UserController extends BaseController
         return $this->sendSuccess(
             data: ListAddressResource::collection($data)->response()->getData()
         );
+    }
+
+    /**
+     * Cập nhật địa chỉ mặc định
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function setDefaultAddress(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $validate = $request->validate([
+            'address' => ['required', 'string', 'max:500'],
+            'latitude' => ['required', 'numeric', 'between:-90,90'],
+            'longitude' => ['required', 'numeric', 'between:-180,180'],
+        ], [
+            'address.required' => __('validation.location.address_required'),
+            'address.string' => __('validation.location.address_string'),
+            'latitude.required' => __('validation.location.latitude_required'),
+            'latitude.numeric' => __('validation.location.latitude_numeric'),
+            'latitude.between' => __('validation.location.latitude_between'),
+            'longitude.required' => __('validation.location.longitude_required'),
+            'longitude.numeric' => __('validation.location.longitude_numeric'),
+            'longitude.between' => __('validation.location.longitude_between'),
+        ]);
+        $userId = Auth::id();
+
+        $result = $this->userService->setDefaultAddress(
+            userId: $userId,
+            latitude: $validate['latitude'],
+            longitude: $validate['longitude'],
+            address: $validate['address'],
+        );
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage(),
+            );
+        }
+        return $this->sendSuccess();
     }
 
 }

@@ -268,7 +268,7 @@ return [
     'file_apply_partner_uploads' => [
         'required' => '请上传至少 1 张图片。',
         'array' => '图片列表必须是数组。',
-        'invalid' => '图片格式无效，每张图片最大 10MB。',
+        'invalid' => '图片格式无效，每张图片最大 :max MB。',
         'invalid_type' => '无效的图片类型。',
         'invalid_type_for_role' => '此角色的图片类型无效。',
         'duplicate_type' => '某些图片重复。',
@@ -306,8 +306,6 @@ return [
     ],
     'nickname' => [
         'required_if' => '请输入显示名称。',
-        'nullable' => '显示名称必须是字符串。',
-        'string' => '显示名称必须是字符串。',
-        'max' => '显示名称太长（最多 255 个字符）。',
+        'invalid' => '显示名称必须是字符串，且至少 4 个字符，最多 255 个字符。',
     ],
 ];

@@ -16,6 +16,7 @@ return [
     "bank_not_found" => "Ngân hàng không tồn tại",
     "file_invalid" => "File không hợp lệ",
     "address_not_found" => "Địa chỉ không tồn tại",
+    "cant_delete_primary_address" => "Không thể xóa địa chỉ chính của người dùng",
     "notification_not_found" => "Thông báo không tồn tại",
     "need_identify_image" => "Cần có 1 ảnh căn cước mặt trước và 1 ảnh căn cước mặt sau.",
     "need_identify_image_display" => "Cần có 3 ảnh hiển thị.",

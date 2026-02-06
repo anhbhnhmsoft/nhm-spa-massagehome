@@ -556,12 +556,8 @@ class UserService extends BaseService
                 'user_id' => $user->id,
                 'referrer_id' => $data['referrer_id'] ?? null,
                 'status' => ReviewApplicationStatus::PENDING->value,
-                'province_code' => $data['province_code'],
                 'nickname' => $data['nickname'] ?? null,
-                'address' => $data['address'],
                 'experience' => $data['experience'] ?? 0,
-                'latitude' => $data['latitude'],
-                'longitude' => $data['longitude'],
                 'application_date' => now(),
                 'role' => $data['role'],
             ];
@@ -628,7 +624,6 @@ class UserService extends BaseService
             }
             DB::commit();
 
-
             return ServiceReturn::success(
                 data: $user->load('reviewApplication', 'files'),
                 message: __("common.success.data_created")
@@ -664,22 +659,11 @@ class UserService extends BaseService
     {
         $user = Auth::user();
         try {
-            $checkApply = $this->userReviewApplicationRepository->query()
+            $reviewApplication = $this->userReviewApplicationRepository->query()
                 ->where('user_id', $user->id)
                 ->first();
-            if (!$checkApply) {
-                return ServiceReturn::success(
-                    data: [
-                        'can_apply' => true,
-                    ]
-                );
-            }
             return ServiceReturn::success(
-                data: [
-                    'can_apply' => false,
-                    'apply_role' => $checkApply->role,
-                    'apply_status' => $checkApply->status,
-                ]
+                data: $reviewApplication
             );
         } catch (\Exception $exception) {
             LogHelper::error(
@@ -712,23 +696,15 @@ class UserService extends BaseService
                     message: __("common_error.address_exists")
                 );
             }
-            $isPrimary = $data['is_primary'] ?? false;
             $preparedData = [
                 'user_id' => $user->id,
                 'address' => $data['address'],
                 'latitude' => $data['latitude'],
                 'longitude' => $data['longitude'],
                 'desc' => $data['desc'] ?? '',
-                'is_primary' => $isPrimary
+                'is_primary' => false
             ];
             $userAddress = $this->userAddressRepository->create($preparedData);
-            // Nếu là địa chỉ chính thì cập nhật các địa chỉ khác thành không phải chính
-            if ($isPrimary) {
-                $this->userAddressRepository->query()
-                    ->where('user_id', $user->id)
-                    ->where('id', '<>', $userAddress->id)
-                    ->update(['is_primary' => false]);
-            }
             DB::commit();
             return ServiceReturn::success(
                 data: $userAddress,
@@ -759,27 +735,21 @@ class UserService extends BaseService
             $userAddress = $this->userAddressRepository->query()
                 ->where('id', $id)
                 ->where('user_id', $user->id)
+                ->where('is_primary', false)
                 ->first();
 
             if (!$userAddress) {
                 throw new ServiceException(__("error.address_not_found"));
             }
-            $isPrimary = $data['is_primary'] ?? $userAddress->is_primary;
             $preparedData = [
                 'address' => $data['address'] ?? $userAddress->address,
                 'latitude' => $data['latitude'] ?? $userAddress->latitude,
                 'longitude' => $data['longitude'] ?? $userAddress->longitude,
                 'desc' => $data['desc'] ?? $userAddress->desc,
-                'is_primary' => $isPrimary
             ];
+
             $userAddress->update($preparedData);
-            // Nếu là địa chỉ chính thì cập nhật các địa chỉ khác thành không phải chính
-            if ($isPrimary) {
-                $this->userAddressRepository->query()
-                    ->where('user_id', $user->id)
-                    ->where('id', '<>', $userAddress->id)
-                    ->update(['is_primary' => false]);
-            }
+
             return ServiceReturn::success(
                 data: $userAddress,
                 message: __("common.success.data_updated")
@@ -816,17 +786,9 @@ class UserService extends BaseService
             if (!$userAddress) {
                 throw new ServiceException(__("error.address_not_found"));
             }
-            // kiểm tra nếu địa chỉ xóa là chính thì set 1 địa chỉ khác thành chính
+            // Kiểm tra nếu địa chỉ xóa là chính thì không thể xóa
             if ($userAddress->is_primary) {
-                $anotherAddress = $this->userAddressRepository->query()
-                    ->where('user_id', $user->id)
-                    ->orderBy('created_at', 'desc')
-                    ->where('id', '<>', $userAddress->id)
-                    ->first();
-                if ($anotherAddress) {
-                    $anotherAddress->is_primary = true;
-                    $anotherAddress->save();
-                }
+                throw new ServiceException(__("error.cant_delete_primary_address"));
             }
             // Sau đó mới xóa địa chỉ
             $userAddress->delete();
@@ -834,7 +796,8 @@ class UserService extends BaseService
             return ServiceReturn::success(
                 message: __("common.success.data_deleted")
             );
-        } catch (ServiceException $exception) {
+        }
+        catch (ServiceException $exception) {
             DB::rollBack();
             return ServiceReturn::error(
                 message: $exception->getMessage()
@@ -847,6 +810,45 @@ class UserService extends BaseService
             );
             return ServiceReturn::error(
                 message: $exception->getMessage()
+            );
+        }
+    }
+
+    /**
+     * Set địa chỉ mặc định cho user (địa chỉ cập nhật location chính xác GPS)
+     * @param $userId
+     * @param float $latitude
+     * @param float $longitude
+     * @param string $address
+     * @return ServiceReturn
+     */
+    public function setDefaultAddress(
+        $userId,
+        float $latitude,
+        float $longitude,
+        string $address,
+    ): ServiceReturn
+    {
+        try {
+            $this->userAddressRepository->query()->updateOrCreate(
+                [
+                    'user_id' => $userId,
+                    'is_primary' => true,
+                ],
+                [
+                    'address' => $address,
+                    'latitude' => $latitude,
+                    'longitude' => $longitude,
+                ]
+            );
+            return ServiceReturn::success();
+        } catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi UserService@setDefaultAddress",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: __("common_error.server_error")
             );
         }
     }

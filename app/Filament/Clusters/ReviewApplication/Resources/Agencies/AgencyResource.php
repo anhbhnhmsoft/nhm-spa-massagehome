@@ -64,10 +64,7 @@ class AgencyResource extends Resource
             ->whereHas('reviewApplication', function (Builder $query) {
                 $query->whereIn('status', ReviewApplicationStatus::values());
                 $query->where('role', UserRole::AGENCY->value);
-            })
-            ->withoutGlobalScopes([
-                SoftDeletingScope::class,
-            ]);
+            });
         return $query;
     }
 

@@ -257,8 +257,6 @@ return
                 'end_time' => '结束时间',
                 'is_leader' => '组长',
                 'nickname' => '昵称',
-                'location_info' => '位置信息',
-                'location_info_desc' => '技师工作地点。请搜索或使用 Google 地图获取纬度和经度。',
             ],
             "actions" => [
                 "approve" => [
@@ -343,8 +341,6 @@ return
                 'bio_vi' => '企业介绍 (越南语)',
                 'bio_en' => '企业介绍 (英语)',
                 'bio_cn' => '企业介绍 (中文)',
-                'location_info' => '位置信息',
-                'location_info_desc' => '合作伙伴工作地点。请搜索或使用 Google 地图获取纬度和经度。',
                 'status' => '状态',
                 'note' => '备注',
                 'latitude' => '纬度',

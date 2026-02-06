@@ -10,6 +10,7 @@ use App\Enums\Language;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserFileType;
 use App\Enums\UserRole;
+use App\Filament\Components\CommonFields;
 use App\Models\Province;
 use App\Services\LocationService;
 use Filament\Forms\Components\DatePicker;
@@ -166,25 +167,7 @@ class KTVForm
                                 'max' => __('common.error.max_length', ['max' => 255]),
                             ]),
 
-                        Select::make('referrer_id')
-                            ->label(__('admin.ktv_apply.fields.agency'))
-                            ->relationship(
-                                name: 'referrer', // Tên function quan hệ trong Model
-                                titleAttribute: 'name', // Cột dùng để hiển thị và tìm kiếm
-                                modifyQueryUsing: function (Builder $query, $get) {
-                                    $currentId = $get('user_id') ?? null;
-                                    $query->whereIn('role', [UserRole::AGENCY->value, UserRole::KTV->value])
-                                        ->where('is_active', true);
-                                    if ($currentId) {
-                                        $query->where('id', '!=', $currentId);
-                                    }
-                                    return $query;
-                                }
-                            )
-                            ->searchable() // Filament sẽ tự động search theo titleAttribute (name)
-                            ->preload() // Load trước một ít dữ liệu để chọn nhanh
-                            ->disabled(fn($livewire) => $livewire instanceof ViewRecord)
-                            ->columnSpan(1),
+                        CommonFields::SelectReferrerIdForKTVAndAgency(),
 
                         TextInput::make('experience')
                             ->label(__('admin.ktv_apply.fields.experience'))
@@ -214,90 +197,6 @@ class KTVForm
                             ->columnSpanFull(),
                     ])
                     ->columns(2),
-
-                // Thông tin địa điểm
-                Section::make(__('admin.ktv_apply.fields.location_info'))
-                    ->description(__('admin.ktv_apply.fields.location_info_desc'))
-                    ->relationship('reviewApplication')
-                    ->aside()
-                    ->columnSpanFull()
-                    ->compact()
-                    ->schema([
-                        Select::make('province_code')
-                            ->label(__('admin.ktv_apply.fields.province'))
-                            ->searchable()
-                            ->required()
-                            ->validationMessages([
-                                'required' => __('common.error.required'),
-                            ])
-                            ->options(fn() => Province::all()->pluck('name', 'code'))
-                            ->disabled(fn($livewire) => $livewire instanceof ViewRecord)
-                            ->columnSpan(1),
-
-                        Select::make('search_location')
-                            ->label(__('admin.ktv_apply.fields.address_search'))
-                            ->searchable()
-                            ->live(debounce: 500)
-                            ->getSearchResultsUsing(function (string $search) {
-                                if (!$search) return [];
-                                $service = app(LocationService::class);
-                                $res = $service->autoComplete($search);
-                                if (!$res->isSuccess()) return [];
-                                return collect($res->getData())->pluck('formatted_address', 'place_id')->toArray();
-                            })
-                            ->getOptionLabelUsing(function ($value): ?string {
-                                if (!$value) return null;
-
-                                $service = app(LocationService::class);
-                                $res = $service->getDetail($value);
-
-                                return $res->isSuccess()
-                                    ? $res->getData()['formatted_address']
-                                    : (string) $value;
-                            })
-                            ->afterStateUpdated(function ($set, ?string $state) {
-                                if (!$state) return;
-                                $service = app(LocationService::class);
-                                $res = $service->getDetail($state);
-                                if ($res->isSuccess()) {
-                                    $data = $res->getData();
-                                    $set('address', $data['formatted_address']);
-                                    $set('latitude', $data['latitude']);
-                                    $set('longitude', $data['longitude']);
-                                }
-                            })
-                            ->dehydrated(false)
-                            ->columnSpanFull(),
-
-                        TextInput::make('latitude')
-                            ->label(__('admin.ktv_apply.fields.latitude') ?? 'Latitude')
-                            ->numeric()
-                            ->required()
-                            ->validationMessages([
-                                'required' => __('common.error.required'),
-                            ])
-                            ->rules(['nullable', 'numeric', 'between:-90,90'])
-                            ->columnSpan(1),
-
-                        TextInput::make('longitude')
-                            ->label(__('admin.ktv_apply.fields.longitude') ?? 'Longitude')
-                            ->numeric()
-                            ->required()
-                            ->validationMessages([
-                                'required' => __('common.error.required'),
-                            ])
-                            ->rules(['nullable', 'numeric', 'between:-180,180'])
-                            ->columnSpan(1),
-
-                        Textarea::make('address')
-                            ->label(__('admin.ktv_apply.fields.address'))
-                            ->columnSpanFull()
-                            ->required()
-                            ->validationMessages([
-                                'required' => __('common.error.required'),
-                            ])
-                            ->rows(2),
-                    ]),
 
                 // Lịch làm việc Kỹ thuật viên
                 Section::make(__('admin.ktv_apply.fields.schedule'))

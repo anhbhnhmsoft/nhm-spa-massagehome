@@ -90,11 +90,6 @@ final class Helper
         return in_array($language, [Language::VIETNAMESE->value, Language::ENGLISH->value, Language::CHINESE->value], true);
     }
 
-    public static function FileUrl(string $path): string
-    {
-        return route('file_url_render', ['path' => $path]);
-    }
-
     /**
      * Kiểm tra thiết bị có phải là thiết bị di động không.
      * @param string $userAgent
@@ -113,6 +108,16 @@ final class Helper
     public static function getPublicUrl(string $path): string
     {
         return Storage::disk('public')->url($path);
+    }
+
+    /**
+     * Lấy URL công khai cho tệp tin riêng tư. (có check quyền truy cập)
+     * @param string $id
+     * @return string
+     */
+    public static function getPrivateUrl(string $id): string
+    {
+        return route('file.user-file-private', ['id' => $id]);
     }
 
     /**

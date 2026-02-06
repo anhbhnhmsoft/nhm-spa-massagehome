@@ -7,7 +7,7 @@ use App\Enums\Jobs\WalletTransCase;
 use App\Enums\NotificationType;
 use App\Enums\WalletTransactionStatus;
 use App\Enums\WalletTransactionType;
-use App\Filament\Components\CommonColumns;
+use App\Filament\Components\CommonFields;
 use App\Jobs\SendNotificationJob;
 use App\Jobs\WalletTransactionJob;
 use App\Services\ConfigService;
@@ -33,7 +33,7 @@ class WalletTransactionsTable
             })
             ->defaultSort('created_at', 'desc')
             ->columns([
-                CommonColumns::IdColumn(),
+                CommonFields::IdColumn(),
 
                 TextColumn::make('wallet.user.name')
                     ->label(__('admin.transaction.fields.user'))

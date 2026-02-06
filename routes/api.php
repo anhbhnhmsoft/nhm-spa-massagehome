@@ -37,6 +37,8 @@ Route::middleware('set-api-locale')->group(function () {
             Route::post('register', [AuthController::class, 'register']);
         });
 
+        Route::get('config-application', [AuthController::class, 'configApplication']);
+
         // Auth middleware
         Route::middleware(['auth:sanctum'])->group(function () {
             // Lấy thông tin hồ sơ người dùng.
@@ -81,6 +83,12 @@ Route::middleware('set-api-locale')->group(function () {
          * save address
          */
         Route::post('save', [UserController::class, 'saveAddress']);
+
+        /**
+         * set default address
+         */
+        Route::post('set-default', [UserController::class, 'setDefaultAddress'])->middleware(['throttle:2,1']); // Giới hạn 2 lần trong 1 phút
+
         /**
          * edit address
          */
@@ -206,6 +214,9 @@ Route::middleware('set-api-locale')->group(function () {
 
     Route::prefix('file')->group(function () {
         Route::get('contract', [FileController::class, 'getContract']);
+        Route::get('user-file-private/{id}', [FileController::class, 'getPrivateFile'])
+            ->name('file.user-file-private')
+            ->where('id', '[0-9]+');
     });
 
     Route::prefix('notification')->middleware(['auth:sanctum'])->group(function () {

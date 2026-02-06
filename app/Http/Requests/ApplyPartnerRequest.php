@@ -22,13 +22,10 @@ class ApplyPartnerRequest extends FormRequest
                 UserRole::AGENCY->value,
                 UserRole::KTV->value,
             ])],
-            'nickname' => [Rule::requiredIf($this->role == UserRole::KTV->value), 'nullable', 'string', 'max:255'],
+            'nickname' => [Rule::requiredIf($this->role == UserRole::KTV->value), 'nullable', 'string', 'min:4', 'max:255'],
             'referrer_id' => ['nullable', 'numeric', 'exists:users,id'],
-            'province_code' => ['required', 'string', 'max:10'],
             'experience' => [Rule::requiredIf($this->role == UserRole::KTV->value), 'nullable', 'integer'],
-            'address' => ['required', 'string', 'max:255'],
-            'latitude' => ['required', 'numeric', 'between:-90,90'],
-            'longitude' => ['required', 'numeric', 'between:-180,180'],
+
             'is_leader' => ['nullable', 'boolean'],
 
             'bio' => ['required', 'array', function ($attribute, $value, $fail) {
@@ -43,7 +40,7 @@ class ApplyPartnerRequest extends FormRequest
                 foreach ($value as $file) {
                     // Kiểm tra type_upload và file
                     if (!isset($file['type_upload']) || !isset($file['file'])) {
-                        $fail(__('validation.file_apply_partner_uploads.invalid'));
+                        $fail(__('validation.file_apply_partner_uploads.invalid', ['max' => 20]));
                         return;
                     }
                     // Kiểm tra type_upload có hợp lệ không
@@ -66,7 +63,7 @@ class ApplyPartnerRequest extends FormRequest
                 'integer',
                 Rule::in(UserFileType::values()),
             ],
-            'file_uploads.*.file' => ['required', 'file', 'mimes:jpg,jpeg,png', 'max:10240'],
+            'file_uploads.*.file' => ['required', 'file', 'mimes:jpg,jpeg,png', 'max:20480'], // max 20MB
         ];
     }
 
@@ -79,31 +76,20 @@ class ApplyPartnerRequest extends FormRequest
             'referrer_id.numeric' => __('validation.referrer_id.numeric'),
             'referrer_id.exists' => __('validation.referrer_id.exists'),
             'nickname.required_if' => __('validation.nickname.required_if'),
-            'nickname.nullable' => __('validation.nickname.nullable'),
+            'nickname.nullable' => __('validation.nickname.invalid'),
             'nickname.string' => __('validation.nickname.invalid'),
+            'nickname.min' => __('validation.nickname.invalid'),
             'nickname.max' => __('validation.nickname.invalid'),
             'bio.required' => __('validation.bio.required'),
             'bio.array' => __('validation.bio.invalid'),
-            'province_code.required' => __('validation.province_code.required'),
-            'province_code.string' => __('validation.province_code.invalid'),
-            'province_code.max' => __('validation.province_code.invalid'),
-            'address.required' => __('validation.address.required'),
-            'address.string' => __('validation.address.invalid'),
-            'address.max' => __('validation.address.invalid'),
-            'latitude.required' => __('validation.lat.required'),
-            'latitude.numeric' => __('validation.lat.invalid'),
-            'latitude.between' => __('validation.lat.invalid'),
-            'longitude.required' => __('validation.lng.required'),
-            'longitude.numeric' => __('validation.lng.invalid'),
-            'longitude.between' => __('validation.lng.invalid'),
             'file_uploads.required' => __('validation.file_apply_partner_uploads.required'),
             'file_uploads.array' => __('validation.file_apply_partner_uploads.invalid'),
             'file_uploads.*.type_upload.required' => __('validation.file_apply_partner_uploads.invalid'),
             'file_uploads.*.type_upload.in' => __('validation.file_apply_partner_uploads.invalid_type'),
-            'file_uploads.*.file.required' => __('validation.file_apply_partner_uploads.invalid'),
-            'file_uploads.*.file.file' => __('validation.file_apply_partner_uploads.invalid'),
-            'file_uploads.*.file.mimes' => __('validation.file_apply_partner_uploads.invalid'),
-            'file_uploads.*.file.max' => __('validation.file_apply_partner_uploads.invalid'),
+            'file_uploads.*.file.required' => __('validation.file_apply_partner_uploads.invalid', ['max' => 20]),
+            'file_uploads.*.file.file' => __('validation.file_apply_partner_uploads.invalid', ['max' => 20]),
+            'file_uploads.*.file.mimes' => __('validation.file_apply_partner_uploads.invalid', ['max' => 20]),
+            'file_uploads.*.file.max' => __('validation.file_apply_partner_uploads.invalid', ['max' => 20]),
             'experience.required' => __('validation.experience.required'),
             'experience.integer' => __('validation.experience.integer'),
             'experience.min' => __('validation.experience.min'),

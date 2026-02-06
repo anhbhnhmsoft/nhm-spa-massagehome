@@ -268,7 +268,7 @@ return [
     'file_apply_partner_uploads' => [
         'required' => 'Please upload at least 1 image.',
         'array' => 'Image list must be an array.',
-        'invalid' => 'Invalid image format and max 10MB per image.',
+        'invalid' => 'Invalid image format and max :max MB per image.',
         'invalid_type' => 'Invalid image type.',
         'invalid_type_for_role' => 'Invalid image type for this role.',
         'duplicate_type' => 'Some images are duplicated.',
@@ -306,8 +306,6 @@ return [
     ],
     'nickname' => [
         'required_if' => 'Please enter display name.',
-        'nullable' => 'Display name must be a string.',
-        'string' => 'Display name must be a string.',
-        'max' => 'Display name too long (max 255 characters).',
+        'invalid' => 'Display name must be a string, at least 4 characters, and at most 255 characters.',
     ],
 ];

@@ -258,6 +258,19 @@ class AuthController extends BaseController
         return $this->sendSuccess();
     }
 
+    public function configApplication(): JsonResponse
+    {
+        $resService = $this->authService->configApplication();
+        if ($resService->isError()) {
+            return $this->sendError(
+                message: $resService->getMessage(),
+            );
+        }
+        return $this->sendSuccess(
+            data: $resService->getData(),
+        );
+    }
+
     /**
      * Cập nhật device cho user.
      * @return JsonResponse
