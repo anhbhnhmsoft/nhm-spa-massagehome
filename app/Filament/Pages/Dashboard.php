@@ -3,7 +3,6 @@
 namespace App\Filament\Pages;
 
 use App\Filament\Widgets\DangerSupportStats;
-use App\Filament\Widgets\DangerSupportTable;
 use App\Filament\Widgets\GeneralBookingStats;
 use App\Filament\Widgets\GeneralStats;
 use App\Filament\Widgets\TransactionChart;
@@ -32,7 +31,6 @@ class Dashboard extends PagesDashboard
     {
         return [
             DangerSupportStats::class,
-            DangerSupportTable::class,
             GeneralStats::class,
             GeneralBookingStats::class,
             UserStaticStats::class,

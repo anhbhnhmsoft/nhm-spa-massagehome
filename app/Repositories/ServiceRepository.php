@@ -29,9 +29,7 @@ class ServiceRepository extends BaseRepository
             ->withAvg('reviews', 'rating')
             ->withCount([
                 // Đếm số lượng booking đã hoàn thành
-                'bookings' => function ($query) {
-                    $query->where('status', BookingStatus::COMPLETED->value);
-                }
+                'bookings'
             ]);
     }
 

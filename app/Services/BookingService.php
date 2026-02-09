@@ -27,6 +27,7 @@ use App\Enums\WalletTransactionType;
 use App\Jobs\WalletTransactionBookingJob;
 use App\Models\ServiceBooking;
 use App\Repositories\ServiceOptionRepository;
+use App\Repositories\UserAddressRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\UserReviewApplicationRepository;
 use App\Repositories\WalletRepository;
@@ -52,6 +53,7 @@ class BookingService extends BaseService
         protected ConfigService $configService,
         protected WalletService $walletService,
         protected ReviewRepository $reviewRepository,
+        protected UserAddressRepository $addressRepository
     ) {
         parent::__construct();
     }
@@ -100,6 +102,92 @@ class BookingService extends BaseService
                     perPage: $dto->perPage,
                     currentPage: $dto->page
                 )
+            );
+        }
+    }
+
+    /**
+     * Lấy cac data cần thiết để booking
+     * @return ServiceReturn
+     */
+    public function prepareBooking(
+        $serviceId,
+        $optionId,
+    ): ServiceReturn
+    {
+        try {
+            $user = Auth::user();
+            $now = \Carbon\Carbon::now();
+            $endOfDay = $now->copy()->endOfDay();
+
+            // Kiểm tra dịch vụ có phù hợp để book dịch vụ không
+            $service = $this->checkServiceAllowBooking(
+                serviceId: $serviceId,
+            );
+            // kiểm tra option dịch vụ có tồn tại không và thuộc về dịch vụ này
+            $serviceOption = $this->checkOptionServiceAllowBooking(
+                categoryId: $service->category_id,
+                optionId: $optionId,
+            );
+            // Lấy config khoảng thời gian nghỉ giữa 2 buổi
+            $breakTimeGap = $this->configService->getConfigValue(ConfigName::BREAK_TIME_GAP);
+            // Lấy config giá di chuyển / km
+            $priceTransportation = $this->configService->getConfigValue(ConfigName::PRICE_TRANSPORTATION);
+
+            // Lấy danh sách lịch hẹn đang chờ, xác nhận, đang diễn ra
+            $bookings = $this->bookingRepository->query()
+                ->whereIn('status', [
+                    \App\Enums\BookingStatus::PENDING->value,
+                    \App\Enums\BookingStatus::CONFIRMED->value,
+                    \App\Enums\BookingStatus::ONGOING->value,
+                ])
+//                ->whereBetween('booking_time', [$now, $endOfDay])
+                ->orderBy('booking_time', 'desc')
+                ->get(["id", "booking_time"]);
+
+            $ktvAddress = $this->addressRepository
+                ->query()
+                ->where('user_id', $service->user_id)
+                ->where('is_primary', true)
+                ->first();
+
+            return ServiceReturn::success(
+                data: [
+                    'break_time_gap' => (int)$breakTimeGap,
+                    'price_transportation' => (float)$priceTransportation,
+                    'bookings' => $bookings->map(function ($booking) {
+                        return [
+                            'booking_time' => $booking->booking_time,
+                        ];
+                    }),
+                    'service' => [
+                        'name' => $service->name,
+                        'id' => $service->id,
+                    ],
+                    'option' => [
+                        'id' => $serviceOption->id,
+                        'price' => $serviceOption->price,
+                        'duration' => $serviceOption->duration,
+                    ],
+                    'location_ktv' => $ktvAddress ? [
+                        'latitude' => (float)$ktvAddress->latitude,
+                        'longitude' => (float)$ktvAddress->longitude,
+                        'address' => $ktvAddress->address,
+                    ] : null
+                ]
+            );
+        }catch (ServiceException $exception) {
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        }
+        catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi UserService@getTodayBookedCustomers",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: __("common_error.server_error")
             );
         }
     }
@@ -698,7 +786,7 @@ class BookingService extends BaseService
                     );
                 }
 
-                // tạo transaction 
+                // tạo transaction
                 $transaction  = $this->walletTransactionRepository->create([
                     'wallet_id' => $clientWallet->id,
                     'type' => WalletTransactionType::REFUND->value,

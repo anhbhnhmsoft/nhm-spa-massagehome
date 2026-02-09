@@ -38,7 +38,7 @@ return [
     'verify_referrer' => 'Mã xác thực người giới thiệu không hợp lệ',
     'referrer_not_found' => 'Người giới thiệu không tồn tại',
     'user_have_review_application' => 'Người dùng đã có đơn ứng tuyển review',
-    'user_have_review_application_rejected' => 'Bạn đã có đơn ứng tuyển review bị từ chối, không thể đăng ký lại làm đối tác được nữa',
+    'user_have_review_application_pending' => 'Bạn đã có đơn ứng tuyển review đang chờ duyệt, không thể đăng ký lại làm đối tác được nữa',
     'cannot_change_referrer' => 'Bạn đã có người giới thiệu, không thể thay đổi',
     'exchange_rate_not_found' => 'Tỉ lệ đổi tiền không tồn tại',
     'discount_rate_not_found' => 'Tỉ lệ chiết khấu không tồn tại',

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Core\Controller\BaseController;
 use App\Core\Controller\ListRequest;
 use App\Core\LogHelper;
+use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserRole;
 use App\Http\Requests\ApplyPartnerRequest;
 use App\Http\Requests\ListKTVRequest;
@@ -52,13 +53,6 @@ class UserController extends BaseController
     public function applyPartner(ApplyPartnerRequest $request): JsonResponse
     {
         $data = $request->validated();
-        LogHelper::action(
-            message: "Test action apply partner",
-            context: [
-                'data' => $data
-            ]
-        );
-        dd("test");
         $result = $this->userService->applyPartnerForCurrentUser($data);
 
         if ($result->isError()) {
@@ -86,11 +80,11 @@ class UserController extends BaseController
                 message: $result->getMessage(),
             );
         }
-        $reviewApplication = $result->getData();
+        $data = $result->getData();
         return $this->sendSuccess(
             data: [
-                'can_apply' => !$reviewApplication,
-                'review_application' => $reviewApplication ? new UserReviewApplicationResource($reviewApplication) : null,
+                'can_apply' => $data['check_apply'],
+                'review_application' => $data['review_application'] ? new UserReviewApplicationResource($data['review_application']) : null,
             ],
             message: $result->getMessage() ?? __('common.success.data_created')
         );
@@ -246,9 +240,8 @@ class UserController extends BaseController
         $dto = $request->getFilterOptions();
         $dto->setFilters([
             'user_id' => $request->user()->id,
+            'is_primary' => false
         ]);
-        $dto->setSortBy('is_primary');
-        $dto->setDirection('desc');
 
         $result = $this->userService->getPaginateAddress(dto: $dto);
         if ($result->isError()) {

@@ -303,4 +303,15 @@ final class Helper
 
         return $R * $c;
     }
+
+    /**
+     * Xóa các file tạm đã upload khi gặp lỗi.
+     * @param array{disk: string, path: string} $files
+     * @return void
+     */
+    public static function cleanupFiles(array $files) {
+        foreach ($files as $file) {
+            Storage::disk($file['disk'])->delete($file['path']);
+        }
+    }
 }

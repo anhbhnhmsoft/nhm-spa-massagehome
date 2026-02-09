@@ -18,6 +18,7 @@ class ListKTVResource extends JsonResource
         $profile = $this->profile;
         $reviewApplication = $this->reviewApplication;
         $workingSchedule = $this->schedule ?? null;
+        $primaryAddress = $this->primaryAddress ?? null;
         return [
             'id' => $this->id,
             'name' => $reviewApplication->nickname ?? $this->name,
@@ -36,11 +37,13 @@ class ListKTVResource extends JsonResource
                 'gender' => $profile->gender,
             ],
             'review_application' => [
-                'address' => $reviewApplication->address,
                 'experience' => $reviewApplication->experience,
-                'latitude' => (float) $reviewApplication->latitude,
-                'longitude' => (float) $reviewApplication->longitude,
                 'bio' => $reviewApplication->bio,
+            ],
+            'location' => [
+                'address' => $primaryAddress?->address ?? null,
+                'latitude' => (float) $primaryAddress?->latitude ?? null,
+                'longitude' => (float) $primaryAddress?->longitude ?? null,
             ],
             'schedule' => [
                 'is_working' => $workingSchedule?->is_working ?? false,

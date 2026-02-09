@@ -37,7 +37,7 @@ return [
     'verify_referrer' => '推荐人验证码无效',
     'referrer_not_found' => '推荐人不存在',
     'user_have_review_application' => '用户已有审核申请',
-    'user_have_review_application_rejected' => '您的审核申请已被拒绝，无法再次注册成为合作伙伴',
+    'user_have_review_application_pending' => '您的审核申请正在等待处理，无法再次注册成为合作伙伴',
     'cannot_change_referrer' => '您已有推荐人，无法更改',
     'exchange_rate_not_found' => '汇率不存在',
     'discount_rate_not_found' => '折扣率不存在',
