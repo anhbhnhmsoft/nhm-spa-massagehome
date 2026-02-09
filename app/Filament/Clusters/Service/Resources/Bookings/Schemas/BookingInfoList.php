@@ -3,11 +3,14 @@
 namespace App\Filament\Clusters\Service\Resources\Bookings\Schemas;
 
 use App\Enums\BookingStatus;
+use App\Enums\UserRole;
 use Filament\Actions\Action;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ViewEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Carbon;
+
 class BookingInfoList
 {
     public static function configure(Schema $schema): Schema
@@ -113,7 +116,24 @@ class BookingInfoList
                             ->icon('heroicon-m-exclamation-triangle')
                             ->placeholder(__('admin.common.empty')),
 
+                        TextEntry::make('cancel_by')
+                            ->hidden(fn($record) => $record->status !== BookingStatus::WAITING_CANCEL->value)
+                            ->label(__('admin.booking.fields.cancel_by'))
+                            ->formatStateUsing(fn($state) => UserRole::getLabel($state))
+                            ->badge()
+                            ->color('warning'),
                     ]),
+
+
+                // Dịch vụ thay thế (cho reassign)
+                Section::make(__('admin.booking.actions.reassign.heading'))
+                    ->hidden(fn($record) => $record->status !== BookingStatus::WAITING_CANCEL->value)
+                    ->schema([
+                        ViewEntry::make('similar_services')
+                            ->view('filament.clusters.service.bookings.similar_services_table_wrapper')
+                            ->hiddenLabel(),
+                    ])
+                    ->columnSpanFull(),
             ]);
     }
 }

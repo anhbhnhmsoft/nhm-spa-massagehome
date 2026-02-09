@@ -338,6 +338,96 @@ class TransactionJobService
     }
 
     /**
+     * Xử lý điều phối booking sang KTV khác
+     * @param int $bookingId
+     * @param int|null $newServiceId
+     * @param int|null $newKtvId
+     * @return ServiceReturn
+     * @throws Throwable
+     */
+    public function handleReassignBooking(
+        int $bookingId,
+        ?int $newServiceId,
+        ?int $newKtvId
+    ): ServiceReturn {
+        DB::beginTransaction();
+        try {
+            if (!$newServiceId || !$newKtvId) {
+                throw new ServiceException(__("error.invalid_data"));
+            }
+
+            // Tìm booking với lock để tránh race condition
+            $booking = $this->bookingService->getBookingRepository()->query()
+                ->where('id', $bookingId)
+                ->where('status', BookingStatus::WAITING_CANCEL->value)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$booking) {
+                throw new ServiceException(__("error.booking_not_found_or_invalid_status"));
+            }
+
+            // Lưu thông tin KTV cũ để gửi notification
+            $oldKtvId = $booking->ktv_user_id;
+
+            // Cập nhật booking sang KTV mới
+            $booking->service_id = $newServiceId;
+            $booking->ktv_user_id = $newKtvId;
+            $booking->status = BookingStatus::CONFIRMED->value;
+            $booking->reason_cancel = null; // Xóa lý do hủy
+            $booking->cancel_by = null;
+            $booking->save();
+
+            DB::commit();
+
+            // Gửi notification cho khách hàng
+            SendNotificationJob::dispatch(
+                userId: $booking->user_id,
+                type: NotificationType::BOOKING_REASSIGNED,
+                data: [
+                    'booking_id' => $booking->id,
+                ]
+            );
+
+            // Gửi notification cho KTV mới
+            SendNotificationJob::dispatch(
+                userId: $newKtvId,
+                type: NotificationType::NEW_BOOKING_REQUEST,
+                data: [
+                    'booking_id' => $booking->id,
+                    'customer_name' => $booking->user->name ?? '',
+                    'booking_time' => $booking->booking_time?->format('Y-m-d H:i:s'),
+                ]
+            );
+
+            // Gửi notification cho KTV cũ
+            if ($oldKtvId && $oldKtvId != $newKtvId) {
+                SendNotificationJob::dispatch(
+                    userId: $oldKtvId,
+                    type: NotificationType::BOOKING_CANCELLED,
+                    data: [
+                        'booking_id' => $booking->id,
+                        'reason' => __('booking.reassigned_to_other_ktv'),
+                    ]
+                );
+            }
+
+            return ServiceReturn::success(
+                message: __("booking.reassign_success")
+            );
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            LogHelper::error(
+                message: "Lỗi TransactionJobService@handleReassignBooking",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        }
+    }
+
+    /**
      * Xử lý Trả tiền thưởng cho người giới thiệu khi mời KTV thành công
      * @param  $referrerId - Id người giới thiệu
      * @param  $userId - Id nguời dc giới thiệu
