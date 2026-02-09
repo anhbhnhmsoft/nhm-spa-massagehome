@@ -2,14 +2,24 @@
 
 namespace App\Filament\Widgets;
 
+use App\Enums\DangerSupportStatus;
+use App\Filament\Resources\DangerSupports\DangerSupportResource;
+use App\Models\DangerSupport;
 use App\Services\DashboardService;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class DangerSupportStats extends BaseWidget
 {
-    protected int | string | array $columnSpan = 1;
+    protected int|string|array $columnSpan = 1;
     protected static ?int $sort = 0;
+
+    public static function canView(): bool
+    {
+        return DangerSupport::query()
+            ->where('status', DangerSupportStatus::PENDING->value)->exists();
+    }
+
     protected function getStats(): array
     {
         $dashboardService = app(DashboardService::class);
@@ -20,18 +30,16 @@ class DangerSupportStats extends BaseWidget
                 Stat::make('Error', 'Unable to load data')->color('danger'),
             ];
         }
-        $pendingCount = $result->getData()['pending_danger_supports'];
+        $pendingCount = $result->getData()['pending_danger_supports'] ?? 0;
 
-        if ($pendingCount === 0){
-            return [];
-        }
         return [
             Stat::make(__('dashboard.danger_support_stat.pending_danger_supports'), $pendingCount)
                 ->description($pendingCount > 0 ? __('dashboard.danger_support_stat.pending_danger_supports_desc') : __('dashboard.danger_support_stat.no_pending_danger_supports'))
                 ->descriptionIcon($pendingCount > 0 ? 'heroicon-m-exclamation-triangle' : 'heroicon-m-check-circle')
                 ->color($pendingCount > 0 ? 'danger' : 'success')
+                ->url(DangerSupportResource::getUrl('index'))
                 ->extraAttributes([
-                    'class' => 'cursor-pointer',
+                    'class' => 'cursor-pointer ring-2 ring-danger-500 animate-pulse', // Hiệu ứng nhấp nháy báo động
                 ]),
         ];
     }

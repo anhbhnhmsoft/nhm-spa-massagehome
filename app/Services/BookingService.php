@@ -1086,19 +1086,51 @@ class BookingService extends BaseService
             ConfigName::PRICE_TRANSPORTATION
         );
         // Tính chi phí di chuyển
-        $priceTransportation = $this->calculateTransportationCost(
+        $distance = $this->calculateTransportationCost(
             longitude: $longitude,
             latitude: $latitude,
             ktvId: $ktvId
-        ) * $pricePerKm;
+        );
 
         // cộng phí vào giá cuối cùng
-        $finalPrice = $price - $discountAmount + $priceTransportation;
+        $calculatePrice = $this->calculateBookingTotal(
+            servicePrice: $price,
+            distance: $distance,
+            pricePerKm: $pricePerKm,
+            discountAmount: $discountAmount
+        );
+
         return [
             'price_before_discount' => $price,
-            'price_transportation' => $priceTransportation,
-            'final_price' => $finalPrice,
+            'price_transportation' => $calculatePrice['transportation_fee'],
+            'final_price' => $calculatePrice['final_total'],
             'discount_amount' => $discountAmount
+        ];
+    }
+
+    /**
+     * Tính toán tổng giá trị của một booking bao gồm dịch vụ, phí di chuyển và giảm giá
+     * @param $servicePrice
+     * @param $distance
+     * @param $pricePerKm
+     * @param $discountAmount
+     */
+    private function calculateBookingTotal($servicePrice, $distance, $pricePerKm, $discountAmount = null)
+    {
+        // 1. Tính phí di chuyển (Làm tròn lên 500)
+        $rawTransportFee = $pricePerKm * $distance;
+        $transportationFee = ceil($rawTransportFee / 500) * 500;
+
+        // 2. Tính giá tạm tính (Subtotal)
+        $tempTotalPrice = $servicePrice + $transportationFee;
+
+
+        // 4. Tính giá cuối cùng (Đảm bảo không âm và làm tròn 500)
+        $finalPrice = max(0, $tempTotalPrice - $discountAmount);
+
+        return [
+            'transportation_fee' => $transportationFee,
+            'final_total' => ceil($finalPrice / 500) * 500, // Làm tròn cuối cùng
         ];
     }
 
@@ -1123,19 +1155,19 @@ class BookingService extends BaseService
             );
         }
 
-        $apply = $ktv->reviewApplication;
-        if (!$apply) {
+        $location = $ktv->primaryAddress;
+        if (!$location) {
             throw new ServiceException(
-                message: __("booking.ktv.not_found_profile")
+                message: __("booking.service.not_found_location")
             );
         }
 
-        $ktvLongitude = $apply->longitude;
-        $ktvLatitude = $apply->latitude;
+        $ktvLongitude = $location->longitude;
+        $ktvLatitude = $location->latitude;
 
         if (!$ktvLongitude || !$ktvLatitude) {
             throw new ServiceException(
-                message: __("booking.ktv.not_found_location")
+                message: __("booking.service.not_found_location")
             );
         }
 

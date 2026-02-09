@@ -1370,7 +1370,7 @@ class UserService extends BaseService
             $user = Auth::user();
             $payload = [
                 'user_id' => $user->id,
-                'content' => $data['message'] ?? null,
+                'content' => $data['message'] ?? "",
                 'status' => \App\Enums\DangerSupportStatus::PENDING,
             ];
 
@@ -1403,15 +1403,14 @@ class UserService extends BaseService
 
             $dangerSupport = $this->dangerSupportRepository->create($payload);
 
-            if ($dangerSupport) {
-                $this->notificationService->sendAdminNotification(NotificationAdminType::EMERGENCY_SUPPORT, [
-                    'danger_support_id' => $dangerSupport->id,
-                ]);
-                DB::commit();
-                return ServiceReturn::success();
-            }
+            $this->notificationService->sendAdminNotification(NotificationAdminType::EMERGENCY_SUPPORT, [
+                'danger_support_id' => $dangerSupport->id,
+            ]);
 
-            return ServiceReturn::error(__('common_error.server_error'));
+            DB::commit();
+
+            return ServiceReturn::success();
+
         } catch (\Exception $e) {
             DB::rollBack();
             LogHelper::error('Lỗi UserService@handleSendDangerSupport', $e);

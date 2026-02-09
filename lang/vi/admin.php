@@ -231,6 +231,7 @@ return
         ],
         "ktv" => [
             "label" => "Kĩ thuật viên",
+            'label_leader' => 'Trưởng nhóm KTV',
             'relation_manager' => [
                 'reviews_received' => 'Đánh giá',
             ],

@@ -158,6 +158,7 @@ return
         ],
         "ktv" => [
             "label" => "技师管理",
+            "label_leader" => "技师组长管理",
             "model_label" => "技师",
             "action" => [
                 "view_services" => "查看服务"

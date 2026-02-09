@@ -158,6 +158,7 @@ return
         ],
         "ktv" => [
             "label" => "KTV Management",
+            "label_leader" => "Technician Leader Management",
             "model_label" => "Technician",
             "action" => [
                 "view_services" => "View Services"

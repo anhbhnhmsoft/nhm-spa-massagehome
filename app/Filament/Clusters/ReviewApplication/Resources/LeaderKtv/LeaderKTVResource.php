@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Filament\Clusters\ReviewApplication\Resources\KTVs;
+namespace App\Filament\Clusters\ReviewApplication\Resources\LeaderKtv;
 
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserRole;
-use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Pages\ViewKTV;
-use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Schemas\KTVInfolist;
-use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Tables\KTVsTable;
-use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Pages\ListKTVs;
-use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Schemas\KTVForm;
-use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Pages\EditKTV;
+use App\Filament\Clusters\ReviewApplication\Resources\LeaderKtv\Pages\ViewLeaderKTV;
+use App\Filament\Clusters\ReviewApplication\Resources\LeaderKtv\Schemas\LeaderKTVInfolist;
+use App\Filament\Clusters\ReviewApplication\Resources\LeaderKtv\Tables\LeaderKTVsTable;
+use App\Filament\Clusters\ReviewApplication\Resources\LeaderKtv\Pages\ListLeaderKTV;
+use App\Filament\Clusters\ReviewApplication\Resources\LeaderKtv\Schemas\LeaderKTVForm;
+use App\Filament\Clusters\ReviewApplication\Resources\LeaderKtv\Pages\EditLeaderKTV;
 use App\Models\User;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -17,9 +17,8 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class KTVResource extends Resource
+class LeaderKTVResource extends Resource
 {
     protected static ?string $model = User::class;
 
@@ -34,17 +33,17 @@ class KTVResource extends Resource
 
     public static function form(Schema $schema): Schema
     {
-        return KTVForm::configure($schema);
+        return LeaderKTVForm::configure($schema);
     }
 
     public static function table(Table $table): Table
     {
-        return KTVsTable::configure($table);
+        return LeaderKTVsTable::configure($table);
     }
 
     public static function infolist(Schema $schema): Schema
     {
-        return KTVInfolist::configure($schema);
+        return LeaderKTVInfolist::configure($schema);
     }
 
     public static function getEloquentQuery(): Builder
@@ -56,19 +55,19 @@ class KTVResource extends Resource
             ->whereHas('reviewApplication', function (Builder $query) {
                 $query->whereIn('status', ReviewApplicationStatus::values());
                 $query->where('role', UserRole::KTV->value);
-                $query->where('is_leader', false);
+                $query->where('is_leader', true);
             });
         return $query;
     }
 
     public static function getNavigationLabel(): string
     {
-        return __('admin.ktv.label');
+        return __('admin.ktv.label_leader');
     }
 
     public static function getModelLabel(): string
     {
-        return __('admin.ktv.model_label');
+        return __('admin.ktv.label_leader');
     }
 
     public static function getRelations(): array
@@ -80,9 +79,9 @@ class KTVResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => ListKTVs::route('/'),
-            'edit' => EditKTV::route('/{record}/edit'),
-            'view' => ViewKTV::route('/{record}'),
+            'index' => ListLeaderKTV::route('/'),
+            'edit' => EditLeaderKTV::route('/{record}/edit'),
+            'view' => ViewLeaderKTV::route('/{record}'),
         ];
     }
 

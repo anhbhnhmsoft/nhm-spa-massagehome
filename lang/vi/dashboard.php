@@ -66,7 +66,7 @@ return [
         'empty_title' => 'Không có yêu cầu trợ giúp khẩn cấp',
         'created_at' => 'Thời gian',
         'user' => 'Người dùng cần hỗ trợ',
-        'address' => 'Địa chỉ',
+        'address' => 'Vị trí cần hỗ trợ',
         'booking' => 'Đơn hàng',
         'content' => 'Lý do / Nội dung',
         'booking_start_time' => 'Lịch đặt gần nhất',

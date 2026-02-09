@@ -1,53 +1,22 @@
 <?php
 
-namespace App\Filament\Widgets;
+namespace App\Filament\Resources\DangerSupports\Tables;
 
 use App\Enums\DangerSupportStatus;
 use App\Filament\Clusters\Service\Resources\Bookings\BookingResource;
 use App\Models\DangerSupport;
-use App\Services\DashboardService;
 use Filament\Actions\Action;
-use Filament\Tables\Table;
-use Filament\Widgets\StatsOverviewWidget\Stat;
-use Filament\Widgets\TableWidget as BaseWidget;
 use Filament\Notifications\Notification;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 
-class DangerSupportTable extends BaseWidget
+class DangerSupportsTable
 {
-    protected int | string | array $columnSpan = 5;
-    public static function title(): string
-    {
-        return __('dashboard.danger_support_table.title');
-    }
-
-    public static function canView(): bool
-    {
-        $dashboardService = app(DashboardService::class);
-        $result = $dashboardService->getDangerSupportStats();
-
-        if (!$result->isSuccess()) {
-            return false;
-        }
-        $pendingCount = $result->getData()['pending_danger_supports'];
-
-        if ($pendingCount === 0){
-           return false;
-        }
-        return true;
-    }
-
-
-    protected static ?int $sort = 1;
-
-    public function table(Table $table): Table
+    public static function configure(Table $table): Table
     {
         return $table
-            ->heading(__('dashboard.danger_support_table.title'))
-            ->emptyStateHeading(__('dashboard.danger_support_table.empty_title'))
-            ->query(
-                DangerSupport::query()->latest()
-            )
+            ->defaultSort('created_at', 'desc')
             ->columns([
                 TextColumn::make('created_at')
                     ->label(__('dashboard.danger_support_table.created_at'))
@@ -57,30 +26,29 @@ class DangerSupportTable extends BaseWidget
                     ->label(__('dashboard.danger_support_table.user'))
                     ->description(fn(DangerSupport $record) => $record->user->phone)
                     ->searchable(),
-                TextColumn::make('address')
+                TextColumn::make('latitude')
                     ->label(__('dashboard.danger_support_table.address'))
+                    ->formatStateUsing(function () {
+                        return __('dashboard.danger_support_table.view_on_map');
+                    })
+                    ->icon(Heroicon::MapPin)
                     ->url(fn(DangerSupport $record) => "https://www.google.com/maps/search/?api=1&query={$record->latitude},{$record->longitude}")
-                    ->openUrlInNewTab()
-                    ->icon('heroicon-m-map-pin'),
-                TextColumn::make('content')
-                    ->label(__('dashboard.danger_support_table.content'))
-                    ->wrap()
-                    ->searchable(),
+                    ->openUrlInNewTab(),
                 TextColumn::make('booking.id')
                     ->label(__('dashboard.danger_support_table.booking'))
                     ->searchable()
-                    ->url(fn(DangerSupport $record) => $record->booking_id ? BookingResource::getUrl('view', ['record' => $record->booking_id]) : '#')
+                    ->url(fn(DangerSupport $record) => $record->booking_id ? BookingResource::getUrl('view', ['record' => $record->booking_id]) : null)
                     ->openUrlInNewTab()
+                    ->placeholder(__('dashboard.danger_support_table.no_booking'))
                     ->badge(),
-                TextColumn::make('booking.start_time')
-                    ->label(__('dashboard.danger_support_table.booking_start_time'))
-                    ->dateTime()
-                    ->placeholder(__('dashboard.danger_support_table.no_booking')),
                 TextColumn::make('status')
                     ->label(__('dashboard.danger_support_table.status'))
                     ->formatStateUsing(fn($record) => $record->status->getLabel())
                     ->badge()
                     ->color(fn($record) => $record->status->getColor()),
+            ])
+            ->filters([
+                //
             ])
             ->recordActions([
                 Action::make('confirm')
@@ -100,7 +68,6 @@ class DangerSupportTable extends BaseWidget
                     })
                     ->modalSubmitActionLabel(__('common.action.confirm'))
                     ->modalCancelActionLabel(__('common.action.cancel')),
-            ])
-            ->poll('5m');
+            ]);
     }
 }
