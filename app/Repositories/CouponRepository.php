@@ -41,19 +41,7 @@ class CouponRepository extends BaseRepository
             // Lọc theo thời gian hiệu lực
             $query->where('start_at', '<=', $now)
                 ->where('end_at', '>=', $now)
-                ->where(function ($q) {
-                    $q->whereNull('usage_limit')
-                        ->orWhereColumn('used_count', '<', 'usage_limit');
-                });
-            // Lọc theo thời gian sử dụng (nếu có)
-            $query->where(function ($q) use ($currentTime) {
-                $q->whereRaw("(config->'allowed_time_slots') IS NULL")
-                    ->orWhereRaw("jsonb_array_length(config->'allowed_time_slots') = 0")
-                    ->orWhereRaw("EXISTS (
-                SELECT 1 FROM jsonb_array_elements(config->'allowed_time_slots') AS slot
-                WHERE ? >= (slot->>'start') AND ? <= (slot->>'end')
-            )", [$currentTime, $currentTime]);
-            });
+                ->whereColumn('used_count', '<', 'usage_limit');
         }
 
         // Lọc theo Dịch vụ (Logic: Lấy mã của dịch vụ này HOẶC mã toàn sàn)
@@ -98,11 +86,5 @@ class CouponRepository extends BaseRepository
         $column = $sortBy ?? 'created_at';
         $query->orderBy($column, $direction);
         return $query;
-    }
-    public function incrementDailyCollectCountAtomic( $couponId): void
-    {
-        DB::table($this->model->getTable())
-            ->where('id', $couponId)
-            ->increment('config->daily_collect_count');
     }
 }

@@ -75,7 +75,7 @@ class CouponForm
                                     ->required()
                                     ->numeric()
                                     ->validationMessages([
-                                        'required' => __("common.error.required"),
+                                        'required' => __("com0mon.error.required"),
                                         'numeric' => __("common.error.numeric"),
                                     ]),
                                 TextInput::make('max_discount')
@@ -90,10 +90,17 @@ class CouponForm
                                     ->label(__('admin.coupon.fields.usage_limit'))
                                     ->required()
                                     ->numeric()
+                                    ->live()
                                     ->validationMessages([
                                         'required' => __("common.error.required"),
                                         'numeric' => __("common.error.numeric"),
                                     ]),
+                                TextInput::make('count_collect')
+                                    ->label(__('admin.coupon.fields.count_collect'))
+                                    ->required()
+                                    ->numeric()
+                                    ->default(0)
+                                    ->disabled(true),
                                 TextInput::make('used_count')
                                     ->label(__('admin.coupon.fields.used_count'))
                                     ->required()
@@ -141,65 +148,6 @@ class CouponForm
                                     ->columnSpanFull(),
                             ])
                             ->columns(2)
-                            ->columnSpanFull(),
-                        Section::make(__('admin.coupon.fields.config.label'))
-                            ->schema([
-                                Grid::make(4)
-                                    ->schema([
-                                        TextInput::make('config.per_day_global')
-                                            ->label(__('admin.coupon.fields.config.per_day_global'))
-                                            ->required()
-                                            ->numeric()
-                                            ->minValue(0)
-                                            ->validationMessages([
-                                                'required' => __("common.error.required"),
-                                                'numeric' => __("common.error.numeric"),
-                                            ]),
-
-                                        TextInput::make('config.min_order_value')
-                                            ->label(__('admin.coupon.fields.config.min_order_value'))
-                                            ->required()
-                                            ->numeric()
-                                            ->minValue(0)
-                                            ->suffix(__('common.unit.vnd'))
-                                            ->validationMessages([
-                                                'required' => __("common.error.required"),
-                                                'numeric' => __("common.error.numeric"),
-                                            ]),
-
-                                        KeyValue::make('config.daily_collected')
-                                            ->label(__('admin.coupon.fields.config.used_day'))
-                                            ->keyLabel(__('admin.common.date'))
-                                            ->valueLabel(__('admin.common.count'))
-                                            ->disabled(), // Quản trị viên chỉ xem, hệ thống tự cập nhật,
-                                        KeyValue::make('config.daily_used')
-                                            ->label(__('admin.coupon.fields.config.collected_day'))
-                                            ->keyLabel(__('admin.common.date'))
-                                            ->valueLabel(__('admin.common.count'))
-                                            ->disabled(), // Quản trị viên chỉ xem, hệ thống tự cập nhật
-                                    ]),
-
-                                Repeater::make('config.allowed_time_slots')
-                                    ->label(__('admin.coupon.fields.config.allowed_time_slots'))
-                                    ->schema([
-                                        TimePicker::make('start')
-                                            ->label(__('admin.common.from'))
-                                            ->required()
-                                            ->seconds(false),
-                                        TimePicker::make('end')
-                                            ->label(__('admin.common.to'))
-                                            ->required()
-                                            ->seconds(false)
-                                            ->after('start'), // Validation: thời gian kết thúc phải sau thời gian bắt đầu
-                                    ])
-                                    ->columns(2)
-                                    ->default([])
-                                    ->addActionLabel(__('admin.coupon.fields.config.add_time_slot'))
-                                    ->itemLabel(fn(array $state): ?string => ($state['start'] ?? '??') . ' - ' . ($state['end'] ?? '??'))
-                                    ->collapsible()
-                                    ->grid(2)
-                                    ->helperText(__('admin.coupon.fields.config.time_slots_helper')),
-                            ])
                             ->columnSpanFull(),
                     ])
                     ->columns(2)

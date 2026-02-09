@@ -44,7 +44,7 @@ return [
     'invalid_phone_number' => '无效的电话号码',
     'unable_to_get_access_token_zalo' => '暂时无法连接到 Zalo，请稍后重试',
     'user_blocked' => '此电话号码已被封锁，无法发送 OTP',
-    'not_zalo_user' => '电话号码不是 Zalo 用户',
+    'not_zalo_user' => '电话号码不是 Zalo 用户',    
     'zalo_service_unavailable' => '此电话号码未注册 Zalo 服务',
     'invalid_data' => '无效数据',
     'could_not_send_otp' => '无法发送 OTP，请稍后重试',
@@ -59,4 +59,9 @@ return [
     'unvalid_phonenumber' => '无效的电话号码',
     'unable_to_get_access_token' => '无法连接到 Zalo',
     'couldnot_send_otp' => '无法连接到 Zalo 发送 OTP',
+    'coupon_collect_limit_reached' => '此优惠券已达到最大收集限制',
+    'coupon_expired' => '优惠券已过期',
+    'coupon_not_active' => '优惠券未激活',
+    'coupon_usage_limit_reached' => '优惠券使用限制已达上限',
+    'coupon_usage_limit_reached_or_daily_full' => '优惠券已达使用上限或今日已满',
 ];

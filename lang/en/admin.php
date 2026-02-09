@@ -26,6 +26,7 @@ return
             'date' => 'Date',
             'count' => 'Count',
             'affiliate_qr' => 'Affiliate QR',
+            'count_collect' => 'Limit Collect',
             'wallet' => 'Wallet',
             'balance' => 'Balance',
             'total_deposit' => 'Total Deposit',
@@ -749,6 +750,7 @@ return
                 'usage_limit' => 'Usage Limit',
                 'used_count' => 'Used Count',
                 'is_active' => 'Status',
+                'count_collect' => 'Limit Collect',
                 'display_ads' => 'Display Ads',
                 'banners' => [
                     'label' => 'Banner',

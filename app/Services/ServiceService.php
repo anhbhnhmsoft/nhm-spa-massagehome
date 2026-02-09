@@ -234,15 +234,10 @@ class ServiceService extends BaseService
             $query = $this->couponRepository->filterQuery($query, $dto->filters);
             $query = $this->couponRepository->sortQuery($query, $dto->sortBy, $dto->direction);
             $coupons = $query->get();
-            // 3. Lọc lượt nhặt trong ngày (Daily Limit)
-            $validCoupons = $coupons->filter(function ($coupon) {
-                // Nếu CHƯA sở hữu: Kiểm tra xem hôm nay còn lượt nhặt không
-                $valid = $this->couponService->validateCollectCoupon($coupon);
-                return $valid->isSuccess();
-            });
+
 
             return ServiceReturn::success(
-                data: $validCoupons->values()
+                data: $coupons
             );
         } catch (\Exception $exception) {
             LogHelper::error("Lỗi ServiceService@getListCoupon", $exception);

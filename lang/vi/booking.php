@@ -52,7 +52,7 @@ return [
         'max_discount_exceeded' => 'Mã giảm giá vượt quá giá trị giảm tối đa',
         'used_successfully' => 'Mã giảm giá đã được áp dụng',
         'not_allowed_time' => 'Mã giảm giá không áp dụng trong thời gian này',
-        'usage_limit_reached_or_daily_full' => 'Mã giảm giá đã đạt đến giới hạn sử dụng hoặc đã hết lượt sử dụng trong ngày',
+        'usage_limit_reached_or_daily_full' => 'Mã giảm giá đã đạt đến giới hạn sử dụng',
     ],
     'payment' => [
         'wallet_customer' => 'Thanh toán đặt dịch vụ bằng ví',

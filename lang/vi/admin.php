@@ -745,6 +745,7 @@ return
                 'max_uses' => 'Số lần sử dụng',
                 'is_percentage' => 'Loại giảm giá',
                 'description' => 'Mô tả',
+                'count_collect' => 'Giới hạn thu thập',
                 'discount_value' => 'Giá trị giảm ( điểm/ %)',
                 'max_discount' => 'Số điểm tối đa',
                 'usage_limit' => 'Số lần áp dụng tối đa',

@@ -59,4 +59,9 @@ return [
     'unvalid_phonenumber' => 'Invalid phone number',
     'unable_to_get_access_token' => 'Unable to connect to Zalo',
     'couldnot_send_otp' => 'Could not connect to Zalo to send OTP',
+    'coupon_collect_limit_reached' => 'This coupon has reached the maximum collection limit',
+    'coupon_expired' => 'Coupon expired',
+    'coupon_not_active' => 'Coupon not active',
+    'coupon_usage_limit_reached' => 'Coupon usage limit reached',
+    'coupon_usage_limit_reached_or_daily_full' => 'Coupon usage limit reached or daily limit full',
 ];

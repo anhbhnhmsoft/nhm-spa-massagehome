@@ -15,7 +15,6 @@ use App\Enums\UserRole;
 use App\Repositories\AffiliateConfigRepository;
 use App\Repositories\ConfigRepository;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 
 class ConfigService extends BaseService
 {

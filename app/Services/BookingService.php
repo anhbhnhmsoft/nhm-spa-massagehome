@@ -318,6 +318,10 @@ class BookingService extends BaseService
             );
         } catch (ServiceException $exception) {
             DB::rollBack();
+            LogHelper::error(
+                message: "Lỗi ServiceService@bookService",
+                ex: $exception
+            );
             return ServiceReturn::error(
                 message: $exception->getMessage()
             );

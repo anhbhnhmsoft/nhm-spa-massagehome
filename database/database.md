@@ -399,6 +399,7 @@
     - timestamps
     - unique (code, created_by) -- mã giảm giá phải là duy nhất cho từng người dùng
     - config (jsonb, nullable) -- cấu hình điều kiện sử dụng
+    - count_collect (bigint, default 0) -- số lần thu thập
 # coupon_used
     #note
     - Bảng coupon_used lưu trữ thông tin mã giảm giá đã được sử dụng.

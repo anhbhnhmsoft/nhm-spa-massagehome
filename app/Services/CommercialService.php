@@ -10,7 +10,9 @@ use App\Enums\BannerType;
 use App\Repositories\BannerRepository;
 use App\Repositories\CouponRepository;
 use App\Repositories\StaticContractRepository;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\DB;
 
 class CommercialService extends BaseService
 {
@@ -61,7 +63,7 @@ class CommercialService extends BaseService
                 ->where('display_ads', true)
                 ->whereNotNull('banners->' . $language);
 
-            $coupons = $this->couponRepository->filterQuery($query, ['is_valid' => true])->get();
+            $coupons = $this->couponRepository->filterQuery($query, ['is_valid' => true, 'user_id_is_not_used' => true])->get();
             return ServiceReturn::success(
                 data: $coupons
             );
@@ -83,60 +85,89 @@ class CommercialService extends BaseService
      */
     public function collectCoupon(int $couponId): ServiceReturn
     {
-        try {
-            $user = auth('sanctum')->user();
-            if (!$user) {
-                return ServiceReturn::success(
-                   data: [
-                       'need_login' => true,
-                    ]
-                );
-            }
-            // Lấy coupon
-            $coupon = $this->couponRepository
-                ->filterQuery($this->couponRepository->queryCoupon(), ['is_valid' => true])
-                ->where('id', $couponId)
-                ->first();
-            if (!$coupon) {
-                throw new ServiceException(__("error.coupon_not_found"));
-            }
-            // Kiểm tra xem User đã có Coupon này chưa
-            $alreadyHas = $user->collectionCoupons()->where('coupon_id', $coupon->id)->exists();
-            if ($alreadyHas) {
-                return ServiceReturn::success(
-                    data: [
-                        'already_collected' => true,
-                    ]
-                );
-            }
-            // Kiểm tra tính hợp lệ của Coupon khi thu thập
-            $validateResult = $this->couponService->validateCollectCoupon($coupon);
-            if ($validateResult->isError()) {
-                throw new ServiceException($validateResult->getMessage());
-            }
-            // Tăng số lần thu thập Coupon
-            $isIncremented = $this->couponService->incrementCollectCount($coupon->id);
-            if ($isIncremented->isError()) {
-                throw new ServiceException(__('validation.coupon.collect_error', ['code' => $coupon->code]));
-            }
-            // Ghi vào "ví" người dùng
-            $user->collectionCoupons()->syncWithoutDetaching([
-                $coupon->id => ['is_used' => false],
-            ]);
-            return ServiceReturn::success();
-        }catch (ServiceException $exception) {
-            return ServiceReturn::error(
-                message: $exception->getMessage()
+        /**
+         * @var \App\Models\User $user
+         */
+        $user = auth('sanctum')->user();
+        if (!$user) {
+            return ServiceReturn::success(
+                data: [
+                    'need_login' => true,
+                ]
             );
         }
-        catch (\Exception $exception) {
-            LogHelper::error(
-                message: "Lỗi CommercialService@collectCoupon",
-                ex: $exception,
-            );
-            return ServiceReturn::error(
-                message: __("common_error.server_error")
-            );
-        }
+
+        // Sử dụng transaction để đảm bảo tính atomic
+        return DB::transaction(function () use ($couponId, $user) {
+            try {
+                // Lấy coupon với lockForUpdate để ngăn race condition
+                $coupon = $this->couponRepository
+                    ->filterQuery($this->couponRepository->queryCoupon(), ['is_valid' => true])
+                    ->where('id', $couponId)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$coupon) {
+                    throw new ServiceException(__("error.coupon_not_found"));
+                }
+
+                // Re-validate: Kiểm tra lại coupon còn hiệu lực sau khi lock
+                $now = Carbon::now();
+                if (!$coupon->is_active) {
+                    throw new ServiceException(__("error.coupon_not_active"));
+                }
+                if ($now->isBefore(Carbon::parse($coupon->start_at))) {
+                    throw new ServiceException(__("error.coupon_not_yet_started"));
+                }
+                if ($now->isAfter(Carbon::parse($coupon->end_at))) {
+                    throw new ServiceException(__("error.coupon_expired"));
+                }
+                // Kiểm tra giới hạn thu thập (nếu có trong config)
+                $config = $coupon->config ?? [];
+                $collectLimit = $config['collect_limit'] ?? null;
+                if ($collectLimit !== null && $coupon->count_collect >= $collectLimit) {
+                    throw new ServiceException(__("error.coupon_collect_limit_reached"));
+                }
+
+                // Kiểm tra xem User đã có Coupon này chưa (với lock)
+                $alreadyHas = $user->collectionCoupons()
+                    ->where('coupon_id', $coupon->id)
+                    ->lockForUpdate()
+                    ->exists();
+
+                if ($alreadyHas) {
+                    return ServiceReturn::success(
+                        data: [
+                            'already_collected' => true,
+                        ]
+                    );
+                }
+
+                // Tăng số lần thu thập Coupon
+                $isIncremented = $this->couponService->incrementCollectCount($coupon->id);
+                if ($isIncremented->isError()) {
+                    throw new ServiceException(__('validation.coupon.collect_error', ['code' => $coupon->code]));
+                }
+
+                // Ghi vào "ví" người dùng
+                $user->collectionCoupons()->syncWithoutDetaching([
+                    $coupon->id => ['is_used' => false],
+                ]);
+                $user->save();
+                return ServiceReturn::success();
+            } catch (ServiceException $exception) {
+                return ServiceReturn::error(
+                    message: $exception->getMessage()
+                );
+            } catch (\Exception $exception) {
+                LogHelper::error(
+                    message: "Lỗi CommercialService@collectCoupon",
+                    ex: $exception,
+                );
+                return ServiceReturn::error(
+                    message: __("common_error.server_error")
+                );
+            }
+        });
     }
 }
