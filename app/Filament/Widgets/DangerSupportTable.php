@@ -55,7 +55,7 @@ class DangerSupportTable extends BaseWidget
                     ->badge(),
                 TextColumn::make('booking.start_time')
                     ->label(__('dashboard.danger_support_table.booking_start_time'))
-                    ->dateTime()    
+                    ->dateTime()
                     ->placeholder(__('dashboard.danger_support_table.no_booking')),
                 TextColumn::make('status')
                     ->label(__('dashboard.danger_support_table.status'))
@@ -78,7 +78,9 @@ class DangerSupportTable extends BaseWidget
                             ->title(__('dashboard.danger_support_table.confirm_success'))
                             ->success()
                             ->send();
-                    }),
+                    })
+                    ->modalSubmitActionLabel(__('common.action.confirm'))
+                    ->modalCancelActionLabel(__('common.action.cancel')),
             ])
             ->poll('10s');
     }

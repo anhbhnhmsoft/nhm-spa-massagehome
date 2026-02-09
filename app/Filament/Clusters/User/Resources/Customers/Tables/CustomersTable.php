@@ -50,7 +50,6 @@ class CustomersTable
                         ->label(__('admin.common.affiliate_qr'))
                         ->icon('heroicon-o-qr-code')
                         ->modalHeading(__('admin.common.affiliate_qr'))
-                        ->modalSubmitAction(false) // Ẩn nút Submit vì chỉ để xem
                         ->modalWidth('sm')
                         ->schema([
                             TextEntry::make('qr_code_placeholder')
@@ -67,7 +66,16 @@ class CustomersTable
                                         </div>
                                     ");
                                 })
-                        ]),
+                        ])
+                        ->modalCancelActionLabel(__('common.action.cancel'))
+                        ->modalSubmitAction(false)
+                        ->modalFooterActions(function ($action) {
+                            return [
+                                $action->getModalCancelAction()
+                                    ->label(__('common.action.close'))
+                                    ->color('danger'),
+                            ];
+                        }),
                     DeleteAction::make()
                         ->label(__('admin.common.action.delete'))
                         ->tooltip(__('admin.common.tooltip.delete'))
@@ -78,8 +86,7 @@ class CustomersTable
                         ->modalSubmitActionLabel(__('admin.common.action.confirm_delete'))
                 ]),
             ])
-            ->filters([
-            ])
+            ->filters([])
             ->poll('5m');
     }
 }

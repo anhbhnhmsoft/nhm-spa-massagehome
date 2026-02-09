@@ -23,6 +23,8 @@ return
             'week' => '周',
             'month' => '月',
             'year' => '年',
+            'date' => '日期',
+            'count' => '数量',
             'affiliate_qr' => '推广二维码',
             'wallet' => '钱包',
             'balance' => '余额',

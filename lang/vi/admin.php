@@ -24,6 +24,8 @@ return
             'week' => 'tuần',
             'month' => 'tháng',
             'year' => 'năm',
+            'date' => 'Ngày',
+            'count' => 'Số lượng',
             'affiliate_qr' => 'QR code giới thiệu',
             'wallet' => 'Ví tiền',
             'balance' => 'Số dư',

@@ -60,8 +60,17 @@ class CategoriesTable
                     ViewAction::make()
                         ->label(__('admin.common.action.view'))
                         ->tooltip(__('admin.common.tooltip.view'))
-                        ->icon('heroicon-o-eye'),
-
+                        ->modalCancelActionLabel(__('common.action.cancel'))
+                        ->icon('heroicon-o-eye')
+                        ->modalHeading(__('common.modal.view_title'))
+                        ->modalSubmitAction(false)
+                        ->modalFooterActions(function ($action) {
+                            return [
+                                $action->getModalCancelAction()
+                                    ->label(__('common.action.close'))
+                                    ->color('danger'),
+                            ];
+                        }),
                     EditAction::make()
                         ->label(__('admin.common.action.edit'))
                         ->tooltip(__('admin.common.tooltip.edit'))
@@ -75,6 +84,7 @@ class CategoriesTable
                         ->modalHeading(__('admin.common.modal.delete_title'))
                         ->modalDescription(__('admin.common.modal.delete_confirm'))
                         ->modalSubmitActionLabel(__('admin.common.action.confirm_delete'))
+                        ->modalCancelActionLabel(__('common.action.cancel'))
                 ]),
             ])
             ->filters([

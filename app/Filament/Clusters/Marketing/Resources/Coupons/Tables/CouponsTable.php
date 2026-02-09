@@ -56,8 +56,17 @@ class CouponsTable
             ->recordActions([
                 ActionGroup::make([
                     ViewAction::make()
-                        ->label(__('admin.common.action.view'))
-                        ->tooltip(__('admin.common.tooltip.view'))
+                        ->label(__('common.modal.view_title'))
+                        ->tooltip(__('common.modal.view_title'))
+                        ->modalHeading(__('common.modal.view_title'))
+                        ->modalSubmitAction(false)
+                        ->modalFooterActions(function ($action) {
+                            return [
+                                $action->getModalCancelAction()
+                                    ->label(__('common.action.close'))
+                                    ->color('danger'),
+                            ];
+                        })
                         ->icon('heroicon-o-eye'),
 
                     EditAction::make()

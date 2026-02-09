@@ -81,13 +81,14 @@ class ListMobileNotifications extends ListRecords
                                 ]),
                             Select::make('receiver')
                                 ->label(__('admin.mobile_notification.receiver.label'))
+                                ->placeholder(__('common.placeholder.type'))
                                 ->options(fn() => RecieverNotification::toOptions())
                                 ->required(),
                         ])
                 ])
                 ->action(function ($data) {
                     $service = app(NotificationService::class);
-                    $receiver = RecieverNotification::from($data['receiver']);  
+                    $receiver = RecieverNotification::from($data['receiver']);
                     $service->sendGlobalNotification($data, $receiver);
                 }),
         ];

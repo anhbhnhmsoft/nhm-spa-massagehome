@@ -43,11 +43,19 @@ return [
         'save' => 'Save',
         'delete' => 'Delete',
         'view' => 'View',
+        'close' => 'Close',
+        'confirm' => 'Confirm',
     ],
     'breadcrumb' => [
         'list' => 'List',
         'create' => 'Create',
         'edit' => 'Edit',
         'view' => 'View',
-    ]
+    ],
+    "placeholder" => [
+        'type' => 'Type',
+    ],
+    'modal' => [
+        'view_title' => 'View',
+    ],
 ];

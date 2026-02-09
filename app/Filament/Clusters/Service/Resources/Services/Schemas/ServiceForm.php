@@ -49,6 +49,7 @@ class ServiceForm
 
                                 Select::make('category_id')
                                     ->label(__('admin.service.fields.category'))
+                                    ->placeholder(__('common.placeholder.type'))
                                     ->relationship(
                                         name: 'category',
                                         titleAttribute: 'name',
@@ -67,6 +68,8 @@ class ServiceForm
                                     ]),
                                 Select::make('user_id')
                                     ->label(__('admin.service.fields.provider'))
+                                    ->placeholder(__('common.placeholder.type'))
+                                    ->placeholder(__('common.placeholder.type'))
                                     ->relationship(
                                         name: 'provider',
                                         titleAttribute: 'name',
@@ -95,7 +98,7 @@ class ServiceForm
                         Section::make()
                             ->schema([
                                 CheckboxList::make('optionCategoryPrices') // Tên này PHẢI khớp với tên hàm relation trong Model Service
-                                ->label(__('admin.service.fields.option_category_prices'))
+                                    ->label(__('admin.service.fields.option_category_prices'))
                                     ->relationship(
                                         name: 'optionCategoryPrices',
                                         titleAttribute: 'id' // Chúng ta sẽ override hiển thị bằng hàm options() bên dưới

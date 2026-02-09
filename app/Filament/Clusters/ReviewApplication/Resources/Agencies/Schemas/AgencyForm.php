@@ -112,6 +112,7 @@ class AgencyForm
                                     ->label(__('admin.common.table.gender'))
                                     ->options(Gender::toOptions())
                                     ->required()
+                                    ->placeholder(__('common.placeholder.type'))
                                     ->validationMessages([
                                         'required' => __('common.error.required'),
                                     ]),
@@ -178,6 +179,7 @@ class AgencyForm
                             ->label(__('admin.agency_apply.fields.province'))
                             ->searchable()
                             ->required()
+                            ->placeholder(__('common.placeholder.type'))
                             ->validationMessages([
                                 'required' => __('common.error.required'),
                             ])
@@ -189,6 +191,7 @@ class AgencyForm
                             ->label(__('admin.agency_apply.fields.address_search'))
                             ->searchable()
                             ->live(debounce: 500)
+                            ->placeholder(__('common.placeholder.type'))
                             ->getSearchResultsUsing(function (string $search) {
                                 if (!$search) return [];
                                 $service = app(LocationService::class);

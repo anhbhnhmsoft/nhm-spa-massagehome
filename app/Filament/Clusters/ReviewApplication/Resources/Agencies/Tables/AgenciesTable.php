@@ -84,6 +84,7 @@ class AgenciesTable
                         ->modalHeading(__('admin.common.affiliate_qr'))
                         ->modalSubmitAction(false) // Ẩn nút Submit vì chỉ để xem
                         ->modalWidth('sm')
+                        ->modalCancelActionLabel(__('common.action.close'))
                         ->schema([
                             TextEntry::make('qr_code_placeholder')
                                 ->hiddenLabel()
