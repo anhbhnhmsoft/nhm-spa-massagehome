@@ -87,8 +87,6 @@ class KTVResource extends Resource
 
     public static function getRecordRouteBindingEloquentQuery(): Builder
     {
-        return User::query()->withoutGlobalScopes([
-            SoftDeletingScope::class,
-        ]);
+        return User::query();
     }
 }

@@ -5,8 +5,10 @@ namespace App\Filament\Widgets;
 use App\Enums\DangerSupportStatus;
 use App\Filament\Clusters\Service\Resources\Bookings\BookingResource;
 use App\Models\DangerSupport;
+use App\Services\DashboardService;
 use Filament\Actions\Action;
 use Filament\Tables\Table;
+use Filament\Widgets\StatsOverviewWidget\Stat;
 use Filament\Widgets\TableWidget as BaseWidget;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
@@ -18,6 +20,23 @@ class DangerSupportTable extends BaseWidget
     {
         return __('dashboard.danger_support_table.title');
     }
+
+    public static function canView(): bool
+    {
+        $dashboardService = app(DashboardService::class);
+        $result = $dashboardService->getDangerSupportStats();
+
+        if (!$result->isSuccess()) {
+            return false;
+        }
+        $pendingCount = $result->getData()['pending_danger_supports'];
+
+        if ($pendingCount === 0){
+           return false;
+        }
+        return true;
+    }
+
 
     protected static ?int $sort = 1;
 
@@ -82,6 +101,6 @@ class DangerSupportTable extends BaseWidget
                     ->modalSubmitActionLabel(__('common.action.confirm'))
                     ->modalCancelActionLabel(__('common.action.cancel')),
             ])
-            ->poll('10s');
+            ->poll('5m');
     }
 }

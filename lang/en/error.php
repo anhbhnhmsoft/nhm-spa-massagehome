@@ -37,7 +37,7 @@ return [
     'verify_referrer' => 'Invalid referrer verification code',
     'referrer_not_found' => 'Referrer not found',
     'user_have_review_application' => 'User already has a review application',
-    'user_have_review_application_rejected' => 'You have a rejected review application, cannot register as a partner again',
+    'user_have_review_application_pending' => 'You have a pending review application, cannot register as a partner again',
     'cannot_change_referrer' => 'You already have a referrer, cannot change',
     'exchange_rate_not_found' => 'Exchange rate not found',
     'discount_rate_not_found' => 'Discount rate not found',

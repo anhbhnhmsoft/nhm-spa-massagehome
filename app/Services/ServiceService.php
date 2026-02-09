@@ -30,14 +30,15 @@ use Illuminate\Support\Facades\Storage;
 class ServiceService extends BaseService
 {
     public function __construct(
-        protected ServiceRepository  $serviceRepository,
-        protected CategoryRepository $categoryRepository,
-        protected CouponRepository   $couponRepository,
-        protected BookingRepository  $bookingRepository,
-        protected CouponUserRepository $couponUserRepository,
-        protected CouponService $couponService,
+        protected ServiceRepository       $serviceRepository,
+        protected CategoryRepository      $categoryRepository,
+        protected CouponRepository        $couponRepository,
+        protected BookingRepository       $bookingRepository,
+        protected CouponUserRepository    $couponUserRepository,
+        protected CouponService           $couponService,
         protected CategoryPriceRepository $categoryPriceRepository,
-    ) {
+    )
+    {
         parent::__construct();
     }
 
@@ -104,36 +105,34 @@ class ServiceService extends BaseService
         }
     }
 
-        /**
-         * Lấy giá của từng category
-         * @param int $id - id của category
-         * @return ServiceReturn
-         */
-        public function getCategoryPrice(int $id): ServiceReturn
-        {
-            try {
-                $categories = $this->categoryPriceRepository->query()
-                    ->where('category_id', $id)->get();
-                if (!$categories) {
-                    throw new ServiceException(
-                        message: __("error.category_not_found")
-                    );
-                }
-                return ServiceReturn::success(
-                    data: $categories
-                );
-            } catch (\Exception $exception) {
-                LogHelper::error(
-                    message: "Lỗi ServiceService@getCategoryPrice",
-                    ex: $exception
-                );
-                return ServiceReturn::error(
-                    message: __("common_error.server_error")
+    /**
+     * Lấy giá của từng category
+     * @param int $id - id của category
+     * @return ServiceReturn
+     */
+    public function getCategoryPrice(int $id): ServiceReturn
+    {
+        try {
+            $categories = $this->categoryPriceRepository->query()
+                ->where('category_id', $id)->get();
+            if (!$categories) {
+                throw new ServiceException(
+                    message: __("error.category_not_found")
                 );
             }
+            return ServiceReturn::success(
+                data: $categories
+            );
+        } catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi ServiceService@getCategoryPrice",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: __("common_error.server_error")
+            );
         }
-
-
+    }
 
     /**
      * Lấy danh sách dịch vụ
@@ -192,13 +191,13 @@ class ServiceService extends BaseService
                 );
             }
             // Kiểm tra dịch vụ có hoạt động không
-            if ($user->role === UserRole::KTV->value){
+            if ($user->role === UserRole::KTV->value) {
                 if ($service->user_id !== $user->id) {
                     throw new ServiceException(
                         message: __("error.service_not_found")
                     );
                 }
-            }else{
+            } else {
                 if (!$service->is_active) {
                     throw new ServiceException(
                         message: __("error.service_not_active")
@@ -281,47 +280,6 @@ class ServiceService extends BaseService
             );
         }
     }
-
-    /**
-     * Lấy danh sách khách hàng đã đặt lịch trong ngày hôm nay
-     * @param string $ktvUserId
-     * @return ServiceReturn
-     */
-    public function getTodayBookedCustomers(
-        string $ktvUserId
-    ): ServiceReturn {
-        try {
-            $now = \Carbon\Carbon::now();
-            $startOfDay = $now->copy()->startOfDay();
-            $endOfDay   = $now->copy()->endOfDay();
-
-            $customers = $this->bookingRepository->query()
-                ->with([
-                    'user.profile',
-                ])
-                ->whereIn('status', [
-                    \App\Enums\BookingStatus::CONFIRMED->value,
-                    \App\Enums\BookingStatus::ONGOING->value,
-                    \App\Enums\BookingStatus::COMPLETED->value,
-                ])
-                ->whereBetween('booking_time', [$startOfDay, $endOfDay])
-                ->orderBy('booking_time', 'asc')
-                ->get();
-
-            return ServiceReturn::success(
-                data: $customers
-            );
-        } catch (\Exception $exception) {
-            LogHelper::error(
-                message: "Lỗi UserService@getTodayBookedCustomers",
-                ex: $exception
-            );
-            return ServiceReturn::error(
-                message: __("common_error.server_error")
-            );
-        }
-    }
-
 
     /**
      * Tạo dịch vụ mới
@@ -437,7 +395,7 @@ class ServiceService extends BaseService
             $service->update($data);
 
 //            // Xóa các option cũ và tạo mới (bỏ qua bước này - theo nghiệp vụ mới)
-              // Nghiệp vụ mới ko cần option giá mà lấy trực tiếp từ category_price
+            // Nghiệp vụ mới ko cần option giá mà lấy trực tiếp từ category_price
 //            if (isset($data['options'])) {
 //                $optionQuery = $service->options();
 //                $optionQuery->delete();

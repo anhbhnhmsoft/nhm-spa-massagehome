@@ -37,6 +37,8 @@ Route::middleware('set-api-locale')->group(function () {
             Route::post('register', [AuthController::class, 'register']);
         });
 
+        Route::get('config-application', [AuthController::class, 'configApplication']);
+
         // Auth middleware
         Route::middleware(['auth:sanctum'])->group(function () {
             // Lấy thông tin hồ sơ người dùng.
@@ -81,6 +83,12 @@ Route::middleware('set-api-locale')->group(function () {
          * save address
          */
         Route::post('save', [UserController::class, 'saveAddress']);
+
+        /**
+         * set default address
+         */
+        Route::post('set-default', [UserController::class, 'setDefaultAddress'])->middleware(['throttle:2,1']); // Giới hạn 2 lần trong 1 phút
+
         /**
          * edit address
          */
@@ -133,11 +141,15 @@ Route::middleware('set-api-locale')->group(function () {
             Route::get('list', [ServiceController::class, 'listServices']);
             // Lấy thông tin chi tiết dịch vụ
             Route::get('detail/{id}', [ServiceController::class, 'detailService'])->where('id', '[0-9]+');
+
+            // Chuẩn bị prepare-booking
+            Route::post('prepare-booking', [ServiceController::class, 'prepareBooking'])
+                ->middleware(['check-role:customer']); // Chỉ cho phép Customer chuẩn bị prepare-booking
+
             // Đặt lịch dịch vụ
             Route::post('booking', [ServiceController::class, 'booking'])
                 ->middleware(['check-role:customer']); // Chỉ cho phép Customer đặt lịch
-            // Lấy danh sách lịch đã đặt hôm nay
-            Route::get('today-booked/{id}', [ServiceController::class, 'getTodayBookedCustomers'])->where('id', '[0-9]+');
+
             // Lấy danh sách mã giảm giá
             Route::get('list-coupon', [ServiceController::class, 'listCoupon']);
             // Lấy danh sách mã giảm giá của người dùng
@@ -206,6 +218,9 @@ Route::middleware('set-api-locale')->group(function () {
 
     Route::prefix('file')->group(function () {
         Route::get('contract', [FileController::class, 'getContract']);
+        Route::get('user-file-private/{id}', [FileController::class, 'getPrivateFile'])
+            ->name('file.user-file-private')
+            ->where('id', '[0-9]+');
     });
 
     Route::prefix('notification')->middleware(['auth:sanctum'])->group(function () {

@@ -47,7 +47,7 @@ class UserRepository extends BaseRepository
             ->whereHas('reviewApplication', function ($q) {
                 $q->where('status', ReviewApplicationStatus::APPROVED->value);
             })
-            ->with(['profile', 'reviewApplication', 'services','schedule']);
+            ->with(['profile', 'reviewApplication', 'services','schedule','primaryAddress']);
 
         // Tính Trung bình Rating và Đếm Reviews
         $query->leftJoinSub(
@@ -68,7 +68,6 @@ class UserRepository extends BaseRepository
         $query->leftJoinSub(
             ServiceBooking::selectRaw('services.user_id, COUNT(service_bookings.id) as jobs_received_count')
                 ->join('services', 'services.id', '=', 'service_bookings.service_id')
-                ->where('service_bookings.status', BookingStatus::COMPLETED->value)
                 ->groupBy('services.user_id'),
             'job_stats',
             'job_stats.user_id',
@@ -137,32 +136,27 @@ class UserRepository extends BaseRepository
             $targetLng = (float) $filters['lng'];
             $earthRadiusKm = 6371; // Bán kính Trái Đất tính bằng Km
 
-            // Thêm kiểm tra Join để tránh trùng lặp
-            $query->when(
-                !$query->getQuery()->joins || collect($query->getQuery()->joins)->pluck('table')->search('user_review_application') === false,
-                fn ($q) => $q->leftJoin(
-                    'user_review_application',
-                    'users.id',
-                    '=',
-                    'user_review_application.user_id'
-                )
-            );
+            // LeftJoin lấy cả người không có địa chỉ (distance sẽ là NULL)
+            $query->leftJoin('user_address', function($join) {
+                $join->on('users.id', '=', 'user_address.user_id')
+                    ->where('user_address.is_primary', true);
+            });
 
-            // 2. Định nghĩa công thức tính khoảng cách (Distance)
+            // Định nghĩa công thức tính khoảng cách (Distance)
             $distanceSelect = sprintf("
-            (%s * acos(
-                cos(radians(%s)) * cos(radians(user_review_application.latitude)) * cos(radians(user_review_application.longitude) - radians(%s))
-                + sin(radians(%s)) * sin(radians(user_review_application.latitude))
-            )) AS distance
-        ", $earthRadiusKm, $targetLat, $targetLng, $targetLat);
+                (ST_DistanceSphere(
+                    ST_MakePoint(user_address.longitude::float, user_address.latitude::float),
+                    ST_MakePoint(%f, %f)
+                ) / 1000) AS distance
+            ", $targetLng, $targetLat);
 
-            // 3. Thêm cột 'distance' vào kết quả trả về
-            // CHÚ Ý: Phải select các cột chính của users.* để tránh bị trùng tên
+            // Select dữ liệu
+            // Quan trọng: Phải select users.* để không bị mất dữ liệu user sau khi join
+            $query->addSelect('users.*');
             $query->selectRaw($distanceSelect);
 
-            // 4. Sắp xếp theo cột 'distance' vừa tính được
-            // Những User không có latitude/longitude sẽ có distance là NULL và bị đẩy xuống cuối.
-            $query->orderBy('distance', 'asc');
+            // 4. Sắp xếp theo khoảng cách
+            $query->orderByRaw('distance ASC NULLS LAST');
         }
 
         return $query;

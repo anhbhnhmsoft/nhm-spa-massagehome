@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Core\LogHelper;
+use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
 use App\Enums\DirectFile;
 use App\Enums\UserFileType;
@@ -53,33 +54,6 @@ class UserFileService
         } catch (\Throwable $th) {
             LogHelper::error('UserFileService@syncUserFile: ' . $th->getMessage(), $th);
             DB::rollBack();
-            return ServiceReturn::error($th->getMessage(), $th);
-        }
-    }
-
-    /**
-     * Create user file.
-     *
-     * @param string $userId
-     * @param UserFileType $type
-     * @param string $filePath
-     * @param UserRole $role
-     * @return ServiceReturn
-     */
-    public function createUserFile(string $userId, UserFileType $type, string $filePath, UserRole $role): ServiceReturn
-    {
-        try {
-            $this->userFileRepository->create([
-                'user_id' => $userId,
-                'type' => $type,
-                'file_path' => $filePath,
-                'role' => $role,
-                'is_public' => $type === UserFileType::KTV_IMAGE_DISPLAY,
-            ]);
-
-            return ServiceReturn::success();
-        } catch (\Throwable $th) {
-            LogHelper::error('UserFileService@createUserFile: ' . $th->getMessage(), $th);
             return ServiceReturn::error($th->getMessage(), $th);
         }
     }
@@ -153,6 +127,44 @@ class UserFileService
         } catch (\Throwable $th) {
             DB::rollBack();
             LogHelper::error('UserFileService@uploadKtvImages: ' . $th->getMessage(), $th);
+            return ServiceReturn::error($th->getMessage(), $th);
+        }
+    }
+
+
+    /**
+     * Get private file.
+     *
+     * @param string $id
+     * @return ServiceReturn
+     */
+    public function getPrivatePath(string $id, $userId)
+    {
+        try {
+            /** @var \App\Models\UserFile $file */
+            $file = $this->userFileRepository
+                ->query()
+                ->where('id', $id)
+                ->where('user_id', $userId)
+                ->where('is_public', false)
+                ->first();
+
+            if (!$file) {
+                throw new ServiceException(__('common_error.data_not_found'));
+            }
+
+            // Xác định đường dẫn tệp tin
+            $path = $file->file_path;
+
+            // Kiểm tra tệp tin có tồn tại không
+            if (!Storage::disk('private')->exists($path)) {
+                return ServiceReturn::error(__('common.error.not_found'));
+            }
+
+            // Trả về tệp tin
+            return ServiceReturn::success(data: $path);
+        } catch (\Throwable $th) {
+            LogHelper::error('UserFileService@getPrivateFile: ' . $th->getMessage(), $th);
             return ServiceReturn::error($th->getMessage(), $th);
         }
     }

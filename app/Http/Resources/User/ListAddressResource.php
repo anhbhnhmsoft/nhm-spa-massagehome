@@ -20,7 +20,6 @@ class ListAddressResource extends JsonResource
             'latitude' => $this->latitude,
             'longitude' => $this->longitude,
             'desc' => (string) $this->desc,
-            'is_primary' => $this->is_primary,
         ];
     }
 }

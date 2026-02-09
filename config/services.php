@@ -59,4 +59,9 @@ return [
         'momo' => env('MOMOPAY_ENABLE', false),
         'wechatpay' => env('WECHATPAY_ENABLE', false),
     ],
+    'application_mobile' => [
+        'ios_version' => env('IOS_VERSION', '1.0.0'),
+        'android_version' => env('ANDROID_VERSION', '1.0.0'),
+        'maintenance' => env('APP_MAINTENANCE', false),
+    ]
 ];

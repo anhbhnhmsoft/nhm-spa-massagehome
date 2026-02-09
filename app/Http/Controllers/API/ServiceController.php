@@ -127,8 +127,26 @@ class ServiceController extends BaseController
     }
 
 
+    public function prepareBooking(Request $request)
+    {
+        $request->validate([
+            'service_id' => ['required', 'numeric', 'exists:services,id'],
+            'option_id' => ['required', 'numeric', 'exists:category_prices,id'],
+        ]);
 
-    // cần queue transactions-payment để ghi nhận giao dịch
+        $result = $this->bookingService->prepareBooking(
+            serviceId: $request->input('service_id'),
+            optionId: $request->input('option_id'),
+        );
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage()
+            );
+        }
+        return $this->sendSuccess(
+            data: $result->getData()
+        );
+    }
 
     /**
      * Đặt lịch hẹn dịch vụ
@@ -191,27 +209,6 @@ class ServiceController extends BaseController
         }
         return $this->sendSuccess(
             data: $resultService->getData()
-        );
-    }
-
-    /**
-     * Lấy danh sách khách hàng đã đặt lịch trong ngày hôm nay
-     * với status COMPLETED hoặc ONGOING
-     * @return JsonResponse
-     */
-    public function getTodayBookedCustomers(string $id): JsonResponse
-    {
-        $result = $this->serviceService->getTodayBookedCustomers($id);
-
-        if ($result->isError()) {
-            return $this->sendError(
-                message: $result->getMessage()
-            );
-        }
-
-        $data = $result->getData();
-        return $this->sendSuccess(
-            data: CustomerBookedTodayResource::collection($data)
         );
     }
 }

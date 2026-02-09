@@ -9,7 +9,7 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 class DangerSupportStats extends BaseWidget
 {
     protected int | string | array $columnSpan = 1;
-    protected static ?int $sort = 0; 
+    protected static ?int $sort = 0;
     protected function getStats(): array
     {
         $dashboardService = app(DashboardService::class);
@@ -22,6 +22,9 @@ class DangerSupportStats extends BaseWidget
         }
         $pendingCount = $result->getData()['pending_danger_supports'];
 
+        if ($pendingCount === 0){
+            return [];
+        }
         return [
             Stat::make(__('dashboard.danger_support_stat.pending_danger_supports'), $pendingCount)
                 ->description($pendingCount > 0 ? __('dashboard.danger_support_stat.pending_danger_supports_desc') : __('dashboard.danger_support_stat.no_pending_danger_supports'))

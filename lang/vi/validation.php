@@ -268,7 +268,7 @@ return [
     'file_apply_partner_uploads' => [
         'required' => 'Vui lòng tải lên ít nhất 1 ảnh.',
         'array' => 'Danh sách ảnh phải là mảng.',
-        'invalid' => 'Dữ liệu ảnh không đúng định dạng và tối đa 10MB mỗi ảnh.',
+        'invalid' => 'Dữ liệu ảnh không đúng định dạng và tối đa :max MB mỗi ảnh.',
         'invalid_type' => 'Loại ảnh không hợp lệ.',
         'invalid_type_for_role' => 'Loại ảnh không hợp lệ cho vai trò này.',
         'duplicate_type' => 'Có ảnh đang bị trùng lặp.',
@@ -306,8 +306,6 @@ return [
     ],
     'nickname' => [
         'required_if' => 'Vui lòng nhập tên hiển thị.',
-        'nullable' => 'Tên hiển thị phải là chuỗi.',
-        'string' => 'Tên hiển thị phải là chuỗi.',
-        'max' => 'Tên hiển thị quá dài (tối đa 255 ký tự).',
+        'invalid' => 'Tên hiển thị phải là chuỗi và ít nhất 4 ký tự, tối đa 255 ký tự.',
     ],
 ];

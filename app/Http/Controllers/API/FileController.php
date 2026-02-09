@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Core\Controller\BaseController;
 use App\Enums\ContractFileType;
 use App\Http\Resources\Commercial\ContractResource;
+use App\Services\UserFileService;
 use App\Services\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -15,7 +16,8 @@ use Illuminate\Validation\Rule;
 class FileController extends BaseController
 {
     public function __construct(
-        protected UserService $userService
+        protected UserService $userService,
+        protected UserFileService $userFileService
     )
     {
     }
@@ -38,5 +40,23 @@ class FileController extends BaseController
         }
         $data = $result->getData();
         return $this->sendSuccess(data: new ContractResource($data));
+    }
+
+    public function getPrivateFile(string $id)
+    {
+        $userId = auth('sanctum')->id();
+        if (!$userId) {
+            abort(403);
+        }
+        $result = $this->userFileService->getPrivatePath(
+            id: $id,
+            userId: $userId
+        );
+        if ($result->isError()) {
+            abort(403);
+        }
+        $path = $result->getData();
+
+        return Storage::disk('private')->response($path);
     }
 }

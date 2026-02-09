@@ -18,10 +18,16 @@ class CreateCustomer extends CreateRecord
         ];
     }
 
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        return $data;
+    }
+
     protected function afterCreate(): void
     {
         $record = $this->getRecord();
-
+        $record->phone_verified_at = now();
+        $record->save();
         if (!$record->wallet) {
             Wallet::create([
                 'user_id' => $record->id,

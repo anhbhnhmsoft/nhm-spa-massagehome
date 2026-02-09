@@ -20,10 +20,6 @@ class UserReviewApplication extends Model
         'referrer_id',
         'nickname',
         'status', // Cast Enum
-        'province_code',
-        'address',
-        'latitude',
-        'longitude',
         'bio',
         'experience',
         'note',
@@ -37,8 +33,6 @@ class UserReviewApplication extends Model
         'id' => 'string',
         'user_id' => 'string',
         'referrer_id' => 'string',
-        'latitude' => 'float',
-        'longitude' => 'float',
         'status' => ReviewApplicationStatus::class,
         'note' => 'string',
         'effective_date' => 'date',
@@ -62,11 +56,4 @@ class UserReviewApplication extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    /**
-     * Lấy thông tin về tỉnh/thành phố.
-     */
-    public function province()
-    {
-        return $this->hasOne(Province::class, 'code', 'province_code');
-    }
 }

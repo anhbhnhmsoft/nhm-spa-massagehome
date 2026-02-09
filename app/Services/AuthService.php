@@ -9,6 +9,7 @@ use App\Core\LogHelper;
 use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
+use App\Enums\ConfigName;
 use App\Enums\DirectFile;
 use App\Enums\Gender;
 use App\Enums\Language;
@@ -42,6 +43,7 @@ class AuthService extends BaseService
         protected WalletRepository      $walletRepository,
         protected UserDeviceRepository $userDeviceRepository,
         protected ZaloService $zaloService,
+        protected ConfigService $configService
     )
     {
         parent::__construct();
@@ -334,7 +336,7 @@ class AuthService extends BaseService
     public function user(): ServiceReturn
     {
         try {
-            $user = Auth::user();
+            $user = auth('sanctum')->user();
             if (!$user->is_active) {
                 $this->logout();
                 return ServiceReturn::error(message: __('auth.error.unauthorized'));
@@ -347,6 +349,29 @@ class AuthService extends BaseService
         } catch (Exception $exception) {
             LogHelper::error(
                 message: "Lỗi AuthService@user",
+                ex: $exception
+            );
+            return ServiceReturn::error(message: __('common_error.server_error'));
+        }
+    }
+
+    /**
+     * Lấy thông tin người dùng + các config về app
+     * @return ServiceReturn
+     */
+    public function configApplication(): ServiceReturn
+    {
+        try {
+            return ServiceReturn::success(data: [
+                'maintenance' => config('services.application_mobile.maintenance'),
+                'ios_version' => config('services.application_mobile.ios_version'),
+                'android_version' => config('services.application_mobile.android_version'),
+                'appstore_url' => config('services.store.appstore'),
+                'chplay_url' => config('services.store.chplay'),
+            ]);
+        } catch (Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi AuthService@checkAccess",
                 ex: $exception
             );
             return ServiceReturn::error(message: __('common_error.server_error'));
@@ -389,22 +414,22 @@ class AuthService extends BaseService
             if (!$user) {
                 return ServiceReturn::error(message: __('auth.error.unauthorized'));
             }
-            $token = request()->bearerToken();
+            $token = $user->currentAccessToken()->token;
             if (!$token || !$user) {
                 throw new ServiceException(message: __('common_error.unauthorized'));
             }
+            $now = now();
             Caching::setCache(
                 key: CacheKey::CACHE_USER_HEARTBEAT,
                 value: true,
                 uniqueKey: $user->id,
-                expire: 5 // 5 phút
+                expire: $now->copy()->addMinutes(5) // 5 phút
             );
             // --- TẦNG 2: DATABASE (LỊCH SỬ) ---
             // Kiểm tra heartbeat có quá 15 phút không
-            $now = now();
-            $lastUpdate = $user->last_login_at ? Carbon::parse($user->last_login_at) : $now->subYears(1);
+            $lastUpdate = $user->last_login_at ? Carbon::parse($user->last_login_at) : $now;
             if ($lastUpdate->diffInMinutes($now) > 15) {
-                $user->timestamps = false; // Không đổi updated_at
+                $user->timestamps = false;
                 $user->last_login_at = $now;
                 $user->save();
             }
@@ -635,7 +660,7 @@ class AuthService extends BaseService
     public function logout(): ServiceReturn
     {
         try {
-            $user = Auth::user();
+            $user = auth('sanctum')->user();
             if (!$user) {
                 return ServiceReturn::error(message: __('error.unauthorized'));
             }

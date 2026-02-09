@@ -96,10 +96,6 @@
     - referrer_id (bigint, nullable, foreign key to users.id) -- id người giới thiệu (người mời apply)
     - status (smallint) -- trạng thái ứng dụng (trong enum ReviewApplicationStatus)
     - nickname (varchar, nullable) -- tên hiển thị
-    - province_code (varchar, nullable, foreign key to provinces.code) -- mã tỉnh thành
-    - address (varchar, nullable) -- địa chỉ chi tiết
-    - latitude (decimal(10,8), nullable) -- vĩ độ
-    - longitude (decimal(11,8), nullable) -- kinh độ
 
     - bio (json, nullable) -- thông tin cá nhân (dạng json mô tả thông tin cá nhân - đa ngôn ngữ)
     - experience (integer, nullable) -- kinh nghiệm (năm)
@@ -159,10 +155,13 @@
     # cấu trúc
     - id (bigint, primary key, auto-increment)
     - user_id (bigint, foreign key to users.id) -- id người dùng
-    - address (varchar, nullable) -- địa chỉ chi tiết
+    - address (varchar(500), nullable) -- địa chỉ chi tiết
     - latitude (decimal(10,8), nullable) -- vĩ độ
     - longitude (decimal(11,8), nullable) -- kinh độ
+    - is_primary (boolean, default false) -- địa chỉ chính
     - desc (text, nullable) -- ghi chú thêm
+
+    - index (user_id, is_primary) -- chỉ mục trên cột user_id và is_primary để tối ưu truy vấn
     
     - timestamps
 

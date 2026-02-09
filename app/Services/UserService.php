@@ -237,7 +237,8 @@ class UserService extends BaseService
             return ServiceReturn::success(
                 data: $paginate
             );
-        } catch (\Exception $exception) {
+        }
+        catch (\Exception $exception) {
             LogHelper::error(
                 message: "Lỗi UserService@pagination",
                 ex: $exception
@@ -275,14 +276,6 @@ class UserService extends BaseService
                     'reviewsReceived' => function ($query) {
                         $query->where('hidden', false)
                             ->latest('created_at')
-                            ->limit(1);
-                    },
-                    // Lấy lịch hẹn cuối cùng mà KTV này thực hiện hoặc đang diễn ra
-                    'ktvBookings' => function ($query) {
-                        $query->whereIn('status', [BookingStatus::CONFIRMED->value, BookingStatus::ONGOING->value])
-                            ->latest('booking_time')
-                            // Chỉ lấy lịch hôm nay
-                            ->whereDate('booking_time', date('Y-m-d'))
                             ->limit(1);
                     },
                 ])
@@ -509,92 +502,104 @@ class UserService extends BaseService
      */
     public function applyPartnerForCurrentUser(array $data): ServiceReturn
     {
-        $tempFiles = [];
+        $tempFiles = []; // Chứa các file MỚI vừa upload để xóa nếu lỗi
+        $filesToDeleteOnSuccess = []; // Chứa các file CŨ cần xóa nếu commit thành công
+
+        DB::beginTransaction();
         try {
-            DB::beginTransaction();
             $user = Auth::user();
             if (!$user) {
-                throw new ServiceException(
-                    message: __("common_error.unauthenticated")
-                );
+                throw new ServiceException(message: __("common_error.unauthenticated"));
             }
 
-            // Kiểm tra xem user đã có review application chưa
-            $existingReview = $this->userReviewApplicationRepository
-                ->query()
+            // 1. Kiểm tra trạng thái review application
+            $existingReview = $this->userReviewApplicationRepository->query()
                 ->where('user_id', $user->id)
                 ->first();
-            // Nếu Khách hàng đã có review application thì không thể đăng ký lại
+
             if ($existingReview) {
-                // Nếu review application bị từ chối thì không thể đăng ký lại
-                if ($existingReview->status == ReviewApplicationStatus::REJECTED->value) {
-                    throw new ServiceException(
-                        message: __("error.user_have_review_application_rejected")
-                    );
-                } else {
-                    throw new ServiceException(
-                        message: __("error.user_have_review_application")
-                    );
+                if ($existingReview->status == ReviewApplicationStatus::PENDING) {
+                    throw new ServiceException(message: __("error.user_have_review_application_pending"));
+                }
+                else if ($existingReview->status == ReviewApplicationStatus::APPROVED) {
+                    throw new ServiceException(message: __("error.user_have_review_application"));
+                }
+                else if ($existingReview->status == ReviewApplicationStatus::REJECTED) {
+                    // Lấy danh sách file CŨ để chuẩn bị xóa vật lý SAU KHI commit
+                    $oldFiles = $this->userFileRepository->query()
+                        ->where('user_id', $user->id)
+                        ->whereIn('type', [
+                            UserFileType::IDENTITY_CARD_FRONT->value,
+                            UserFileType::IDENTITY_CARD_BACK->value,
+                            UserFileType::KTV_IMAGE_DISPLAY->value,
+                            UserFileType::LICENSE->value,
+                            UserFileType::FACE_WITH_IDENTITY_CARD->value,
+                        ])
+                        ->get();
+
+                    foreach ($oldFiles as $file) {
+                        $filesToDeleteOnSuccess[] = [
+                            'disk' => $file->is_public ? 'public' : 'private',
+                            'path' => $file->file_path,
+                        ];
+                        // Chỉ xóa bản ghi trong DB tại đây
+                        $this->userFileRepository->delete($file->id);
+                    }
+
+                    // Xóa review application cũ trong DB
+                    $this->userReviewApplicationRepository->delete($existingReview->id);
                 }
             }
 
-            // Kiểm tra referrer_id có tồn tại
+            // Kiểm tra referrer_id
             if (!empty($data['referrer_id'])) {
-                $agency = $this->userRepository
-                    ->queryUser()
+                $agency = $this->userRepository->queryUser()
                     ->where('id', $data['referrer_id'])
                     ->whereIn('role', [UserRole::AGENCY->value, UserRole::KTV->value])
                     ->first();
                 if (!$agency) {
-                    throw new ServiceException(
-                        message: __("error.referrer_not_found")
-                    );
+                    throw new ServiceException(message: __("error.referrer_not_found"));
                 }
             }
 
+            // Chuẩn bị dữ liệu và Lưu review application mới
             $reviewData = [
                 'user_id' => $user->id,
-                'referrer_id' => $data['referrer_id'] ?? null,
                 'status' => ReviewApplicationStatus::PENDING->value,
-                'province_code' => $data['province_code'],
                 'nickname' => $data['nickname'] ?? null,
-                'address' => $data['address'],
                 'experience' => $data['experience'] ?? 0,
-                'latitude' => $data['latitude'],
-                'longitude' => $data['longitude'],
                 'application_date' => now(),
                 'role' => $data['role'],
+                'bio' => Helper::multilingualPayload($data, 'bio'),
             ];
-            $reviewData['bio'] = Helper::multilingualPayload($data, 'bio');
-
-            // Kiểm tra nếu user dki làm và role = KTV thì set is_leader = true
-            if (isset($data['is_leader']) && $data['role'] == UserRole::KTV->value) {
-                $reviewData['is_leader'] = true;
+            // Chỉ lưu referrer_id nếu role là KTV
+            if ($data['role'] == UserRole::KTV->value) {
+                $reviewData['referrer_id'] = $data['referrer_id'] ?? null;
+                $reviewData['is_leader'] = isset($data['is_leader']);
             }
 
-            // Lưu review application
             $this->userReviewApplicationRepository->create($reviewData);
 
-            // Lưu file uploads
+            // 4. Lưu file uploads MỚI
             foreach ($data['file_uploads'] as $fileUpload) {
                 $typeUpload = $fileUpload['type_upload'];
                 $file = $fileUpload['file'];
-                // Kiểm tra file có phải là instance của UploadedFile không
+
                 if (!$file instanceof UploadedFile) {
-                    throw new ServiceException(
-                        message: __("common_error.invalid_data")
-                    );
+                    throw new ServiceException(message: __("common_error.invalid_data"));
                 }
+
                 $isPublic = !in_array($typeUpload, UserFileType::getTypeUploadToPrivateDisk());
+                $disk = $isPublic ? 'public' : 'private';
 
                 $path = $file->store(DirectFile::makePathById(
                     type: DirectFile::USER_FILE_UPLOAD,
                     id: $user->id
-                ), $isPublic ? 'public' : 'private');
-                $tempFiles[] = [
-                    'disk' => $isPublic ? 'public' : 'private',
-                    'path' => $path,
-                ];
+                ), $disk);
+
+                // Lưu vào mảng temp để xóa nếu Rollback
+                $tempFiles[] = ['disk' => $disk, 'path' => $path];
+
                 $this->userFileRepository->create([
                     'user_id' => $user->id,
                     'type' => $typeUpload,
@@ -604,55 +609,42 @@ class UserService extends BaseService
                 ]);
             }
 
-            // Gửi thông báo cho quản trị viên
-            if ($data['role'] == UserRole::KTV->value) {
-                $this->notificationService->sendAdminNotification(
-                    type: NotificationAdminType::USER_APPLY_KTV_PARTNER,
-                    data: [
-                        'user_id' => $user->id,
-                        'user_name' => $user->name,
-                        'phone' => $user->phone,
-                    ]
-                );
-            }
-            // Thông báo đăng ký làm đối tác đại lý
-            else if ($data['role'] == UserRole::AGENCY->value) {
-                $this->notificationService->sendAdminNotification(
-                    type: NotificationAdminType::USER_APPLY_AGENCY_PARTNER,
-                    data: [
-                        'user_id' => $user->id,
-                        'user_name' => $user->name,
-                        'phone' => $user->phone,
-                    ]
-                );
-            }
-            DB::commit();
+            // Gửi thông báo
+            $notificationType = match($data['role']) {
+                UserRole::KTV->value => NotificationAdminType::USER_APPLY_KTV_PARTNER,
+                UserRole::AGENCY->value => NotificationAdminType::USER_APPLY_AGENCY_PARTNER,
+                default => null
+            };
 
+            if ($notificationType) {
+                $this->notificationService->sendAdminNotification(
+                    type: $notificationType,
+                    data: ['user_id' => $user->id, 'user_name' => $user->name, 'phone' => $user->phone]
+                );
+            }
+
+            // Đăng ký xóa file CŨ sau khi Commit thành công
+            DB::afterCommit(function () use ($filesToDeleteOnSuccess) {
+                // Xóa file cũ
+                Helper::cleanupFiles($filesToDeleteOnSuccess);
+            });
+
+            DB::commit();
 
             return ServiceReturn::success(
                 data: $user->load('reviewApplication', 'files'),
                 message: __("common.success.data_created")
             );
+
         } catch (ServiceException $exception) {
             DB::rollBack();
-            foreach ($tempFiles as $file) {
-                Storage::disk($file['disk'])->delete($file['path']);
-            }
-            return ServiceReturn::error(
-                message: $exception->getMessage()
-            );
+            Helper::cleanupFiles($tempFiles); // Xóa file mới vừa upload lỗi
+            return ServiceReturn::error(message: $exception->getMessage());
         } catch (\Throwable $exception) {
             DB::rollBack();
-            foreach ($tempFiles as $file) {
-                Storage::disk($file['disk'])->delete($file['path']);
-            }
-            LogHelper::error(
-                message: "Lỗi UserService@applyPartnerForCurrentUser",
-                ex: $exception
-            );
-            return ServiceReturn::error(
-                message: __("common_error.server_error")
-            );
+            Helper::cleanupFiles($tempFiles); // Xóa file mới vừa upload lỗi
+            LogHelper::error(message: "Lỗi UserService@applyPartnerForCurrentUser", ex: $exception);
+            return ServiceReturn::error(message: __("common_error.server_error"));
         }
     }
 
@@ -664,21 +656,17 @@ class UserService extends BaseService
     {
         $user = Auth::user();
         try {
-            $checkApply = $this->userReviewApplicationRepository->query()
+            $checkApply = true;
+            $reviewApplication = $this->userReviewApplicationRepository->query()
                 ->where('user_id', $user->id)
                 ->first();
-            if (!$checkApply) {
-                return ServiceReturn::success(
-                    data: [
-                        'can_apply' => true,
-                    ]
-                );
+            if ($reviewApplication) {
+                $checkApply = $reviewApplication->status == ReviewApplicationStatus::REJECTED;
             }
             return ServiceReturn::success(
                 data: [
-                    'can_apply' => false,
-                    'apply_role' => $checkApply->role,
-                    'apply_status' => $checkApply->status,
+                    'check_apply' => $checkApply,
+                    'review_application' => $reviewApplication
                 ]
             );
         } catch (\Exception $exception) {
@@ -712,23 +700,15 @@ class UserService extends BaseService
                     message: __("common_error.address_exists")
                 );
             }
-            $isPrimary = $data['is_primary'] ?? false;
             $preparedData = [
                 'user_id' => $user->id,
                 'address' => $data['address'],
                 'latitude' => $data['latitude'],
                 'longitude' => $data['longitude'],
                 'desc' => $data['desc'] ?? '',
-                'is_primary' => $isPrimary
+                'is_primary' => false
             ];
             $userAddress = $this->userAddressRepository->create($preparedData);
-            // Nếu là địa chỉ chính thì cập nhật các địa chỉ khác thành không phải chính
-            if ($isPrimary) {
-                $this->userAddressRepository->query()
-                    ->where('user_id', $user->id)
-                    ->where('id', '<>', $userAddress->id)
-                    ->update(['is_primary' => false]);
-            }
             DB::commit();
             return ServiceReturn::success(
                 data: $userAddress,
@@ -759,27 +739,21 @@ class UserService extends BaseService
             $userAddress = $this->userAddressRepository->query()
                 ->where('id', $id)
                 ->where('user_id', $user->id)
+                ->where('is_primary', false)
                 ->first();
 
             if (!$userAddress) {
                 throw new ServiceException(__("error.address_not_found"));
             }
-            $isPrimary = $data['is_primary'] ?? $userAddress->is_primary;
             $preparedData = [
                 'address' => $data['address'] ?? $userAddress->address,
                 'latitude' => $data['latitude'] ?? $userAddress->latitude,
                 'longitude' => $data['longitude'] ?? $userAddress->longitude,
                 'desc' => $data['desc'] ?? $userAddress->desc,
-                'is_primary' => $isPrimary
             ];
+
             $userAddress->update($preparedData);
-            // Nếu là địa chỉ chính thì cập nhật các địa chỉ khác thành không phải chính
-            if ($isPrimary) {
-                $this->userAddressRepository->query()
-                    ->where('user_id', $user->id)
-                    ->where('id', '<>', $userAddress->id)
-                    ->update(['is_primary' => false]);
-            }
+
             return ServiceReturn::success(
                 data: $userAddress,
                 message: __("common.success.data_updated")
@@ -816,17 +790,9 @@ class UserService extends BaseService
             if (!$userAddress) {
                 throw new ServiceException(__("error.address_not_found"));
             }
-            // kiểm tra nếu địa chỉ xóa là chính thì set 1 địa chỉ khác thành chính
+            // Kiểm tra nếu địa chỉ xóa là chính thì không thể xóa
             if ($userAddress->is_primary) {
-                $anotherAddress = $this->userAddressRepository->query()
-                    ->where('user_id', $user->id)
-                    ->orderBy('created_at', 'desc')
-                    ->where('id', '<>', $userAddress->id)
-                    ->first();
-                if ($anotherAddress) {
-                    $anotherAddress->is_primary = true;
-                    $anotherAddress->save();
-                }
+                throw new ServiceException(__("error.cant_delete_primary_address"));
             }
             // Sau đó mới xóa địa chỉ
             $userAddress->delete();
@@ -834,7 +800,8 @@ class UserService extends BaseService
             return ServiceReturn::success(
                 message: __("common.success.data_deleted")
             );
-        } catch (ServiceException $exception) {
+        }
+        catch (ServiceException $exception) {
             DB::rollBack();
             return ServiceReturn::error(
                 message: $exception->getMessage()
@@ -847,6 +814,45 @@ class UserService extends BaseService
             );
             return ServiceReturn::error(
                 message: $exception->getMessage()
+            );
+        }
+    }
+
+    /**
+     * Set địa chỉ mặc định cho user (địa chỉ cập nhật location chính xác GPS)
+     * @param $userId
+     * @param float $latitude
+     * @param float $longitude
+     * @param string $address
+     * @return ServiceReturn
+     */
+    public function setDefaultAddress(
+        $userId,
+        float $latitude,
+        float $longitude,
+        string $address,
+    ): ServiceReturn
+    {
+        try {
+            $this->userAddressRepository->query()->updateOrCreate(
+                [
+                    'user_id' => $userId,
+                    'is_primary' => true,
+                ],
+                [
+                    'address' => $address,
+                    'latitude' => $latitude,
+                    'longitude' => $longitude,
+                ]
+            );
+            return ServiceReturn::success();
+        } catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi UserService@setDefaultAddress",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: __("common_error.server_error")
             );
         }
     }

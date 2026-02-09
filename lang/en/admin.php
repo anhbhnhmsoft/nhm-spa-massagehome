@@ -259,8 +259,6 @@ return
                 'end_time' => 'End Time',
                 'is_leader' => 'Leader',
                 'nickname' => 'Nickname',
-                'location_info' => 'Location Info',
-                'location_info_desc' => 'Location where technician will work. Search or use Google Maps to get latitude and longitude.',
             ],
             "actions" => [
                 "approve" => [
@@ -345,8 +343,6 @@ return
                 'bio_vi' => 'Business Introduction (Vietnamese)',
                 'bio_en' => 'Business Introduction (English)',
                 'bio_cn' => 'Business Introduction (Chinese)',
-                'location_info' => 'Location Info',
-                'location_info_desc' => 'Location where Partner will work. Search or use Google Maps to get latitude and longitude.',
                 'status' => 'Status',
                 'note' => 'Note',
                 'latitude' => 'Latitude',

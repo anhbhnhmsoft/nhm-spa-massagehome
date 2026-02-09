@@ -209,8 +209,6 @@ return
                 'end_time' => 'Giờ kết thúc',
                 'is_leader' => 'Trưởng nhóm',
                 'nickname' => 'Biệt danh',
-                'location_info' => 'Thông tin địa điểm',
-                'location_info_desc' => 'Địa điểm mà kỹ thuật viên sẽ làm việc, hãy tìm kiếm địa chỉ hoặc tra thông tin địa chỉ trên Google Maps, lấy vĩ độ và kinh độ của vị trí đó.',
             ],
             "actions" => [
                 "approve" => [
@@ -345,8 +343,6 @@ return
                 'bio_vi' => 'Giới thiệu doanh nghiệp (Tiếng Việt)',
                 'bio_en' => 'Giới thiệu doanh nghiệp (Tiếng Anh)',
                 'bio_cn' => 'Giới thiệu doanh nghiệp (Tiếng Trung)',
-                'location_info' => 'Thông tin địa điểm',
-                'location_info_desc' => 'Địa điểm mà Đối tác sẽ làm việc, hãy tìm kiếm địa chỉ hoặc tra thông tin địa chỉ trên Google Maps, lấy vĩ độ và kinh độ của vị trí đó.',
                 'status' => 'Trạng thái',
                 'note' => 'Ghi chú',
                 'latitude' => 'Vĩ độ',
