@@ -61,4 +61,5 @@ return [
     'coupon_not_active' => 'Mã giảm giá không hoạt động',
     'coupon_usage_limit_reached' => 'Mã giảm giá đã đạt đến giới hạn sử dụng t',
     'coupon_usage_limit_reached_or_daily_full' => 'Mã giảm giá đã đạt đến giới hạn sử dụng hoặc đã hết lượt sử dụng trong ngày',
+    'not_implemented' => 'Tính năng này chưa được triển khai',
 ];

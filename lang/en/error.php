@@ -64,4 +64,5 @@ return [
     'coupon_not_active' => 'Coupon not active',
     'coupon_usage_limit_reached' => 'Coupon usage limit reached',
     'coupon_usage_limit_reached_or_daily_full' => 'Coupon usage limit reached or daily limit full',
+    'not_implemented' => 'This feature has not been implemented',
 ];

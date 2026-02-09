@@ -64,4 +64,5 @@ return [
     'coupon_not_active' => '优惠券未激活',
     'coupon_usage_limit_reached' => '优惠券使用限制已达上限',
     'coupon_usage_limit_reached_or_daily_full' => '优惠券已达使用上限或今日已满',
+    'not_implemented' => '该功能尚未实现',
 ];
