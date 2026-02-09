@@ -97,7 +97,9 @@ class DangerSupportTable extends BaseWidget
                             ->title(__('dashboard.danger_support_table.confirm_success'))
                             ->success()
                             ->send();
-                    }),
+                    })
+                    ->modalSubmitActionLabel(__('common.action.confirm'))
+                    ->modalCancelActionLabel(__('common.action.cancel')),
             ])
             ->poll('5m');
     }

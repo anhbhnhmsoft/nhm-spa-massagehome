@@ -58,6 +58,7 @@ class CouponForm
                                     ]),
                                 Select::make('is_percentage')
                                     ->label(__('admin.coupon.fields.is_percentage'))
+                                    ->placeholder(__('common.placeholder.type'))
                                     ->required()
                                     ->options([
                                         true => __('admin.coupon.is_percentage.percent'),
@@ -168,9 +169,13 @@ class CouponForm
 
                                         KeyValue::make('config.daily_collected')
                                             ->label(__('admin.coupon.fields.config.used_day'))
+                                            ->keyLabel(__('admin.common.date'))
+                                            ->valueLabel(__('admin.common.count'))
                                             ->disabled(), // Quản trị viên chỉ xem, hệ thống tự cập nhật,
                                         KeyValue::make('config.daily_used')
                                             ->label(__('admin.coupon.fields.config.collected_day'))
+                                            ->keyLabel(__('admin.common.date'))
+                                            ->valueLabel(__('admin.common.count'))
                                             ->disabled(), // Quản trị viên chỉ xem, hệ thống tự cập nhật
                                     ]),
 

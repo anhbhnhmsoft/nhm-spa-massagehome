@@ -49,7 +49,17 @@ class ServicesTable
                     ViewAction::make()
                         ->label(__('admin.common.action.view'))
                         ->tooltip(__('admin.common.tooltip.view'))
-                        ->icon('heroicon-o-eye'),
+                        ->icon('heroicon-o-eye')
+                        ->modalCancelActionLabel(__('common.action.cancel'))
+                        ->modalHeading(__('common.modal.view_title'))
+                        ->modalSubmitAction(false)
+                        ->modalFooterActions(function ($action) {
+                            return [
+                                $action->getModalCancelAction()
+                                    ->label(__('common.action.close'))
+                                    ->color('danger'),
+                            ];
+                        }),
 
                     EditAction::make()
                         ->label(__('admin.common.action.edit'))

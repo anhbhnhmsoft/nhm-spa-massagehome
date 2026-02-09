@@ -43,11 +43,19 @@ return [
         'save' => '保存',
         'delete' => '删除',
         'view' => '查看',
+        'close' => '关闭',
+        'confirm' => '确认',
     ],
     'breadcrumb' => [
         'list' => '列表',
         'create' => '创建',
         'edit' => '编辑',
         'view' => '查看详情',
-    ]
+    ],
+    'placeholder' => [
+        'type' => '类型',
+    ],
+    'modal' => [
+        'view_title' => '查看详情',
+    ],
 ];

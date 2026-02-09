@@ -117,6 +117,7 @@ class KTVForm
                                     ->label(__('admin.common.table.gender'))
                                     ->options(Gender::toOptions())
                                     ->required()
+                                    ->placeholder(__('common.placeholder.type'))
                                     ->validationMessages([
                                         'required' => __('common.error.required'),
                                     ]),
@@ -137,7 +138,7 @@ class KTVForm
                     ->relationship('reviewApplication')
                     ->compact()
                     ->afterHeader([
-                        Text::make(function($record) {
+                        Text::make(function ($record) {
                             return __('admin.common.table.status_review') . ": " . $record->status->label();
                         })
                             ->badge()
@@ -225,6 +226,7 @@ class KTVForm
                                     ->schema([
                                         Select::make('day_key')
                                             ->label(__('admin.ktv_apply.fields.day_key'))
+                                            ->placeholder(__('common.placeholder.type'))
                                             ->options([
                                                 KTVConfigSchedules::MONDAY->value => __('admin.ktv_apply.fields.monday'),
                                                 KTVConfigSchedules::TUESDAY->value => __('admin.ktv_apply.fields.tuesday'),
@@ -249,8 +251,8 @@ class KTVForm
                                             ->format('H:i')
                                             ->displayFormat('H:i')
                                             ->seconds(false)
-                                            ->hidden(fn ( $get) => !$get('active'))
-                                            ->required(fn ( $get) => $get('active'))
+                                            ->hidden(fn($get) => !$get('active'))
+                                            ->required(fn($get) => $get('active'))
                                             ->columnSpan(1),
 
                                         TimePicker::make('end_time')
@@ -258,8 +260,8 @@ class KTVForm
                                             ->format('H:i')
                                             ->displayFormat('H:i')
                                             ->seconds(false)
-                                            ->hidden(fn ( $get) => !$get('active'))
-                                            ->required(fn ( $get) => $get('active'))
+                                            ->hidden(fn($get) => !$get('active'))
+                                            ->required(fn($get) => $get('active'))
                                             ->after('start_time')
                                             ->columnSpan(1),
                                     ]),

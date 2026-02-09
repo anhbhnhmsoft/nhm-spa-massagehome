@@ -23,6 +23,8 @@ return
             'week' => 'week',
             'month' => 'month',
             'year' => 'year',
+            'date' => 'Date',
+            'count' => 'Count',
             'affiliate_qr' => 'Affiliate QR',
             'wallet' => 'Wallet',
             'balance' => 'Balance',

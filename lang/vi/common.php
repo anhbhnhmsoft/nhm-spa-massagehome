@@ -42,12 +42,20 @@ return [
         'cancel' => 'Hủy',
         'save' => 'Lưu',
         'delete' => 'Xóa',
-        'view' => 'Xem'
+        'view' => 'Xem',
+        'close' => 'Đóng',
+        'confirm' => 'Xác nhận',
     ],
     'breadcrumb' => [
         'list' => 'Danh sách',
         'create' => 'Thêm mới',
         'edit' => 'Cập nhật',
         'view' => 'Xem chi tiết',
-    ]
+    ],
+    'placeholder' => [
+        'type' => 'Loại',
+    ],
+    'modal' => [
+        'view_title' => 'Xem chi tiết',
+    ],
 ];

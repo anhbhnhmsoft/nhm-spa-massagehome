@@ -112,6 +112,7 @@ class AgencyForm
                                     ->label(__('admin.common.table.gender'))
                                     ->options(Gender::toOptions())
                                     ->required()
+                                    ->placeholder(__('common.placeholder.type'))
                                     ->validationMessages([
                                         'required' => __('common.error.required'),
                                     ]),

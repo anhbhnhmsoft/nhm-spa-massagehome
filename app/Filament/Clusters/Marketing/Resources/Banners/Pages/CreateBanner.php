@@ -20,8 +20,8 @@ class CreateBanner extends CreateRecord
     protected function getFormActions(): array
     {
         return [
-            $this->getSaveFormAction()
-                ->label(__('common.action.save')),
+            $this->getCreateFormAction()
+                ->label(__('common.action.create')),
             $this->getCancelFormAction()
                 ->label(__('common.action.cancel')),
         ];

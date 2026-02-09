@@ -73,6 +73,7 @@ class AffiliateConfigForm extends Component implements HasForms
                             ->options(\App\Enums\UserRole::class)
                             ->required()
                             ->disabled()
+                            ->placeholder(__('common.placeholder.type'))
                             ->validationMessages([
                                 'required' => __('common.error.required'),
                             ]),

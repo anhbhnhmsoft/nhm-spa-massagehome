@@ -39,6 +39,7 @@ class BannerForm
                         Select::make('type')
                             ->label(__('admin.banner.fields.type'))
                             ->options(BannerType::toOptions())
+                            ->placeholder(__('common.placeholder.type'))
                             ->required()
                             ->validationMessages([
                                 'required' => __("common.error.required"),
