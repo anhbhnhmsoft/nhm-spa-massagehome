@@ -1184,4 +1184,62 @@ class BookingService extends BaseService
 
         return $distance;
     }
+
+    /**
+     * Lấy danh sách dịch vụ thay thế cho việc điều phối booking
+     * Các dịch vụ có cùng category, KTV khác, service active
+     * @param \App\Models\ServiceBooking $booking
+     * @return \Illuminate\Support\Collection
+     */
+    /**
+     * Query dịch vụ có cùng category, KTV khác, service active
+     * @param \App\Models\ServiceBooking $booking
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function getSimilarServicesQuery(\App\Models\ServiceBooking $booking): \Illuminate\Database\Eloquent\Builder
+    {
+        $currentService = $booking->service;
+        if (!$currentService) {
+            return  $this->serviceRepository->query()->whereNull('id');
+        }
+
+        return $this->serviceRepository->query()
+            ->where('category_id', $currentService->category_id)
+            ->where('user_id', '!=', $booking->ktv_user_id) // KTV khác
+            ->where('is_active', true)
+            ->with(['provider', 'category', 'optionCategoryPrices']);
+    }
+
+    /**
+     * Các dịch vụ có cùng category, KTV khác, service active
+     * @param \App\Models\ServiceBooking $booking
+     * @return \Illuminate\Support\Collection
+     */
+    public function getSimilarServicesForReassignment(\App\Models\ServiceBooking $booking): \Illuminate\Support\Collection
+    {
+        // Lấy service hiện tại để lấy category_id
+        $currentService = $booking->service;
+        if (!$currentService) {
+            return collect([]);
+        }
+
+        // Query dịch vụ cùng category, KTV khác, active
+        return \App\Models\Service::query()
+            ->where('category_id', $currentService->category_id)
+            ->where('user_id', '!=', $booking->ktv_user_id) // KTV khác
+            ->where('is_active', true)
+            ->with(['provider', 'category', 'optionCategoryPrices'])
+            ->get()
+            ->map(function ($service) {
+                return [
+                    'service_id' => $service->id,
+                    'ktv_id' => $service->user_id,
+                    'ktv_name' => $service->provider?->name ?? '',
+                    'service_name' => $service->name ?? '',
+                    'category_name' => $service->category?->name ?? '',
+                    'min_price' => $service->optionCategoryPrices->min('price') ?? 0,
+                    'max_price' => $service->optionCategoryPrices->max('price') ?? 0,
+                ];
+            });
+    }
 }

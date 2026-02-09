@@ -17,4 +17,6 @@ enum WalletTransCase
     case CONFIRM_WITHDRAW_REQUEST; // Phục vụ việc xác nhận rút tiền
 
     case CANCEL_WITHDRAW_REQUEST; // Phục vụ việc hủy rút tiền
+
+    case REASSIGN_BOOKING; // Phục vụ việc điều phối booking sang KTV khác
 }

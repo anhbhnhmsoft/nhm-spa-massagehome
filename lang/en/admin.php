@@ -460,6 +460,16 @@ return
                 'confirm_cancel_helper_text' => 'If refund amount is not set, full amount will be refunded to customer.',
                 'cancel_success_title' => 'Booking cancelled successfully',
                 'cancel_error_title' => 'Booking cancellation failed, error occurred',
+                'reassign' => [
+                    'label' => 'Reassign KTV',
+                    'heading' => 'Reassign to another KTV',
+                    'description' => 'Select a suitable KTV to reassign this booking. This action will cancel the current booking and create a new one for the selected KTV.',
+                    'select_service_placeholder' => 'Select KTV and Alternative Service',
+                    'success_title' => 'Reassignment Successful',
+                    'processing_body' => 'Reassignment request is being processed',
+                    'error_title' => 'Reassignment Failed',
+                    'modal_submit' => 'Confirm Reassign',
+                ],
             ],
             'success' => [
                 'cancel' => 'Booking cancelled successfully',
