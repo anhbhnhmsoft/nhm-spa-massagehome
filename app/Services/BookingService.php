@@ -141,7 +141,8 @@ class BookingService extends BaseService
                     \App\Enums\BookingStatus::CONFIRMED->value,
                     \App\Enums\BookingStatus::ONGOING->value,
                 ])
-//                ->whereBetween('booking_time', [$now, $endOfDay])
+                ->where('ktv_user_id', $service->ktv_id)
+                ->whereBetween('booking_time', [$now, $endOfDay])
                 ->orderBy('booking_time', 'desc')
                 ->get(["id", "booking_time"]);
 

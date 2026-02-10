@@ -38,15 +38,20 @@ class ServiceForm
                                     ->validationMessages([
                                         'required' => __('common.error.required'),
                                     ]),
-                                TextInput::make('name.' . $lang)
-                                    ->label(__('admin.service.fields.name'))
+                                TextInput::make('name.vi')
+                                    ->label(__('admin.service.fields.name') . "(VI)")
                                     ->required()
                                     ->maxLength(255)
                                     ->validationMessages([
                                         'required' => __('common.error.required'),
                                         'max' => __('common.error.max_length', ['max' => 255]),
                                     ]),
-
+                                TextInput::make('name.en')
+                                    ->label(__('admin.service.fields.name') . "(EN)")
+                                    ->maxLength(255),
+                                TextInput::make('name.cn')
+                                    ->label(__('admin.service.fields.name') . "(CN)")
+                                    ->maxLength(255),
                                 Select::make('category_id')
                                     ->label(__('admin.service.fields.category'))
                                     ->placeholder(__('common.placeholder.type'))
@@ -88,12 +93,16 @@ class ServiceForm
                                     ->validationMessages([
                                         'required' => __('common.error.required'),
                                     ]),
-                                Textarea::make('description.' . $lang)
-                                    ->label(__('admin.service.fields.description'))
+                                Textarea::make('description.vi')
+                                    ->label(__('admin.service.fields.description') . "(VI)")
                                     ->required()
                                     ->validationMessages([
                                         'required' => __('common.error.required'),
                                     ]),
+                                Textarea::make('description.en')
+                                    ->label(__('admin.service.fields.description') . "(EN)"),
+                                Textarea::make('description.cn')
+                                    ->label(__('admin.service.fields.description') . "(CN)"),
                             ]),
                         Section::make()
                             ->schema([

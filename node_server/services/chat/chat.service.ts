@@ -38,20 +38,35 @@ export class ChatService {
     /**
      * Xử lý message từ Redis pub/sub từ Laravel
      */
-    protected handleLaravelMessage(rawMessage: string) {
+    protected async handleLaravelMessage(rawMessage: string) {
         try {
             const parsed = JSON.parse(rawMessage);
             const type = parsed?.type;
             // Xử lý message:new
             if (type === _ChatConstant.CHAT_MESSAGE_NEW && parsed?.payload) {
                 const payload: PayloadNewMessage = parsed?.payload;
+                console.log('ChatService@handleLaravelMessage', payload);
                 if (payload.room_id) {
                     // Format tên phòng phải KHỚP với lúc join
                     const roomName = this.getConversationRoom(payload.room_id);
+                    console.log('room name', roomName);
+
+                    const clientsInRoom = await this.io
+                        .in(roomName)
+                        .fetchSockets();
+                    console.log(`Debug Room [${roomName}]:`, {
+                        clientsCount: clientsInRoom.length, // Nếu bằng 0 thì emit vô ích
+                        socketIds: clientsInRoom.map((s) => s.id),
+                    });
+
                     // Emit tới phòng
-                    this.io
+                    const emitResult = this.io
                         .to(roomName)
                         .emit(_ChatConstant.CHAT_MESSAGE_NEW, payload);
+
+                    console.log('emit result', emitResult);
+
+
                     // Emit riêng cho người nhận để cập nhật conversation
                     if (payload.receiver_id){
                         const receiverPrivateRoom = this.getPrivateUserRoom(payload.receiver_id);
@@ -89,6 +104,7 @@ export class ChatService {
             ) => {
                 try {
                     if (!roomId) {
+                        console.error('Join room missing roomId:', roomId);
                         callback({
                             status: 'error',
                             message: 'Missing roomId',
@@ -100,6 +116,7 @@ export class ChatService {
                     socket.join(roomName);
 
                     // Báo lại cho Client biết là đã vào thành công
+                    console.log('Join room success:', roomId);
                     callback({ status: 'ok' });
                 } catch (error) {
                     console.error('Join Error:', error);
@@ -123,6 +140,7 @@ export class ChatService {
             ) => {
                 try {
                     if (!roomId) {
+                        console.log('Leave room missing roomId:', roomId);
                         callback({
                             status: 'error',
                             message: 'Missing roomId',
@@ -131,6 +149,7 @@ export class ChatService {
                     }
                     const roomName = this.getConversationRoom(roomId);
                     socket.leave(roomName);
+                    console.log('Leave room success:', roomId);
                     if (typeof callback === 'function') {
                         callback({ status: 'ok' });
                     }
@@ -195,6 +214,7 @@ export class ChatService {
             try {
                 const token = socket.handshake.auth.token;
                 if (!token) {
+                    console.error('Middleware error: Token missing');
                     return next(
                         new Error('Authentication error: Token missing'),
                     );
@@ -204,6 +224,10 @@ export class ChatService {
                 // --- DEBUG LOG ---
                 const rawData = await redisPub.get(rawKey);
                 if (!rawData) {
+                    console.error(
+                        'Middleware error: Session expired or invalid',
+                        rawKey,
+                    );
                     return next(
                         new Error(
                             'Authentication error: Session expired or invalid',

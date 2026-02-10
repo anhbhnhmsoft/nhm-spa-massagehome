@@ -42,10 +42,7 @@ class AuthController extends BaseController
         }
         $dataService = $resService->getData();
         return $this->sendSuccess(
-            data: [
-                'need_register' => $dataService['need_register'],
-                'expire_minutes' => $dataService['expire_minutes'] ?? null,
-            ],
+            data: $dataService,
             message: __('auth.success.authenticate'),
         );
     }
