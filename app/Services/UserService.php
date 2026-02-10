@@ -933,9 +933,6 @@ class UserService extends BaseService
                 $updateData['bio'] = Helper::multilingualPayload($data, 'bio');
             }
             if (isset($data['experience'])) $updateData['experience'] = $data['experience'];
-            if (isset($data['lat'])) $updateData['latitude'] = (float) $data['lat'];
-            if (isset($data['lng'])) $updateData['longitude'] = (float) $data['lng'];
-            if (isset($data['address'])) $updateData['address'] = $data['address'];
             if (!empty($updateData)) {
                 $this->userReviewApplicationRepository->update($reviewApp->id, $updateData);
             }

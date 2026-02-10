@@ -67,7 +67,10 @@ class AuthService extends BaseService
             } else {
                 // Kiểm tra xem số điện thoại có đang có OTP đang chờ xác thực không
                 if (Caching::hasCache(key: CacheKey::CACHE_KEY_OTP_REGISTER, uniqueKey: $phone)) {
-                    return ServiceReturn::error(message: __('auth.error.already_sent'));
+                    return ServiceReturn::success(data: [
+                        'need_register' => false,
+                        'need_enter_otp' => true,
+                    ]);
                 }
                 // Tạo OTP đăng ký và lưu vào cache
                 $this->createCacheRegisterOtp($phone);
@@ -342,6 +345,12 @@ class AuthService extends BaseService
             }
             $user->last_login_at = now();
             $user->save();
+
+            $token = request()->bearerToken();
+            // Lưu token vào Redis nếu có
+            if ($token) {
+                $this->setRedisAuthChatToken($token, $user);
+            }
             return ServiceReturn::success(data: [
                 'user' => $user,
             ]);

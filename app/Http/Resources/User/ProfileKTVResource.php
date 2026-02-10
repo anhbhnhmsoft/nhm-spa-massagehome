@@ -27,9 +27,6 @@ class ProfileKTVResource extends JsonResource
             'experience' => $applycation?->experience,
             'gender' => $profile?->gender,
             'date_of_birth' => (string) $profile?->date_of_birth,
-            'lat' => (string) $applycation?->latitude,
-            'lng' => (string) $applycation?->longitude,
-            'address' => $applycation?->address,
             'list_images' => $gallery->map(function ($item) {
                 return [
                     'id' => $item->id,
