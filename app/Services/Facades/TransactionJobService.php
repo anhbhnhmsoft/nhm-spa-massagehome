@@ -9,7 +9,6 @@ use App\Core\Service\ServiceReturn;
 use App\Enums\BookingStatus;
 use App\Enums\ConfigName;
 use App\Enums\NotificationType;
-use App\Enums\UserRole;
 use App\Enums\WalletTransactionType;
 use App\Jobs\SendNotificationJob;
 use App\Models\User;
@@ -333,10 +332,7 @@ class TransactionJobService
                 throw new ServiceException(__("error.not_found_booking"));
             }
 
-            // TODO: Implement full cancel booking logic
-            return ServiceReturn::error(
-                message: __("error.not_implemented")
-            );
+            return $this->bookingService->approveCancel($booking, $data);
         } catch (\Exception $exception) {
             LogHelper::error(
                 message: "Lỗi TransactionJobService@handleConfirmCancelBooking",

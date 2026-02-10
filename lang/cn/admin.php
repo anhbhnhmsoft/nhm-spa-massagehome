@@ -459,6 +459,7 @@ return
                 'confirm_cancel_helper_text' => '如果未设置退款金额，将全额退款给客户。',
                 'cancel_success_title' => '预订已成功取消',
                 'cancel_error_title' => '预订取消失败，发生错误',
+                'cancel_processing_title' => '预订取消正在处理中',
                 'reassign' => [
                     'label' => '重新分配技师',
                     'heading' => '重新分配给其他技师',
@@ -468,6 +469,7 @@ return
                     'processing_body' => '重新分配请求正在处理中',
                     'error_title' => '重新分配失败',
                     'modal_submit' => '确认重新分配',
+                    'processing_title' => '重新分配请求正在处理中',
                 ],
             ],
             'success' => [

@@ -65,4 +65,6 @@ return [
     'coupon_usage_limit_reached' => '优惠券使用限制已达上限',
     'coupon_usage_limit_reached_or_daily_full' => '优惠券已达使用上限或今日已满',
     'not_implemented' => '该功能尚未实现',
+    'booking_not_found_or_invalid_status' => '未找到该订单或状态无效',
+    'reassigned_to_other_ktv' => '订单已分配给其他技师',
 ];

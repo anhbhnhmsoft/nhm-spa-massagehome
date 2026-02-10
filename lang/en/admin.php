@@ -460,6 +460,7 @@ return
                 'confirm_cancel_helper_text' => 'If refund amount is not set, full amount will be refunded to customer.',
                 'cancel_success_title' => 'Booking cancelled successfully',
                 'cancel_error_title' => 'Booking cancellation failed, error occurred',
+                'cancel_processing_title' => 'Cancel booking is processing',
                 'reassign' => [
                     'label' => 'Reassign KTV',
                     'heading' => 'Reassign to another KTV',
@@ -469,6 +470,7 @@ return
                     'processing_body' => 'Reassignment request is being processed',
                     'error_title' => 'Reassignment Failed',
                     'modal_submit' => 'Confirm Reassign',
+                    'processing_title' => 'Reassignment request is being processed',
                 ],
             ],
             'success' => [

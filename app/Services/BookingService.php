@@ -1186,12 +1186,6 @@ class BookingService extends BaseService
     }
 
     /**
-     * Lấy danh sách dịch vụ thay thế cho việc điều phối booking
-     * Các dịch vụ có cùng category, KTV khác, service active
-     * @param \App\Models\ServiceBooking $booking
-     * @return \Illuminate\Support\Collection
-     */
-    /**
      * Query dịch vụ có cùng category, KTV khác, service active
      * @param \App\Models\ServiceBooking $booking
      * @return \Illuminate\Database\Eloquent\Builder
