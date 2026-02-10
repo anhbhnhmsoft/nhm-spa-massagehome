@@ -56,5 +56,10 @@ return [
     'wallet_technician_not_enough' => 'Số dư ví kĩ thuật viên không đủ để thanh toán triết khấu dịch vụ này',
     'booking_already_failed' => 'Lịch đặt hẹn này đã bị hủy bởi hệ thống trước đó',
     'system_booking_failed' => 'Lịch đặt hẹn này không thể được xác nhận bởi hệ thống, vui lòng liên hệ với bộ phận hỗ trợ',
-
+    'coupon_collect_limit_reached' => 'Mã giảm giá này đã hết lượt sử dụng',
+    'coupon_expired' => 'Mã giảm giá đã hết hạn',
+    'coupon_not_active' => 'Mã giảm giá không hoạt động',
+    'coupon_usage_limit_reached' => 'Mã giảm giá đã đạt đến giới hạn sử dụng t',
+    'coupon_usage_limit_reached_or_daily_full' => 'Mã giảm giá đã đạt đến giới hạn sử dụng hoặc đã hết lượt sử dụng trong ngày',
+    'not_implemented' => 'Tính năng này chưa được triển khai',
 ];

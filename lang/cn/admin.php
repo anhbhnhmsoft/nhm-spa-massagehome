@@ -760,6 +760,7 @@ return
                 'used_count' => '已使用次数',
                 'is_active' => '状态',
                 'display_ads' => '显示广告',
+                'count_collect' => '收集次数',
                 'banners' => [
                     'label' => '横幅',
                     'vi' => '越南语横幅',

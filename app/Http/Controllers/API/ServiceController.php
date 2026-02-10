@@ -4,18 +4,14 @@ namespace App\Http\Controllers\API;
 
 use App\Core\Controller\BaseController;
 use App\Core\Controller\ListRequest;
-use App\Enums\ServiceDuration;
 use App\Http\Resources\Service\CategoryResource;
 use App\Http\Resources\Service\CouponResource;
 use App\Http\Resources\Service\CouponUserResource;
 use App\Http\Resources\Service\ServiceResource;
-use App\Http\Resources\User\CustomerBookedTodayResource;
 use App\Services\BookingService;
 use App\Services\ServiceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
-use Illuminate\Validation\Rule;
 
 
 class ServiceController extends BaseController

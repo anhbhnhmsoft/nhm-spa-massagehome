@@ -29,9 +29,7 @@ class TransactionJobService
         protected ConfigService           $configService,
         protected CouponService           $couponService,
         protected UserWithdrawInfoService $userWithdrawInfoService,
-    )
-    {
-    }
+    ) {}
 
     /**
      * Xác nhận đặt lịch cho khách hàng
@@ -41,8 +39,7 @@ class TransactionJobService
      */
     public function handleConfirmBooking(
         int $bookingId,
-    ): ServiceReturn
-    {
+    ): ServiceReturn {
         DB::beginTransaction();
         try {
             // Lấy tỉ lệ đổi tiền từ config
@@ -75,12 +72,18 @@ class TransactionJobService
 
             // Kiểm tra coupon có được sử dụng hay không
             if ($booking->coupon_id) {
-                $this->couponService->useCoupon(
+                $couponResult = $this->couponService->useCoupon(
                     couponId: $booking->coupon_id,
                     userId: $booking->user_id,
                     serviceId: $booking->service_id,
                     bookingId: $booking->id,
                 );
+                // CRITICAL: Kiểm tra kết quả useCoupon - nếu fail thì rollback toàn bộ
+                if ($couponResult->isError()) {
+                    throw new ServiceException(
+                        message: $couponResult->getMessage() ?? __("error.coupon_usage_failed")
+                    );
+                }
             }
 
             // tiến hành tạo transaction thanh toán booking và cập nhật số dư ví cho Khách hàng
@@ -320,8 +323,7 @@ class TransactionJobService
     public function handleConfirmCancelBooking(
         string $bookingId,
         array $data
-    ): ServiceReturn
-    {
+    ): ServiceReturn {
         try {
             $booking = $this->bookingService->getBookingRepository()->query()
                 ->where('id', $bookingId)
@@ -331,9 +333,18 @@ class TransactionJobService
                 throw new ServiceException(__("error.not_found_booking"));
             }
 
-
-        }catch (\Exception $exception){
-
+            // TODO: Implement full cancel booking logic
+            return ServiceReturn::error(
+                message: __("error.not_implemented")
+            );
+        } catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi TransactionJobService@handleConfirmCancelBooking",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
         }
     }
 
@@ -437,8 +448,7 @@ class TransactionJobService
     public function handleRewardForKtvReferral(
         $referrerId,
         $userId
-    )
-    {
+    ) {
 
         DB::beginTransaction();
         try {
@@ -495,8 +505,7 @@ class TransactionJobService
         $feeWithdraw,
         $exchangeRate,
         $note = null
-    ): ServiceReturn
-    {
+    ): ServiceReturn {
         DB::beginTransaction();
         try {
             if (!$userId || !$withdrawInfoId || !$amount || !$withdrawMoney || !$feeWithdraw || !$exchangeRate) {
