@@ -1,0 +1,1 @@
+@livewire(\App\Livewire\Booking\SimilarServicesTable::class, ['bookingId' => $getRecord()->id])

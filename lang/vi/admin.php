@@ -460,6 +460,16 @@ return
                 'confirm_cancel_helper_text' => 'Nếu không đặt số tiền trả cho khách hàng thì sẽ hoàn toàn bộ số tiền cho khách hàng',
                 'cancel_success_title' => 'Đơn đặt lịch đã được hủy thành công',
                 'cancel_error_title' => 'Hủy đơn đặt lịch thất bại, xảy ra lỗi',
+                'reassign' => [
+                    'label' => 'Chuyển KTV',
+                    'heading' => 'Chuyển đơn sang KTV khác',
+                    'description' => 'Chọn KTV phù hợp để chuyển đơn này. Hành động này sẽ hủy đơn hiện tại và tạo đơn mới cho KTV được chọn.',
+                    'select_service_placeholder' => 'Chọn KTV và Dịch vụ thay thế',
+                    'success_title' => 'Chuyển đơn thành công',
+                    'processing_body' => 'Yêu cầu chuyển đơn đang được xử lý',
+                    'error_title' => 'Chuyển đơn thất bại',
+                    'modal_submit' => 'Xác nhận chuyển',
+                ],
             ],
             'success' => [
                 'cancel' => 'Hủy booking thành công',

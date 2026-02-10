@@ -24,6 +24,52 @@ class ViewBooking extends ViewRecord
         return [
             CommonActions::backAction(static::getResource()),
 
+            Action::make('reassign_booking')
+                ->hidden(fn($record) => $record->status !== BookingStatus::WAITING_CANCEL->value)
+                ->label(__('admin.booking.actions.reassign.label'))
+                ->color('info')
+                // ->icon('heroicon-m-arrow-path-rounded-square')
+                ->modalHeading(__('admin.booking.actions.reassign.heading'))
+                ->modalDescription(__('admin.booking.actions.reassign.description'))
+                ->modalSubmitActionLabel(__('admin.booking.actions.reassign.modal_submit'))
+                ->schema([
+                    \Filament\Forms\Components\Select::make('service_info')
+                        ->label(__('admin.booking.actions.reassign.select_service_placeholder'))
+                        ->options(function ($record, \App\Services\BookingService $service) {
+                            return $service->getSimilarServicesForReassignment($record)
+                                ->mapWithKeys(function ($item) {
+                                    $key = json_encode(['service_id' => $item['service_id'], 'ktv_id' => $item['ktv_id']]);
+                                    $priceRange = number_format($item['min_price']) . ' - ' . number_format($item['max_price']);
+                                    $label = "{$item['ktv_name']} - {$item['service_name']} ({$priceRange})";
+                                    return [$key => $label];
+                                });
+                        })
+                        ->required()
+                        ->searchable()
+                        ->preload(),
+                ])
+                ->action(function (array $data, $record, \App\Services\Facades\TransactionJobService $transactionService) {
+                    $info = json_decode($data['service_info'], true);
+                    $result = $transactionService->handleReassignBooking(
+                        $record->id,
+                        $info['service_id'],
+                        $info['ktv_id']
+                    );
+
+                    if ($result->isSuccess()) {
+                        Notification::make()
+                            ->title(__('admin.booking.actions.reassign.success_title'))
+                            ->success()
+                            ->send();
+                    } else {
+                        Notification::make()
+                            ->title(__('admin.booking.actions.reassign.error_title'))
+                            ->body($result->getMessage())
+                            ->danger()
+                            ->send();
+                    }
+                }),
+
             Action::make('confirm_cancel')
                 ->hidden(fn($record) => $record->status !== BookingStatus::WAITING_CANCEL->value)
                 ->label(__('admin.booking.actions.confirm_cancel'))
