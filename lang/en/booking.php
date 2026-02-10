@@ -87,4 +87,7 @@ return [
     'only_start_today_bookings' => 'Can only start service today',
     'payment_failed' => 'Payment failed',
     'waiting_cancel' => 'Waiting cancel',
+    'reassigned_to_other_ktv' => 'Reassigned to other technician',
+    'reassign_success' => 'Reassign success',
+    'reassigned_to_other_ktv' => 'Reassigned to other technician',
 ];

@@ -65,4 +65,5 @@ return [
     'coupon_usage_limit_reached' => 'Coupon usage limit reached',
     'coupon_usage_limit_reached_or_daily_full' => 'Coupon usage limit reached or daily limit full',
     'not_implemented' => 'This feature has not been implemented',
+    'booking_not_found_or_invalid_status' => 'Booking not found or invalid status',
 ];

@@ -62,4 +62,6 @@ return [
     'coupon_usage_limit_reached' => 'Mã giảm giá đã đạt đến giới hạn sử dụng t',
     'coupon_usage_limit_reached_or_daily_full' => 'Mã giảm giá đã đạt đến giới hạn sử dụng hoặc đã hết lượt sử dụng trong ngày',
     'not_implemented' => 'Tính năng này chưa được triển khai',
+    'booking_not_found_or_invalid_status' => 'Không tìm thấy lịch đặt hẹn này hoặc trạng thái không hợp lệ',
+    'reassigned_to_other_ktv' => 'Đơn đã được chuyển cho kĩ thuật viên khác',
 ];

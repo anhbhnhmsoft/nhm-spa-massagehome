@@ -2,12 +2,10 @@
 
 namespace App\Filament\Clusters\Service\Resources\Bookings\Pages;
 
-use App\Core\Service\ServiceReturn;
 use App\Enums\BookingStatus;
 use App\Enums\UserRole;
 use App\Filament\Clusters\Service\Resources\Bookings\BookingResource;
 use App\Filament\Components\CommonActions;
-use App\Services\BookingService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -48,26 +46,21 @@ class ViewBooking extends ViewRecord
                         ->searchable()
                         ->preload(),
                 ])
-                ->action(function (array $data, $record, \App\Services\Facades\TransactionJobService $transactionService) {
+                ->action(function (array $data, $record) {
                     $info = json_decode($data['service_info'], true);
-                    $result = $transactionService->handleReassignBooking(
-                        $record->id,
-                        $info['service_id'],
-                        $info['ktv_id']
+                    \App\Jobs\WalletTransactionJob::dispatch(
+                        [
+                            'booking_id' => $record->id,
+                            'service_id' => $info['service_id'],
+                            'ktv_id' => $info['ktv_id']
+                        ],
+                        \App\Enums\Jobs\WalletTransCase::REASSIGN_BOOKING
                     );
 
-                    if ($result->isSuccess()) {
-                        Notification::make()
-                            ->title(__('admin.booking.actions.reassign.success_title'))
-                            ->success()
-                            ->send();
-                    } else {
-                        Notification::make()
-                            ->title(__('admin.booking.actions.reassign.error_title'))
-                            ->body($result->getMessage())
-                            ->danger()
-                            ->send();
-                    }
+                    Notification::make()
+                        ->title(__('admin.booking.actions.reassign.processing_title'))
+                        ->success()
+                        ->send();
                 }),
 
             Action::make('confirm_cancel')
@@ -126,19 +119,15 @@ class ViewBooking extends ViewRecord
                 ])
                 ->modalHeading(__('admin.booking.actions.cancel.heading'))
                 ->modalDescription(__('admin.booking.actions.cancel.description'))
-                ->action(function (BookingService $bookingService, $record, $data) {
-                    $result = $bookingService->approveCancel($record, $data);
-                    if ($result->isSuccess()) {
-                        Notification::make()
-                            ->title(__('admin.booking.actions.cancel_success_title'))
-                            ->success()
-                            ->send();
-                    } else {
-                        Notification::make()
-                            ->title(__('admin.booking.actions.cancel_error_title'))
-                            ->danger()
-                            ->send();
-                    }
+                ->action(function ($record, $data) {
+                    \App\Jobs\WalletTransactionJob::dispatch(
+                        ['booking_id' => $record->id] + $data,
+                        \App\Enums\Jobs\WalletTransCase::CONFIRM_CANCEL_BOOKING
+                    );
+                    Notification::make()
+                        ->title(__('admin.booking.actions.cancel_processing_title'))
+                        ->success()
+                        ->send();
                 }),
         ];
     }

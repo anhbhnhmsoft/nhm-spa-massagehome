@@ -460,6 +460,7 @@ return
                 'confirm_cancel_helper_text' => 'Nếu không đặt số tiền trả cho khách hàng thì sẽ hoàn toàn bộ số tiền cho khách hàng',
                 'cancel_success_title' => 'Đơn đặt lịch đã được hủy thành công',
                 'cancel_error_title' => 'Hủy đơn đặt lịch thất bại, xảy ra lỗi',
+                'cancel_processing_title' => 'Hủy đơn đặt lịch đang được xử lý',
                 'reassign' => [
                     'label' => 'Chuyển KTV',
                     'heading' => 'Chuyển đơn sang KTV khác',
@@ -469,6 +470,7 @@ return
                     'processing_body' => 'Yêu cầu chuyển đơn đang được xử lý',
                     'error_title' => 'Chuyển đơn thất bại',
                     'modal_submit' => 'Xác nhận chuyển',
+                    'processing_title' => 'Chuyển đơn đang được xử lý',
                 ],
             ],
             'success' => [

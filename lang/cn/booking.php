@@ -87,4 +87,6 @@ return [
     'only_start_today_bookings' => '只能开始今天的服务',
     'payment_failed' => '支付失败',
     'waiting_cancel' => '等待取消',
+    'reassigned_to_other_ktv' => '已重新分配给其他技师',
+    'reassign_success' => '重新分配成功',
 ];

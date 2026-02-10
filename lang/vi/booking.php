@@ -85,4 +85,6 @@ return [
     'only_start_today_bookings' => 'Chỉ có thể bắt đầu dịch vụ hôm nay',
     'payment_failed' => 'Thanh toán thất bại',
     'waiting_cancel' => 'Chờ hủy',
+    'reassigned_to_other_ktv' => 'Đơn đã được chuyển cho kĩ thuật viên khác',
+    'reassign_success' => 'Chuyển đơn thành công',
 ];

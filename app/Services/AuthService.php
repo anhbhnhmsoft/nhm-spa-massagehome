@@ -9,7 +9,6 @@ use App\Core\LogHelper;
 use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
-use App\Enums\ConfigName;
 use App\Enums\DirectFile;
 use App\Enums\Gender;
 use App\Enums\Language;
@@ -31,7 +30,7 @@ use Illuminate\Support\Facades\Storage;
 
 class AuthService extends BaseService
 {
-    protected int $otpTtl = 15;     // OTP tồn tại 1 phút
+    protected int $otpTtl = 1;     // OTP tồn tại 1 phút
     protected int $blockTime = 60;   // Khóa 60 phút (tránh gửi OTP quá nhiều)
     protected int $maxAttempts = 5;  // Tối đa 5 lần thử sai
     protected int $maxResendOtp = 3;  // Tối đa 3 lần gửi OTP
@@ -432,7 +431,7 @@ class AuthService extends BaseService
                 key: CacheKey::CACHE_USER_HEARTBEAT,
                 value: true,
                 uniqueKey: $user->id,
-                expire: $now->copy()->addMinutes(5) // 5 phút
+                expire: 5 // 5 phút
             );
             // --- TẦNG 2: DATABASE (LỊCH SỬ) ---
             // Kiểm tra heartbeat có quá 15 phút không
