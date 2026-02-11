@@ -244,7 +244,7 @@ class TransactionJobService
             // Thanh toán cho KTV
             $this->walletService->createPaymentServiceBookingForKtv(
                 walletKtv: $walletKtv,
-                bookingId: $booking,
+                bookingId: $booking->id,
                 price: $booking->price,
                 exchangeRate: $exchangeRate,
                 discountRate: $discountRate,

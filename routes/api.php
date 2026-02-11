@@ -257,7 +257,7 @@ Route::middleware('set-api-locale')->group(function () {
 
     Route::prefix('chat')->middleware(['auth:sanctum'])->group(function () {
         // Tạo/lấy phòng chat giữa customer (user hiện tại) và KTV
-        Route::post('room', [ChatController::class, 'createOrGetRoaom']);
+        Route::post('room', [ChatController::class, 'createOrGetRoom']);
         // Lấy danh sách tin nhắn theo room_id (paginate)
         Route::get('messages/{roomId}', [ChatController::class, 'listMessages'])->where('roomId', '[0-9]+');
         // Gửi tin nhắn trong room (lưu DB + publish realtime)

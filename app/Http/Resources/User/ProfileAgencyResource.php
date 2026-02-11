@@ -20,9 +20,6 @@ class ProfileAgencyResource extends JsonResource
             'bio' => $apply?->getTranslations('bio'),
             'gender' => $profile?->gender,
             'date_of_birth' => (string) $profile?->date_of_birth,
-            'lat' => (string) $apply?->latitude,
-            'lng' => (string) $apply?->longitude,
-            'address' => $apply?->address,
         ];
     }
 }
