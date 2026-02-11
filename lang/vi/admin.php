@@ -580,6 +580,7 @@ return
                 'cancel' => 'Hủy bỏ',
                 'transfer' => 'Chuyển tiền ',
                 'fee_transfer' => '(thuộc giao dịch ID: :transaction_id)',
+                'approve_confirmation_message' => 'Bạn có chắc chắn muốn duyệt giao dịch này?',
             ],
             'errors' => [
                 'withdraw_info_not_found' => 'Thông tin rút tiền không tồn tại',

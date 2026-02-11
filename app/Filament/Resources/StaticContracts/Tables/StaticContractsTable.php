@@ -53,6 +53,7 @@ class StaticContractsTable
                         ->modalDescription(__('admin.common.modal.delete_confirm'))
                         ->modalSubmitActionLabel(__('admin.common.action.confirm_delete')),
                 ]),
-            ]);
+            ])
+            ->defaultSort('created_at', 'desc');
     }
 }

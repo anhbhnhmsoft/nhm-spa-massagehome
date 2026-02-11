@@ -45,6 +45,7 @@ return [
         'view' => 'View',
         'close' => 'Close',
         'confirm' => 'Confirm',
+        'submit' => 'Submit'
     ],
     'breadcrumb' => [
         'list' => 'List',
@@ -54,8 +55,12 @@ return [
     ],
     "placeholder" => [
         'type' => 'Type',
+        'select' => 'Select'    
     ],
     'modal' => [
         'view_title' => 'View',
     ],
+    'search_prompt' => 'Search',
+    'no_results_found' => 'No results found',
+    'loading' => 'Loading'
 ];

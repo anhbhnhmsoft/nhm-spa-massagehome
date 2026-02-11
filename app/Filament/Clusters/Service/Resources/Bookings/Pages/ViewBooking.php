@@ -33,6 +33,10 @@ class ViewBooking extends ViewRecord
                 ->schema([
                     \Filament\Forms\Components\Select::make('service_info')
                         ->label(__('admin.booking.actions.reassign.select_service_placeholder'))
+                        ->placeholder(__('common.placeholder.select'))
+                        ->searchPrompt(__('common.search_prompt'))
+                        ->noSearchResultsMessage(__('common.no_results_found'))
+                        ->loadingMessage(__('common.loading'))
                         ->options(function ($record, \App\Services\BookingService $service) {
                             return $service->getSimilarServicesForReassignment($record)
                                 ->mapWithKeys(function ($item) {
@@ -61,6 +65,16 @@ class ViewBooking extends ViewRecord
                         ->title(__('admin.booking.actions.reassign.processing_title'))
                         ->success()
                         ->send();
+                })
+                ->modalFooterActions(function ($action) {
+                    return [
+                        $action->getModalCancelAction()
+                            ->label(__('common.action.close'))
+                            ->color('danger'),
+                        $action->getModalSubmitAction()
+                            ->label(__('common.action.submit'))
+                            ->color('success'),
+                    ];
                 }),
 
             Action::make('confirm_cancel')
@@ -128,6 +142,16 @@ class ViewBooking extends ViewRecord
                         ->title(__('admin.booking.actions.cancel_processing_title'))
                         ->success()
                         ->send();
+                })
+                ->modalFooterActions(function ($action) {
+                    return [
+                        $action->getModalCancelAction()
+                            ->label(__('common.action.close'))
+                            ->color('danger'),
+                        $action->getModalSubmitAction()
+                            ->label(__('common.action.submit'))
+                            ->color('success'),
+                    ];
                 }),
         ];
     }

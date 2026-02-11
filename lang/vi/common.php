@@ -45,6 +45,7 @@ return [
         'view' => 'Xem',
         'close' => 'Đóng',
         'confirm' => 'Xác nhận',
+        'submit' => 'Gửi',
     ],
     'breadcrumb' => [
         'list' => 'Danh sách',
@@ -54,8 +55,12 @@ return [
     ],
     'placeholder' => [
         'type' => 'Loại',
+        'select' => 'Chọn',
     ],
     'modal' => [
         'view_title' => 'Xem chi tiết',
     ],
+    'search_prompt' => 'Tìm kiếm',
+    'no_results_found' => 'Không tìm thấy kết quả',
+    'loading' => 'Đang tải',
 ];

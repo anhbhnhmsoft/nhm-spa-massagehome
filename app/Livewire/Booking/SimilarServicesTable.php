@@ -57,13 +57,13 @@ class SimilarServicesTable extends Component implements HasForms, HasTable, HasA
             ])
             ->recordActions([
                 Action::make('reassign')
-                    ->label(__('admin.booking.reassign.label')) // Reusing existing translation key 'label' => 'Chuyển KTV'
+                    ->label(__('admin.booking.actions.reassign.label')) // Reusing existing translation key 'label' => 'Chuyển KTV'
                     ->button()
                     ->color('primary')
                     ->requiresConfirmation()
-                    ->modalHeading(__('admin.booking.reassign.heading'))
-                    ->modalDescription(__('admin.booking.reassign.description'))
-                    ->modalSubmitActionLabel(__('admin.booking.reassign.modal_submit'))
+                    ->modalHeading(__('admin.booking.actions.reassign.heading'))
+                    ->modalDescription(__('admin.booking.actions.reassign.description'))
+                    ->modalSubmitActionLabel(__('admin.booking.actions.reassign.modal_submit'))
                     ->action(function (Service $record) {
                         \App\Jobs\WalletTransactionBookingJob::dispatch(
                             $this->bookingId,
@@ -75,8 +75,8 @@ class SimilarServicesTable extends Component implements HasForms, HasTable, HasA
                         );
 
                         Notification::make()
-                            ->title(__('admin.booking.reassign.success_title'))
-                            ->body(__('admin.booking.reassign.processing_body'))
+                            ->title(__('admin.booking.actions.reassign.success_title'))
+                            ->body(__('admin.booking.actions.reassign.processing_body'))
                             ->success()
                             ->send();
 

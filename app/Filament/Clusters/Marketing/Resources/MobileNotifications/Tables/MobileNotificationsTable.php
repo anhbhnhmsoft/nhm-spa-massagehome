@@ -34,6 +34,6 @@ class MobileNotificationsTable
                     ->dateTime()
                     ->sortable()
             ])
-            ->defaultSort('created_at', 'asc');
+            ->defaultSort('created_at', 'desc');
     }
 }

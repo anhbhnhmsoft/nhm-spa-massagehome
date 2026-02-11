@@ -115,6 +115,14 @@ return [
             'title' => 'Nạp tiền thất bại',
             'body'  => 'Giao dịch nạp số tiền :amount VND đã thất bại. Vui lòng thử lại hoặc liên hệ quản trị để được hỗ trợ.',
         ],
+        NotificationType::NOTIFICATION_MARKETING->value => [
+            'title' => ':title',
+            'body'  => ':content',
+        ],
+        NotificationType::BOOKING_REASSIGNED->value => [
+            'title' => 'Dịch vụ được chuyển giao',
+            'body'  => 'Dịch vụ ID :booking_id đã được chuyển giao cho bạn.',
+        ],
     ],
 ];
 

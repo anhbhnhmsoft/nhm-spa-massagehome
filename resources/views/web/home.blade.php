@@ -453,7 +453,7 @@
     <section class="cta">
         <div class="container">
             <h2>Sẵn sàng thư giãn ngay hôm nay?</h2>
-            <p>Tải ứng dụng Masa Home để nhận ngay voucher giảm giá 20% cho lần đặt lịch đầu tiên.</p>
+            <p>Tải ứng dụng Masa Home iđể nhận ngay voucher giảm giá 20% cho lần đặt lịch đầu tiên.</p>
             <div class="btn-group">
                 <a href="{{ $ios_url ?? '#' }}" class="btn btn-white" title="Tải cho IOS (Iphone)"><img
                         src="images/appstore.png"></a>

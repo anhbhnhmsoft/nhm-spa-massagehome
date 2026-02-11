@@ -82,14 +82,25 @@ class WalletTransactionsTable
                         ->icon('heroicon-o-check')
                         ->color('success')
                         ->visible(function ($record) {
-                           return $record->status == WalletTransactionStatus::PENDING->value
-                                   // Chỉ duyệt các giao dịch nạp vào hệ thống
-                               && in_array($record->type, WalletTransactionType::statusIn());
+                            return $record->status == WalletTransactionStatus::PENDING->value
+                                // Chỉ duyệt các giao dịch nạp vào hệ thống
+                                && in_array($record->type, WalletTransactionType::statusIn());
                         })
                         ->action(function ($record, PaymentService $paymentService) {
                             $paymentService->handleAdminConfirmTransaction($record);
                         })
-                        ->requiresConfirmation(),
+                        ->modalDescription(__('admin.transaction.actions.approve_confirmation_message'))
+                        ->requiresConfirmation()
+                        ->modalFooterActions(function ($action) {
+                            return [
+                                $action->getModalCancelAction()
+                                    ->label(__('common.action.close'))
+                                    ->color('danger'),
+                                $action->getModalSubmitAction()
+                                    ->label(__('common.action.submit'))
+                                    ->color('success'),
+                            ];
+                        }),
 
                     Action::make('fee_transfer')
                         ->visible(function ($record) {
@@ -106,8 +117,8 @@ class WalletTransactionsTable
                         ->color('info')
                         ->visible(function ($record) {
                             return $record->status == WalletTransactionStatus::PENDING->value
-                                    // Chỉ duyệt các giao dịch rút tiền
-                                    && $record->type == WalletTransactionType::WITHDRAWAL->value;
+                                // Chỉ duyệt các giao dịch rút tiền
+                                && $record->type == WalletTransactionType::WITHDRAWAL->value;
                         })
                         ->action(function ($record) {
                             WalletTransactionJob::dispatchSync(
@@ -151,9 +162,21 @@ class WalletTransactionsTable
                                         ],
                                         'record' => $record
                                     ])
-                                    ->columnSpanFull()];
+                                    ->columnSpanFull()
+                            ];
                         })
-                        ->requiresConfirmation(),
+                        ->requiresConfirmation()
+                        ->modalDescription(__('admin.transaction.actions.approve_confirmation_message'))
+                        ->modalFooterActions(function ($action) {
+                            return [
+                                $action->getModalCancelAction()
+                                    ->label(__('common.action.close'))
+                                    ->color('danger'),
+                                $action->getModalSubmitAction()
+                                    ->label(__('common.action.submit'))
+                                    ->color('success'),
+                            ];
+                        }),
 
 
                     // Hủy giao dịch
@@ -164,7 +187,7 @@ class WalletTransactionsTable
                         ->visible(function ($record) {
                             return $record->status == WalletTransactionStatus::PENDING->value
                                 && (in_array($record->type, WalletTransactionType::statusIn())
-                                || $record->type === WalletTransactionType::WITHDRAWAL->value);
+                                    || $record->type === WalletTransactionType::WITHDRAWAL->value);
                         })
                         ->action(function ($record) {
                             // Nếu là giao dịch rút tiền, hoàn tiền về ví khi hủy
@@ -185,10 +208,22 @@ class WalletTransactionsTable
                             );
                             $record->update(['status' => WalletTransactionStatus::FAILED->value]);
                         })
-                        ->requiresConfirmation(),
+                        ->requiresConfirmation()
+                        ->modalDescription(__('admin.transaction.actions.cancel_confirmation_message'))
+                        ->modalFooterActions(function ($action) {
+                            return [
+                                $action->getModalCancelAction()
+                                    ->label(__('common.action.close'))
+                                    ->color('danger'),
+                                $action->getModalSubmitAction()
+                                    ->label(__('common.action.submit'))
+                                    ->color('success'),
+                            ];
+                        }),
 
                 ])->buttonGroup()
             ])
+            ->defaultSort('created_at', 'desc')
             ->emptyStateHeading(__('admin.transaction.empty_state.heading'));
     }
 }

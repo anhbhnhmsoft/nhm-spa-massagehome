@@ -51,6 +51,7 @@ class ReviewsTable
             ->recordActions([
                 DeleteAction::make(),
             ])
+            ->defaultSort('created_at', 'desc')
             ->poll('5m');
     }
 }
