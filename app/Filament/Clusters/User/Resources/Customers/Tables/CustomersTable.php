@@ -86,6 +86,7 @@ class CustomersTable
                         ->modalSubmitActionLabel(__('admin.common.action.confirm_delete'))
                 ]),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([])
             ->poll('5m');
     }

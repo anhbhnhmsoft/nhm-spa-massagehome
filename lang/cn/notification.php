@@ -114,5 +114,13 @@ return [
             'title' => '充值失败',
             'body'  => '金额为 :amount VND 的充值交易失败。请重试或联系支持。',
         ],
+        NotificationType::NOTIFICATION_MARKETING->value => [
+            'title' => ':title',
+            'body'  => ':content',
+        ],
+        NotificationType::BOOKING_REASSIGNED->value =>  [
+            'title' => '服务被重新分配',
+            'body'  => '服务 ID :booking_id 已被重新分配给您。',
+        ],
     ],
 ];

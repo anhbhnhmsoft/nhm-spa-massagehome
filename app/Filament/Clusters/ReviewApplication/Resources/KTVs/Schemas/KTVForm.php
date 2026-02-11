@@ -11,13 +11,10 @@ use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserFileType;
 use App\Enums\UserRole;
 use App\Filament\Components\CommonFields;
-use App\Models\Province;
-use App\Services\LocationService;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\TimePicker;
 use Filament\Resources\Pages\CreateRecord;
-use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Schemas\Components\Text;
 use Filament\Forms\Components\Repeater;
@@ -29,7 +26,6 @@ use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Illuminate\Database\Eloquent\Builder;
 
 class KTVForm
 {

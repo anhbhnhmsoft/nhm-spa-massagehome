@@ -580,6 +580,8 @@ return
                 'cancel' => 'Cancel',
                 'transfer' => 'Transfer Money ',
                 'fee_transfer' => '(Transaction ID: :transaction_id)',
+                'approve_confirmation_message' => 'Are you sure you want to approve this transaction?',
+                'cancel_confirmation_message' => 'Are you sure you want to cancel this transaction?',
             ],
             'errors' => [
                 'withdraw_info_not_found' => 'Withdrawal info not found',

@@ -68,6 +68,7 @@ class DangerSupportsTable
                     })
                     ->modalSubmitActionLabel(__('common.action.confirm'))
                     ->modalCancelActionLabel(__('common.action.cancel')),
-            ]);
+            ])
+            ->defaultSort('created_at', 'desc');
     }
 }

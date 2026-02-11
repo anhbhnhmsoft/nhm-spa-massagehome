@@ -111,6 +111,7 @@ class CategoriesTable
                         ->modalSubmitActionLabel(__('admin.common.action.confirm_delete')),
                 ]),
             ])
+            ->defaultSort('created_at', 'desc')
             ->poll('5m');
     }
 }

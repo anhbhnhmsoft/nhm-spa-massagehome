@@ -1399,6 +1399,7 @@ class UserService extends BaseService
 
             $this->notificationService->sendAdminNotification(NotificationAdminType::EMERGENCY_SUPPORT, [
                 'danger_support_id' => $dangerSupport->id,
+                'booking_id' => $nearestBooking?->id,
             ]);
 
             DB::commit();

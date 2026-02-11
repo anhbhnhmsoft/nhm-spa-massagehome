@@ -579,6 +579,8 @@ return
                 'cancel' => '取消',
                 'transfer' => '转账',
                 'fee_transfer' => '(交易 ID: :transaction_id)',
+                'approve_confirmation_message' => '您确定要批准此交易吗？',
+                'cancel_confirmation_message' => '您确定要取消此交易吗？',
             ],
             'errors' => [
                 'withdraw_info_not_found' => '未找到提现信息',

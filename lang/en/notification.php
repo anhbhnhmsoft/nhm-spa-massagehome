@@ -114,5 +114,13 @@ return [
             'title' => 'Deposit Failed',
             'body'  => 'Deposit transaction of :amount VND has failed. Please try again or contact support.',
         ],
+        NotificationType::NOTIFICATION_MARKETING->value => [
+            'title' => ':title',
+            'body'  => ':content',
+        ],
+        NotificationType::BOOKING_REASSIGNED->value => [
+            'title' => 'Service Reassigned',
+            'body'  => 'Service ID :booking_id has been reassigned to you.',
+        ],
     ],
 ];

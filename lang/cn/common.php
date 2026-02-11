@@ -45,6 +45,7 @@ return [
         'view' => '查看',
         'close' => '关闭',
         'confirm' => '确认',
+        'submit' => '提交',
     ],
     'breadcrumb' => [
         'list' => '列表',
@@ -54,8 +55,12 @@ return [
     ],
     'placeholder' => [
         'type' => '类型',
+        'select' => '请选择',
     ],
     'modal' => [
         'view_title' => '查看详情',
     ],
+    'search_prompt' => '搜索',
+    'no_results_found' => '未找到结果',
+    'loading' => '加载中',
 ];
