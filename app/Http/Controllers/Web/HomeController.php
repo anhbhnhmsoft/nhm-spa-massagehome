@@ -11,6 +11,7 @@ class HomeController extends BaseController
     {
         $chplay = config('services.store.chplay');
         $appstore = config('services.store.appstore');
-        return view('web.home', compact('chplay', 'appstore'));
+        $web = config('services.store.web_app');
+        return view('web.home', compact('chplay', 'appstore', 'web'));
     }
 }

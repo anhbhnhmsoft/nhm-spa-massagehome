@@ -354,17 +354,15 @@
                     <p>Đặt lịch mát-xa thư giãn, trị liệu chuyên sâu ngay trên ứng dụng. Đội ngũ kỹ thuật viên tay nghề
                         cao sẵn sàng phục vụ bạn mọi lúc, mọi nơi.</p>
                     <div class="btn-group">
-                        <a href="{{ $ios_url ?? '#' }}" class="btn btn-white" title="Tải cho IOS (Iphone)"><img
+                        <a href="{{ $appstore ?? '#' }}" class="btn btn-white" title="Tải cho IOS (Iphone)"><img
                                 src="images/appstore.png"></a>
-                        <a href="{{ $android_url ?? '#' }}" class="btn btn-white" title="Tải cho CHPlay"><img
+                        <a href="{{ $chplay ?? '#' }}" class="btn btn-white" title="Tải cho CHPlay"><img
                                 src="images/chplay.png"></a>
-
-                    </div>
-                    <div class="btn-group btn-quick-access" style="margin-top: 8px;">
-                        <a href="{{ $android_url ?? '#' }}" class="btn btn-white" title="Truy cập nhanh"
-                            style="color: var(--primary-color);">
+                        <a href="{{ $web ?? '#' }}" target="_blank" class="btn btn-white" title="Truy cập nhanh"
+                           style="color: var(--primary-color);">
                             <img src="/images/logo.png" style="max-width: 40px; margin: 0 8px;" />
                             Truy cập nhanh</a>
+
                     </div>
                 </div>
                 <div class="hero-image">
@@ -455,10 +453,14 @@
             <h2>Sẵn sàng thư giãn ngay hôm nay?</h2>
             <p>Tải ứng dụng Masa Home iđể nhận ngay voucher giảm giá 20% cho lần đặt lịch đầu tiên.</p>
             <div class="btn-group">
-                <a href="{{ $ios_url ?? '#' }}" class="btn btn-white" title="Tải cho IOS (Iphone)"><img
+                <a href="{{ $appstore ?? '#' }}" class="btn btn-white" title="Tải cho IOS (Iphone)"><img
                         src="images/appstore.png"></a>
-                <a href="{{ $android_url ?? '#' }}" download="" class="btn btn-white" title="Tải cho CHPlay"><img
+                <a href="{{ $chplay ?? '#' }}" class="btn btn-white" title="Tải cho CHPlay"><img
                         src="images/chplay.png"></a>
+                <a href="{{ $web ?? '#' }}" target="_blank" class="btn btn-white" title="Truy cập nhanh"
+                   style="color: var(--primary-color);">
+                    <img src="/images/logo.png" style="max-width: 40px; margin: 0 8px;" />
+                    Truy cập nhanh</a>
             </div>
         </div>
     </section>

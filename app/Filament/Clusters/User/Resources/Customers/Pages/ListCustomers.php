@@ -13,8 +13,7 @@ class ListCustomers extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make()
-                ->label(__('common.action.create')),
+
         ];
     }
 
@@ -23,5 +22,5 @@ class ListCustomers extends ListRecords
     {
         return __('common.breadcrumb.list');
     }
-    
+
 }

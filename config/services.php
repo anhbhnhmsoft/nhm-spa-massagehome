@@ -52,6 +52,7 @@ return [
     'store' => [
         'chplay' => env('CHPLAY_APP') ?? '',
         'appstore' => env('APPSTORE_APP') ?? '',
+        'web_app' => env('WEB_APP') ?? '',
     ],
     'payment' => [
         'qrcode' => env('QRCODE_ENABLE', false),

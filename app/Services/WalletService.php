@@ -340,7 +340,7 @@ class WalletService extends BaseService
             // Tính toán hoa hồng affiliate
             $amount = Helper::calculatePriceAffiliate(
                 price: $systemIncome,
-                commissionPercent: $affiliateConfigData['commission_percent'],
+                commissionPercent: $affiliateConfigData['commission_rate'],
                 minCommission: $affiliateConfigData['min_commission'],
                 maxCommission: $affiliateConfigData['max_commission'],
             );
