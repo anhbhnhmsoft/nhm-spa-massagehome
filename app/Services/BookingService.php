@@ -118,6 +118,7 @@ class BookingService extends BaseService
         try {
             $user = Auth::user();
             $now = \Carbon\Carbon::now();
+            $startOfDay = $now->copy()->startOfDay();
             $endOfDay = $now->copy()->endOfDay();
 
             // Kiểm tra dịch vụ có phù hợp để book dịch vụ không
@@ -141,8 +142,8 @@ class BookingService extends BaseService
                     \App\Enums\BookingStatus::CONFIRMED->value,
                     \App\Enums\BookingStatus::ONGOING->value,
                 ])
-                ->where('ktv_user_id', $service->ktv_id)
-                ->whereBetween('booking_time', [$now, $endOfDay])
+                ->where('ktv_user_id', $service->user_id)
+                ->whereBetween('booking_time', [$startOfDay, $endOfDay])
                 ->orderBy('booking_time', 'desc')
                 ->get(["id", "booking_time"]);
 

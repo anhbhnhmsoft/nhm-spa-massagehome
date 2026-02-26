@@ -2,8 +2,6 @@
 
 namespace App\Models;
 
-use App\Core\Cache\CacheKey;
-use App\Core\Cache\Caching;
 use App\Core\GenerateId\HasBigIntId;
 use App\Enums\UserRole;
 use App\Enums\UserFileType;
@@ -49,20 +47,9 @@ class User extends Authenticatable implements FilamentUser
         'is_active' => 'boolean',
     ];
 
-    protected $appends = ['is_online'];
-
-
     public function canAccessPanel(Panel $panel): bool
     {
         return true;
-    }
-
-    public function getIsOnlineAttribute()
-    {
-        return Caching::hasCache(
-            key: CacheKey::CACHE_USER_HEARTBEAT,
-            uniqueKey: $this->id
-        );
     }
 
     // Relations

@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\CommercialController;
-use App\Http\Controllers\API\DashboardController;
 use App\Http\Controllers\API\FileController;
 use App\Http\Controllers\API\BookingController;
 use App\Http\Controllers\API\KTVController;
@@ -41,6 +40,7 @@ Route::middleware('set-api-locale')->group(function () {
 
         // Auth middleware
         Route::middleware(['auth:sanctum'])->group(function () {
+            Route::post('me', [AuthController::class, 'me']);
             // Lấy thông tin hồ sơ người dùng.
             Route::get('profile', [AuthController::class, 'getProfile']);
             // Cập nhật ngôn ngữ hệ thống.
@@ -279,6 +279,10 @@ Route::middleware('set-api-locale')->group(function () {
     Route::prefix('config')->group(function () {
         // Lấy thông tin cấu hình hỗ trợ
         Route::get('support-channels', [ConfigController::class, 'getSupportChannels']);
+
+        // Lấy thông tin cấu hình ứng dụng
+        Route::get('config-application', [ConfigController::class, 'configApplication']);
+
     });
 
     // Chỉ dành cho KTV
@@ -328,7 +332,7 @@ Route::middleware('set-api-locale')->group(function () {
     });
 
     // Dành cho agency
-    Route::prefix('agency')->middleware(['auth:sanctum','check-role:agency'])->group(function () {
+    Route::prefix('agency')->middleware(['auth:sanctum', 'check-role:agency'])->group(function () {
         // Lấy thông tin dashboard
         Route::get('dashboard', [AgencyController::class, 'dashboard']);
         // Lấy danh sách KTV Performance

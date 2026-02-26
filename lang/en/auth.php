@@ -23,7 +23,6 @@ return [
         'resend_otp' => 'Too many resend attempts. Please try again in :minutes minutes.',
         'not_sent' => 'OTP code does not exist.',
         'phone_invalid' => 'Invalid phone number.',
-        'invalid_token_register' => 'Invalid registration token.',
         'disabled' => 'This account has been locked, please contact administrator for support.',
         'invalid_login' => 'Incorrect phone number or password.',
         'language_invalid' => 'Invalid language.',

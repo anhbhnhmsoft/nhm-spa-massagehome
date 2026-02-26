@@ -39,6 +39,7 @@ use App\Repositories\StaticContractRepository;
 use App\Repositories\UserDeviceRepository;
 use App\Repositories\UserFileRepository;
 use App\Repositories\UserKtvScheduleRepository;
+use App\Repositories\UserOtpRepository;
 use App\Repositories\UserProfileRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\UserReviewApplicationRepository;
@@ -135,6 +136,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(CategoryPriceRepository::class);
         $this->app->singleton(ZaloTokenRepository::class);
         $this->app->singleton(DangerSupportRepository::class);
+        $this->app->singleton(UserOtpRepository::class);
     }
 
     /**

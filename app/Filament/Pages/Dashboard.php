@@ -2,17 +2,17 @@
 
 namespace App\Filament\Pages;
 
-use App\Enums\DangerSupportStatus;
+use App\Enums\UserRole;
 use App\Filament\Resources\DangerSupports\DangerSupportResource;
 use App\Filament\Widgets\GeneralBookingStats;
 use App\Filament\Widgets\GeneralStats;
 use App\Filament\Widgets\TransactionChart;
 use App\Filament\Widgets\UserStaticStats;
-use App\Models\DangerSupport;
+use App\Models\User;
 use App\Services\DashboardService;
 use Filament\Actions\Action;
+use Filament\Notifications\Notification;
 use Filament\Pages\Dashboard as PagesDashboard;
-use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class Dashboard extends PagesDashboard
 {
@@ -53,6 +53,31 @@ class Dashboard extends PagesDashboard
                 ->extraAttributes([
                     'class' => $sosCount > 0 ? 'animate-pulse' : '', // Nhấp nháy nếu có SOS
                 ]),
+            Action::make('test2')
+                ->label("test notificaiton database")
+                ->action(function () {
+                    Notification::make()
+                        ->title("Test tiếng")
+                        ->info()
+                        ->body("Test tiếng notification")
+                        ->actions([
+                            Action::make(__('notification.marked_as_read'))
+                                ->button()
+                                ->markAsRead(),
+                        ])
+                        ->sendToDatabase(User::query()->where('role',UserRole::ADMIN)->first());
+
+
+                }),
+            Action::make('test')
+                ->label("test notificaiton")
+                ->action(function () {
+                    Notification::make()
+                        ->title("Test tiếng")
+                        ->info()
+                        ->body("Test tiếng notification")
+                        ->send();
+                }),
         ];
     }
 

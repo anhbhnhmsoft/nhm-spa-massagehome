@@ -14,6 +14,7 @@ use App\Enums\ConfigType;
 use App\Enums\UserRole;
 use App\Repositories\AffiliateConfigRepository;
 use App\Repositories\ConfigRepository;
+use Exception;
 use Illuminate\Support\Facades\DB;
 
 class ConfigService extends BaseService
@@ -208,42 +209,6 @@ class ConfigService extends BaseService
     }
 
     /**
-     * Lấy affiliate config theo role
-     * @param UserRole $role
-     * @return ServiceReturn
-     */
-    public function getAffiliateConfigByRole(UserRole $role): ServiceReturn
-    {
-        try {
-            $config = $this->affiliateConfigRepository->query()
-                ->where('target_role', $role->value)
-                ->where('is_active', true)
-                ->first();
-            if (!$config) {
-                return ServiceReturn::error(
-                    message: __('error.config_not_found')
-                );
-            }
-            return ServiceReturn::success(
-                data: [
-                    'target_role' => $config->target_role,
-                    'commission_rate' => $config->commission_rate,
-                    'min_commission' => $config->min_commission,
-                    'max_commission' => $config->max_commission,
-                ]
-            );
-        } catch (\Exception $exception) {
-            LogHelper::error(
-                message: "Lỗi SettingService@getAffiliateConfigByRole",
-                ex: $exception
-            );
-            return ServiceReturn::error(
-                message: __('common_error.server_error')
-            );
-        }
-    }
-
-    /**
      * Cập nhật affiliate configs (CRUD)
      * @param array $configsData
      * @return ServiceReturn
@@ -270,6 +235,7 @@ class ConfigService extends BaseService
             $this->affiliateConfigRepository->query()->whereNotIn('id', $currentIds)->delete();
 
             DB::commit();
+
             return ServiceReturn::success(
                 message: __('admin.notification.success.update_success')
             );
@@ -292,13 +258,13 @@ class ConfigService extends BaseService
      */
     public function getConfigAffiliate(UserRole $role): ServiceReturn
     {
-        $config = Caching::getCache(
-            key: CacheKey::CACHE_KEY_CONFIG_AFFILIATE,
-            uniqueKey: $role->value,
-        );
-        if ($config) {
-            return ServiceReturn::success(data: $config);
-        }
+//        $config = Caching::getCache(
+//            key: CacheKey::CACHE_KEY_CONFIG_AFFILIATE,
+//            uniqueKey: $role->value,
+//        );
+//        if ($config) {
+//            return ServiceReturn::success(data: $config);
+//        }
         try {
             $config = $this->affiliateConfigRepository->query()
                 ->where('target_role', $role->value)
@@ -356,5 +322,25 @@ class ConfigService extends BaseService
         } catch (\Throwable) {
             return 10;
         }
+    }
+
+    /**
+     * Lấy thông tin người dùng + các config về app
+     * @return ServiceReturn
+     * @throws \Throwable
+     */
+    public function getConfigApplication(): ServiceReturn
+    {
+        return $this->execute(
+            callback: function () {
+                return [
+                    'maintenance' => config('services.application_mobile.maintenance'),
+                    'ios_version' => config('services.application_mobile.ios_version'),
+                    'android_version' => config('services.application_mobile.android_version'),
+                    'appstore_url' => config('services.store.appstore'),
+                    'chplay_url' => config('services.store.chplay'),
+                ];
+            }
+        );
     }
 }

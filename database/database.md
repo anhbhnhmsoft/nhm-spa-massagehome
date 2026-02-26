@@ -23,18 +23,6 @@
     - timestamps
 
 
-# provinces
-    # note
-    - Bảng provinces lưu trữ các tỉnh thành.
-
-    # cấu trúc
-    - id (bigint, primary key, auto-increment)
-    - name (varchar) -- tên tỉnh thành
-    - code (varchar, unique) -- mã tỉnh thành
-    - division_type (varchar, nullable) -- cấp hành chính
-    - timestamps
-
-
 # geo_caching_places
     # note
     - Bảng geo_caching_places lưu trữ các địa điểm được tìm kiếm từ API để tối ưu truy vấn.
@@ -67,6 +55,26 @@
     - last_login_at (timestamp, nullable) -- thời gian đăng nhập cuối cùng
     
     - timestamps
+
+## user_otp
+    # note
+    - Bảng user_otp lưu trữ thông tin OTP (mã xác thực) của người dùng.
+
+    # cấu trúc
+    - id
+    - phone (varchar)            
+    - otp_hash (varchar)
+    - type (unsigned smallint) - Loại OTP (trong enum UserOtpType)
+    - attempts (unsigned tinyint, default 0) -- số lần thử lại     
+    - expired_at (timestamp) -- thời gian hết hạn
+    - verified_at (timestamp, nullable) -- thời gian xác thực
+    - last_sent_at (timestamp, nullable) -- thời gian gửi OTP cuối cùng
+    - send_count (unsigned tinyint, default 1) -- số lần gửi OTP
+    - ip_address (varchar, nullable) -- địa chỉ IP
+    - timestamps
+
+    - index (phone, type) -- chỉ mục trên cột phone và type để tối ưu truy vấn
+
 
 # user_devices
     # note
@@ -122,7 +130,17 @@
     - date_of_birth (date, nullable) -- ngày sinh
     - gender (smallint, nullable) -- giới tính (trong enum Gender)
     - bio (text, nullable) -- thông tin cá nhân
-    
+
+    - user_id (bigint, foreign key to users.id) -- id người dùng
+    - nickname (varchar, nullable) -- tên hiển thị
+    - real_name (varchar, nullable) -- tên thật
+    - date_of_birth (date, nullable) -- ngày sinh
+    - gender (smallint, nullable) -- giới tính (trong enum UserGender)
+    - bio (json, nullable) -- thông tin cá nhân (dạng json mô tả thông tin cá nhân - đa ngôn ngữ)
+    - is_leader (boolean, default false) -- đánh dấu trưởng nhóm KTV (job sẽ tự động set khi số KTV được giới thiệu >= điều kiện)
+    - referrer_id (bigint, nullable, foreign key to users.id) -- id người giới thiệu (người mời apply)
+    - experience (unsigned smallint, nullable) -- kinh nghiệm (năm)
+    - timestamps
     
     - timestamps
 

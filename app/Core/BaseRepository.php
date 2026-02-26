@@ -38,26 +38,6 @@ abstract class BaseRepository
      */
     abstract protected function getModel(): string;
 
-    /**
-     * BẮT BUỘC: Áp dụng filter vào query.
-     *
-     * @param Builder $query
-     * @param array $filters
-     * @return Builder
-     */
-    abstract public function filterQuery(Builder $query, array $filters): Builder;
-
-    /**
-     * BẮT BUỘC: Áp dụng sort vào query.
-     *
-     * @param Builder $query
-     * @param string|null $sortBy
-     * @param string $direction
-     * @return Builder
-     */
-    abstract public function sortQuery(Builder $query, ?string $sortBy, string $direction): Builder;
-
-
 
     /**
      * Lấy query builder của Model.

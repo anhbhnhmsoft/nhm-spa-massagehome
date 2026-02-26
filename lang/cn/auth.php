@@ -23,7 +23,6 @@ return [
         'resend_otp' => '重发次数过多。请在 :minutes 分钟后重试。',
         'not_sent' => 'OTP 验证码不存在。',
         'phone_invalid' => '无效的手机号码。',
-        'invalid_token_register' => '无效的注册令牌。',
         'disabled' => '此账号已被锁定，请联系管理员以获得支持。',
         'invalid_login' => '手机号码或密码不正确。',
         'language_invalid' => '无效的语言。',

@@ -23,7 +23,6 @@ return [
         'resend_otp' => 'Bạn đã gửi lại quá nhiều lần. Vui lòng thử lại sau :minutes phút.',
         'not_sent' => 'Mã OTP không tồn tại.',
         'phone_invalid' => 'Số điện thoại không hợp lệ.',
-        'invalid_token_register' => 'Token đăng ký không hợp lệ.',
         'disabled' => 'Tài khoản này đã bị khóa, vui lòng liên hệ với quản trị viên để được hỗ trợ.',
         'invalid_login' => 'Số điện thoại hoặc mật khẩu không đúng.',
         'language_invalid' => 'Ngôn ngữ không hợp lệ.',
@@ -31,6 +30,10 @@ return [
         'validation_failed' => 'Lỗi xác thực.',
         'unauthenticated' => 'Bạn chưa đăng nhập.',
         'wrong_password' => 'Mật khẩu cũ không đúng.',
+        'otp_retry_too_fast' => 'Bạn phải đợi :seconds giây trước khi gửi OTP lại.',
+        'otp_limit_reached' => 'Bạn đã gửi quá nhiều OTP trong ngày.',
+        'otp_invalid_or_expired' => 'OTP không hợp lệ hoặc đã hết hạn.',
+        'otp_max_attempts_exceeded' => 'Bạn đã nhập sai OTP quá nhiều lần. Vui lòng gửi lại mã OTP',
     ],
 
     'admin' => [

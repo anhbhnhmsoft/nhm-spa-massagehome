@@ -30,22 +30,21 @@ class ConfigController extends BaseController
         );
     }
 
-
     /**
-     * Lấy cấu hình affiliate dựa trên vai trò của người dùng
+     * Lấy thông tin các config về app
      * @return JsonResponse
+     * @throws \Throwable
      */
-    public function getConfigAffiliate(): JsonResponse
+    public function configApplication(): JsonResponse
     {
-        $user = Auth::user();
-        $result = $this->configService->getAffiliateConfigByRole(
-            role: UserRole::from($user->role),
-        );
-        if ($result->isError()) {
-            return $this->sendError(message: $result->getMessage());
+        $resService = $this->configService->getConfigApplication();
+        if ($resService->isError()) {
+            return $this->sendError(
+                message: $resService->getMessage(),
+            );
         }
         return $this->sendSuccess(
-            data: $result->getData(),
+            data: $resService->getData(),
         );
     }
 }

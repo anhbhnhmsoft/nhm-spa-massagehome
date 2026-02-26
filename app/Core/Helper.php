@@ -239,7 +239,7 @@ final class Helper
     public static function calculatePriceAffiliate(float $price, float $commissionPercent, float $minCommission, float $maxCommission, int $precision = 0): float
     {
         // Tính số tiền hoa hồng mà người giới thiệu sẽ nhận được
-        $amount = $price * (100 - $commissionPercent) / 100;
+        $amount = $price * ($commissionPercent / 100);
         // Clamp giá trị trong khoảng min/max
         $amount = max($minCommission, min($amount, $maxCommission));
         // Làm tròn số tiền hoa hồng

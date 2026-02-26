@@ -2,6 +2,10 @@
 
 return [
     'required' => 'Thông tin này là bắt buộc.',
+    'phone' => [
+        'required' => 'Bạn hãy nhập số điện thoại.',
+        'invalid' => 'Số điện thoại không hợp lệ định dạng số Việt Nam.',
+    ],
     'password' => [
         'required' => 'Mật khẩu không hợp lệ.',
         'min' => 'Mật khẩu phải có ít nhất :min ký tự.',

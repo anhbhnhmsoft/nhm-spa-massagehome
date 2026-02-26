@@ -206,7 +206,7 @@ class UserRepository extends BaseRepository
      * @param string $phone
      * @return User|null
      */
-    public function findByPhone(string $phone): ?User
+    public function findByPhoneVerified(string $phone): ?User
     {
         return $this->query()
             ->where('phone', $phone)

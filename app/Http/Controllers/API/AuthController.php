@@ -4,11 +4,13 @@ namespace App\Http\Controllers\API;
 
 use App\Enums\Gender;
 use App\Enums\Language;
+use App\Http\Requests\API\Auth\RegisterRequest;
 use App\Http\Resources\Auth\UserResource;
 use App\Rules\PhoneRule;
 use App\Core\Cache\Caching;
 use App\Rules\PasswordRule;
 use App\Core\Cache\CacheKey;
+use App\Services\ConfigService;
 use Illuminate\Http\Request;
 use App\Services\AuthService;
 use Illuminate\Validation\Rule;
@@ -19,6 +21,7 @@ class AuthController extends BaseController
 {
     public function __construct(
         protected AuthService $authService,
+        protected ConfigService $configService,
     ) {}
 
     /**
@@ -56,9 +59,10 @@ class AuthController extends BaseController
     public function verifyOtpRegister(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'phone' => [new PhoneRule()],
+            'phone' => ['required', new PhoneRule()],
             'otp' => ['required', 'numeric'],
         ], [
+            'phone.required' => __('validation.phone.required'),
             'otp.required' => __('auth.error.invalid_otp'),
             'otp.numeric' => __('auth.error.invalid_otp'),
         ]);
@@ -72,12 +76,8 @@ class AuthController extends BaseController
                 message: $resService->getMessage(),
             );
         }
-        $dataService = $resService->getData();
         return $this->sendSuccess(
-            data: [
-                'token' => $dataService['token'],
-            ],
-            message: __('auth.success.verify_register')
+            message: __('auth.success.verify_register'),
         );
     }
 
@@ -89,7 +89,7 @@ class AuthController extends BaseController
     public function resendOtpRegister(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'phone' => [new PhoneRule()],
+            'phone' => ['required', new PhoneRule()],
         ]);
 
         // Gửi lại OTP đăng ký
@@ -112,32 +112,12 @@ class AuthController extends BaseController
 
     /**
      * Đăng ký tài khoản mới.
-     * @param Request $request
+     * @param RegisterRequest $request
      * @return JsonResponse
      */
-    public function register(Request $request): JsonResponse
+    public function register(RegisterRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'token' => ['required', 'string', function ($attribute, $value, $fail) {
-                if (!Caching::hasCache(key: CacheKey::CACHE_KEY_REGISTER_TOKEN, uniqueKey: $value)) {
-                    $fail(__('auth.error.invalid_token_register'));
-                }
-            }],
-            'password' => [new PasswordRule()],
-            'name' => ['required', 'string', 'max:255'],
-            'gender' => ['required', Rule::in(Gender::cases())],
-            'language' => ['required', Rule::in(Language::cases())],
-        ], [
-            'token.required' => __('auth.error.invalid_token_register'),
-            'token.string' => __('auth.error.invalid_token_register'),
-            'name.required' => __('validation.name.required'),
-            'name.string' => __('validation.name.string'),
-            'name.max' => __('validation.name.max', ['max' => 255]),
-            'gender.required' => __('validation.gender.required'),
-            'gender.in' => __('validation.gender.in'),
-            'language.required' => __('validation.language.required'),
-            'language.in' => __('validation.language.in'),
-        ]);
+        $data = $request->validated();
 
         // Đăng ký tài khoản
         $resService = $this->authService->register(
@@ -257,7 +237,7 @@ class AuthController extends BaseController
 
     public function configApplication(): JsonResponse
     {
-        $resService = $this->authService->configApplication();
+        $resService = $this->configService->getConfigApplication();
         if ($resService->isError()) {
             return $this->sendError(
                 message: $resService->getMessage(),
