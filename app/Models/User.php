@@ -2,8 +2,6 @@
 
 namespace App\Models;
 
-use App\Core\Cache\CacheKey;
-use App\Core\Cache\Caching;
 use App\Core\GenerateId\HasBigIntId;
 use App\Enums\UserRole;
 use App\Enums\UserFileType;
@@ -49,20 +47,9 @@ class User extends Authenticatable implements FilamentUser
         'is_active' => 'boolean',
     ];
 
-    protected $appends = ['is_online'];
-
-
     public function canAccessPanel(Panel $panel): bool
     {
         return true;
-    }
-
-    public function getIsOnlineAttribute()
-    {
-        return Caching::hasCache(
-            key: CacheKey::CACHE_USER_HEARTBEAT,
-            uniqueKey: $this->id
-        );
     }
 
     // Relations
@@ -121,6 +108,21 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasOne(Wallet::class);
     }
 
+    /**
+     * Lấy danh sách các category mà Kĩ thuật viên này đăng ký làm
+     * @return BelongsToMany
+     */
+    public function categories()
+    {
+        return $this->belongsToMany(Category::class, 'services', 'user_id', 'category_id')
+            ->withPivot('id') // lấy ID của service
+            ->withTimestamps();
+    }
+
+    /**
+     * Lấy danh sách các service mà Kĩ thuật viên này đăng ký làm (quan hệ n-n với category)
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
     public function services()
     {
         return $this->hasMany(Service::class);
@@ -177,23 +179,6 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->hasMany(MobileNotification::class, 'user_id'); // hoặc notifiable_id tùy cấu trúc cũ
     }
-
-    /**
-     * Lấy danh sách Booking mà User này NHẬN ĐƯỢC (với tư cách là KTV).
-     * Logic: User (Provider) -> Service -> ServiceBooking
-     */
-    public function jobsReceived()
-    {
-        return $this->hasManyThrough(
-            ServiceBooking::class, // Bảng đích (Booking)
-            Service::class,        // Bảng trung gian (Service)
-            'user_id',             // Khóa ngoại trên bảng Service (services.user_id = user.id)
-            'service_id',          // Khóa ngoại trên bảng Booking (service_bookings.service_id = service.id)
-            'id',                  // Khóa chính bảng User
-            'id'                   // Khóa chính bảng Service
-        );
-    }
-
 
     /**
      * Lấy danh sách Booking mà User này ĐẶT (với tư cách là Customer)
@@ -274,4 +259,6 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->hasMany(UserReviewApplication::class, 'referrer_id');
     }
+
+
 }

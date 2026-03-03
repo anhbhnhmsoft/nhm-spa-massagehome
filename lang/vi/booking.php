@@ -14,8 +14,8 @@ return [
     'book_time' => [
         'break_time_gap_not_found' => 'Có lỗi xảy ra khi lấy khoảng thời gian nghỉ, vui lòng liên hệ quản trị viên, cảm ơn!',
         'book_time_not_valid' => 'Thời gian đặt không hợp lệ, bạn có thể đặt lịch từ :time trở đi!',
-        'not_working' => 'Kỹ thuật viên không làm việc trong khoảng thời gian này, vui lòng chọn thời gian khác!',
-        'overlapping' => 'Đang có người khác đặt lịch trong khoảng thời gian này. Vui lòng chọn thời gian khác! Thời gian sớm nhất bạn có thể đặt là :time',
+        'not_working' => 'Kỹ thuật viên không làm việc trong khoảng thời gian này, vui lòng chọn kỹ thuật viên khác để đặt lịch!',
+        'overlapping' => 'Đang có người khác đặt lịch trong khoảng thời gian này. Thời gian sớm nhất Kĩ thuật viên có thể phục vụ bạn là :time',
     ],
     'status_not_confirmed' => 'Booking chưa được xác nhận',
     'already_started' => 'Booking đã bắt đầu',
@@ -74,6 +74,9 @@ return [
         'integer' => 'Booking ID phải là số nguyên.',
         'reason' => 'Lý do hủy phải là chuỗi ký tự.',
         'reason_required' => 'Lý do hủy không được để trống',
+    ],
+    'error' => [
+        'user_not_enough_money' => 'Số dư ví của quý khách không đủ để thanh toán dịch vụ này (Số dư hiện tại: :balance, Giá dịch vụ: :price, Giá giảm giá: :coupon_discount, Cước di chuyển: :price_move)',
     ],
     'cannot_cancel_ongoing_or_completed' => 'Không thể hủy booking đang thực hiện hoặc đã hoàn thành',
     'status_not_ongoing' => 'Booking không ở trạng thái đang thực hiện',

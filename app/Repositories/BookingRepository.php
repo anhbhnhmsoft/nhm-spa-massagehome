@@ -9,6 +9,7 @@ use App\Enums\UserRole;
 use App\Models\ServiceBooking;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class BookingRepository extends BaseRepository
 {
@@ -71,6 +72,47 @@ class BookingRepository extends BaseRepository
     }
 
     /**
+     * Lấy thông tin đặt lịch theo id và trạng thái
+     * @param int $bookingId
+     * @param BookingStatus $status
+     * @return ServiceBooking|null
+     */
+    public function getBookingByIdAndStatus(int $bookingId, BookingStatus $status): ServiceBooking|null
+    {
+        return $this->query()
+            ->where('id', $bookingId)
+            ->where('status', $status->value)
+            ->first();
+    }
+
+    /**
+     * Lấy thông tin dashboard đặt lịch của user khách hàng
+     * @param int $userId
+     * @return mixed[]
+     */
+    public function getBookingDashboardCustomer(int $userId)
+    {
+        $targetStatuses = [
+            BookingStatus::PENDING->value,
+            BookingStatus::CONFIRMED->value,
+            BookingStatus::ONGOING->value,
+            BookingStatus::WAITING_CANCEL->value,
+        ];
+        $bookingRawCounts = $this->query()
+            ->where('user_id', $userId)
+            ->whereIn('status', $targetStatuses) // Thêm lọc ở database để tối ưu
+            ->select('status', DB::raw('count(*) as total'))
+            ->groupBy('status')
+            ->pluck('total', 'status');
+
+        return collect($targetStatuses)
+            ->mapWithKeys(function ($statusValue) use ($bookingRawCounts) {
+                return [$statusValue => $bookingRawCounts->get($statusValue, 0)];
+            })
+            ->toArray();
+    }
+
+    /**
      * Lấy thống kê đặt lịch trong khoảng thời gian
      * @param Carbon $from
      * @param Carbon $to
@@ -82,15 +124,19 @@ class BookingRepository extends BaseRepository
             ->whereBetween('created_at', [$from, $to])
             ->selectRaw("
             COUNT(*) as total,
-            COUNT(CASE WHEN status IN (?, ?) THEN 1 END) as pending,
+            COUNT(CASE WHEN status = ? THEN 1 END) as pending,
+            COUNT(CASE WHEN status = ? THEN 1 END) as confirmed,
             COUNT(CASE WHEN status = ? THEN 1 END) as ongoing,
             COUNT(CASE WHEN status = ? THEN 1 END) as completed,
-            COUNT(CASE WHEN status IN (?, ?) THEN 1 END) as canceled
+            COUNT(CASE WHEN status = ? THEN 1 END) as waiting_cancel,
+            COUNT(CASE WHEN status = ? THEN 1 END) as canceled,
+            COUNT(CASE WHEN status = ? THEN 1 END) as payment_failed
         ", [
                 BookingStatus::PENDING->value,
                 BookingStatus::CONFIRMED->value,
                 BookingStatus::ONGOING->value,
                 BookingStatus::COMPLETED->value,
+                BookingStatus::WAITING_CANCEL->value,
                 BookingStatus::CANCELED->value,
                 BookingStatus::PAYMENT_FAILED->value
             ])

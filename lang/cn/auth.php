@@ -23,7 +23,6 @@ return [
         'resend_otp' => '重发次数过多。请在 :minutes 分钟后重试。',
         'not_sent' => 'OTP 验证码不存在。',
         'phone_invalid' => '无效的手机号码。',
-        'invalid_token_register' => '无效的注册令牌。',
         'disabled' => '此账号已被锁定，请联系管理员以获得支持。',
         'invalid_login' => '手机号码或密码不正确。',
         'language_invalid' => '无效的语言。',
@@ -31,6 +30,11 @@ return [
         'validation_failed' => '验证错误。',
         'unauthenticated' => '您尚未登录。',
         'wrong_password' => '旧密码不正确。',
+        'otp_retry_too_fast' => '您必须等待 :seconds 秒后才能发送 OTP 。',
+        'otp_limit_reached' => '您已发送过多 OTP 在今天。',
+        'otp_invalid_or_expired' => 'OTP 验证码无效或已过期。',
+        'otp_max_attempts_exceeded' => '您已输入错误的 OTP 次数过多。请重新发送 OTP 。',
+        'otp_not_verified' => 'OTP 未被验证。',
     ],
 
     'admin' => [

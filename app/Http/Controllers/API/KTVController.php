@@ -104,30 +104,7 @@ class KTVController extends BaseController
     }
 
     /**
-     * Lấy danh sách service của KTV
-     * @param ListRequest $request
-     * @return JsonResponse
-     */
-    public function listService(ListRequest $request): JsonResponse
-    {
-        $dto = $request->getFilterOptions();
-        $dto->addFilter('user_id', $request->user()->id);
-        $dto->setSortBy('created_at');
-        $dto->setDirection('desc');
-        $result = $this->serviceService->servicePaginate($dto);
-        if ($result->isError()) {
-            return $this->sendError(
-                message: $result->getMessage(),
-            );
-        }
-        $data = $result->getData();
-        return $this->sendSuccess(
-            data: ServiceResource::collection($data)->response()->getData(),
-        );
-    }
-
-    /**
-     * Lấy tất cả categories
+     * Lấy tất cả categories (bao gồm thông tin đăng ký dịch vụ của KTV)
      * @param Request $request
      * @return JsonResponse
      */
@@ -141,106 +118,28 @@ class KTVController extends BaseController
         }
         $data = $result->getData();
         return $this->sendSuccess(
-            data: CategoryResource::collection($data)->toArray($request),
+            data: ServiceResource::collection($data)->toArray($request),
         );
     }
 
+
     /**
-     * Lấy giá của từng category
+     * Cập nhật dịch vụ cho KTV
      * @param Request $request
      * @param int $id
      * @return JsonResponse
      */
-    public function categoryPrice(Request $request, int $id): JsonResponse
+    public function setService(Request $request, int $id): JsonResponse
     {
-        $result = $this->serviceService->getCategoryPrice($id);
-        if ($result->isError()) {
-            return $this->sendError(
-                message: $result->getMessage(),
-            );
-        }
-        $data = $result->getData();
-        return $this->sendSuccess(
-            data: CategoryPriceResource::collection($data)->toArray($request),
-        );
-    }
-
-
-    /**
-     * Thêm dịch vụ mới
-     * @param FormServiceRequest $request
-     * @return JsonResponse
-     */
-    public function addService(FormServiceRequest $request): JsonResponse
-    {
-        $data = $request->validated();
-        $data['user_id'] = $request->user()->id;
-
-        $result = $this->serviceService->createService($data);
-        if ($result->isError()) {
-            return $this->sendError(
-                message: $result->getMessage(),
-            );
-        }
-        return $this->sendSuccess();
-    }
-
-    /**
-     * Cập nhật dịch vụ
-     * @param FormServiceRequest $request
-     * @param string $id
-     * @return JsonResponse
-     */
-    public function updateService(FormServiceRequest $request, string $id): JsonResponse
-    {
-        $data = $request->validated();
-        $data['user_id'] = $request->user()->id;
-        $result = $this->serviceService->updateService($id, $data);
-        if ($result->isError()) {
-            return $this->sendError(
-                message: $result->getMessage(),
-            );
-        }
-        $data = $result->getData();
-        return $this->sendSuccess(
-            data: new ServiceResource($data),
-        );
-    }
-
-    /**
-     * Xóa dịch vụ
-     * @param int $id
-     * @return JsonResponse
-     */
-    public function deleteService(int $id): JsonResponse
-    {
-        $result = $this->serviceService->deleteService($id);
+        $userId = $request->user()->id;
+        $result = $this->serviceService->setService($id, $userId);
         if ($result->isError()) {
             return $this->sendError(
                 message: $result->getMessage(),
             );
         }
         return $this->sendSuccess(
-            message: $result->getMessage(),
-        );
-    }
-
-    /**
-     * Lấy thông tin chi tiết dịch vụ
-     * @param string $id
-     * @return JsonResponse
-     */
-    public function detailService(string $id): JsonResponse
-    {
-        $result = $this->serviceService->detailService($id);
-        if ($result->isError()) {
-            return $this->sendError(
-                message: $result->getMessage(),
-            );
-        }
-        $data = $result->getData();
-        return $this->sendSuccess(
-            data: new DetailServiceResource($data),
+            message:  __('common.success.data_updated')
         );
     }
 

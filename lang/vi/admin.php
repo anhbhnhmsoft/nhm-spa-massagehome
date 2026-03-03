@@ -111,6 +111,7 @@ return
                 'to_date' => 'Đến ngày',
                 'from' => 'Từ',
                 'to' => 'Đến',
+                'is_leader' => 'Là trưởng nhóm',
             ],
             'status' => [
                 'active' => 'Kích hoạt',
@@ -131,7 +132,7 @@ return
                 'description_cn' => 'Miêu tả (Tiếng Trung)',
                 'image' => 'Hình ảnh',
                 'is_featured' => 'Nổi bật',
-                'is_active' => 'Vô hiệu hóa',
+                'is_active' => 'Trạng thái',
                 'duration' => 'Thời lượng',
                 'price' => 'Giá tiền',
                 'add_price' => 'Thêm mức giá',
@@ -237,7 +238,8 @@ return
             ],
             "model_label" => "Kỹ thuật viên",
             "action" => [
-                "view_services" => "Xem dịch vụ"
+                "view_services" => "Xem dịch vụ",
+                'choose_categories' => 'Chọn các danh mục KTV này đảm nhận',
             ],
             "tooltip" => [
                 "view_services" => "Xem danh sách dịch vụ của KTV"
@@ -278,6 +280,7 @@ return
                 'list_referral_leader' => 'Danh sách KTV giới thiệu',
                 'transaction_list' => 'Danh sách giao dịch',
                 'booking_list' => 'Danh sách đặt lịch',
+                'customer_affiliate' => 'Danh sách khách hàng giới thiệu',
             ]
         ],
         "user_role" => [
@@ -287,7 +290,7 @@ return
             "admin" => "Quản trị viên",
         ],
         'category' => [
-            'label' => 'Danh mục',
+            'label' => 'Dịch vụ chung',
             'basic_info' => 'Thông tin cơ bản',
             'price_config' => 'Cấu hình giá',
             'price_list' => 'Danh sách giá',
@@ -567,6 +570,8 @@ return
                 'REFERRAL_INVITE_KTV_REWARD' => 'Nhận hoa hồng khi mời KTV thành công',
                 'DEPOSIT_WECHAT_PAY' => 'Nạp tiền qua Wechat Pay',
                 'FEE_WITHDRAW' => 'Phí rút tiền',
+                'FEE_TRANSPORT' => 'Phí di chuyển',
+                'EARN_TRANSPORT' => 'Cộng tiền di chuyển',
             ],
             'status' => [
                 'PENDING' => 'Chờ xử lý',

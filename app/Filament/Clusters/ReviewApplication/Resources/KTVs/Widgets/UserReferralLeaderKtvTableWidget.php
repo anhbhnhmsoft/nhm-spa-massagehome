@@ -26,12 +26,11 @@ class UserReferralLeaderKtvTableWidget extends TableWidget
 
     public function table(Table $table): Table
     {
-        $userRepository = app(UserRepository::class);
         return KTVsTable::configure($table)
             ->defaultPaginationPageOption(5)
             ->filters([])
-            ->query(function () use ($userRepository) {
-                return $userRepository->queryUser()->with('profile', 'reviewApplication')
+            ->query(function (UserRepository $repository){
+                return $repository->queryUser()->with('profile', 'reviewApplication')
                     ->whereIn('role', [UserRole::KTV->value, UserRole::CUSTOMER->value])
                     ->whereHas('reviewApplication', function (Builder $query) {
                         $query->whereIn('status', ReviewApplicationStatus::values());

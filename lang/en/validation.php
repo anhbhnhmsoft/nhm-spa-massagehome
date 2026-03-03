@@ -2,6 +2,10 @@
 
 return [
     'required' => 'This information is required.',
+    'phone' => [
+        'required' => 'Invalid phone number.',
+        'invalid' => 'Invalid phone number format (VietNam phone number only).',
+    ],
     'password' => [
         'required' => 'Invalid password.',
         'min' => 'Password must be at least :min characters.',

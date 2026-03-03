@@ -2,17 +2,17 @@
 
 namespace App\Filament\Pages;
 
-use App\Enums\DangerSupportStatus;
+use App\Enums\UserRole;
 use App\Filament\Resources\DangerSupports\DangerSupportResource;
 use App\Filament\Widgets\GeneralBookingStats;
 use App\Filament\Widgets\GeneralStats;
 use App\Filament\Widgets\TransactionChart;
 use App\Filament\Widgets\UserStaticStats;
-use App\Models\DangerSupport;
+use App\Models\User;
 use App\Services\DashboardService;
 use Filament\Actions\Action;
+use Filament\Notifications\Notification;
 use Filament\Pages\Dashboard as PagesDashboard;
-use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class Dashboard extends PagesDashboard
 {
@@ -41,7 +41,6 @@ class Dashboard extends PagesDashboard
         }
 
         $sosCount = $result->getData()['pending_danger_supports'] ?? 0;
-
 
         return [
             Action::make('sos_count')

@@ -47,7 +47,11 @@ class UserRepository extends BaseRepository
             ->whereHas('reviewApplication', function ($q) {
                 $q->where('status', ReviewApplicationStatus::APPROVED->value);
             })
-            ->with(['profile', 'reviewApplication', 'services','schedule','primaryAddress']);
+            ->withCount([
+                'services',
+                'ktvBookings'
+            ])
+            ->with(['profile', 'reviewApplication', 'schedule', 'primaryAddress']);
 
         // Tính Trung bình Rating và Đếm Reviews
         $query->leftJoinSub(
@@ -63,35 +67,6 @@ class UserRepository extends BaseRepository
                 'reviews_received_avg_rating' => 'review_stats.reviews_received_avg_rating',
                 'reviews_received_count' => 'review_stats.reviews_received_count',
             ]);
-
-        // Đếm Số lượng Jobs đã hoàn thành
-        $query->leftJoinSub(
-            ServiceBooking::selectRaw('services.user_id, COUNT(service_bookings.id) as jobs_received_count')
-                ->join('services', 'services.id', '=', 'service_bookings.service_id')
-                ->groupBy('services.user_id'),
-            'job_stats',
-            'job_stats.user_id',
-            '=',
-            'users.id'
-        )
-            ->addSelect([
-                'jobs_received_count' => 'job_stats.jobs_received_count',
-            ]);
-
-
-        // Đếm Số lượng Services (Services)
-        $query->leftJoinSub(
-            Service::selectRaw('user_id, COUNT(id) as services_count')
-                ->groupBy('user_id'),
-            'service_stats',
-            'service_stats.user_id',
-            '=',
-            'users.id'
-        )
-            ->addSelect([
-                'services_count' => 'service_stats.services_count',
-            ]);
-
 
         // Đảm bảo lấy tất cả các cột của bảng users
         $query->addSelect('users.*');
@@ -134,8 +109,6 @@ class UserRepository extends BaseRepository
         if (isset($filters['lat'], $filters['lng']) && is_numeric($filters['lat']) && is_numeric($filters['lng'])) {
             $targetLat = (float) $filters['lat'];
             $targetLng = (float) $filters['lng'];
-            $earthRadiusKm = 6371; // Bán kính Trái Đất tính bằng Km
-
             // LeftJoin lấy cả người không có địa chỉ (distance sẽ là NULL)
             $query->leftJoin('user_address', function($join) {
                 $join->on('users.id', '=', 'user_address.user_id')
@@ -206,7 +179,7 @@ class UserRepository extends BaseRepository
      * @param string $phone
      * @return User|null
      */
-    public function findByPhone(string $phone): ?User
+    public function findByPhoneVerified(string $phone): ?User
     {
         return $this->query()
             ->where('phone', $phone)

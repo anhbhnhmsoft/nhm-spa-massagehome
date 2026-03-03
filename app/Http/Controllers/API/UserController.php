@@ -4,20 +4,17 @@ namespace App\Http\Controllers\API;
 
 use App\Core\Controller\BaseController;
 use App\Core\Controller\ListRequest;
-use App\Core\LogHelper;
-use App\Enums\ReviewApplicationStatus;
-use App\Enums\UserRole;
+use App\Http\Requests\API\User\ListKTVRequest;
 use App\Http\Requests\ApplyPartnerRequest;
-use App\Http\Requests\ListKTVRequest;
 use App\Http\Resources\User\AddressResource;
 use App\Http\Resources\User\ItemKTVResource;
 use App\Http\Resources\User\ListAddressResource;
 use App\Http\Resources\User\ListKTVResource;
 use App\Http\Resources\User\UserReviewApplicationResource;
 use App\Services\UserService;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends BaseController
 {
@@ -25,26 +22,6 @@ class UserController extends BaseController
         protected UserService $userService
     )
     {
-    }
-
-    /**
-     * Lấy thông tin dashboard profile của user hiện tại
-     * @return JsonResponse
-     */
-    public function dashboardProfile()
-    {
-        $result = $this->userService->dashboardProfile();
-
-        if ($result->isError()) {
-            return $this->sendError(
-                message: $result->getMessage(),
-            );
-        }
-
-        return $this->sendSuccess(
-            data: $result->getData(),
-            message: $result->getMessage() ?? __('common.success.data_created')
-        );
     }
 
     /**
@@ -137,7 +114,7 @@ class UserController extends BaseController
         }
         $data = $result->getData();
         return $this->sendSuccess(
-            data: new ItemKTVResource($data['ktv'], $data['break_time_gap'], $data['price_transportation'])
+            data: new ItemKTVResource($data['ktv'], $data['price_transportation'])
         );
     }
 

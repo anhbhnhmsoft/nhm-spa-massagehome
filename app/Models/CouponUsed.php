@@ -12,14 +12,12 @@ class CouponUsed extends Model
     protected $fillable = [
         'coupon_id',
         'user_id',
-        'service_id',
         'booking_id',
     ];
 
     protected $casts = [
         'coupon_id' => 'string',
         'user_id' => 'string',
-        'service_id' => 'string',
         'booking_id' => 'string',
     ];
 
@@ -31,11 +29,6 @@ class CouponUsed extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
-    }
-
-    public function service()
-    {
-        return $this->belongsTo(Service::class, 'service_id');
     }
 
     public function booking()

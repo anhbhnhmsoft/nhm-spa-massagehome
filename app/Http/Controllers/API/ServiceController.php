@@ -7,7 +7,6 @@ use App\Core\Controller\ListRequest;
 use App\Http\Resources\Service\CategoryResource;
 use App\Http\Resources\Service\CouponResource;
 use App\Http\Resources\Service\CouponUserResource;
-use App\Http\Resources\Service\ServiceResource;
 use App\Services\BookingService;
 use App\Services\ServiceService;
 use Illuminate\Http\JsonResponse;
@@ -35,40 +34,6 @@ class ServiceController extends BaseController
         $data = $result->getData();
         return $this->sendSuccess(
             data: CategoryResource::collection($data)->response()->getData()
-        );
-    }
-
-    /**
-     * Lấy danh sách dịch vụ
-     * @param ListRequest $request
-     * @return JsonResponse
-     */
-    public function listServices(ListRequest $request): JsonResponse
-    {
-        $dto = $request->getFilterOptions();
-        $result = $this->serviceService->servicePaginate($dto);
-        $data = $result->getData();
-        return $this->sendSuccess(
-            data: ServiceResource::collection($data)->response()->getData()
-        );
-    }
-
-    /**
-     * Lấy chi tiết dịch vụ
-     * @param int $id
-     * @return JsonResponse
-     */
-    public function detailService(int $id): JsonResponse
-    {
-        $result = $this->serviceService->getDetailService($id);
-        if ($result->isError()) {
-            return $this->sendError(
-                message: $result->getMessage()
-            );
-        }
-        $data = $result->getData();
-        return $this->sendSuccess(
-            data: new ServiceResource($data)
         );
     }
 
@@ -122,89 +87,4 @@ class ServiceController extends BaseController
         );
     }
 
-
-    public function prepareBooking(Request $request)
-    {
-        $request->validate([
-            'service_id' => ['required', 'numeric', 'exists:services,id'],
-            'option_id' => ['required', 'numeric', 'exists:category_prices,id'],
-        ]);
-
-        $result = $this->bookingService->prepareBooking(
-            serviceId: $request->input('service_id'),
-            optionId: $request->input('option_id'),
-        );
-        if ($result->isError()) {
-            return $this->sendError(
-                message: $result->getMessage()
-            );
-        }
-        return $this->sendSuccess(
-            data: $result->getData()
-        );
-    }
-
-    /**
-     * Đặt lịch hẹn dịch vụ
-     * @param Request $request
-     */
-    public function booking(Request $request): JsonResponse
-    {
-        $validate = $request->validate([
-            'service_id' => ['required', 'numeric', 'exists:services,id'],
-            'option_id' => ['required', 'numeric', 'exists:category_prices,id'],
-            // Rule: Phải là định dạng ngày & Phải sau thời điểm hiện tại 1 tiếng
-            'book_time' => [
-                'required',
-                'date',
-            ],
-            // Validate Coupon (Không bắt buộc, nhưng nếu có phải tồn tại)
-            'coupon_id' => [
-                'nullable',
-                'string',
-                'exists:coupons,id',
-            ],
-
-            // 4. Validate Địa chỉ & Note
-            'address' => ['required', 'string', 'max:255'],
-            'note' => ['nullable', 'string', 'max:500'],
-            'note_address' => ['nullable', 'string', 'max:500'],
-            // 5. Validate Tọa độ (Lat/Lng)
-            'latitude' => ['required', 'numeric', 'between:-90,90'],
-            'longitude' => ['required', 'numeric', 'between:-180,180'],
-        ], [
-            'service_id.required' => __('validation.service_id.required'),
-            'service_id.numeric' => __('validation.service_id.numeric'),
-            'service_id.exists' => __('validation.service_id.exists'),
-            'option_id.required' => __('validation.option_id.required'),
-            'option_id.numeric' => __('validation.option_id.numeric'),
-            'option_id.exists' => __('validation.option_id.exists'),
-            'book_time.required' => __('validation.book_time.required'),
-            'book_time.timestamp' => __('validation.book_time.timestamp'),
-            'coupon_id.exists' => __('validation.coupon_id.exists'),
-            'note.max' => __('validation.note.max'),
-            'note_address.max' => __('validation.note_address.max'),
-            'latitude.required' => __('validation.location.latitude_required'),
-            'longitude.required' => __('validation.location.longitude_required'),
-        ]);
-        $resultService = $this->bookingService->bookService(
-            serviceId: $validate['service_id'],
-            optionId: $validate['option_id'],
-            address: $validate['address'],
-            latitude: $validate['latitude'],
-            longitude: $validate['longitude'],
-            bookTime: $validate['book_time'],
-            note: $validate['note'] ?? null,
-            noteAddress: $validate['note_address'] ?? null,
-            couponId: $validate['coupon_id'] ?? null,
-        );
-        if ($resultService->isError()) {
-            return $this->sendError(
-                message: $resultService->getMessage()
-            );
-        }
-        return $this->sendSuccess(
-            data: $resultService->getData()
-        );
-    }
 }

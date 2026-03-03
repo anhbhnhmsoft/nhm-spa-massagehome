@@ -4,34 +4,22 @@ namespace App\Models;
 
 use App\Core\GenerateId\HasBigIntId;
 use Illuminate\Database\Eloquent\Model;
-use Spatie\Translatable\HasTranslations;
 
 class Service extends Model
 {
-    use HasBigIntId, HasTranslations;
+    use HasBigIntId;
 
-    protected $translatable = [
-        'name',
-        'description',
-    ];
 
     protected $fillable = [
         'user_id',
         'category_id',
-        'name',
-        'description',
-        'is_active',
-        'image_url',
     ];
 
     protected $casts = [
         'id' => 'string',
         'user_id' => 'string',
         'category_id' => 'string',
-        'is_active' => 'boolean',
     ];
-
-
 
     /**
      * Mối quan hệ với User (Provider) - là người làm massage
@@ -52,24 +40,6 @@ class Service extends Model
     }
 
     /**
-     * Mối quan hệ với ServiceBooking
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    public function bookings()
-    {
-        return $this->hasMany(ServiceBooking::class);
-    }
-
-    /**
-     * Mối quan hệ với ServiceOption
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    public function options()
-    {
-        return $this->hasMany(ServiceOption::class);
-    }
-
-    /**
      * Mối quan hệ n-n với bảng category_prices thông qua bảng service_options
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
@@ -82,17 +52,5 @@ class Service extends Model
             'service_id',
             'category_price_id'
         )->withTimestamps();
-    }
-
-    public function reviews()
-    {
-        return $this->hasManyThrough(
-            Review::class,
-            ServiceBooking::class,
-            'service_id',
-            'service_booking_id',
-            'id',
-            'id'
-        );
     }
 }

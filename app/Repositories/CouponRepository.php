@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Core\BaseRepository;
+use App\Core\Service\ServiceException;
 use App\Models\Coupon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
@@ -44,24 +45,6 @@ class CouponRepository extends BaseRepository
                 ->whereColumn('used_count', '<', 'usage_limit');
         }
 
-        // Lọc theo Dịch vụ (Logic: Lấy mã của dịch vụ này HOẶC mã toàn sàn)
-        if (isset($filters['for_service_id'])) {
-            $serviceId = $filters['for_service_id'];
-
-            // Nhóm điều kiện lại: AND (service_id = X OR service_id IS NULL)
-            $query->where(function ($q) use ($serviceId, $filters) {
-                $q->where('for_service_id', $serviceId);
-
-                // Nếu muốn lấy cả mã toàn sàn (Global) kèm theo
-                if (isset($filters['get_all']) && filter_var($filters['get_all'], FILTER_VALIDATE_BOOLEAN)) {
-                    $q->orWhereNull('for_service_id');
-                }
-            });
-        } // Nếu không truyền service_id nhưng vẫn muốn lấy mã toàn sàn
-        elseif (isset($filters['get_all']) && filter_var($filters['get_all'], FILTER_VALIDATE_BOOLEAN)) {
-            $query->whereNull('for_service_id');
-        }
-
         // Lọc theo Người dùng (Logic: Lấy mã mà người dùng này chưa sử dụng)
         if (isset($filters['user_id_is_not_used'])) {
             $userId = $filters['user_id_is_not_used'];
@@ -86,5 +69,15 @@ class CouponRepository extends BaseRepository
         $column = $sortBy ?? 'created_at';
         $query->orderBy($column, $direction);
         return $query;
+    }
+
+    public function getCouponByIdOrFail(int $couponId, bool $lockForUpdate = false): ?Coupon
+    {
+        $query = $this->queryCoupon()
+            ->where('id', $couponId);
+        if ($lockForUpdate) {
+            $query->lockForUpdate();
+        }
+        return $query->first();
     }
 }

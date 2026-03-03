@@ -2,6 +2,10 @@
 
 return [
     'required' => 'Thông tin này là bắt buộc.',
+    'phone' => [
+        'required' => 'Bạn hãy nhập số điện thoại.',
+        'invalid' => 'Số điện thoại không hợp lệ định dạng số Việt Nam.',
+    ],
     'password' => [
         'required' => 'Mật khẩu không hợp lệ.',
         'min' => 'Mật khẩu phải có ít nhất :min ký tự.',
@@ -101,10 +105,11 @@ return [
         'max' => 'Ghi chú không được vượt quá 500 ký tự.',
     ],
     'note_address' => [
-        'max' => 'Địa chỉ không được vượt quá 500 ký tự.',
+        'max' => 'Note Địa chỉ không được vượt quá 500 ký tự.',
     ],
     'coupon' => [
         'required' => 'Vui lòng chọn mã giảm giá.',
+        'invalid' => 'Mã giảm giá không hợp lệ.',
         'exists' => 'Mã giảm giá không tồn tại.',
         'array' => 'Mã giảm giá phải là mảng.',
         'collect_error' => 'Không thể dùng mã :code vào thời điểm này',

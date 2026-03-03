@@ -110,6 +110,7 @@ return
                 'to_date' => '结束日期',
                 'from' => '从',
                 'to' => '至',
+                'is_leader' => '是否组长',
             ],
             'status' => [
                 'active' => '激活',

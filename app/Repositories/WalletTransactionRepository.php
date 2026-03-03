@@ -3,6 +3,8 @@
 namespace App\Repositories;
 
 use App\Core\BaseRepository;
+use App\Core\Helper;
+use App\Enums\PaymentType;
 use App\Enums\UserRole;
 use App\Enums\WalletTransactionStatus;
 use App\Enums\WalletTransactionType;
@@ -42,43 +44,99 @@ class WalletTransactionRepository extends BaseRepository
     }
 
     /**
+     * Tạo giao dịch thanh toán dịch vụ cho khách hàng
+     * @param int $walletCustomerId
+     * @param int $bookingId
+     * @param float $price
+     * @param float $exchangeRate
+     * @param float $balanceAfter
+     * @return void
+     */
+    public function createPaymentServiceBookingForCustomer(
+        int $walletCustomerId,
+        int $bookingId,
+        float $price,
+        float $exchangeRate,
+        float $balanceAfter,
+    )
+    {
+        $this->create([
+            'wallet_id' => $walletCustomerId,
+            'foreign_key' => $bookingId,
+            'money_amount' => $price * $exchangeRate,
+            'exchange_rate_point' => $exchangeRate,
+            'point_amount' => $price,
+            'balance_after' => $balanceAfter,
+            'type' => WalletTransactionType::PAYMENT->value,
+            'status' => WalletTransactionStatus::COMPLETED->value,
+            'transaction_code' => Helper::createDescPayment(PaymentType::BY_POINTS),
+            'description' => __('booking.payment.wallet_customer'),
+            'expired_at' => now(),
+            'transaction_id' => null,
+            'metadata' => null,
+        ]);
+    }
+
+
+    /**
+     * Lấy thống kê tiền vào và ra hệ thống trong khoảng thời gian
+     * @param Carbon $from
+     * @param Carbon $to
+     */
+    public function getFinancialInOutStats(Carbon $from, Carbon $to)
+    {
+        // Trạng thái tiền vào system
+        $incomeTypes = WalletTransactionType::incomeStatus();
+        // Trạng thái tiền ra system
+        $outcomeTypes = WalletTransactionType::outcomeStatus();
+
+        return $this->query()
+            ->selectRaw("
+                SUM(CASE WHEN type IN (" . implode(',', $incomeTypes) . ") THEN point_amount ELSE 0 END) as total_income,
+                SUM(CASE WHEN type IN (" . implode(',', $outcomeTypes) . ") THEN point_amount ELSE 0 END) as total_outcome
+            ")
+            ->where('status', WalletTransactionStatus::COMPLETED->value)
+            ->whereBetween('created_at', [$from, $to])
+            ->first();
+    }
+
+
+    /**
      * Lấy toàn bộ thống kê tài chính dashboard admin trong khoảng thời gian
      * @param Carbon $from
      * @param Carbon $to
      */
     public function getFinancialDashboardStats(Carbon $from, Carbon $to)
     {
-        // Chuẩn bị các mảng Type để dùng trong câu query
-        $incomeTypes = WalletTransactionType::incomeStatus();
+        // Trạng thái lợi nhuận
+        $revenueStatus = WalletTransactionType::revenueStatus();
+
+        // Trạng thái chi phí vận hành
         $operationCostTypes = WalletTransactionType::operationCostStatus();
 
+        // Trạng thái chi phí vận chuyển
+        $transportTypes = WalletTransactionType::transportStatus();
+
+        // Trạng thái chi phí khách hàng
+        $customerCostTypes = WalletTransactionType::customerCostStatus();
+
         // Các loại phí riêng cho Agency
-        $agencyTypes = [
-            WalletTransactionType::AFFILIATE->value,
-            WalletTransactionType::REFERRAL_KTV->value,
-            WalletTransactionType::REFERRAL_INVITE_KTV_REWARD->value,
-        ];
+        $agencyCostTypes = WalletTransactionType::agencyCostStatus();
 
         // Các loại phí riêng cho KTV
-        $ktvTypes = [
-            WalletTransactionType::AFFILIATE->value,
-            WalletTransactionType::REFERRAL_KTV->value,
-            WalletTransactionType::REFERRAL_INVITE_KTV_REWARD->value,
-            WalletTransactionType::PAYMENT_FOR_KTV->value,
-        ];
+        $technicalCostTypes = WalletTransactionType::technicalCostStatus();
 
         return $this->query()
-            // 1. Join bảng để lấy Role của User (chỉ Join 1 lần)
             ->join('wallets', 'wallet_transactions.wallet_id', '=', 'wallets.id')
             ->join('users', 'wallets.user_id', '=', 'users.id')
             ->where('wallet_transactions.status', WalletTransactionStatus::COMPLETED->value)
             ->whereBetween('wallet_transactions.created_at', [$from, $to])
             ->selectRaw("
             SUM(CASE
-                WHEN wallet_transactions.type IN (" . implode(',', $incomeTypes) . ")
+                WHEN wallet_transactions.type IN (" . implode(',', $revenueStatus) . ")
                 THEN wallet_transactions.point_amount
                 ELSE 0
-            END) as total_income,
+            END) as total_revenue,
 
             SUM(CASE
                 WHEN wallet_transactions.type IN (" . implode(',', $operationCostTypes) . ")
@@ -87,27 +145,33 @@ class WalletTransactionRepository extends BaseRepository
             END) as operation_cost,
 
             SUM(CASE
-                WHEN wallet_transactions.type = ?
+                WHEN wallet_transactions.type IN (" . implode(',', $transportTypes) . ")
                 THEN wallet_transactions.point_amount
                 ELSE 0
-            END) as affiliate_cost,
+            END) as transportation_cost,
 
             SUM(CASE
                 WHEN users.role = ?
-                     AND wallet_transactions.type IN (" . implode(',', $agencyTypes) . ")
+                     AND wallet_transactions.type IN (" . implode(',', $customerCostTypes) . ")
+                THEN wallet_transactions.point_amount
+                ELSE 0
+            END) as customer_cost,
+
+            SUM(CASE
+                WHEN users.role = ?
+                     AND wallet_transactions.type IN (" . implode(',', $agencyCostTypes) . ")
                 THEN wallet_transactions.point_amount
                 ELSE 0
             END) as agency_cost,
 
             SUM(CASE
                 WHEN users.role = ?
-                     AND wallet_transactions.type IN (" . implode(',', $ktvTypes) . ")
+                     AND wallet_transactions.type IN (" . implode(',', $technicalCostTypes) . ")
                 THEN wallet_transactions.point_amount
                 ELSE 0
-            END) as ktv_cost
-
+            END) as technical_cost
             ", [
-                WalletTransactionType::AFFILIATE->value,
+                UserRole::CUSTOMER->value,
                 UserRole::AGENCY->value,
                 UserRole::KTV->value
             ])

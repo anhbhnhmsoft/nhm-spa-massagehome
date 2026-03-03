@@ -23,7 +23,6 @@ return [
         'resend_otp' => 'Too many resend attempts. Please try again in :minutes minutes.',
         'not_sent' => 'OTP code does not exist.',
         'phone_invalid' => 'Invalid phone number.',
-        'invalid_token_register' => 'Invalid registration token.',
         'disabled' => 'This account has been locked, please contact administrator for support.',
         'invalid_login' => 'Incorrect phone number or password.',
         'language_invalid' => 'Invalid language.',
@@ -31,6 +30,11 @@ return [
         'validation_failed' => 'Validation error.',
         'unauthenticated' => 'You are not logged in.',
         'wrong_password' => 'Incorrect old password.',
+        'otp_retry_too_fast' => 'You must wait :seconds seconds before sending OTP again.',
+        'otp_limit_reached' => 'You have sent too many OTPs today.',
+        'otp_invalid_or_expired' => 'OTP is invalid or expired.',
+        'otp_max_attempts_exceeded' => 'You have entered the wrong OTP too many times. Please send OTP again.',
+        'otp_not_verified' => 'OTP has not been verified.',
     ],
 
     'admin' => [

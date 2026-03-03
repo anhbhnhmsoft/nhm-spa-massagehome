@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\CommercialController;
-use App\Http\Controllers\API\DashboardController;
 use App\Http\Controllers\API\FileController;
 use App\Http\Controllers\API\BookingController;
 use App\Http\Controllers\API\KTVController;
@@ -10,6 +9,7 @@ use App\Http\Controllers\API\LocationController;
 use App\Http\Controllers\API\AgencyController;
 use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\API\PaymentController;
+use App\Http\Controllers\API\ProfileController;
 use App\Http\Controllers\API\ServiceController;
 use App\Http\Controllers\API\ChatController;
 use App\Http\Controllers\API\UserController;
@@ -21,7 +21,6 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::middleware('set-api-locale')->group(function () {
-    // Authenticate routes
     Route::prefix('auth')->group(function () {
         // Guest middleware
         Route::middleware(['throttle:5,1'])->group(function () {
@@ -72,10 +71,6 @@ Route::middleware('set-api-locale')->group(function () {
          */
         Route::get('detail', [LocationController::class, 'detail'])->middleware(['throttle:5,0.2']);
         /**
-         * list provinces
-         */
-        Route::get('provinces', [LocationController::class, 'listProvinces']);
-        /**
          * list address
          */
         Route::get('address', [UserController::class, 'listAddress']);
@@ -99,6 +94,15 @@ Route::middleware('set-api-locale')->group(function () {
         Route::delete('delete/{id}', [UserController::class, 'deleteAddress'])->where('id', '[0-9]+');
     });
 
+    Route::prefix('profile')->group(function () {
+        Route::middleware(['auth:sanctum'])->group(function () {
+            // Lấy thông tin hồ sơ người dùng.
+            Route::get('dashboard-profile', [ProfileController::class, 'dashboardProfile'])
+                ->middleware(['check-role:customer']);
+        });
+
+    });
+
     Route::prefix('user')->group(function () {
         /**
          * router không cần auth
@@ -110,10 +114,9 @@ Route::middleware('set-api-locale')->group(function () {
          * router cần auth
          */
         Route::middleware(['auth:sanctum'])->group(function () {
-            // Lấy thông tin chi tiết hồ sơ người dùng
-            Route::get('dashboard-profile', [UserController::class, 'dashboardProfile']);
             // Lấy thông tin chi tiết KTV
-            Route::get('ktv/{id}', [UserController::class, 'detailKtv'])->where('id', '[0-9]+');
+            Route::get('ktv/{id}', [UserController::class, 'detailKtv'])
+                ->where('id', '[0-9]+');
             // Kiểm tra quyền đăng ký đối tác
             Route::get('check-apply-partner', [UserController::class, 'checkApplyPartner'])
                 ->middleware(['check-role:customer']);
@@ -132,24 +135,10 @@ Route::middleware('set-api-locale')->group(function () {
          */
         // Lấy danh sách dịch vụ
         Route::get('list-category', [ServiceController::class, 'listCategory']);
-
         /**
          * router cần auth
          */
         Route::middleware(['auth:sanctum'])->group(function () {
-            // Lấy danh sách dịch vụ
-            Route::get('list', [ServiceController::class, 'listServices']);
-            // Lấy thông tin chi tiết dịch vụ
-            Route::get('detail/{id}', [ServiceController::class, 'detailService'])->where('id', '[0-9]+');
-
-            // Chuẩn bị prepare-booking
-            Route::post('prepare-booking', [ServiceController::class, 'prepareBooking'])
-                ->middleware(['check-role:customer']); // Chỉ cho phép Customer chuẩn bị prepare-booking
-
-            // Đặt lịch dịch vụ
-            Route::post('booking', [ServiceController::class, 'booking'])
-                ->middleware(['check-role:customer']); // Chỉ cho phép Customer đặt lịch
-
             // Lấy danh sách mã giảm giá
             Route::get('list-coupon', [ServiceController::class, 'listCoupon']);
             // Lấy danh sách mã giảm giá của người dùng
@@ -166,8 +155,18 @@ Route::middleware('set-api-locale')->group(function () {
         Route::middleware(['auth:sanctum'])->group(function () {
             // Lấy danh sách lịch đặt
             Route::get('list', [BookingController::class, 'listBooking']);
+
+            // Chuẩn bị đặt lịch
+            Route::post('prepare-booking', [BookingController::class, 'prepareBooking'])
+                ->middleware(['check-role:customer']); // Chỉ cho phép Customer chuẩn bị prepare-booking
+
+            // Đặt lịch dịch vụ
+            Route::post('booking-service', [BookingController::class, 'booking'])
+                ->middleware(['check-role:customer']); // Chỉ cho phép Customer đặt lịch
+
             // kiểm tra trạng thái booking
             Route::get('{bookingId}', [BookingController::class, 'checkBooking']);
+
             // Lấy thông tin chi tiết lịch đặt
             Route::get('detail/{id}', [BookingController::class, 'detailBooking'])
                 ->where('id', '[0-9]+');
@@ -279,6 +278,10 @@ Route::middleware('set-api-locale')->group(function () {
     Route::prefix('config')->group(function () {
         // Lấy thông tin cấu hình hỗ trợ
         Route::get('support-channels', [ConfigController::class, 'getSupportChannels']);
+
+        // Lấy thông tin cấu hình ứng dụng
+        Route::get('config-application', [ConfigController::class, 'configApplication']);
+
     });
 
     // Chỉ dành cho KTV
@@ -289,20 +292,10 @@ Route::middleware('set-api-locale')->group(function () {
         Route::get('list-booking', [KTVController::class, 'listBooking']);
         // Lấy tất cả categories
         Route::get('all-categories', [KTVController::class, 'allCategories']);
-        // Lấy giá của từng category
-        Route::get('category-price/{id}', [KTVController::class, 'categoryPrice'])->where('id', '[0-9]+');
-        // Lấy danh sách service của KTV
-        Route::get('list-service', [KTVController::class, 'listService']);
-        // Thêm service mới
-        Route::post('add-service', [KTVController::class, 'addService']);
         // Kết thúc dịch vụ
         Route::post('finish-booking', [BookingController::class, 'finishBooking']);
-        // Cập nhật service
-        Route::post('update-service/{id}', [KTVController::class, 'updateService'])->where('id', '[0-9]+');
-        // Lấy thông tin chi tiết service
-        Route::get('detail-service/{id}', [KTVController::class, 'detailService'])->where('id', '[0-9]+');
-        // Xóa service
-        Route::delete('delete-service/{id}', [KTVController::class, 'deleteService'])->where('id', '[0-9]+');
+        // Cập nhật service (toggle)
+        Route::post('set-service/{id}', [KTVController::class, 'setService'])->where('id', '[0-9]+');
         // Bắt đầu dịch vụ
         Route::post('start-booking', [BookingController::class, 'startBooking']);
         // tổng hợp thu nhập
@@ -328,7 +321,7 @@ Route::middleware('set-api-locale')->group(function () {
     });
 
     // Dành cho agency
-    Route::prefix('agency')->middleware(['auth:sanctum','check-role:agency'])->group(function () {
+    Route::prefix('agency')->middleware(['auth:sanctum', 'check-role:agency'])->group(function () {
         // Lấy thông tin dashboard
         Route::get('dashboard', [AgencyController::class, 'dashboard']);
         // Lấy danh sách KTV Performance

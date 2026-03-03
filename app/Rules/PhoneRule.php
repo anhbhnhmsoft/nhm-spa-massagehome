@@ -15,12 +15,12 @@ class PhoneRule implements ValidationRule
     {
         // Không dc để trống
         if (empty($value) || trim($value) === '') {
-            $fail(__('auth.error.phone_invalid'));
+            $fail(__('validation.phone.required'));
         }
 
         // Kiểm tra định dạng số điện thoại Việt Nam
         if (!preg_match('/^(0[3|5|7|8|9])+([0-9]{8})\b$/', $value)) {
-            $fail(__('auth.error.phone_invalid'));
+            $fail(__('validation.phone.invalid'));
         }
 
     }

@@ -8,8 +8,10 @@ use App\Enums\UserRole;
 use App\Enums\UserFileType;
 use App\Filament\Components\CommonActions;
 use App\Models\UserFile;
+use App\Repositories\CategoryRepository;
 use App\Services\UserService;
 use Filament\Actions\Action;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Model;
@@ -29,7 +31,7 @@ class EditKTV extends EditRecord
     {
         return __('common.breadcrumb.edit');
     }
-    
+
     public function boot(UserService $userService): void
     {
         $this->userService = $userService;
@@ -38,6 +40,35 @@ class EditKTV extends EditRecord
     {
         return [
             CommonActions::backAction(static::getResource()),
+            Action::make('view_service')
+                ->label(__('admin.common.action.view_service'))
+                ->icon('heroicon-o-tag')
+                ->hidden(fn($record) => $record->reviewApplication->status !== ReviewApplicationStatus::APPROVED)
+                ->color('success')
+                ->fillForm(fn ($record) => [
+                    'categories' => $record->categories->pluck('id')->toArray(),
+
+                ])
+                ->action(function ($record, array $data): void {
+                    $record->categories()->sync($data['categories']);
+                    Notification::make()
+                        ->success()
+                        ->title(__('common.success.success'))
+                        ->body(__('common.success.data_updated'))
+                        ->send();
+                })
+                ->modal()
+                ->modalSubmitActionLabel(__('admin.common.action.save'))
+                ->modalCancelActionLabel(__('admin.common.action.cancel'))
+                ->schema([
+                    CheckboxList::make('categories')
+                        ->label(__('admin.ktv.action.choose_categories'))
+                        ->options(fn (CategoryRepository $repo) =>
+                        $repo->pluckNameAndId()
+                        )
+                        ->columns(2)
+                ]),
+
             // Hiển thị nút Approve nếu trạng thái là PENDING hoặc REJECTED
             Action::make('approve')
                 ->label(__('admin.ktv_apply.actions.approve.label'))

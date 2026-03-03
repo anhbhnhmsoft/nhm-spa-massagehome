@@ -39,6 +39,7 @@ use App\Repositories\StaticContractRepository;
 use App\Repositories\UserDeviceRepository;
 use App\Repositories\UserFileRepository;
 use App\Repositories\UserKtvScheduleRepository;
+use App\Repositories\UserOtpRepository;
 use App\Repositories\UserProfileRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\UserReviewApplicationRepository;
@@ -59,10 +60,13 @@ use App\Services\Facades\TransactionJobService;
 use App\Services\NotificationService;
 use App\Services\PaymentService;
 use App\Services\PayOsService;
+use App\Services\ProfileService;
 use App\Services\ProvinceService;
 use App\Services\ServiceService;
 use App\Services\UserService;
 use App\Services\UserWithdrawInfoService;
+use App\Services\Validator\BookingValidator;
+use App\Services\Validator\CouponValidator;
 use App\Services\WalletService;
 use App\Services\AffiliateService;
 use App\Services\ReviewService;
@@ -80,6 +84,8 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register repositories
         $this->registerRepository();
+
+        // Register Validator
 
         // Register services
         $this->registerService();
@@ -105,6 +111,10 @@ class AppServiceProvider extends ServiceProvider
         });
     }
 
+    /**
+     * Register repositories.
+     * @return void
+     */
     protected function registerRepository(): void
     {
         $this->app->singleton(ConfigRepository::class);
@@ -135,8 +145,20 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(CategoryPriceRepository::class);
         $this->app->singleton(ZaloTokenRepository::class);
         $this->app->singleton(DangerSupportRepository::class);
+        $this->app->singleton(UserOtpRepository::class);
     }
 
+
+    /**
+     * Register validators.
+     * @return void
+     */
+    protected function registerValidator(): void
+    {
+        $this->app->singleton(BookingValidator::class);
+        $this->app->singleton(CouponValidator::class);
+
+    }
     /**
      * Register services.
      * @return void
@@ -164,6 +186,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(UserFileService::class);
         $this->app->singleton(AgencyService::class);
         $this->app->singleton(ZaloService::class);
+        $this->app->singleton(ProfileService::class);
     }
 
 

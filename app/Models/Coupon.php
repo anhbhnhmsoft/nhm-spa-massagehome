@@ -24,7 +24,6 @@ class Coupon extends Model
         'label',
         'description',
         'created_by',
-        'for_service_id',
         'is_percentage',
         'discount_value',
         'max_discount',
@@ -36,13 +35,13 @@ class Coupon extends Model
         'banners',
         'display_ads',
         'config',
-        'count_collect'
+        'count_collect',
+        'user_id'
     ];
 
     protected $casts = [
         'id' => 'string',
         'created_by' => 'string',
-        'for_service_id' => 'string',
         'is_percentage' => 'boolean',
         'is_active' => 'boolean',
         'start_at' => 'datetime',
@@ -60,12 +59,6 @@ class Coupon extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
-    }
-
-    // Dịch vụ áp dụng (Nếu null là áp dụng tất cả)
-    public function service()
-    {
-        return $this->belongsTo(Service::class, 'for_service_id');
     }
 
 
@@ -95,5 +88,14 @@ class Coupon extends Model
         )
             ->withPivot('is_used')
             ->withTimestamps();
+    }
+
+    /**
+     * Lấy danh sách những người dùng đã sử dụng mã giảm giá này.
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function couponUseds()
+    {
+        return $this->hasMany(CouponUsed::class, 'coupon_id', 'id');
     }
 }

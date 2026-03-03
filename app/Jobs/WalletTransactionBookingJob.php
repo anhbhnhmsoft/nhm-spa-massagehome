@@ -44,6 +44,7 @@ class WalletTransactionBookingJob implements ShouldQueue
                     if ($result->isError()) {
                         $service->handleFailedConfirmBooking(
                             bookingId: $this->bookingId,
+                            reason: $result->getMessage() ?? null
                         );
                     }
                 } catch (\Throwable $exception) {

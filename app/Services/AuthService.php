@@ -12,9 +12,11 @@ use App\Core\Service\ServiceReturn;
 use App\Enums\DirectFile;
 use App\Enums\Gender;
 use App\Enums\Language;
+use App\Enums\UserOtpType;
 use App\Enums\UserRole;
 use App\Models\User;
 use App\Repositories\UserDeviceRepository;
+use App\Repositories\UserOtpRepository;
 use App\Repositories\UserProfileRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\WalletRepository;
@@ -30,11 +32,10 @@ use Illuminate\Support\Facades\Storage;
 
 class AuthService extends BaseService
 {
-    protected int $otpTtl = 1;     // OTP tồn tại 1 phút
-    protected int $blockTime = 60;   // Khóa 60 phút (tránh gửi OTP quá nhiều)
-    protected int $maxAttempts = 5;  // Tối đa 5 lần thử sai
-    protected int $maxResendOtp = 3;  // Tối đa 3 lần gửi OTP
-    protected int $registerTimeout = 30;  // Thời gian chờ sau khi đăng ký
+    protected const RETRY_AFTER_SECONDS = 60; // Số giây tối thiểu giữa 2 lần gửi OTP
+    protected const MAX_SEND_PER_DAY = 3; // Số lần tối đa gửi OTP trong ngày
+    protected const MAX_OTP_ATTEMPTS = 5; // Số lần thử sai tối đa trước khi khóa tài khoản
+    protected const OTP_TTL_MINUTES = 30; // Thời gian hiệu lực OTP (mặc định là 30 phút)
 
     public function __construct(
         protected UserRepository        $userRepository,
@@ -42,7 +43,8 @@ class AuthService extends BaseService
         protected WalletRepository      $walletRepository,
         protected UserDeviceRepository $userDeviceRepository,
         protected ZaloService $zaloService,
-        protected ConfigService $configService
+        protected ConfigService $configService,
+        protected UserOtpRepository $userOtpRepository,
     )
     {
         parent::__construct();
@@ -56,40 +58,59 @@ class AuthService extends BaseService
      */
     public function authenticate(string $phone): ServiceReturn
     {
-        try {
-            // Kiểm tra xem số điện thoại có tồn tại không
-            $user = $this->userRepository->isPhoneVerified($phone);
-            if ($user) {
-                // nếu có user thì yêu cầu thêm mật khẩu
-                return ServiceReturn::success(data: [
-                    'need_register' => false,
-                ]);
-            } else {
-                // Kiểm tra xem số điện thoại có đang có OTP đang chờ xác thực không
-                if (Caching::hasCache(key: CacheKey::CACHE_KEY_OTP_REGISTER, uniqueKey: $phone)) {
-                    return ServiceReturn::success(data: [
-                        'need_register' => false,
-                        'need_enter_otp' => true,
-                    ]);
-                }
-                // Tạo OTP đăng ký và lưu vào cache
-                $this->createCacheRegisterOtp($phone);
+        return $this->execute(
+            callback: function () use ($phone) {
+                // Kiểm tra xem số điện thoại có tồn tại không
+                $user = $this->userRepository->isPhoneVerified($phone);
+                if ($user) {
+                    // nếu có user thì yêu cầu thêm mật khẩu
+                    return [
+                        'case' => 'need_login',
+                    ];
+                } else {
+                    // nếu không có user thì kiểm tra xem có OTP đăng ký chưa
+                    $otpRecord = $this->getLastOtpNotVerified(
+                        phone: $phone,
+                        type: UserOtpType::REGISTER,
+                    );
+                    if ($otpRecord) {
+                        // nếu có OTP đăng ký chưa thì yêu cầu nhập OTP
+                        return [
+                            'case' => 'need_re_enter_otp',
+                            'last_sent_at' => $otpRecord->last_sent_at,
+                            'retry_after_seconds' => self::RETRY_AFTER_SECONDS,
+                        ];
+                    }
 
-                // nếu không có user thì yêu cầu đăng ký
-                return ServiceReturn::success(data: [
-                    'need_register' => true,
-                    'expire_minutes' => $this->otpTtl,
-                ]);
-            }
-        } catch (ServiceException $exception) {
-            return ServiceReturn::error(message: $exception->getMessage());
-        } catch (Exception $exception) {
-            LogHelper::error(
-                message: "Lỗi AuthService@authenticate",
-                ex: $exception
-            );
-            return ServiceReturn::error(message: __('common_error.server_error'));
-        }
+                    // Kiểm tra có OTP nào đã xác thực rồi mà chưa đăng ký ko
+                    $otpRecord = $this->userOtpRepository->getLatestVerifiedOtp(
+                        phone: $phone,
+                        type: UserOtpType::REGISTER,
+                        minutes: self::OTP_TTL_MINUTES,
+                    );
+                    if ($otpRecord) {
+                        // nếu có OTP đăng ký và xác thực rồi thì phải đăng ký mới được
+                        return [
+                            'case' => 'need_re_enter_register',
+                        ];
+                    }
+
+                    // Tạo OTP đăng ký và lưu vào database
+                    $otpRecord = $this->createOtp(
+                        phone: $phone,
+                        type: UserOtpType::REGISTER,
+                    );
+
+                    // nếu không có user thì yêu cầu đăng ký
+                    return [
+                        'case' => 'need_register',
+                        'last_sent_at' => $otpRecord->last_sent_at,
+                        'retry_after_seconds' => self::RETRY_AFTER_SECONDS,
+                    ];
+                }
+            },
+            useTransaction: true
+        );
     }
 
     /**
@@ -100,81 +121,45 @@ class AuthService extends BaseService
      */
     public function verifyOtpRegister(string $phone, string $otp): ServiceReturn
     {
-        try {
-            // Set OTP limit
-            if (!Caching::hasCache(key: CacheKey::CACHE_KEY_OTP_REGISTER_ATTEMPTS, uniqueKey: $phone)) {
-                Caching::setCache(
-                    key: CacheKey::CACHE_KEY_OTP_REGISTER_ATTEMPTS,
-                    value: 0,
-                    uniqueKey: $phone,
-                    expire: $this->otpTtl
+        return $this->execute(
+            callback: function () use ($phone, $otp) {
+                // Xác thực OTP đăng ký tài khoản
+                $this->verifyOtp(
+                    phone: $phone,
+                    type: UserOtpType::REGISTER,
+                    otpCode: $otp,
                 );
-            }
-            $attempts = Caching::incrementCache(key: CacheKey::CACHE_KEY_OTP_REGISTER_ATTEMPTS, uniqueKey: $phone);
-            if ($attempts >= $this->maxAttempts) {
-                return ServiceReturn::error(message: __('auth.error.attempts_left', ['minutes' => $this->blockTime]));
-            }
-
-            // Lấy OTP từ cache
-            $cacheData = Caching::getCache(key: CacheKey::CACHE_KEY_OTP_REGISTER, uniqueKey: $phone);
-            if (!$cacheData) {
-                return ServiceReturn::error(message: __('auth.error.not_sent'));
-            }
-
-            if ($cacheData['otp'] != $otp) {
-                return ServiceReturn::error(message: __('auth.error.invalid_otp'));
-            }
-
-            // Xác thực thành công, xóa OTP khỏi cache
-            Caching::deleteCache(key: CacheKey::CACHE_KEY_OTP_REGISTER, uniqueKey: $phone);
-            Caching::deleteCache(key: CacheKey::CACHE_KEY_OTP_REGISTER_ATTEMPTS, uniqueKey: $phone);
-            Caching::deleteCache(key: CacheKey::CACHE_KEY_RESEND_REGISTER_OTP, uniqueKey: request()->ip() || request()->userAgent() || $phone);
-
-            // Tạo 1 token dùng để đăng ký tài khoản
-            $token = Helper::generateTokenRandom();
-            Caching::setCache(
-                key: CacheKey::CACHE_KEY_REGISTER_TOKEN,
-                value: [
-                    'phone' => $phone,
-                ],
-                uniqueKey: $token,
-                expire: $this->registerTimeout,
-            );
-            return ServiceReturn::success(data: [
-                'token' => $token,
-            ]);
-        } catch (Exception $exception) {
-            LogHelper::error(
-                message: "Lỗi AuthService@verifyOtpRegister",
-                ex: $exception
-            );
-            return ServiceReturn::error(message: __('common_error.server_error'));
-        }
+                return ServiceReturn::success();
+            },
+            useTransaction: true
+        );
     }
 
+    /**
+     * Gửi lại OTP đăng ký tài khoản.
+     * @param string $phone
+     * @return ServiceReturn
+     */
     public function resendOtpRegister(string $phone): ServiceReturn
     {
-        try {
-            // Tạo OTP đăng ký và lưu vào cache
-            $this->createCacheRegisterOtp($phone);
-
-            return ServiceReturn::success(data: [
-                'expire_minutes' => $this->otpTtl,
-            ]);
-        } catch (ServiceException $exception) {
-            return ServiceReturn::error(message: $exception->getMessage());
-        } catch (Exception $exception) {
-            LogHelper::error(
-                message: "Lỗi AuthService@resendOtpRegister",
-                ex: $exception
-            );
-            return ServiceReturn::error(message: __('common_error.server_error'));
-        }
+        return $this->execute(
+            callback: function () use ($phone) {
+                $otpRecord = $this->createOtp(
+                    phone: $phone,
+                    type: UserOtpType::REGISTER,
+                );
+                return [
+                    'last_sent_at' => $otpRecord->last_sent_at,
+                    'retry_after_seconds' => self::RETRY_AFTER_SECONDS,
+                ];
+            },
+            useTransaction: true
+        );
     }
 
     /**
      * Đăng ký tài khoản mới.
-     * @param $token -- Token dùng để đăng ký tài khoản.
+     * @param string $phone -- Số điện thoại dùng để đăng ký tài khoản.
      * @param string $password -- Mật khẩu tài khoản.
      * @param string $name -- Tên người dùng.
      * @param ?Gender $gender -- Giới tính.
@@ -182,68 +167,67 @@ class AuthService extends BaseService
      * @return ServiceReturn
      */
     public function register(
-        string    $token,
+        string    $phone,
         string    $password,
         string    $name,
         ?Gender   $gender,
         ?Language $language
     ): ServiceReturn
     {
-        DB::beginTransaction();
-        try {
-            // Kiểm tra token
-            if (!Caching::hasCache(key: CacheKey::CACHE_KEY_REGISTER_TOKEN, uniqueKey: $token)) {
-                throw new ServiceException(message: __('auth.error.invalid_token_register'));
-            }
-            $dataCache = Caching::getCache(key: CacheKey::CACHE_KEY_REGISTER_TOKEN, uniqueKey: $token);
+        return $this->execute(
+            callback: function () use ($phone, $password, $name, $gender, $language) {
+                // Kiểm tra xem số điện thoại đã được xác thực chưa
+                $otpRecord = $this->userOtpRepository->getLatestVerifiedOtp(
+                    phone: $phone,
+                    type: UserOtpType::REGISTER,
+                    minutes: self::OTP_TTL_MINUTES,
+                );
+                if (!$otpRecord) {
+                    throw new ServiceException(__('auth.error.otp_not_verified'));
+                }
 
-            /**
-             * Tạo user mới
-             * @var User $user
-             */
-            $user = $this->userRepository->create([
-                'phone' => $dataCache['phone'],
-                'phone_verified_at' => now(),
-                'password' => Hash::make($password),
-                'name' => $name,
-                'language' => $language?->value ?? Language::VIETNAMESE->value,
-                // Ban đầu user là customer
-                'role' => UserRole::CUSTOMER->value,
-                'last_login_at' => now(),
-            ]);
+                // Kiểm tra xem số điện thoại đã được đăng ký chưa
+                $user = $this->userRepository->isPhoneVerified($phone);
+                if ($user) {
+                    throw new ServiceException(message: __('auth.error.phone_verified'));
+                }
 
-            // Tạo user profile
-            $this->userProfileRepository->create([
-                'user_id' => $user->id,
-                'gender' => $gender?->value ?? Gender::MALE->value,
-            ]);
+                /**
+                 * Tạo user mới
+                 * @var User $user
+                 */
+                $user = $this->userRepository->create([
+                    'phone' => $phone,
+                    'phone_verified_at' => now(),
+                    'password' => Hash::make($password),
+                    'name' => $name,
+                    'language' => $language?->value ?? Language::VIETNAMESE->value,
+                    // Ban đầu user là customer
+                    'role' => UserRole::CUSTOMER->value,
+                    'last_login_at' => now(),
+                ]);
 
-            // Tạo wallet cho user
-            $this->walletRepository->create([
-                'user_id' => $user->id,
-            ]);
+                // Tạo user profile cho user
+                $this->userProfileRepository->create([
+                    'user_id' => $user->id,
+                    'gender' => $gender?->value ?? Gender::MALE->value,
+                ]);
 
-            // Tiến hành tạo token đăng nhập
-            $token = $this->createTokenAuth($user);
-            DB::commit();
-            // Xóa token đăng ký khỏi cache
-            Caching::deleteCache(key: CacheKey::CACHE_KEY_REGISTER_TOKEN, uniqueKey: $token);
+                // Tạo wallet cho user
+                $this->walletRepository->create([
+                    'user_id' => $user->id,
+                ]);
 
-            return ServiceReturn::success(data: [
-                'token' => $token,
-                'user' => $user,
-            ]);
-        } catch (ServiceException $exception) {
-            DB::rollBack();
-            return ServiceReturn::error(message: $exception->getMessage());
-        } catch (Exception $exception) {
-            DB::rollBack();
-            LogHelper::error(
-                message: "Lỗi AuthService@register",
-                ex: $exception
-            );
-            return ServiceReturn::error(message: __('common_error.server_error'));
-        }
+                // Tiến hành tạo token đăng nhập
+                $token = $this->createTokenAuth($user);
+
+                return [
+                    'token' => $token,
+                    'user' => $user,
+                ];
+            },
+            useTransaction: true
+        );
     }
 
     /**
@@ -257,39 +241,41 @@ class AuthService extends BaseService
         string $password,
     ): ServiceReturn
     {
-        try {
-            // Kiểm tra user có tồn tại không
-            $user = $this->userRepository->findByPhone($phone);
-            if (!$user) {
-                return ServiceReturn::error(message: __('auth.error.invalid_login'));
-            }
-            // Kiểm tra password
-            if (!Hash::check($password, $user->password)) {
-                return ServiceReturn::error(message: __('auth.error.invalid_login'));
-            }
-            // Kiểm tra user có bị khóa không
-            if (!$user->is_active) {
-                return ServiceReturn::error(message: __('auth.error.disabled'));
-            }
-            // Cập nhật last login time
-            $user->last_login_at = now();
-            $user->save();
-            // Tạo token đăng nhập
-            $token = $this->createTokenAuth($user);
-            // Lưu token vào Redis
-            $this->setRedisAuthChatToken($token, $user);
+        return $this->execute(
+            callback: function () use ($phone, $password) {
+                $user = $this->userRepository->findByPhoneVerified($phone);
+                if (!$user) {
+                    return ServiceReturn::error(message: __('auth.error.invalid_login'));
+                }
+                // Kiểm tra password
+                if (!Hash::check($password, $user->password)) {
+                    return ServiceReturn::error(message: __('auth.error.invalid_login'));
+                }
+                // Kiểm tra user có bị khóa không
+                if (!$user->is_active) {
+                    return ServiceReturn::error(message: __('auth.error.disabled'));
+                }
 
-            return ServiceReturn::success(data: [
-                'token' => $token,
-                'user' => $user,
-            ]);
-        } catch (Exception $exception) {
-            LogHelper::error(
-                message: "Lỗi AuthService@login",
-                ex: $exception
-            );
-            return ServiceReturn::error(message: __('common_error.server_error'));
-        }
+                // Xóa token cũ, các thiết bị khác sẽ bị đăng xuất
+                $user->tokens()->delete();
+                // Lưu thông tin đăng nhập mới
+                $user->last_login_at = now();
+                $user->save();
+                // Tải thông tin hồ sơ và địa chỉ mặc định của người dùng
+                $user->load(['profile', 'primaryAddress']);
+
+                // Tạo token đăng nhập
+                $token = $this->createTokenAuth($user);
+                // Lưu token vào Redis
+//                $this->setRedisAuthChatToken($token, $user);
+
+                return [
+                    'token' => $token,
+                    'user' => $user,
+                ];
+            },
+            useTransaction: true
+        );
     }
 
     /**
@@ -305,7 +291,7 @@ class AuthService extends BaseService
     {
         try {
             // Kiểm tra user có tồn tại không
-            $user = $this->userRepository->findByPhone($phone);
+            $user = $this->userRepository->findByPhoneVerified($phone);
             if (!$user) {
                 return ServiceReturn::error(message: __('auth.error.invalid_login'));
             }
@@ -338,19 +324,19 @@ class AuthService extends BaseService
     public function user(): ServiceReturn
     {
         try {
-            $user = auth('sanctum')->user();
+            $user = Auth::user();
             if (!$user->is_active) {
                 $this->logout();
                 return ServiceReturn::error(message: __('auth.error.unauthorized'));
             }
             $user->last_login_at = now();
             $user->save();
-
-            $token = request()->bearerToken();
-            // Lưu token vào Redis nếu có
-            if ($token) {
-                $this->setRedisAuthChatToken($token, $user);
-            }
+            $user->load(['profile', 'primaryAddress']);
+//            $token = request()->bearerToken();
+//            // Lưu token vào Redis nếu có
+//            if ($token) {
+//                $this->setRedisAuthChatToken($token, $user);
+//            }
             return ServiceReturn::success(data: [
                 'user' => $user,
             ]);
@@ -363,28 +349,7 @@ class AuthService extends BaseService
         }
     }
 
-    /**
-     * Lấy thông tin người dùng + các config về app
-     * @return ServiceReturn
-     */
-    public function configApplication(): ServiceReturn
-    {
-        try {
-            return ServiceReturn::success(data: [
-                'maintenance' => config('services.application_mobile.maintenance'),
-                'ios_version' => config('services.application_mobile.ios_version'),
-                'android_version' => config('services.application_mobile.android_version'),
-                'appstore_url' => config('services.store.appstore'),
-                'chplay_url' => config('services.store.chplay'),
-            ]);
-        } catch (Exception $exception) {
-            LogHelper::error(
-                message: "Lỗi AuthService@checkAccess",
-                ex: $exception
-            );
-            return ServiceReturn::error(message: __('common_error.server_error'));
-        }
-    }
+
 
     /**
      * Cập nhật ngôn ngữ cho user.
@@ -444,7 +409,7 @@ class AuthService extends BaseService
 
             // --- TẦNG 3: REDIS CHAT AUTH ---
             // Lưu token vào Redis
-            $this->setRedisAuthChatToken($token, $user);
+//            $this->setRedisAuthChatToken($token, $user);
 
             return ServiceReturn::success();
         } catch (Exception $exception) {
@@ -710,28 +675,46 @@ class AuthService extends BaseService
     }
 
     /**
-     * Tạo OTP đăng ký và lưu vào cache.
+     * Lấy OTP chưa được xác thực mới nhất cho số điện thoại và loại OTP
      * @param string $phone
+     * @param UserOtpType $type
+     * @return \App\Models\UserOtp|null
+     */
+    protected function getLastOtpNotVerified(string $phone, UserOtpType $type)
+    {
+        $latestOtp = $this->userOtpRepository->getLastOtpNotVerified($phone, $type);
+        if ($latestOtp &&
+            $latestOtp->last_sent_at->addSeconds(self::RETRY_AFTER_SECONDS)->isFuture()
+        ) {
+            return $latestOtp;
+        }
+        return null;
+    }
+
+    /**
+     * Tạo OTP
+     * @param string $phone
+     * @param UserOtpType $type
+     * @return \Illuminate\Database\Eloquent\Model
      * @throws ServiceException
      */
-    protected function createCacheRegisterOtp(string $phone): void
+    protected function createOtp(string $phone, UserOtpType $type)
     {
-        // Set OTP limit số lần gửi lại
-        if (!Caching::hasCache(key: CacheKey::CACHE_KEY_RESEND_REGISTER_OTP, uniqueKey: $phone)) {
-            Caching::setCache(
-                key: CacheKey::CACHE_KEY_RESEND_REGISTER_OTP,
-                value: 0,
-                uniqueKey: request()->ip() || request()->userAgent() || $phone,
-                expire: $this->blockTime
-            );
-        }
-        $attempts = Caching::incrementCache(key: CacheKey::CACHE_KEY_RESEND_REGISTER_OTP, uniqueKey: $phone);
+        // Kiểm tra giới hạn gửi trong ngày
+        $totalSentToday = $this->userOtpRepository->sumTotalSendOTPToday($phone, $type);
 
-        // Kiểm tra số lần gửi lại OTP
-        if ($attempts > $this->maxResendOtp) {
-            throw new ServiceException(__('auth.error.resend_otp', ['minutes' => $this->blockTime]));
+        if ($totalSentToday >= self::MAX_SEND_PER_DAY) {
+            throw new ServiceException(__("auth.error.otp_limit_reached"));
         }
 
+        // Kiểm tra khoảng cách giữa 2 lần gửi
+        $latestOtp = $this->getLastOtpNotVerified($phone, $type);
+        if ($latestOtp) {
+            $secondsLeft = now()->diffInSeconds($latestOtp->last_sent_at->addSeconds(self::RETRY_AFTER_SECONDS));
+            throw new ServiceException(__("auth.error.otp_retry_too_fast", ['seconds' => $secondsLeft]));
+        }
+
+        // Tạo OTP
         if (config('app.debug')) {
             $otp = 123456;
         } else {
@@ -741,16 +724,53 @@ class AuthService extends BaseService
                 throw new ServiceException($result->getMessage());
             }
         }
-        // Lưu OTP vào cache
-        Caching::setCache(
-            key: CacheKey::CACHE_KEY_OTP_REGISTER,
-            value: [
-                'otp' => $otp,
-                'phone' => $phone,
-            ],
-            uniqueKey: $phone,
-            expire: $this->otpTtl
+
+        // Cập nhật hoặc tạo mới record OTP
+        return $this->userOtpRepository->createOrUpdateOtp(
+            phone: $phone,
+            type: $type,
+            otp: $otp,
+            ip: request()->ip()
         );
+    }
+
+
+    /**
+     * @param string $phone
+     * @param UserOtpType $type
+     * @param string $otpCode
+     * @throws ServiceException
+     */
+    protected function verifyOtp(string $phone, UserOtpType $type, string $otpCode)
+    {
+        // Tìm OTP hợp lệ chưa được xác thực mới nhất
+        $otpRecord = $this->userOtpRepository->getLastOtpNotVerified($phone, $type);
+
+        if (!$otpRecord || $otpRecord->isExpired()) {
+            throw new ServiceException(__("auth.error.otp_invalid_or_expired"));
+        }
+
+        // Kiểm tra số lần thử sai
+        if ($otpRecord->attempts >= self::MAX_OTP_ATTEMPTS) {
+            // Xóa hiệu lực của OTP này luôn vì đã thử sai quá nhiều
+            $otpRecord->update(['expired_at' => now()]);
+            throw new ServiceException(__("auth.error.otp_max_attempts_exceeded"));
+        }
+
+        // Kiểm tra mã OTP
+        if (!Hash::check($otpCode, $otpRecord->otp_hash)) {
+            // Tăng số lần thử sai (attempts increment)
+            $otpRecord->increment('attempts');
+            $remaining = self::MAX_OTP_ATTEMPTS - $otpRecord->attempts;
+            throw new ServiceException(__("user.error.otp_incorrect", ['remaining' => $remaining]));
+        }
+
+        // Xác thực thành công
+        $otpRecord->update([
+            'verified_at' => now(),
+            'attempts' => $otpRecord->attempts + 1
+        ]);
+
     }
 
     /**

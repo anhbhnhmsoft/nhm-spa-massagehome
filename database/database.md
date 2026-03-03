@@ -23,18 +23,6 @@
     - timestamps
 
 
-# provinces
-    # note
-    - Bảng provinces lưu trữ các tỉnh thành.
-
-    # cấu trúc
-    - id (bigint, primary key, auto-increment)
-    - name (varchar) -- tên tỉnh thành
-    - code (varchar, unique) -- mã tỉnh thành
-    - division_type (varchar, nullable) -- cấp hành chính
-    - timestamps
-
-
 # geo_caching_places
     # note
     - Bảng geo_caching_places lưu trữ các địa điểm được tìm kiếm từ API để tối ưu truy vấn.
@@ -67,6 +55,26 @@
     - last_login_at (timestamp, nullable) -- thời gian đăng nhập cuối cùng
     
     - timestamps
+
+## user_otp
+    # note
+    - Bảng user_otp lưu trữ thông tin OTP (mã xác thực) của người dùng.
+
+    # cấu trúc
+    - id
+    - phone (varchar)            
+    - otp_hash (varchar)
+    - type (unsigned smallint) - Loại OTP (trong enum UserOtpType)
+    - attempts (unsigned tinyint, default 0) -- số lần thử lại     
+    - expired_at (timestamp) -- thời gian hết hạn
+    - verified_at (timestamp, nullable) -- thời gian xác thực
+    - last_sent_at (timestamp, nullable) -- thời gian gửi OTP cuối cùng
+    - send_count (unsigned tinyint, default 1) -- số lần gửi OTP
+    - ip_address (varchar, nullable) -- địa chỉ IP
+    - timestamps
+
+    - index (phone, type) -- chỉ mục trên cột phone và type để tối ưu truy vấn
+
 
 # user_devices
     # note
@@ -122,7 +130,17 @@
     - date_of_birth (date, nullable) -- ngày sinh
     - gender (smallint, nullable) -- giới tính (trong enum Gender)
     - bio (text, nullable) -- thông tin cá nhân
-    
+
+    - user_id (bigint, foreign key to users.id) -- id người dùng
+    - nickname (varchar, nullable) -- tên hiển thị
+    - real_name (varchar, nullable) -- tên thật
+    - date_of_birth (date, nullable) -- ngày sinh
+    - gender (smallint, nullable) -- giới tính (trong enum UserGender)
+    - bio (json, nullable) -- thông tin cá nhân (dạng json mô tả thông tin cá nhân - đa ngôn ngữ)
+    - is_leader (boolean, default false) -- đánh dấu trưởng nhóm KTV (job sẽ tự động set khi số KTV được giới thiệu >= điều kiện)
+    - referrer_id (bigint, nullable, foreign key to users.id) -- id người giới thiệu (người mời apply)
+    - experience (unsigned smallint, nullable) -- kinh nghiệm (năm)
+    - timestamps
     
     - timestamps
 
@@ -316,25 +334,6 @@
     - id (bigint, primary key, auto-increment)
     - user_id (bigint, foreign key to users.id) -- id người dùng cung cấp dịch vụ
     - category_id (bigint, foreign key to categories.id) -- id danh mục dịch vụ
-    - name (json) -- tên dịch vụ
-    - description (json, nullable) -- mô tả dịch vụ (đa ngôn ngữ, lưu trữ dưới dạng JSON)
-    - is_active (boolean) -- trạng thái kích hoạt
-    - image_url (varchar, nullable) -- URL hình ảnh dịch vụ
-    
-    - timestamps
-
-# service_options
-    # note
-    - Bảng service_options lưu trữ thông tin tùy chọn dịch vụ (ví dụ: thời gian thực hiện, giá).
-
-    #relations
-    - Quan hệ 1-n với bảng services.
-    - Quan hệ 1-n với bảng category_prices.
-    # cấu trúc
-    - id (bigint, primary key, auto-increment)
-    - service_id (bigint, foreign key to services.id) -- id dịch vụ
-    - category_price_id (bigint, nullable, foreign key to category_prices.id) -- id tùy chọn danh mục
-    
     - timestamps
 
 # service_bookings
@@ -349,21 +348,23 @@
     - id (bigint, primary key, auto-increment)
     - user_id (bigint, foreign key to users.id) -- id người dùng đặt lịch
     - ktv_user_id (bigint, foreign key to users.id) -- id người làm dịch vụ (KTV)
-    - service_id (bigint, foreign key to services.id) -- id dịch vụ
+    - category_id (bigint, foreign key to categories.id) -- id danh mục dịch vụ
     - coupon_id (bigint, foreign key to coupons.id, nullable) -- id mã giảm giá
     - duration (smallint) -- thời gian thực hiện dịch vụ (dạng enum ServiceDuration - minutes)
     - booking_time (timestamp) -- thời gian đặt lịch
     - start_time (timestamp, nullable) -- thời gian bắt đầu
     - end_time (timestamp, nullable) -- thời gian kết thúc
     - status (smallint) -- trạng thái đặt lịch (trong enum BookingStatus)
-    - price (decimal(15,2)) -- giá dịch vụ (lưu trữ giá trị thực tế khi đặt lịch)
-    - price_before_discount (decimal(15,2)) -- giá dịch vụ trước khi áp dụng mã giảm giá
+    - price (decimal(15,2)) -- giá dịch vụ 
+    - price_discount (decimal(15,2)) -- giá dịch vụ trước khi áp dụng mã giảm giá
     - price_transportation (decimal(15,2), nullable) -- chi phí di chuyển của ktv do khách hàng trả
     - note (text, nullable) -- ghi chú
     - address (varchar, nullable) -- địa chỉ hẹn
-    - note_address (varchar, nullable) -- ghi chú thêm (ví dụ: yêu cầu đặc biệt)
     - latitude (decimal(10,8), nullable) -- vĩ độ
     - longitude (decimal(11,8), nullable) -- kinh độ
+    - ktv_address (varchar, nullable) -- địa chỉ của KTV
+    - ktv_latitude (decimal(10,8), nullable) -- vĩ độ của KTV
+    - ktv_longitude (decimal(11,8), nullable) -- kinh độ của KTV
     - payment_type (smallint, nullable) -- hình thức thanh toán (trong enum PaymentType), null là khi dịch vụ chưa được xác nhận
     - reason_cancel (varchar, nullable) -- lý do hủy đặt lịch
     - overtime_warning_sent (boolean, default false) -- đã gửi thông báo về thời gian vượt quá không
@@ -384,7 +385,6 @@
     - label (json) -- tên mã giảm giá (đa ngôn ngữ, lưu trữ dưới dạng JSON)
     - description (json, nullable) -- mô tả mã giảm giá (đa ngôn ngữ, lưu trữ dưới dạng JSON)
     - created_by (bigint, foreign key to users.id) -- id người dùng tạo mã giảm giá
-    - for_service_id (bigint, foreign key to services.id, nullable) -- id dịch vụ áp dụng mã giảm giá (nếu null thì áp dụng cho tất cả dịch vụ)
     - is_percentage (boolean, default false) -- có phải là phần trăm giảm giá hay không (nếu là false thì là giảm giá cố định)
     - discount_value (decimal(15,2)) -- giá trị giảm giá 
     - max_discount (decimal(15,2), nullable) -- giá trị giảm giá tối đa
@@ -407,14 +407,12 @@
     # relations
     - Quan hệ 1-n với bảng coupons.
     - Quan hệ 1-n với bảng users.
-    - Quan hệ 1-n với bảng services.
     - Quan hệ 1-n với bảng service_bookings.
 
     # cấu trúc
     - id (bigint, primary key, auto-increment)
     - coupon_id (bigint, foreign key to coupons.id) -- id mã giảm giá
     - user_id (bigint, foreign key to users.id) -- id người dùng
-    - service_id (bigint, foreign key to services.id) -- id dịch vụ
     - booking_id (bigint, foreign key to service_bookings.id) -- id đơn đặt lịch
     
     - timestamps

@@ -101,8 +101,7 @@ class CategoryForm
                             ->required()
                             ->numeric()
                             ->minValue(0)
-                            ->suffix(__('admin.currency'))
-                            ->formatStateUsing(fn($state) => number_format($state, 0, '.', '')),
+                            ->suffix(__('admin.currency')),
                     ])
                     ->columns(2)
                     ->defaultItems(1)

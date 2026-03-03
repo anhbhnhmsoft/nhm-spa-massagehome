@@ -8,6 +8,7 @@ use App\Filament\Clusters\ReviewApplication\Resources\Agencies\Widgets\Statistic
 use App\Filament\Clusters\ReviewApplication\Resources\Agencies\Widgets\TransactionAgencyTable;
 use App\Filament\Clusters\ReviewApplication\Resources\Agencies\Widgets\UserReferralLeaderAgencyTableWidget;
 use App\Filament\Components\CommonActions;
+use App\Filament\Widgets\CustomerAffiliate;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewAgencies extends ViewRecord
@@ -31,6 +32,7 @@ class ViewAgencies extends ViewRecord
         return [
             StatisticalStatsAgency::make(),
             TransactionAgencyTable::make(),
+            CustomerAffiliate::make(),
             UserReferralLeaderAgencyTableWidget::make(),
         ];
     }

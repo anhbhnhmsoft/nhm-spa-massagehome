@@ -45,44 +45,6 @@ class WalletService extends BaseService
     }
 
     /**
-     * Tạo transaction thanh toán booking cho Khách hàng
-     * @param Wallet $walletCustomer - Ví của khách hàng
-     * @param $bookingId - Id của booking
-     * @param $price - Giá booking
-     * @param $exchangeRate - Tỷ giá đổi tiền
-     */
-    public function createPaymentServiceBookingForCustomer(
-        Wallet $walletCustomer,
-        $bookingId,
-        $price,
-        $exchangeRate,
-    )
-    {
-        $balanceAfter = $walletCustomer->balance - $price;
-
-        // Tạo transaction thanh toán booking cho Khách hàng
-        $this->walletTransactionRepository->create([
-            'wallet_id' => $walletCustomer->id,
-            'foreign_key' => $bookingId,
-            'money_amount' => $price * $exchangeRate,
-            'exchange_rate_point' => $exchangeRate,
-            'point_amount' => $price,
-            'balance_after' => $balanceAfter,
-            'type' => WalletTransactionType::PAYMENT->value,
-            'status' => WalletTransactionStatus::COMPLETED->value,
-            'transaction_code' => Helper::createDescPayment(PaymentType::BY_POINTS),
-            'description' => __('booking.payment.wallet_customer'),
-            'expired_at' => now(),
-            'transaction_id' => null,
-            'metadata' => null,
-        ]);
-
-        // Trừ số dư ví Khách hàng
-        $walletCustomer->balance -= $price;
-        $walletCustomer->save();
-    }
-
-    /**
      * Tạo transaction thanh toán booking cho KTV
      * @param Wallet $walletKtv - Ví của kỹ thuật viên
      * @param $bookingId - Id của booking
@@ -409,7 +371,7 @@ class WalletService extends BaseService
         switch ($referrer->role) {
             case UserRole::KTV->value:
                 // Nếu KTV
-                if ($referrer->reviewApplications?->is_leader){
+                if ($referrer->reviewApplication?->is_leader){
                     $rateDiscount = (float) $this->configService->getConfigValue(ConfigName::DISCOUNT_RATE_REFERRER_KTV_LEADER);
                 }else{
                     $rateDiscount = (float) $this->configService->getConfigValue(ConfigName::DISCOUNT_RATE_REFERRER_KTV);
@@ -431,7 +393,7 @@ class WalletService extends BaseService
             ->where('type', WalletTransactionType::REFERRAL_KTV->value)
             ->exists();
 
-        if (!$existingCommission) {
+        if (!$existingCommission && $rateDiscount > 0) {
             // Tính giá tiền hoa hồng cho người giới thiệu
             $amount = Helper::calculatePriceReferrer($systemIncome, $rateDiscount);
 
@@ -687,32 +649,4 @@ class WalletService extends BaseService
             throw $exception;
         }
     }
-
-    /**
-     * Kiểm tra số dư ví của người dùng có đủ không
-     * @param $userId
-     * @param $price
-     * @param bool $lockForUpdate
-     * @return array {
-     *     'balance' => int, // Số dư ví của người dùng
-     *     'is_enough' => bool, // Có đủ số dư không
-     *     'wallet' => Wallet, // Ví của người dùng
-     * }
-     * @throws ServiceException
-     */
-    public function checkUserWalletBalance($userId, $price, bool $lockForUpdate = false)
-    {
-        $walletCustomer = $this->getWalletByUserId($userId, $lockForUpdate);
-        if (!$walletCustomer) {
-            throw new ServiceException(
-                message: __("booking.payment.wallet_customer_not_found")
-            );
-        }
-        return [
-            'balance' => $walletCustomer->balance,
-            'wallet' => $walletCustomer,
-            'is_enough' => $walletCustomer->balance >= $price,
-        ];
-    }
-
 }

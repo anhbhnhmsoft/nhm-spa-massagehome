@@ -46,41 +46,6 @@ final class Helper
     }
 
     /**
-     * Tạo mã tham gia mới cho người dùng dựa trên vai trò.
-     * @param UserRole $role
-     * @return string
-     */
-    public static function generateReferCodeUser(UserRole $role): string
-    {
-        $fix = match ($role) {
-            UserRole::ADMIN => 'ADM-',
-            UserRole::AGENCY => 'AGN-',
-            UserRole::KTV => 'KTV-',
-            UserRole::CUSTOMER => 'CST-',
-        };
-        return $fix . self::generateReferCode();
-    }
-
-    /**
-     * Tạo mã tham gia ngẫu nhiên 8 ký tự in hoa.
-     * @param int|null $length
-     * @return string
-     */
-    public static function generateReferCode(?int $length = 8): string
-    {
-        return strtoupper(substr(Str::uuid()->toString(), 0, $length));
-    }
-
-    /**
-     * Tạo token ngẫu nhiên 60 ký tự.
-     * @return string
-     */
-    public static function generateTokenRandom(): string
-    {
-        return Str::random(60);
-    }
-
-    /**
      * Kiểm tra ngôn ngữ có hợp lệ không.
      * @param string|null $language
      * @return bool
@@ -90,15 +55,6 @@ final class Helper
         return in_array($language, [Language::VIETNAMESE->value, Language::ENGLISH->value, Language::CHINESE->value], true);
     }
 
-    /**
-     * Kiểm tra thiết bị có phải là thiết bị di động không.
-     * @param string $userAgent
-     * @return bool
-     */
-    public static function isMobileDevice($userAgent)
-    {
-        return preg_match('/(android|iphone|ipad|mobile)/i', $userAgent);
-    }
 
     /**
      * Lấy URL công khai cho tệp tin.
@@ -239,7 +195,7 @@ final class Helper
     public static function calculatePriceAffiliate(float $price, float $commissionPercent, float $minCommission, float $maxCommission, int $precision = 0): float
     {
         // Tính số tiền hoa hồng mà người giới thiệu sẽ nhận được
-        $amount = $price * (100 - $commissionPercent) / 100;
+        $amount = $price * ($commissionPercent / 100);
         // Clamp giá trị trong khoảng min/max
         $amount = max($minCommission, min($amount, $maxCommission));
         // Làm tròn số tiền hoa hồng
@@ -289,19 +245,28 @@ final class Helper
         return preg_match('/^84\d{9}$/', $phone);
     }
 
+    /**
+     * Tính khoảng cách giữa 2 tọa độ theo công thức Haversine
+     * @param $lat1
+     * @param $lon1
+     * @param $lat2
+     * @param $lon2
+     * @return float|int
+     */
     public static function getDistance($lat1, $lon1, $lat2, $lon2)
     {
-        $R = 6371;
+        $earthRadius = 6371; // km
 
         $dLat = deg2rad($lat2 - $lat1);
         $dLon = deg2rad($lon2 - $lon1);
 
         $a = sin($dLat / 2) * sin($dLat / 2) +
-            cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon / 2) * sin($dLon / 2);
+            cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+            sin($dLon / 2) * sin($dLon / 2);
 
         $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
 
-        return $R * $c;
+        return $earthRadius * $c;
     }
 
     /**
@@ -313,5 +278,15 @@ final class Helper
         foreach ($files as $file) {
             Storage::disk($file['disk'])->delete($file['path']);
         }
+    }
+
+    /**
+     * Định dạng giá tiền thành chuỗi có dấu chấm ngăn cách hàng nghìn và dấu ₫ ở cuối.
+     * @param float $price
+     * @return string
+     */
+    public static function formatPrice(float $price): string
+    {
+        return number_format($price, 0, ',', '.') . ' ₫';
     }
 }

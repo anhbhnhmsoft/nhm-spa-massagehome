@@ -160,59 +160,7 @@ class UserService extends BaseService
         }
     }
 
-    /**
-     * Lấy thông tin dashboard profile của user hiện tại
-     * @return ServiceReturn
-     */
-    public function dashboardProfile()
-    {
-        try {
-            $user = Auth::user();
-            // Số dư wallet
-            $wallet = $this->walletRepository->query()
-                ->where('user_id', $user->id)
-                ->first();
-            $walletBalance = $wallet?->balance ?? "0";
-
-
-            // Lấy số lượng đặt lịch theo từng trạng thái
-            $bookingRawCounts = $this->bookingRepository->query()
-                ->where('user_id', $user->id)
-                ->select('status', DB::raw('count(*) as total'))
-                ->groupBy('status')
-                ->pluck('total', 'status');
-            $bookingCount = collect(BookingStatus::cases())
-                ->mapWithKeys(function ($case) use ($bookingRawCounts) {
-                    return [$case->value => $bookingRawCounts->get($case->value, 0)];
-                })
-                ->toArray();
-
-            // Số lượng mã giảm giá
-            $couponUserCount = $this->couponUserRepository->query()
-                ->where('user_id', $user->id)
-                ->where('is_used', false)
-                ->count();
-
-            return ServiceReturn::success(
-                data: [
-                    'booking_count' => $bookingCount,
-                    'wallet_balance' => $walletBalance,
-                    'coupon_user_count' => $couponUserCount,
-                ]
-            );
-        } catch (\Exception $exception) {
-            LogHelper::error(
-                message: "Lỗi UserService@dashboardCustomer",
-                ex: $exception
-            );
-            return ServiceReturn::error(
-                message: __('common_error.server_error')
-            );
-        }
-    }
-
-
-    /**
+      /**
      * Lấy danh sách KTV
      * @param FilterDTO $dto
      * @return ServiceReturn
@@ -261,48 +209,43 @@ class UserService extends BaseService
      */
     public function getKtvById(int $id): ServiceReturn
     {
-        try {
-            // Lấy config khoảng thời gian nghỉ giữa 2 buổi
-            $breakTimeGap = $this->configService->getConfigValue(ConfigName::BREAK_TIME_GAP);
-            // Lấy config giá di chuyển / km
-            $priceTransportation = $this->configService->getConfigValue(ConfigName::PRICE_TRANSPORTATION);
-            // Lấy thông tin KTV
-            $ktv = $this->userRepository->queryKTV()
-                ->with([
-                    'files' => function ($query) {
-                        $query->whereIn('type', [UserFileType::KTV_IMAGE_DISPLAY->value]);
-                    },
-                    // Chỉ lấy 1 review
-                    'reviewsReceived' => function ($query) {
-                        $query->where('hidden', false)
-                            ->latest('created_at')
-                            ->limit(1);
-                    },
-                ])
-                ->find($id);
-            if (!$ktv) {
-                throw new ServiceException(
-                    message: __("common_error.data_not_found")
-                );
-            }
-            return ServiceReturn::success(
-                data: [
+        return $this->execute(
+            callback: function () use ($id) {
+                // Lấy config khoảng thời gian nghỉ giữa 2 buổi
+                $breakTimeGap = $this->configService->getConfigValue(ConfigName::BREAK_TIME_GAP);
+                // Lấy config giá di chuyển / km
+                $priceTransportation = $this->configService->getConfigValue(ConfigName::PRICE_TRANSPORTATION);
+
+                // Lấy thông tin KTV
+                $ktv = $this->userRepository->queryKTV()
+                    ->with([
+                        'gallery',
+                        // Chỉ lấy 1 review
+                        'reviewsReceived' => function ($query) {
+                            $query->where('hidden', false)
+                                ->latest('created_at')
+                                ->limit(1);
+                        },
+                        'categories' => function ($query) {
+                            $query->withCount(['bookings as booking_count' => function ($q) {
+                                $q->whereColumn('ktv_user_id', 'services.user_id');
+                            }]);
+                        },
+                        'categories.prices',
+                    ])
+                    ->find($id);
+                if (!$ktv) {
+                    throw new ServiceException(
+                        message: __("common_error.data_not_found")
+                    );
+                }
+                return  [
                     'ktv' => $ktv,
                     'break_time_gap' => $breakTimeGap,
                     'price_transportation' => $priceTransportation,
-
-                ]
-            );
-        }
-        catch (\Exception $exception) {
-            LogHelper::error(
-                message: "Lỗi UserService@getKtvById",
-                ex: $exception
-            );
-            return ServiceReturn::error(
-                message: __("common_error.server_error")
-            );
-        }
+                ];
+            }
+        );
     }
 
     /**

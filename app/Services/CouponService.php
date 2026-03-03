@@ -11,7 +11,7 @@ use App\Repositories\CouponUsedRepository;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Symfony\Component\HttpKernel\Log\Logger;
+use function PHPUnit\Framework\callback;
 
 class CouponService extends BaseService
 {
@@ -22,84 +22,6 @@ class CouponService extends BaseService
         protected UserRepository $userRepository,
     ) {
         parent::__construct();
-    }
-
-    /**
-     * Phương thức kiểm tra tính hợp lệ của Coupon khi sử dụng.
-     * @param int $couponId
-     * @param int $serviceId
-     * @param  $priceBeforeDiscount
-     * @return ServiceReturn
-     */
-    public function validateUseCoupon(int $couponId, int $serviceId, $priceBeforeDiscount): ServiceReturn
-    {
-
-        $coupon = $this->couponRepository->query()->find($couponId);
-
-        if (!$coupon) {
-            return ServiceReturn::error(
-                message: __("booking.coupon.not_found")
-            );
-        }
-
-        // --- 1. Kiểm tra trạng thái và thời gian (dùng dữ liệu từ Cache) ---
-        if (!$coupon->is_active) {
-            return ServiceReturn::error(
-                message: __("booking.coupon.not_active")
-            );
-        }
-
-        // --- 2. Kiểm tra thời gian (dùng dữ liệu từ Cache) ---
-        $now = Carbon::now();
-        if ($now->isBefore(Carbon::parse($coupon->start_at))) {
-            return ServiceReturn::error(
-                message: __("booking.coupon.not_yet_started")
-            );
-        }
-        if ($now->isAfter(Carbon::parse($coupon->end_at))) {
-            return ServiceReturn::error(
-                message: __("error.coupon_expired")
-            );
-        }
-
-        // --- 3. Kiểm tra dịch vụ áp dụng ---
-        if ($coupon->for_service_id !== null && $coupon->for_service_id != $serviceId) {
-            return ServiceReturn::error(
-                message: __("booking.coupon.not_match_service")
-            );
-        }
-
-        // --- 4. Kiểm tra giới hạn sử dụng ---
-        // Kiểm tra giới hạn sử dụng toàn bộ
-        if ($coupon->usage_limit !== null && $coupon->used_count >= $coupon->usage_limit) {
-            return ServiceReturn::error(
-                message: __("booking.coupon.usage_limit_reached")
-            );
-        }
-
-        // --- 5. Kiểm tra giá trị tối đa của mã có vượt quá giá trị sau áp dụng không ---
-        if ($coupon->is_percentage) {
-            $discountAmount = ($priceBeforeDiscount * $coupon->discount_value) / 100;
-        } else {
-            // Đảm bảo discount không vượt quá giá trị đơn hàng
-            $discountAmount = min($priceBeforeDiscount, $coupon->discount_value);
-        }
-        // Đảm bảo discount không âm
-        $discountAmount = max(0, $discountAmount);
-        // Kiểm tra giá trị giảm tối đa không vượt quá giá trị tối đa của mã
-        if ($coupon->max_discount !== null && $discountAmount > $coupon->max_discount) {
-            $discountAmount = $coupon->max_discount;
-        }
-
-
-
-        // Nếu mọi thứ hợp lệ, trả về dữ liệu
-        return ServiceReturn::success(
-            data: [
-                'coupon' => $coupon,
-                'discount_amount' => $discountAmount,
-            ]
-        );
     }
 
     /**
@@ -252,7 +174,6 @@ class CouponService extends BaseService
                 $this->couponUsedRepository->create([
                     'coupon_id' => $coupon->id,
                     'user_id' => $userId,
-                    'service_id' => $serviceId,
                     'booking_id' => $bookingId,
                 ]);
 
