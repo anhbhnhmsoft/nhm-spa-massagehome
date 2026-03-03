@@ -49,28 +49,30 @@ class DashboardService extends BaseService
             $start = $dateRange['from'];
             $end = $dateRange['to'];
 
-            $stats = $this->walletTransactionRepository->getFinancialDashboardStats($start, $end);
+            // Lấy thống kê doanh thu và lợi nhuận
+            $incomeOutcome = $this->walletTransactionRepository->getFinancialInOutStats($start, $end);
 
-            // Lấy tổng số tiền nạp vào (Deposit)
-            $totalIncome   = (float) $stats->total_income;
-            // Tổng chi phí (Operation Cost)
-            $operationCost = (float) $stats->operation_cost;
-            // chi phí dành cho đại lý
-            $agencyCost    = (float) $stats->agency_cost;
-            // chi phí dành cho KTV
-            $ktvCost       = (float) $stats->ktv_cost;
-            // chi phí dành cho Affiliate
-            $affiliateCost = (float) $stats->affiliate_cost;
-            // Tính lợi nhuận
-            $profit = round($totalIncome - $operationCost, 2);
+            // Lấy thống kê doanh thu và chi phí
+            $revenue = $this->walletTransactionRepository->getFinancialDashboardStats($start, $end);
+
+            // Lấy thống kê đơn hàng
+            $stats = $this->bookingRepository->getBookingStats($start, $end);
+
 
             return ServiceReturn::success([
-                'total_income' => $totalIncome,
-                'operation_cost' => $operationCost,
-                'agency_cost' => $agencyCost,
-                'ktv_cost' => $ktvCost,
-                'affiliate_cost' => $affiliateCost,
-                'profit' => $profit,
+                'system_inout' =>[
+                    'total_income' => (float) ($incomeOutcome->total_income ?? 0),
+                    'total_outcome' => (float) ($incomeOutcome->total_outcome ?? 0),
+                ],
+                'revenue' => [
+                    'total_revenue' => (float) $revenue->total_revenue,
+                    'operation_cost' => (float) $revenue->operation_cost,
+                    'profit' => round($revenue->total_revenue - $revenue->operation_cost, 2),
+                    'technical_cost' => (float) $revenue->technical_cost,
+                    'customer_cost' => (float) $revenue->customer_cost,
+                    'transportation_cost' => (float) $revenue->transportation_cost,
+                    'agency_cost' => (float) $revenue->agency_cost,
+                ],
             ]);
         } catch (\Exception $exception) {
             LogHelper::error(
@@ -99,19 +101,28 @@ class DashboardService extends BaseService
             $totalBooking     = $stats->total ?? 0;
             // Số đơn hàng đang chờ
             $pendingBooking   = $stats->pending ?? 0;
+            // Số đơn hàng đã xác nhận
+            $confirmedBooking = $stats->confirmed ?? 0;
             // Số đơn hàng đang tiến hành
             $ongoingBooking   = $stats->ongoing ?? 0;
             // Số đơn hàng đã hoàn thành
             $completedBooking = $stats->completed ?? 0;
+            // Số đơn hàng đang chờ hủy
+            $waitingCancelBooking = $stats->waiting_cancel ?? 0;
             // Số đơn hàng đã hủy và hoàn tiền
             $canceledBooking  = $stats->canceled ?? 0;
+            // Số đơn hàng bị lỗi
+            $paymentFailedBooking = $stats->payment_failed ?? 0;
 
             return ServiceReturn::success([
                 'total_booking' => $totalBooking,
                 'pending_booking' => $pendingBooking,
+                'confirmed_booking' => $confirmedBooking,
                 'ongoing_booking' => $ongoingBooking,
                 'completed_booking' => $completedBooking,
+                'waiting_cancel_booking' => $waitingCancelBooking,
                 'canceled_booking' => $canceledBooking,
+                'payment_failed_booking' => $paymentFailedBooking,
             ]);
 
         }catch (\Exception $exception){
@@ -207,7 +218,7 @@ class DashboardService extends BaseService
                     TO_CHAR(DATE_TRUNC(?, created_at), ?) as date_key,
                     SUM(point_amount) as total
                 ", [$config['unit'], $config['pg_format']])
-                ->whereIn('type', WalletTransactionType::incomeStatus())
+                ->whereIn('type', WalletTransactionType::revenueStatus())
                 ->where('status', WalletTransactionStatus::COMPLETED->value)
                 ->whereBetween('created_at', [$start, $end])
                 ->groupBy('date_key')
@@ -255,13 +266,6 @@ class DashboardService extends BaseService
             };
 
 
-            // Tổng thu nhập (Kỳ này)
-            $totalIncome = $this->bookingRepository->getKtvTotalIncome(
-                ktvId: $user->id,
-                from: $fromDate,
-                to: $toDate,
-            );
-
             // Doanh thu thực nhận
             $receivedIncome = $this->walletTransactionRepository->sumRealIncomePaymentBooking(
                 ktvUserId: $user->id,
@@ -299,7 +303,6 @@ class DashboardService extends BaseService
             );
 
             return ServiceReturn::success([
-                'total_income' => $totalIncome,
                 'received_income' => $receivedIncome,
                 'total_customers' => $totalCustomers,
                 'total_bookings' => $totalBookings,

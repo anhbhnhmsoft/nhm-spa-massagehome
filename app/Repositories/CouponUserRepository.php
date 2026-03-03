@@ -35,4 +35,17 @@ class CouponUserRepository extends BaseRepository
     {
         return $query;
     }
+
+    /**
+     * Lấy số lượng mã giảm giá chưa được sử dụng của user
+     * @param int $userId
+     * @return int
+     */
+    public function countCouponUserNotUsedByUserId(int $userId): int
+    {
+         return $this->model->query()
+            ->where('user_id', $userId)
+            ->where('is_used', false)
+            ->count();
+    }
 }

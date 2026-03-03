@@ -19,20 +19,21 @@ class WalletRepository extends BaseRepository
             ->where('is_active', true);
     }
 
-    public function filterQuery(Builder $query, array $filters): Builder
+    /**
+     * Lấy ví của người dùng
+     * @param $userId
+     * @param bool $lockForUpdate
+     * @return null
+     */
+    public function getWalletByUserId($userId, bool $lockForUpdate = false)
     {
-        return $query;
+        $query = $this->queryWallet()
+            ->where('user_id', $userId);
+        if ($lockForUpdate) {
+            $query->lockForUpdate();
+        }
+        return $query->first();
     }
 
-    public function sortQuery(Builder $query, ?string $sortBy, string $direction = 'desc'): Builder
-    {
-        if (!in_array($direction, ['asc', 'desc'])) {
-            $direction = 'desc';
-        }
-        if (empty($column)) {
-            $column = 'created_at';
-        }
-        $query->orderBy($column, $direction);
-        return $query;
-    }
+
 }

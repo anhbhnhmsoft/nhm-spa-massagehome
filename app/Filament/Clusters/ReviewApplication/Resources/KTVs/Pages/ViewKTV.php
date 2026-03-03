@@ -8,6 +8,7 @@ use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Widgets\StatisticalSt
 use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Widgets\TransactionKtvTable;
 use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Widgets\UserReferralLeaderKtvTableWidget;
 use App\Filament\Components\CommonActions;
+use App\Filament\Widgets\CustomerAffiliate;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewKTV extends ViewRecord
@@ -37,6 +38,7 @@ class ViewKTV extends ViewRecord
             StatisticalStatsKTV::make(),
             BookingListKtv::make(),
             UserReferralLeaderKtvTableWidget::make(),
+            CustomerAffiliate::make(),
             TransactionKtvTable::make(),
         ];
     }

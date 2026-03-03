@@ -45,4 +45,24 @@ class Category extends Model
     {
         return $this->hasMany(CategoryPrice::class, 'category_id');
     }
+
+    // Lấy 1 bản ghi có giá thấp nhất trong bảng category_prices
+    public function cheapestPrice()
+    {
+        return $this->hasOne(CategoryPrice::class)->oldest('price');
+    }
+
+    // Quan hệ n-n với bảng users.
+    // Lấy danh sách KTV có sẵn dịch vụ trong danh mục này
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'services', 'category_id', 'user_id')
+            ->withTimestamps();
+    }
+
+    // Quan hệ 1-n với bảng service_bookings.
+    public function bookings()
+    {
+        return $this->hasMany(ServiceBooking::class, 'category_id');
+    }
 }

@@ -30,6 +30,11 @@ return [
         'validation_failed' => '验证错误。',
         'unauthenticated' => '您尚未登录。',
         'wrong_password' => '旧密码不正确。',
+        'otp_retry_too_fast' => '您必须等待 :seconds 秒后才能发送 OTP 。',
+        'otp_limit_reached' => '您已发送过多 OTP 在今天。',
+        'otp_invalid_or_expired' => 'OTP 验证码无效或已过期。',
+        'otp_max_attempts_exceeded' => '您已输入错误的 OTP 次数过多。请重新发送 OTP 。',
+        'otp_not_verified' => 'OTP 未被验证。',
     ],
 
     'admin' => [

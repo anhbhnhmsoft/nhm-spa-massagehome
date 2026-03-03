@@ -55,16 +55,20 @@ class UserOtpRepository extends BaseRepository
 
     /**
      * Kiểm tra xem có OTP nào vừa được xác thực thành công không
-     * OTP xác thực chỉ có hiệu lực trong 30 phút để hoàn tất đăng ký
+     * OTP xác thực chỉ có hiệu lực trong ? phút để hoàn tất đăng ký
+     * @param string $phone - Số điện thoại
+     * @param UserOtpType $type - Loại OTP
+     * @param int $minutes - Thời gian hiệu lực OTP (mặc định là 30 phút)
+     * @return UserOtp|null
      */
-    public function getLatestVerifiedOtp(string $phone, UserOtpType $type): ?UserOtp
+    public function getLatestVerifiedOtp(string $phone, UserOtpType $type, int $minutes = 30): ?UserOtp
     {
         return $this->query()
             ->where('phone', $phone)
             ->where('type', $type)
             ->whereNotNull('verified_at')
-            // OTP xác thực chỉ có hiệu lực trong 30 phút để hoàn tất đăng ký
-            ->where('verified_at', '>', now()->subMinutes(30))
+            // OTP xác thực chỉ có hiệu lực trong $minutes phút để hoàn tất đăng ký
+            ->where('verified_at', '>', now()->subMinutes($minutes))
             ->latest()
             ->first();
     }

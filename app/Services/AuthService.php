@@ -32,10 +32,10 @@ use Illuminate\Support\Facades\Storage;
 
 class AuthService extends BaseService
 {
-    protected int $otpTtl = 1;     // OTP tồn tại 1 phút
     protected const RETRY_AFTER_SECONDS = 60; // Số giây tối thiểu giữa 2 lần gửi OTP
     protected const MAX_SEND_PER_DAY = 3; // Số lần tối đa gửi OTP trong ngày
     protected const MAX_OTP_ATTEMPTS = 5; // Số lần thử sai tối đa trước khi khóa tài khoản
+    protected const OTP_TTL_MINUTES = 30; // Thời gian hiệu lực OTP (mặc định là 30 phút)
 
     public function __construct(
         protected UserRepository        $userRepository,
@@ -73,13 +73,25 @@ class AuthService extends BaseService
                         phone: $phone,
                         type: UserOtpType::REGISTER,
                     );
-
                     if ($otpRecord) {
                         // nếu có OTP đăng ký chưa thì yêu cầu nhập OTP
                         return [
                             'case' => 'need_re_enter_otp',
                             'last_sent_at' => $otpRecord->last_sent_at,
                             'retry_after_seconds' => self::RETRY_AFTER_SECONDS,
+                        ];
+                    }
+
+                    // Kiểm tra có OTP nào đã xác thực rồi mà chưa đăng ký ko
+                    $otpRecord = $this->userOtpRepository->getLatestVerifiedOtp(
+                        phone: $phone,
+                        type: UserOtpType::REGISTER,
+                        minutes: self::OTP_TTL_MINUTES,
+                    );
+                    if ($otpRecord) {
+                        // nếu có OTP đăng ký và xác thực rồi thì phải đăng ký mới được
+                        return [
+                            'case' => 'need_re_enter_register',
                         ];
                     }
 
@@ -127,7 +139,6 @@ class AuthService extends BaseService
      * Gửi lại OTP đăng ký tài khoản.
      * @param string $phone
      * @return ServiceReturn
-     * @throws \Throwable
      */
     public function resendOtpRegister(string $phone): ServiceReturn
     {
@@ -148,7 +159,7 @@ class AuthService extends BaseService
 
     /**
      * Đăng ký tài khoản mới.
-     * @param $phone -- Số điện thoại dùng để đăng ký tài khoản.
+     * @param string $phone -- Số điện thoại dùng để đăng ký tài khoản.
      * @param string $password -- Mật khẩu tài khoản.
      * @param string $name -- Tên người dùng.
      * @param ?Gender $gender -- Giới tính.
@@ -165,70 +176,58 @@ class AuthService extends BaseService
     {
         return $this->execute(
             callback: function () use ($phone, $password, $name, $gender, $language) {
-                // Kiểm tra xem số điện thoại có tồn tại không
+                // Kiểm tra xem số điện thoại đã được xác thực chưa
+                $otpRecord = $this->userOtpRepository->getLatestVerifiedOtp(
+                    phone: $phone,
+                    type: UserOtpType::REGISTER,
+                    minutes: self::OTP_TTL_MINUTES,
+                );
+                if (!$otpRecord) {
+                    throw new ServiceException(__('auth.error.otp_not_verified'));
+                }
+
+                // Kiểm tra xem số điện thoại đã được đăng ký chưa
                 $user = $this->userRepository->isPhoneVerified($phone);
                 if ($user) {
-                    throw new ServiceException(message: __('auth.error.phone_registered'));
+                    throw new ServiceException(message: __('auth.error.phone_verified'));
                 }
+
+                /**
+                 * Tạo user mới
+                 * @var User $user
+                 */
+                $user = $this->userRepository->create([
+                    'phone' => $phone,
+                    'phone_verified_at' => now(),
+                    'password' => Hash::make($password),
+                    'name' => $name,
+                    'language' => $language?->value ?? Language::VIETNAMESE->value,
+                    // Ban đầu user là customer
+                    'role' => UserRole::CUSTOMER->value,
+                    'last_login_at' => now(),
+                ]);
+
+                // Tạo user profile cho user
+                $this->userProfileRepository->create([
+                    'user_id' => $user->id,
+                    'gender' => $gender?->value ?? Gender::MALE->value,
+                ]);
+
+                // Tạo wallet cho user
+                $this->walletRepository->create([
+                    'user_id' => $user->id,
+                ]);
+
+                // Tiến hành tạo token đăng nhập
+                $token = $this->createTokenAuth($user);
+
+                return [
+                    'token' => $token,
+                    'user' => $user,
+                ];
             },
             useTransaction: true
         );
-
-        DB::beginTransaction();
-        try {
-            // Kiểm tra token
-            if (!Caching::hasCache(key: CacheKey::CACHE_KEY_REGISTER_TOKEN, uniqueKey: $token)) {
-                throw new ServiceException(message: __('auth.error.invalid_token_register'));
-            }
-            $dataCache = Caching::getCache(key: CacheKey::CACHE_KEY_REGISTER_TOKEN, uniqueKey: $token);
-
-            /**
-             * Tạo user mới
-             * @var User $user
-             */
-            $user = $this->userRepository->create([
-                'phone' => $dataCache['phone'],
-                'phone_verified_at' => now(),
-                'password' => Hash::make($password),
-                'name' => $name,
-                'language' => $language?->value ?? Language::VIETNAMESE->value,
-                // Ban đầu user là customer
-                'role' => UserRole::CUSTOMER->value,
-                'last_login_at' => now(),
-            ]);
-
-            // Tạo user profile
-            $this->userProfileRepository->create([
-                'user_id' => $user->id,
-                'gender' => $gender?->value ?? Gender::MALE->value,
-            ]);
-
-            // Tạo wallet cho user
-            $this->walletRepository->create([
-                'user_id' => $user->id,
-            ]);
-
-            // Tiến hành tạo token đăng nhập
-            $token = $this->createTokenAuth($user);
-            DB::commit();
-            // Xóa token đăng ký khỏi cache
-            Caching::deleteCache(key: CacheKey::CACHE_KEY_REGISTER_TOKEN, uniqueKey: $token);
-
-            return ServiceReturn::success(data: [
-                'token' => $token,
-                'user' => $user,
-            ]);
-        } catch (ServiceException $exception) {
-            DB::rollBack();
-            return ServiceReturn::error(message: $exception->getMessage());
-        } catch (Exception $exception) {
-            DB::rollBack();
-            LogHelper::error(
-                message: "Lỗi AuthService@register",
-                ex: $exception
-            );
-            return ServiceReturn::error(message: __('common_error.server_error'));
-        }
     }
 
     /**
@@ -263,15 +262,12 @@ class AuthService extends BaseService
                 $user->last_login_at = now();
                 $user->save();
                 // Tải thông tin hồ sơ và địa chỉ mặc định của người dùng
-                $user->load([
-                    'profile',
-                    'primaryAddress',
-                    'avatar'
-                ]);
+                $user->load(['profile', 'primaryAddress']);
+
                 // Tạo token đăng nhập
                 $token = $this->createTokenAuth($user);
                 // Lưu token vào Redis
-                $this->setRedisAuthChatToken($token, $user);
+//                $this->setRedisAuthChatToken($token, $user);
 
                 return [
                     'token' => $token,
@@ -413,7 +409,7 @@ class AuthService extends BaseService
 
             // --- TẦNG 3: REDIS CHAT AUTH ---
             // Lưu token vào Redis
-            $this->setRedisAuthChatToken($token, $user);
+//            $this->setRedisAuthChatToken($token, $user);
 
             return ServiceReturn::success();
         } catch (Exception $exception) {

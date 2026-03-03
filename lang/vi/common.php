@@ -2,6 +2,7 @@
 
 return [
     'success' => [
+        'success' => 'Thao tác thành công',
         'data_list' => 'Lấy danh sách dữ liệu thành công',
         'data_created' => 'Dữ liệu đã được tạo',
         'data_updated' => 'Dữ liệu đã được cập nhật',

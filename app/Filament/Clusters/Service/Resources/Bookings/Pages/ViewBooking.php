@@ -23,10 +23,11 @@ class ViewBooking extends ViewRecord
             CommonActions::backAction(static::getResource()),
 
             Action::make('reassign_booking')
-                ->hidden(fn($record) => $record->status !== BookingStatus::WAITING_CANCEL->value)
+                ->visible(function($record) {
+                    return $record->status === BookingStatus::WAITING_CANCEL->value || $record->status === BookingStatus::CONFIRMED->value;
+                } )
                 ->label(__('admin.booking.actions.reassign.label'))
                 ->color('info')
-                // ->icon('heroicon-m-arrow-path-rounded-square')
                 ->modalHeading(__('admin.booking.actions.reassign.heading'))
                 ->modalDescription(__('admin.booking.actions.reassign.description'))
                 ->modalSubmitActionLabel(__('admin.booking.actions.reassign.modal_submit'))
@@ -40,10 +41,7 @@ class ViewBooking extends ViewRecord
                         ->options(function ($record, \App\Services\BookingService $service) {
                             return $service->getSimilarServicesForReassignment($record)
                                 ->mapWithKeys(function ($item) {
-                                    $key = json_encode(['service_id' => $item['service_id'], 'ktv_id' => $item['ktv_id']]);
-                                    $priceRange = number_format($item['min_price']) . ' - ' . number_format($item['max_price']);
-                                    $label = "{$item['ktv_name']} - {$item['service_name']} ({$priceRange})";
-                                    return [$key => $label];
+                                    return [$item['user_id'] => $item['user_name']];
                                 });
                         })
                         ->required()

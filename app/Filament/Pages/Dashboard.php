@@ -42,7 +42,6 @@ class Dashboard extends PagesDashboard
 
         $sosCount = $result->getData()['pending_danger_supports'] ?? 0;
 
-
         return [
             Action::make('sos_count')
                 ->label("SOS: {$sosCount}")
@@ -53,31 +52,6 @@ class Dashboard extends PagesDashboard
                 ->extraAttributes([
                     'class' => $sosCount > 0 ? 'animate-pulse' : '', // Nhấp nháy nếu có SOS
                 ]),
-            Action::make('test2')
-                ->label("test notificaiton database")
-                ->action(function () {
-                    Notification::make()
-                        ->title("Test tiếng")
-                        ->info()
-                        ->body("Test tiếng notification")
-                        ->actions([
-                            Action::make(__('notification.marked_as_read'))
-                                ->button()
-                                ->markAsRead(),
-                        ])
-                        ->sendToDatabase(User::query()->where('role',UserRole::ADMIN)->first());
-
-
-                }),
-            Action::make('test')
-                ->label("test notificaiton")
-                ->action(function () {
-                    Notification::make()
-                        ->title("Test tiếng")
-                        ->info()
-                        ->body("Test tiếng notification")
-                        ->send();
-                }),
         ];
     }
 

@@ -49,16 +49,12 @@ class KTVResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery();
-
-        $query = $query->with('profile', 'reviewApplication')
+        return parent::getEloquentQuery()->with('profile', 'reviewApplication')
             ->whereIn('role', [UserRole::KTV->value, UserRole::CUSTOMER->value])
             ->whereHas('reviewApplication', function (Builder $query) {
                 $query->whereIn('status', ReviewApplicationStatus::values());
                 $query->where('role', UserRole::KTV->value);
-                $query->where('is_leader', false);
             });
-        return $query;
     }
 
     public static function getNavigationLabel(): string

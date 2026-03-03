@@ -34,6 +34,7 @@ return [
         'otp_limit_reached' => 'Bạn đã gửi quá nhiều OTP trong ngày.',
         'otp_invalid_or_expired' => 'OTP không hợp lệ hoặc đã hết hạn.',
         'otp_max_attempts_exceeded' => 'Bạn đã nhập sai OTP quá nhiều lần. Vui lòng gửi lại mã OTP',
+        'otp_not_verified' => 'OTP chưa được xác thực.',
     ],
 
     'admin' => [

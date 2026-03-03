@@ -111,6 +111,7 @@ return
                 'to_date' => 'To Date',
                 'from' => 'From',
                 'to' => 'To',
+                'is_leader' => 'Is Leader',
             ],
             'status' => [
                 'active' => 'Active',

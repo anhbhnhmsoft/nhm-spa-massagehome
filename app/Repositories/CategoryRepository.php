@@ -46,4 +46,37 @@ class CategoryRepository extends BaseRepository
         $query->orderBy('position', 'asc');
         return $query;
     }
+
+    /**
+     * Lấy danh sách tên và id của các danh mục (dùng làm options form)
+     * @return \Illuminate\Support\Collection
+     */
+    public function pluckNameAndId()
+    {
+        return $this->query()
+            ->pluck('name', 'id');
+    }
+
+    /**
+     * Lấy danh mục theo id và id của KTV có sẵn dịch vụ và giá dịch vụ
+     * @param  $id
+     * @param  $ktvId
+     * @param  $optionId
+     * @return Category|null
+     */
+    public function getCategoryByIdAndKTVIdAndOptionId($id, $ktvId, $optionId): ?Category
+    {
+        return $this->queryCategory()
+            ->where('id', $id)
+            ->whereHas('services', function ($query) use ($ktvId) {
+                $query->where('user_id', $ktvId);
+            })
+            ->whereHas('prices', function ($query) use ($optionId) {
+                $query->where('id', $optionId);
+            })
+            ->with(['prices' => function ($query) use ($optionId)  {
+                $query->where('id', $optionId);
+            }])
+            ->first();
+    }
 }

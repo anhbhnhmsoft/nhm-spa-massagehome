@@ -2,8 +2,11 @@
 
 namespace App\Enums;
 
+use App\Core\Helper\EnumHelper;
+
 enum WalletTransactionType: int
 {
+    use EnumHelper;
     case DEPOSIT_QR_CODE = 1; // Nạp tiền qua mã QR
     case DEPOSIT_ZALO_PAY = 2; // Nạp tiền qua Zalo Pay
     case DEPOSIT_MOMO_PAY = 3; // Nạp tiền qua Momo Pay
@@ -17,6 +20,8 @@ enum WalletTransactionType: int
     case REFERRAL_INVITE_KTV_REWARD = 11; // Nhận hoa hồng khi mời KTV thành công
     case DEPOSIT_WECHAT_PAY = 12; // Nạp tiền qua Wechat Pay
     case FEE_WITHDRAW = 13; // Chi phí rút tiền
+    case FEE_TRANSPORT = 14; // Chi phí di chuyển (Trừ tiền KH)
+    case EARN_TRANSPORT = 15; // Nhận tiền từ di chuyển ( Cộng tiền KTV)
 
 
     public function label(): string
@@ -35,20 +40,16 @@ enum WalletTransactionType: int
             self::REFERRAL_INVITE_KTV_REWARD => __('admin.transaction.type.REFERRAL_INVITE_KTV_REWARD'),
             self::DEPOSIT_WECHAT_PAY => __('admin.transaction.type.DEPOSIT_WECHAT_PAY'),
             self::FEE_WITHDRAW => __('admin.transaction.type.FEE_WITHDRAW'),
+            self::FEE_TRANSPORT => __('admin.transaction.type.FEE_TRANSPORT'),
+            self::EARN_TRANSPORT => __('admin.transaction.type.EARN_TRANSPORT'),
         };
     }
 
-    public static function toOptions(): array
-    {
-        $options = [];
-        foreach (self::cases() as $case) {
-            $options[$case->value] = $case->label();
-        }
-        return $options;
-    }
 
-
-    // Trạng thái nạp vào hệ thống
+    /**
+     * Trạng thái nạp vào hệ thống
+     * @return array
+     */
     public static function incomeStatus(): array
     {
         return [
@@ -60,7 +61,10 @@ enum WalletTransactionType: int
         ];
     }
 
-    // Trạng thái rút ra khỏi hệ thống
+    /**
+     * Trạng thái rút ra khỏi hệ thống
+     * @return array
+     */
     public static function outComeStatus()
     {
         return [
@@ -68,17 +72,80 @@ enum WalletTransactionType: int
         ];
     }
 
-    // Trạng thái chi phí vận hành
-    public static function operationCostStatus()
+    /**
+     * Trạng thái doanh thu
+     * @return array
+     */
+    public static function revenueStatus(): array
+    {
+        return [
+            self::PAYMENT->value,
+        ];
+    }
+
+    /**
+     * Trạng thái chi phí vận hành
+     * @return array
+     */
+    public static function operationCostStatus(): array
     {
         return [
             self::AFFILIATE->value,
             self::PAYMENT_FOR_KTV->value,
             self::REFERRAL_KTV->value,
             self::REFERRAL_INVITE_KTV_REWARD->value,
-            self::WITHDRAWAL->value,
         ];
     }
+
+    /**
+     * Trạng thái chi phí vận chuyển
+     * @return array
+     */
+    public static function transportStatus(): array
+    {
+        return [
+            self::FEE_TRANSPORT->value,
+        ];
+    }
+
+    /**
+     * Trạng thái chi phí dịch vụ khách hàng
+     * @return array
+     */
+    public static function customerCostStatus(): array
+    {
+        return [
+            self::AFFILIATE->value,
+        ];
+    }
+
+    /**
+     * Trạng thái chi phí dịch vụ đại lý
+     * @return array
+     */
+    public static function agencyCostStatus(): array
+    {
+        return [
+            self::AFFILIATE->value,
+            self::REFERRAL_KTV->value,
+            self::REFERRAL_INVITE_KTV_REWARD->value,
+        ];
+    }
+
+    /**
+     * Trạng thái chi phí dịch vụ kỹ thuật viên
+     * @return array
+     */
+    public static function technicalCostStatus(): array
+    {
+        return [
+            self::AFFILIATE->value,
+            self::REFERRAL_KTV->value,
+            self::REFERRAL_INVITE_KTV_REWARD->value,
+            self::PAYMENT_FOR_KTV->value,
+        ];
+    }
+
 
     // Lấy danh sách trạng thái giao dịch nạp vào ví
     public static function statusIn()

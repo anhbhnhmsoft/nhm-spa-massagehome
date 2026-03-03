@@ -10,36 +10,22 @@ class ServiceResource extends JsonResource
 {
     /**
      * Chỉ dùng trả về item (ko dùng cho collection)
-     * @return array<string, mixed>
      */
     public function toArray(Request $request): array
     {
-        $category = $this->category;
-        $provider = $this->provider;
-        $prices = $this->category->prices;
-        $rating = $this->reviews_avg_rating ?? 0;
+
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'category_id' => $this->category_id,
+            'is_featured' => $this->is_featured,
             'description' => $this->description,
             'image_url' => $this->image_url ? Helper::getPublicUrl($this->image_url) : null,
-            'bookings_count' => $this->bookings_count,
+            'is_registered' => (bool)$this->is_registered,
             'is_active' => (bool) $this->is_active,
-            'avg_rating' => number_format($rating, 1),
-            'category' => [
-                'id' => $category->id,
-                'name' => $category->name,
-            ],
-            'provider' => [
-                'id' => $provider->id,
-                'name' => $provider->name,
-            ],
-            'options' => $prices->map(fn($price) => [
-                'id' => $price->id,
+            'prices' => $this->prices->map(fn($price) => [
                 'duration' => $price->duration,
                 'price' => $price->price,
-            ]),
+            ]) ?? [],
         ];
     }
 }

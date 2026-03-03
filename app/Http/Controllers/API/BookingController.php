@@ -5,6 +5,8 @@ namespace App\Http\Controllers\API;
 use App\Core\Controller\BaseController;
 use App\Core\Controller\ListRequest;
 use App\Enums\BookingStatus;
+use App\Http\Requests\API\Booking\BookingRequest;
+use App\Http\Requests\API\Booking\PrepareBookingRequest;
 use App\Http\Resources\Booking\BookingItemResource;
 use App\Services\BookingService;
 use Illuminate\Http\JsonResponse;
@@ -31,6 +33,45 @@ class BookingController extends BaseController
             data: BookingItemResource::collection($data)->response()->getData()
         );
     }
+
+    /**
+     * Chuẩn bị đặt lịch (tính toán giá, thời gian)
+     * @param PrepareBookingRequest $request
+     * @return JsonResponse
+     */
+    public function prepareBooking(PrepareBookingRequest $request)
+    {
+        $data = $request->validated();
+
+        $result = $this->bookingService->prepareBooking($data);
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage()
+            );
+        }
+        return $this->sendSuccess(
+            data: $result->getData()
+        );
+    }
+
+    /**
+     * Đặt lịch hẹn dịch vụ
+     * @param BookingRequest $request
+     */
+    public function booking(BookingRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+        $resultService = $this->bookingService->bookService($data);
+        if ($resultService->isError()) {
+            return $this->sendError(
+                message: $resultService->getMessage()
+            );
+        }
+        return $this->sendSuccess(
+            data: $resultService->getData()
+        );
+    }
+
 
     /**
      * Kiểm tra booking

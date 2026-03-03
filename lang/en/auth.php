@@ -30,6 +30,11 @@ return [
         'validation_failed' => 'Validation error.',
         'unauthenticated' => 'You are not logged in.',
         'wrong_password' => 'Incorrect old password.',
+        'otp_retry_too_fast' => 'You must wait :seconds seconds before sending OTP again.',
+        'otp_limit_reached' => 'You have sent too many OTPs today.',
+        'otp_invalid_or_expired' => 'OTP is invalid or expired.',
+        'otp_max_attempts_exceeded' => 'You have entered the wrong OTP too many times. Please send OTP again.',
+        'otp_not_verified' => 'OTP has not been verified.',
     ],
 
     'admin' => [

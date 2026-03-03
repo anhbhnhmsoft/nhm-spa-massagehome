@@ -12,7 +12,7 @@ class ServiceBooking extends Model
     protected $fillable = [
         'user_id',
         'ktv_user_id',
-        'service_id',
+        'category_id',
         'coupon_id',
         'duration',
         'booking_time',
@@ -20,13 +20,16 @@ class ServiceBooking extends Model
         'end_time',
         'status', // Cast Enum BookingStatus
         'price',
-        'price_before_discount',
+        'price_discount',
+        'price_transportation',
         'payment_type',
         'note',
         'address',
         'latitude',
         'longitude',
-        'note_address',
+        'ktv_address',
+        'ktv_latitude',
+        'ktv_longitude',
         'reason_cancel',
         'overtime_warning_sent',
         'cancel_by',
@@ -36,14 +39,15 @@ class ServiceBooking extends Model
         'id' => 'string',
         'user_id' => 'string',
         'ktv_user_id' => 'string',
-        'service_id' => 'string',
+        'category_id' => 'string',
         'coupon_id' => 'string',
         'duration' => 'integer',
         'booking_time' => 'datetime',
         'start_time' => 'datetime',
         'end_time' => 'datetime',
         'price' => 'decimal:2',
-        'price_before_discount' => 'decimal:2',
+        'price_discount' => 'decimal:2',
+        'price_transportation' => 'decimal:2',
         'payment_type' => 'integer',
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
@@ -66,7 +70,7 @@ class ServiceBooking extends Model
     // Lấy thông tin dịch vụ được đặt
     public function service()
     {
-        return $this->belongsTo(Service::class);
+        return $this->belongsTo(Category::class, 'category_id');
     }
 
     // Lấy thông tin mã giảm giá áp dụng (nếu có)
@@ -85,4 +89,6 @@ class ServiceBooking extends Model
     {
         return $this->hasMany(Review::class, 'service_booking_id');
     }
+
+
 }

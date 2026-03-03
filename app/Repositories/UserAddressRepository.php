@@ -57,4 +57,17 @@ class UserAddressRepository extends BaseRepository
         $query->orderBy($column, $direction);
         return $query;
     }
+
+    /**
+     * Lấy địa chỉ chính của người dùng
+     * @param int $userId
+     * @return UserAddress|null
+     */
+    public function getPrimaryAddressByUserId(int $userId): ?UserAddress
+    {
+        return $this->query()
+            ->where('user_id', $userId)
+            ->where('is_primary', true)
+            ->first();
+    }
 }

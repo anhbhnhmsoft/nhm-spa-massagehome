@@ -14,56 +14,6 @@ class ServiceRepository extends BaseRepository
         return Service::class;
     }
 
-    public function queryService(): Builder
-    {
-        return $this->model->query()
-            ->with([
-                'category' => function ($query) {
-                    $query->select(['id', 'name']);
-                },
-                'provider' => function ($query) {
-                    $query->select(['id', 'name']);
-                },
-                'category.prices',
-            ])
-            ->withAvg('reviews', 'rating')
-            ->withCount([
-                // Đếm số lượng booking đã hoàn thành
-                'bookings'
-            ]);
-    }
 
-
-    public function filterQuery(Builder $query, array $filters): Builder
-    {
-        // Lọc theo danh mục
-        if (isset($filters['category_id'])) {
-            $query->where('category_id', $filters['category_id']);
-        }
-        // Lọc theo
-        if (isset($filters['user_id'])) {
-            $query->where('user_id', $filters['user_id']);
-        }
-        return $query;
-    }
-
-    /**
-     * Sắp xếp query theo cột và hướng
-     * @param Builder $query
-     * @param string|null $sortBy
-     * @param string $direction
-     * @return Builder
-     */
-    public function sortQuery(Builder $query, ?string $sortBy, string $direction = 'desc'): Builder
-    {
-        if (!in_array($direction, ['asc', 'desc'])) {
-            $direction = 'desc';
-        }
-        if (empty($column)) {
-            $column = 'created_at';
-        }
-        $query->orderBy($column, $direction);
-        return $query;
-    }
 
 }

@@ -25,26 +25,6 @@ class UserController extends BaseController
     }
 
     /**
-     * Lấy thông tin dashboard profile của user hiện tại
-     * @return JsonResponse
-     */
-    public function dashboardProfile()
-    {
-        $result = $this->userService->dashboardProfile();
-
-        if ($result->isError()) {
-            return $this->sendError(
-                message: $result->getMessage(),
-            );
-        }
-
-        return $this->sendSuccess(
-            data: $result->getData(),
-            message: $result->getMessage() ?? __('common.success.data_created')
-        );
-    }
-
-    /**
      * User hiện tại đăng ký làm đối tác (tạo hồ sơ chờ duyệt).
      */
     public function applyPartner(ApplyPartnerRequest $request): JsonResponse
@@ -134,7 +114,7 @@ class UserController extends BaseController
         }
         $data = $result->getData();
         return $this->sendSuccess(
-            data: new ItemKTVResource($data['ktv'], $data['break_time_gap'], $data['price_transportation'])
+            data: new ItemKTVResource($data['ktv'], $data['price_transportation'])
         );
     }
 

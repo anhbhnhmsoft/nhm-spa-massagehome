@@ -21,7 +21,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'set-api-locale' => SetLocale::class,
             'check-role' => CheckRole::class,
-
         ]);
         $middleware->web(append: [
             HandleAppearance::class,

@@ -6,14 +6,16 @@ use App\Enums\Gender;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserRole;
 use App\Filament\Clusters\ReviewApplication\Resources\KTVs\KTVResource;
-use App\Filament\Clusters\Service\Resources\Services\ServiceResource;
 use App\Filament\Components\CommonFields;
+use App\Repositories\CategoryRepository;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -66,10 +68,34 @@ class KTVsTable
                         ->url(fn($record): string => KTVResource::getUrl('edit', ['record' => $record]))
                         ->icon('heroicon-o-identification'),
                     Action::make('view_service')
-                        ->hidden(fn($record) => $record->reviewApplication->status !== ReviewApplicationStatus::APPROVED)
                         ->label(__('admin.common.action.view_service'))
-                        ->icon('heroicon-o-inbox-stack')
-                        ->url(fn($record): string => ServiceResource::getUrl('index', ['filters[user_id][value]' => $record->id])),
+                        ->icon('heroicon-o-tag')
+                        ->hidden(fn($record) => $record->reviewApplication->status !== ReviewApplicationStatus::APPROVED)
+                        ->color('success')
+                        ->fillForm(fn ($record) => [
+                            'categories' => $record->categories->pluck('id')->toArray(),
+
+                        ])
+                        ->action(function ($record, array $data): void {
+                            $record->categories()->sync($data['categories']);
+                            Notification::make()
+                                ->success()
+                                ->title(__('common.success.success'))
+                                ->body(__('common.success.data_updated'))
+                                ->send();
+                        })
+                        ->modal()
+                        ->modalSubmitActionLabel(__('admin.common.action.save'))
+                        ->modalCancelActionLabel(__('admin.common.action.cancel'))
+                        ->schema([
+                            CheckboxList::make('categories')
+                                ->label(__('admin.ktv.action.choose_categories'))
+                                ->options(fn (CategoryRepository $repo) =>
+                                    $repo->pluckNameAndId()
+                                )
+                                ->columns(2)
+                        ]),
+
                     Action::make('view')
                         ->hidden(fn($record) => $record->reviewApplication->status !== ReviewApplicationStatus::APPROVED)
                         ->label(__('admin.common.action.ktv_dashboard'))
@@ -108,6 +134,20 @@ class KTVsTable
                 ]),
             ])
             ->filters([
+                SelectFilter::make('is_leader')
+                    ->label(__('admin.common.filter.is_leader'))
+                    ->options([
+                        true => __('admin.common.yes'),
+                        false => __('admin.common.no'),
+                    ])
+                    ->query(function ($query, array $data) {
+                        if (empty($data['value'])) {
+                            return $query;
+                        }
+                        return $query->whereHas('reviewApplication', function ($q) use ($data) {
+                            $q->where('is_leader', $data['value']);
+                        });
+                    }),
                 SelectFilter::make('review_status')
                     ->label(__('admin.common.filter.review_status'))
                     ->options(ReviewApplicationStatus::toOptions())

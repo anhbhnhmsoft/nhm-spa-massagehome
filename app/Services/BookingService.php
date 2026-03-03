@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Core\Controller\FilterDTO;
 use App\Core\Helper;
+use App\Core\Helper\CalculatePrice;
 use App\Core\LogHelper;
 use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
@@ -14,9 +15,14 @@ use App\Enums\NotificationType;
 use App\Enums\UserRole;
 use App\Jobs\RefundBookingCancelJob;
 use App\Jobs\SendNotificationJob;
+use App\Models\Category;
 use App\Models\CategoryPrice;
+use App\Models\Coupon;
+use App\Models\UserAddress;
+use App\Models\Wallet;
 use App\Repositories\BookingRepository;
 use App\Repositories\CategoryPriceRepository;
+use App\Repositories\CategoryRepository;
 use App\Repositories\CouponRepository;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
@@ -32,10 +38,16 @@ use App\Repositories\UserRepository;
 use App\Repositories\UserReviewApplicationRepository;
 use App\Repositories\WalletRepository;
 use App\Repositories\WalletTransactionRepository;
+use App\Services\Validator\BookingValidator;
+use App\Services\Validator\CouponValidator;
+use App\Services\Validator\WalletValidator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use function PHPUnit\Framework\callback;
+use function PHPUnit\Framework\matches;
 
 class BookingService extends BaseService
 {
@@ -44,7 +56,7 @@ class BookingService extends BaseService
         protected ServiceRepository $serviceRepository,
         protected CouponRepository $couponRepository,
         protected ServiceOptionRepository $serviceOptionRepository,
-        protected CategoryPriceRepository $categoryPriceRepository,
+        protected CategoryRepository $categoryRepository,
         protected CouponService $couponService,
         protected WalletRepository $walletRepository,
         protected WalletTransactionRepository $walletTransactionRepository,
@@ -53,7 +65,10 @@ class BookingService extends BaseService
         protected ConfigService $configService,
         protected WalletService $walletService,
         protected ReviewRepository $reviewRepository,
-        protected UserAddressRepository $addressRepository
+        protected UserAddressRepository $addressRepository,
+        protected BookingValidator $bookingValidator,
+        protected CouponValidator $couponValidator,
+        protected WalletValidator $walletValidator,
     ) {
         parent::__construct();
     }
@@ -107,236 +122,82 @@ class BookingService extends BaseService
     }
 
     /**
-     * Lấy cac data cần thiết để booking
+     * Check data và đưa ra giá tiền trước khi booking dịch vụ
+     * @param array $data - Dựa theo Request PrepareBookingRequest
      * @return ServiceReturn
+     * @throws \Throwable
      */
-    public function prepareBooking(
-        $serviceId,
-        $optionId,
-    ): ServiceReturn
+    public function prepareBooking(array $data): ServiceReturn
     {
-        try {
-            $user = Auth::user();
-            $now = \Carbon\Carbon::now();
-            $startOfDay = $now->copy()->startOfDay();
-            $endOfDay = $now->copy()->endOfDay();
+        return $this->execute(function () use ($data) {
+            $userId = Auth::id();
 
-            // Kiểm tra dịch vụ có phù hợp để book dịch vụ không
-            $service = $this->checkServiceAllowBooking(
-                serviceId: $serviceId,
-            );
-            // kiểm tra option dịch vụ có tồn tại không và thuộc về dịch vụ này
-            $serviceOption = $this->checkOptionServiceAllowBooking(
-                categoryId: $service->category_id,
-                optionId: $optionId,
-            );
-            // Lấy config khoảng thời gian nghỉ giữa 2 buổi
-            $breakTimeGap = $this->configService->getConfigValue(ConfigName::BREAK_TIME_GAP);
-            // Lấy config giá di chuyển / km
-            $priceTransportation = $this->configService->getConfigValue(ConfigName::PRICE_TRANSPORTATION);
+            $dataRes =  $this->validateBooking($data, $userId);
 
-            // Lấy danh sách lịch hẹn đang chờ, xác nhận, đang diễn ra
-            $bookings = $this->bookingRepository->query()
-                ->whereIn('status', [
-                    \App\Enums\BookingStatus::PENDING->value,
-                    \App\Enums\BookingStatus::CONFIRMED->value,
-                    \App\Enums\BookingStatus::ONGOING->value,
-                ])
-                ->where('ktv_user_id', $service->user_id)
-                ->whereBetween('booking_time', [$startOfDay, $endOfDay])
-                ->orderBy('booking_time', 'desc')
-                ->get(["id", "booking_time"]);
-
-            $ktvAddress = $this->addressRepository
-                ->query()
-                ->where('user_id', $service->user_id)
-                ->where('is_primary', true)
-                ->first();
-
-            return ServiceReturn::success(
-                data: [
-                    'break_time_gap' => (int)$breakTimeGap,
-                    'price_transportation' => (float)$priceTransportation,
-                    'bookings' => $bookings->map(function ($booking) {
-                        return [
-                            'booking_time' => $booking->booking_time,
-                        ];
-                    }),
-                    'service' => [
-                        'name' => $service->name,
-                        'id' => $service->id,
-                    ],
-                    'option' => [
-                        'id' => $serviceOption->id,
-                        'price' => $serviceOption->price,
-                        'duration' => $serviceOption->duration,
-                    ],
-                    'location_ktv' => $ktvAddress ? [
-                        'latitude' => (float)$ktvAddress->latitude,
-                        'longitude' => (float)$ktvAddress->longitude,
-                        'address' => $ktvAddress->address,
-                    ] : null
-                ]
-            );
-        }catch (ServiceException $exception) {
-            return ServiceReturn::error(
-                message: $exception->getMessage()
-            );
-        }
-        catch (\Exception $exception) {
-            LogHelper::error(
-                message: "Lỗi UserService@getTodayBookedCustomers",
-                ex: $exception
-            );
-            return ServiceReturn::error(
-                message: __("common_error.server_error")
-            );
-        }
+            // Chỉ cần trả ra data này
+            return [
+                'break_time' => $dataRes['bookTimeData']['break_time'],
+                'price' => $dataRes['priceData']['price'],
+                'price_per_km' => $dataRes['priceData']['price_per_km'],
+                'price_distance' => $dataRes['priceData']['price_distance'],
+                'discount_coupon' => $dataRes['priceData']['discount_coupon'],
+                'final_price' => $dataRes['priceData']['final_price'],
+                'distance' => $dataRes['priceData']['distance'],
+            ];
+        });
     }
 
 
     /**
      * Đặt lịch hẹn dịch vụ
-     * @param int $serviceId
-     * @param int $optionId
-     * @param string $address
-     * @param string $latitude
-     * @param string $longitude
-     * @param string $bookTime
-     * @param string|null $note
-     * @param string|null $noteAddress
-     * @param int|null $couponId
+     * @param array $data - Dựa theo Request BookingRequest
      * @return ServiceReturn
-     * @throws \Throwable
      */
     public function bookService(
-        int             $serviceId,
-        int             $optionId,
-        string          $address,
-        string          $latitude,
-        string          $longitude,
-        string          $bookTime,
-        ?string         $note = null,
-        ?string         $noteAddress = null,
-        ?int            $couponId = null,
+       array $data
     ): ServiceReturn {
-        DB::beginTransaction();
-        try {
-            $user = Auth::user();
-            // Lấy thời gian book dịch vụ
-            $currentBookingStartTime = Carbon::parse($bookTime);
 
-            // Kiểm tra dịch vụ có phù hợp để book dịch vụ không
-            $service = $this->checkServiceAllowBooking(
-                serviceId: $serviceId,
-            );
+        return $this->execute(
+            callback: function () use ($data) {
+                $userId = Auth::id();
 
-            // kiểm tra option dịch vụ có tồn tại không và thuộc về dịch vụ này
-            $serviceOption = $this->checkOptionServiceAllowBooking(
-                categoryId: $service->category_id,
-                optionId: $optionId,
-            );
+                $resultValidate = $this->validateBooking($data, $userId);
 
-            // Kiểm tra kỹ thuật viên có thể book dịch vụ lúc này không
-            $this->checkKtvAvailabilityToBooking(
-                ktvId: $service->user_id,
-                startTime: $currentBookingStartTime,
-                duration: $serviceOption->duration
-            );
+                // Phải để status là pending rồi bắn vào queue để xử lý thanh toán
+                $booking = $this->bookingRepository->create([
+                    'user_id' => $userId,
+                    'ktv_user_id' => $data['ktv_id'],
+                    'category_id' => $data['category_id'],
+                    'coupon_id' => $data['coupon_id'] ?? null,
+                    'duration' => $resultValidate['categoryData']['option']['duration'],
+                    'booking_time' => $resultValidate['bookTimeData']['booking_time'],
+                    'start_time' => null,
+                    'end_time' => null,
+                    'status' => BookingStatus::PENDING->value,
+                    'price' => $resultValidate['priceData']['price'],
+                    'price_discount' => $resultValidate['priceData']['discount_coupon'],
+                    'price_transportation' => $resultValidate['priceData']['price_distance'],
+                    'payment_type' => PaymentType::BY_POINTS->value,
+                    'note' => $data['note'] ?? '',
+                    'address' => $data['address'] ?? '',
+                    'latitude' => $data['latitude'] ?? 0,
+                    'longitude' => $data['longitude'] ?? 0,
+                    'ktv_address' => $resultValidate['ktvAddress']['address'] ?? '',
+                    'ktv_latitude' => $resultValidate['ktvAddress']['latitude'] ?? 0,
+                    'ktv_longitude' => $resultValidate['ktvAddress']['longitude'] ?? 0,
+                ]);
 
-            // Tính toán giá cuối cùng bao gồm giảm giá nếu có và chi phí di chuyển
-            $priceData = $this->calculateFinalPrice(
-                serviceId: $serviceId,
-                price: $serviceOption->price,
-                couponId: $couponId,
-                longitude: $longitude,
-                latitude: $latitude,
-                ktvId: $service->user_id,
-            );
-
-            // Lấy giá cuối cùng
-            $finalPrice = $priceData['final_price'];
-            // Lấy giá trước giảm giá
-            $priceBeforeDiscount = $priceData['price_before_discount'];
-            $priceTransportation = $priceData['price_transportation'];
-
-            // Kiểm tra số dư ví của khách hàng có đủ không
-            $walletUserCheck = $this->walletService->checkUserWalletBalance(
-                userId: $user->id,
-                price: $finalPrice,
-            );
-            if (!$walletUserCheck['is_enough']) {
-                DB::commit();
-                return ServiceReturn::success(
-                    data: [
-                        'status' => false,
-                        'failed' => [
-                            'not_enough_money' => true,
-                            'final_price' => $finalPrice,
-                            'balance_customer' => $walletUserCheck['balance']
-                        ]
-                    ],
-                    message: __("booking.wallet.not_enough")
+                // xử lý giao dịch, ghi lại lịch sử dùng coupon
+                WalletTransactionBookingJob::dispatch(
+                    bookingId: $booking->id,
+                    case: WalletTransCase::CONFIRM_BOOKING,
                 );
-            }
-
-            // Tạo mới lịch hẹn
-            // Phải để status là pending rồi bắn vào queue để xử lý thanh toán
-            $booking = $this->bookingRepository->create([
-                'user_id' => $user->id,
-                'ktv_user_id' => $service->user_id,
-                'service_id' => $serviceId,
-                'coupon_id' => $couponId,
-                'duration' => $serviceOption->duration,
-                'booking_time' => $currentBookingStartTime,
-                'start_time' => null,
-                'end_time' => null,
-                'status' => BookingStatus::PENDING->value,
-                'price' => $finalPrice,
-                'price_before_discount' => $priceBeforeDiscount,
-                'payment_type' => PaymentType::BY_POINTS->value,
-                'note' => $note ?? '',
-                'address' => $address ?? '',
-                'latitude' => $latitude ?? 0,
-                'longitude' => $longitude ?? 0,
-                'note_address' => $noteAddress ?? '',
-            ]);
-
-            DB::commit();
-
-            // xử lý giao dịch, ghi lại lịch sử dùng coupon
-            WalletTransactionBookingJob::dispatch(
-                bookingId: $booking->id,
-                case: WalletTransCase::CONFIRM_BOOKING,
-            );
-
-            return ServiceReturn::success(
-                data: [
-                    'status' => true,
-                    'success' => [
-                        'booking_id' => $booking->id,
-                    ]
-                ]
-            );
-        } catch (ServiceException $exception) {
-            DB::rollBack();
-            LogHelper::error(
-                message: "Lỗi ServiceService@bookService",
-                ex: $exception
-            );
-            return ServiceReturn::error(
-                message: $exception->getMessage()
-            );
-        } catch (\Exception $exception) {
-            DB::rollBack();
-            LogHelper::error(
-                message: "Lỗi ServiceService@bookService",
-                ex: $exception
-            );
-            return ServiceReturn::error(
-                message: __("common_error.server_error")
-            );
-        }
+                return [
+                    'booking_id' => $booking->id,
+                ];
+            },
+            useTransaction: true
+        );
     }
 
     /**
@@ -470,53 +331,41 @@ class BookingService extends BaseService
      */
     public function checkBooking(string $bookingId): ServiceReturn
     {
-        try {
+        return $this->execute(function () use ($bookingId) {
             $booking = $this->bookingRepository->query()->find($bookingId);
             if (!$booking) {
-                return ServiceReturn::error(
+                throw new ServiceException(
                     message: __("booking.not_found")
                 );
             }
-            if ($booking->status == BookingStatus::PENDING->value) {
-                return ServiceReturn::success(
-                    data: [
-                        'status' => 'waiting',
-                    ]
-                );
-            } elseif ($booking->status == BookingStatus::CONFIRMED->value) {
-                return ServiceReturn::success(
-                    data: [
-                        'status' => 'confirmed',
-                        'data' => [
-                            'booking_id' => $booking->id,
-                            'service_name' => $booking->service->name,
-                            'date' => Carbon::make($booking->booking_time)->format('d/m/Y H:i'),
-                            'location' => $booking->address,
-                            'technician' => $booking->ktvUser->name,
-                            'total_price' => $booking->price,
-                        ]
-                    ]
-                );
-            } elseif (in_array($booking->status, [BookingStatus::CANCELED->value, BookingStatus::PAYMENT_FAILED->value])) {
-                return ServiceReturn::success(
-                    data: [
-                        'status' => 'failed',
-                    ]
-                );
-            } else {
-                return ServiceReturn::error(
+            $status = match ($booking->status) {
+                BookingStatus::PENDING->value => 'waiting',
+                BookingStatus::CONFIRMED->value => 'confirmed',
+                BookingStatus::CANCELED->value, BookingStatus::PAYMENT_FAILED->value => 'failed',
+                default => throw new ServiceException(
                     message: __("booking.not_found")
-                );
-            }
-        } catch (\Exception $exception) {
-            LogHelper::error(
-                message: "Lỗi ServiceService@checkBooking",
-                ex: $exception
-            );
-            return ServiceReturn::error(
-                message: __("common_error.server_error")
-            );
-        }
+                ),
+            };
+            return [
+                'status' => $status,
+                'data' => [
+                    'booking_id' => $booking->id,
+                    'service_name' => $booking->service->name,
+                    'date' => Carbon::make($booking->booking_time)->format('d/m/Y H:i'),
+                    'location' => $booking->address,
+                    'technician' => $booking->ktvUser->name,
+                    'price' => $booking->price,
+                    'price_discount' => $booking->price_discount,
+                    'price_transportation' => $booking->price_transportation,
+                    'total_price' => CalculatePrice::totalBookingPrice(
+                        price: $booking->price,
+                        priceDiscount: $booking->price_discount,
+                        priceTransportation: $booking->price_transportation,
+                    ),
+                    'reason_cancel' => $booking->reason_cancel ?? '',
+                ]
+            ];
+        });
     }
 
     /**
@@ -899,293 +748,137 @@ class BookingService extends BaseService
         }
     }
 
-
     /**
      *  --------- Protected methods ---------
      */
 
     /**
-     * Kiểm tra dịch vụ có phù hợp để book dịch vụ không
-     * @param int $serviceId ID của dịch vụ cần kiểm tra
-     * @return Service
+     * Kiểm tra dữ liệu book dịch vụ có hợp lệ không
+     * Nếu phù hợp sẽ trả về data
+     * @param array{
+     *    category_id: int,
+     *    option_id: int,
+     *    ktv_id: int,
+     *    latitude: float,
+     *    longitude: float,
+     *    coupon_id?: int|null
+     *  } $data
+     * @return array{
+     *     categoryData: array{
+     *         category: Category,
+     *         option: array {
+     *             'price': float,
+     *             'duration': int,
+     *         }
+     *     },
+     *     bookTimeData: array{
+     *         booking_time: Carbon, // Thời gian book lịch (là hiện tại + break time),
+     *         break_time: int, // Thời gian nghỉ giữa 2 lần phục vụ,
+     *     },
+     *     priceData: array{
+     *           price: float, // Giá gốc của dịch vụ
+     *          price_per_km: float, // Giá tiền/km
+     *          distance: float, // Khoảng cách giữa khách hàng và KTV
+     *          price_distance: float, // Giá di chuyển
+     *          discount_coupon: float, // Giá trị giảm giá coupon
+     *          final_price: float, // Giá cuối cùng (Total = Gía gốc + Giá di chuyển - Giá giảm giá coupon)
+         *  },
+     *     walletCustomer: Wallet,
+     *     ktvAddress: UserAddress,
+     * }
      * @throws ServiceException
      */
-    protected function checkServiceAllowBooking(int $serviceId)
+    public function validateBooking(array $data, $userId): array
     {
-        $service = $this->serviceRepository->query()
-            ->where('id', $serviceId)
+        $user = $this->userRepository->queryUser()
+            ->where('id', $userId)
             ->first();
-        // Kiểm tra dịch vụ có tồn tại không
-        if (!$service) {
+        if (!$user) {
             throw new ServiceException(
-                message: __("booking.service.not_found")
+                message: __("error.user_not_found")
             );
         }
-        // Dịch vụ có đang hoạt động không
-        if (!$service->is_active) {
-            throw new ServiceException(
-                message: __("booking.service.not_active")
-            );
-        }
-        return $service;
-    }
-
-    /**
-     * Kiểm tra option dịch vụ có tồn tại không và thuộc về dịch vụ này
-     * @param int $categoryId ID của dịch vụ cần kiểm tra
-     * @param int $optionId ID của option dịch vụ cần kiểm tra
-     * @throws ServiceException
-     * @return CategoryPrice
-     */
-    protected function checkOptionServiceAllowBooking(int $categoryId, int $optionId)
-    {
-        $serviceOption = $this->categoryPriceRepository
-            ->query()
-            ->where('category_id', $categoryId)
-            ->where('id', $optionId)
-            ->first();
-        if (!$serviceOption) {
-            throw new ServiceException(
-                message: __("booking.service_option.not_match")
-            );
-        }
-        return $serviceOption;
-    }
-
-    /**
-     * Kiểm tra KTV có trống trong khoảng thời gian này không
-     * @param int $ktvId
-     * @param Carbon $startTime
-     * @param int $duration
-     * @throws ServiceException
-     */
-    protected function checkKtvAvailabilityToBooking(int $ktvId, Carbon $startTime, int $duration)
-    {
-        // Thời gian hiện tại
-        $now = Carbon::now();
-        // Lấy thông tin kỹ thuật viên
-        $ktv = $this->userRepository->queryUser()
-            ->where('id', $ktvId)
-            ->where('role', UserRole::KTV->value)
-            ->first();
-        if (!$ktv) {
-            throw new ServiceException(
-                message: __("booking.ktv.not_found")
-            );
-        }
-
-        // Lấy thời gian nghỉ giữa 2 lần phục vụ của kỹ thuật viên
-        // Mục đích: Breaktime dc coi như là thời gian đi lại, nghỉ ngơi, ...
-        $breakTime = (int) $this->configService->getConfigValue(ConfigName::BREAK_TIME_GAP);
-
-        // Thời gian kết thúc đặt lịch dự kiến  = Thời gian bắt đầu + Thời gian dịch vụ + Thời gian nghỉ
-        $endTimeWithBreak = $startTime->copy()->addMinutes($duration + $breakTime);
-
-        // Thời gian book phải sau thời gian hiện tại ít nhất BreakTime để có thể lên lịch
-        if ($startTime->lt($now->copy()->addMinutes($breakTime))) {
-            throw new ServiceException(
-                message: __("booking.book_time.book_time_not_valid", ['time' => $now->copy()->addMinutes($breakTime)->format('H:i')])
-            );
-        }
-
-        // Kiểm tra xem kỹ thuật viên có đang làm việc ko
-        $schedule = $ktv->schedule;
-        if ($schedule) {
-            // Kiểm tra xem kỹ thuật viên có đang làm việc ko
-            if (!$schedule->is_working) {
-                throw new ServiceException(
-                    message: __("booking.ktv.not_working")
-                );
-            }
-            // Kiểm tra xem kỹ thuật viên có làm việc vào ngày này không
-            if ($schedule->working_schedule) {
-                // Lấy ra ngày trong tuần của thời gian book (1-7)
-                // Nếu là thứ 8 (0) thì coi như là thứ 8 (8) để hợp với array key KTVConfigSchedules
-                $dayKey = $startTime->dayOfWeek === 0 ? 8 : $startTime->dayOfWeek + 1;
-                // Lấy ra cấu hình làm việc của ngày này
-                $dayConfig = collect($schedule->working_schedule)->firstWhere('day_key', $dayKey);
-                // Kiểm tra xem kỹ thuật viên có làm việc vào ngày này không
-                if (!$dayConfig || !$dayConfig['active']) {
-                    throw new ServiceException(message: __("booking.ktv.not_working"));
-                }
-                // Kiểm tra xem thời gian book có nằm trong khoảng làm việc của kỹ thuật viên không
-                $startTimeSchedule = Carbon::createFromTimeString($dayConfig['start_time']);
-                $endTimeSchedule = Carbon::createFromTimeString($dayConfig['end_time']);
-                $timeOnly = Carbon::createFromTimeString($startTime->copy()->format('H:i'));
-                if (!$timeOnly->between($startTimeSchedule, $endTimeSchedule)) {
-                    throw new ServiceException(message: __("booking.book_time.not_working"));
-                }
-            }
-        }
-
-        // Lấy ra tất cả các booking trong ngày này của kỹ thuật viên
-        $bookingsInDay = $this->bookingRepository->query()
-            ->where('ktv_user_id', $ktvId)
-            ->whereDate('booking_time', $startTime->toDateString())
-            ->whereIn('status', [
-                BookingStatus::CONFIRMED->value,
-                BookingStatus::ONGOING->value,
-                BookingStatus::PENDING->value
-            ])
-            // Sắp xếp theo thời gian book tăng dần
-            ->orderBy('booking_time', 'asc')
-            ->get();
-        foreach ($bookingsInDay as $existing) {
-            // Thông tin booking cũ (Booking B)
-            $existingStart = Carbon::parse($existing->booking_time);
-            $existingDuration = (int) $existing->duration;
-
-            // Thời điểm kết thúc của B bao gồm cả thời gian nghỉ
-            // End B = Start B + Duration B + BreakTime
-            $existingEndWithBreak = $existingStart->copy()->addMinutes($existingDuration + $breakTime);
-            /**
-             * LOGIC KIỂM TRA TRÙNG:
-             * Hai khoảng thời gian trùng nhau khi: (StartA < EndB) VÀ (EndA > StartB)
-             * Ở đây End được tính kèm cả BreakTime để đảm bảo khoảng nghỉ.
-             */
-            $isOverlapping = $startTime->lt($existingEndWithBreak) && $endTimeWithBreak->gt($existingStart);
-            if ($isOverlapping) {
-                // Duyệt tiếp các booking sau đó để tìm xem khi nào KTV thực sự rảnh liên tục đủ thời gian của dịch vụ mới
-                // Ở đây ta đơn giản hóa: Gợi ý là ngay sau khi booking này kết thúc
-                $suggestedTime = $existingEndWithBreak->copy()->format('H:i');
-                throw new ServiceException(
-                    message: __("booking.book_time.overlapping", ['time' => $suggestedTime])
-                );
-            }
-        }
-    }
-
-
-
-    /**
-     * Tính toán giá cuối cùng sau khi áp dụng mã giảm giá
-     * @param int $serviceId
-     * @param $price
-     * @param int|null $couponId
-     * @param string|float $longitude
-     * @param string|float $latitude
-     * @param int $ktvId
-     * @return array
-     * @throws ServiceException
-     */
-    private function calculateFinalPrice(int $serviceId, $price, ?int $couponId, string|float $longitude, string|float $latitude, int $ktvId): array
-    {
-        $discountAmount = 0.0;
-        if ($couponId) {
-            // Kiểm tra mã giảm giá có hợp lệ không
-            $couponValidation = $this->couponService->validateUseCoupon(
-                (string) $couponId,
-                (string) $serviceId,
-                $price
-            );
-
-            if (!$couponValidation->isError()) {
-                $discountAmount = $couponValidation->getData()['discount_amount'];
-            } else {
-                throw new ServiceException(
-                    message: $couponValidation->getMessage()
-                );
-            }
-        }
-
-        $pricePerKm = $this->configService->getConfigValue(
-            ConfigName::PRICE_TRANSPORTATION
-        );
-        // Tính chi phí di chuyển
-        $distance = $this->calculateTransportationCost(
-            longitude: $longitude,
-            latitude: $latitude,
-            ktvId: $ktvId
+        // Kiểm tra dịch vụ có phù hợp để book dịch vụ không
+        $categoryData = $this->bookingValidator->validateServiceBooking(
+            categoryId: $data['category_id'],
+            ktvId: $data['ktv_id'],
+            optionId: $data['option_id'],
         );
 
-        // cộng phí vào giá cuối cùng
-        $calculatePrice = $this->calculateBookingTotal(
-            servicePrice: $price,
-            distance: $distance,
+        // Kiểm tra kỹ thuật viên có thể book dịch vụ lúc này không
+        $bookTimeData = $this->bookingValidator->validateKtvAvailabilityToBooking(
+            ktvId: $data['ktv_id'],
+            duration: $categoryData['option']['duration'],
+            breakTime: $this->configService->getConfigValue(ConfigName::BREAK_TIME_GAP),
+        );
+
+        if (!empty($data['coupon_id'])) {
+            // Kiểm tra Coupon tồn tại
+            $coupon = $this->couponRepository->getCouponByIdOrFail(
+                couponId: $data['coupon_id'],
+            );
+            if (!$coupon) {
+                throw new ServiceException(
+                    message: __("booking.coupon.not_found")
+                );
+            }
+            // Kiểm tra Coupon có hợp lệ không
+            $this->couponValidator->validateUseCoupon(
+                coupon: $coupon,
+                user: $user,
+            );
+        }
+
+
+        // Lấy địa chỉ kỹ thuật viên
+        $ktvAddress = $this->addressRepository->getPrimaryAddressByUserId($data['ktv_id']);
+        if (!$ktvAddress) {
+            throw new ServiceException(
+                message: __("booking.service.not_found_location")
+            );
+        }
+
+        // Lấy giá di chuyển / km
+        $pricePerKm = $this->configService->getConfigValue(ConfigName::PRICE_TRANSPORTATION);
+        // Tính toán giá
+        $priceData = CalculatePrice::calculateBookingPrice(
+            price: $categoryData['option']['price'],
+            coupon: $coupon ?? null,
             pricePerKm: $pricePerKm,
-            discountAmount: $discountAmount
+            longitude: $data['longitude'],
+            latitude: $data['latitude'],
+            ktvLongitude: $ktvAddress->longitude,
+            ktvLatitude: $ktvAddress->latitude,
         );
 
+        // Kiểm tra số dư ví của khách hàng có đủ không
+        $walletCustomer = $this->walletRepository->getWalletByUserId(
+            userId: $userId,
+        );
+        if (!$walletCustomer) {
+            throw new ServiceException(
+                message: __("booking.payment.wallet_customer_not_found")
+            );
+        }
+        $this->walletValidator->validateBookingBalance(
+            wallet: $walletCustomer,
+            price: $priceData['price'],
+            priceDistance: $priceData['price_distance'],
+            couponDiscount: $priceData['coupon_discount'] ?? 0,
+        );
+
+
+
+        // Trả ra data hợp lệ
         return [
-            'price_before_discount' => $price,
-            'price_transportation' => $calculatePrice['transportation_fee'],
-            'final_price' => $calculatePrice['final_total'],
-            'discount_amount' => $discountAmount
+            'categoryData' => $categoryData,
+            'bookTimeData' => $bookTimeData,
+            'priceData' => $priceData,
+            'walletCustomer' => $walletCustomer,
+            'ktvAddress' => $ktvAddress,
         ];
     }
 
-    /**
-     * Tính toán tổng giá trị của một booking bao gồm dịch vụ, phí di chuyển và giảm giá
-     * @param $servicePrice
-     * @param $distance
-     * @param $pricePerKm
-     * @param $discountAmount
-     */
-    private function calculateBookingTotal($servicePrice, $distance, $pricePerKm, $discountAmount = null)
-    {
-        // 1. Tính phí di chuyển (Làm tròn lên 500)
-        $rawTransportFee = $pricePerKm * $distance;
-        $transportationFee = ceil($rawTransportFee / 500) * 500;
-
-        // 2. Tính giá tạm tính (Subtotal)
-        $tempTotalPrice = $servicePrice + $transportationFee;
-
-
-        // 4. Tính giá cuối cùng (Đảm bảo không âm và làm tròn 500)
-        $finalPrice = max(0, $tempTotalPrice - $discountAmount);
-
-        return [
-            'transportation_fee' => $transportationFee,
-            'final_total' => ceil($finalPrice / 500) * 500, // Làm tròn cuối cùng
-        ];
-    }
-
-    /**
-     * Tính chi phí di chuyển
-     * @param string|float $longitude
-     * @param string|float $latitude
-     * @param int $ktvId
-     * @return float
-     * @throws ServiceException
-     */
-    private function calculateTransportationCost(string|float $longitude, string|float $latitude, int $ktvId): float
-    {
-        // Lấy thông tin kỹ thuật viên
-        $ktv = $this->userRepository->queryUser()
-            ->where('id', $ktvId)
-            ->where('role', UserRole::KTV->value)
-            ->first();
-        if (!$ktv) {
-            throw new ServiceException(
-                message: __("booking.ktv.not_found")
-            );
-        }
-
-        $location = $ktv->primaryAddress;
-        if (!$location) {
-            throw new ServiceException(
-                message: __("booking.service.not_found_location")
-            );
-        }
-
-        $ktvLongitude = $location->longitude;
-        $ktvLatitude = $location->latitude;
-
-        if (!$ktvLongitude || !$ktvLatitude) {
-            throw new ServiceException(
-                message: __("booking.service.not_found_location")
-            );
-        }
-
-        $distance = Helper::getDistance(
-            $longitude,
-            $latitude,
-            $ktvLongitude,
-            $ktvLatitude
-        );
-
-        return $distance;
-    }
 
     /**
      * Query dịch vụ có cùng category, KTV khác, service active
@@ -1219,22 +912,17 @@ class BookingService extends BaseService
             return collect([]);
         }
 
-        // Query dịch vụ cùng category, KTV khác, active
-        return \App\Models\Service::query()
-            ->where('category_id', $currentService->category_id)
-            ->where('user_id', '!=', $booking->ktv_user_id) // KTV khác
-            ->where('is_active', true)
-            ->with(['provider', 'category', 'optionCategoryPrices'])
+        // Query KTV đang có dịch vụ khác trong category này
+        return $this->userRepository->queryUser()
+            ->where('role',UserRole::KTV->value)
+            ->whereHas('services', function ($query) use ($currentService) {
+                $query->where('category_id', $currentService->category_id);
+            })
             ->get()
-            ->map(function ($service) {
+            ->map(function ($user) {
                 return [
-                    'service_id' => $service->id,
-                    'ktv_id' => $service->user_id,
-                    'ktv_name' => $service->provider?->name ?? '',
-                    'service_name' => $service->name ?? '',
-                    'category_name' => $service->category?->name ?? '',
-                    'min_price' => $service->optionCategoryPrices->min('price') ?? 0,
-                    'max_price' => $service->optionCategoryPrices->max('price') ?? 0,
+                    'user_id' => $user->id,
+                    'user_name' => $user->name ?? '',
                 ];
             });
     }
