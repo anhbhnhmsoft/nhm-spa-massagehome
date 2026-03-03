@@ -134,6 +134,8 @@ class BookingService extends BaseService
 
             $dataRes =  $this->validateBooking($data, $userId);
 
+            $dataBookingToday = $this->bookingRepository->getBookingCustomerOnGoingInDay($userId);
+
             // Chỉ cần trả ra data này
             return [
                 'break_time' => $dataRes['bookTimeData']['break_time'],
@@ -143,6 +145,12 @@ class BookingService extends BaseService
                 'discount_coupon' => $dataRes['priceData']['discount_coupon'],
                 'final_price' => $dataRes['priceData']['final_price'],
                 'distance' => $dataRes['priceData']['distance'],
+                'booking_today' => $dataBookingToday ? [
+                    'id' => $dataBookingToday->id,
+                    'status' => $dataBookingToday->status,
+                    'booking_time' => $dataBookingToday->booking_time,
+                    'start_time' => $dataBookingToday->start_time,
+                ] : null,
             ];
         });
     }
@@ -788,7 +796,7 @@ class BookingService extends BaseService
      * }
      * @throws ServiceException
      */
-    public function validateBooking(array $data, $userId): array
+    protected function validateBooking(array $data, $userId): array
     {
         $user = $this->userRepository->queryUser()
             ->where('id', $userId)
@@ -878,7 +886,6 @@ class BookingService extends BaseService
             'ktvAddress' => $ktvAddress,
         ];
     }
-
 
     /**
      * Query dịch vụ có cùng category, KTV khác, service active

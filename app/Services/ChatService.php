@@ -41,7 +41,7 @@ class ChatService extends BaseService
      */
     public function getOrCreateRoom(int $userId): ServiceReturn
     {
-        try {
+        return $this->execute(function () use ($userId) {
             // Check Auth & Token
             $currentUser = Auth::user();
             $token = request()->bearerToken();
@@ -79,21 +79,11 @@ class ChatService extends BaseService
                     'customer_id' => $customerId,
                 ]);
             }
-            return ServiceReturn::success(data: [
+            return [
                 'room' => $room,
                 'partner' => $partner,
-            ]);
-        } catch (ServiceException $exception) {
-            return ServiceReturn::error(message: $exception->getMessage());
-        } catch (\Throwable $exception) {
-            LogHelper::error(
-                message: 'Lỗi ChatService@getOrCreateRoom',
-                ex: $exception
-            );
-            return ServiceReturn::error(
-                message: __('common_error.server_error')
-            );
-        }
+            ];
+        });
     }
 
     /**

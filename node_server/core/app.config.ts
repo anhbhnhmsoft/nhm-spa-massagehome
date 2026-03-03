@@ -22,5 +22,12 @@ export const config = {
     app: {
         host: process.env.NODE_HOST || '0.0.0.0',
         port: Number(process.env.NODE_PORT) || 3000,
+    },
+    database: {
+        user: process.env.DB_USERNAME,
+        host: process.env.DB_HOST,
+        database: process.env.DB_DATABASE,
+        password: process.env.DB_PASSWORD,
+        port: parseInt(process.env.DB_PORT || '5432'),
     }
 };

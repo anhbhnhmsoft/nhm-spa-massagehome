@@ -7,7 +7,6 @@ export enum _ChatConstant {
 export type UserSession = {
     id: string;
     name: string;
-    room_id: string;
 };
 
 export type PayloadNewMessage = {

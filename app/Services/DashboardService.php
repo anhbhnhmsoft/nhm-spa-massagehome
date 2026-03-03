@@ -23,6 +23,7 @@ use App\Repositories\UserReviewApplicationRepository;
 use App\Repositories\WalletRepository;
 use App\Repositories\WalletTransactionRepository;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardService extends BaseService
 {
@@ -238,6 +239,93 @@ class DashboardService extends BaseService
     }
 
     /**
+     * Lấy thông tin dashboard của KTV (ở phía Khách hàng)
+     * @return ServiceReturn
+     */
+    public function dashboardKtv($userId)
+    {
+        try {
+            // 1. Chuẩn bị mốc thời gian (Dùng Carbon để chính xác và tận dụng Index DB tốt hơn)
+            $todayStart = Carbon::today();
+            $todayEnd = Carbon::today()->endOfDay();
+            $yesterdayStart = Carbon::yesterday()->startOfDay();
+
+            // 2. Lấy Wallet (Check exists nhanh hơn nếu chỉ cần check, nhưng ở đây cần ID nên giữ nguyên)
+            $wallet = $this->walletRepository->query()
+                ->where('user_id', $userId)
+                ->select('id')
+                ->first();
+
+            if (!$wallet) {
+                throw new ServiceException(__('error.wallet_not_found'));
+            }
+
+            // Doanh thu hôm nay & hôm qua
+            $revenueStats = $this->walletTransactionRepository->query()
+                ->where('wallet_id', $wallet->id)
+                ->where('status', WalletTransactionStatus::COMPLETED->value)
+                ->where('type', WalletTransactionType::PAYMENT_FOR_KTV->value)
+                ->where('created_at', '>=', $todayStart)
+                ->toBase()
+                ->selectRaw("SUM(CASE WHEN created_at >= ? THEN point_amount ELSE 0 END) as today", [$todayStart])
+                ->selectRaw("SUM(CASE WHEN created_at < ? THEN point_amount ELSE 0 END) as yesterday", [$yesterdayStart])
+                ->first();
+
+            //  Gộp thống kê Booking (Completed & Pending)
+            $bookingStats = $this->bookingRepository->query()
+                ->where('ktv_user_id', $userId)
+                ->whereBetween('booking_time', [$todayStart, $todayEnd]) // Tận dụng Index tốt hơn whereDate
+                ->toBase()
+                ->selectRaw("COUNT(CASE WHEN status = ? THEN 1 END) as completed", [BookingStatus::COMPLETED->value])
+                ->selectRaw("COUNT(CASE WHEN status IN (?, ?) THEN 1 END) as pending", [BookingStatus::PENDING->value, BookingStatus::CONFIRMED->value])
+                ->first();
+
+            //  Lấy booking sắp tới (hoặc mới nhất)
+            $booking = $this->bookingRepository->query()
+                ->where('ktv_user_id', $userId)
+                ->whereIn('status', [
+                    BookingStatus::CONFIRMED->value
+                ])
+                ->where('booking_time', '>=', $todayStart)
+                ->where('booking_time', '<=', $todayEnd)
+                ->orderBy('booking_time', 'asc')
+                ->first();
+
+            //Lấy booking đang diễn ra
+            $bookingOnGoing = $this->bookingRepository->query()
+                ->where('ktv_user_id', $userId)
+                ->where('status', BookingStatus::ONGOING->value)
+                ->first();
+
+
+            // 7. Review mới nhất hôm nay
+            $reviewToday = $this->reviewRepository->query()
+                ->with('reviewer')
+                ->where('user_id', $userId)
+                ->whereBetween('review_at', [$todayStart, $todayEnd])
+                ->orderBy('review_at', 'desc')
+                ->get();
+
+            return ServiceReturn::success(
+                data: [
+                    'booking' => $booking,
+                    'booking_ongoing' => $bookingOnGoing,
+                    'total_revenue_today' => (float)($revenueStats->today ?? 0),
+                    'total_revenue_yesterday' => (float)($revenueStats->yesterday ?? 0),
+                    'total_booking_completed_today' => (int)($bookingStats->completed ?? 0),
+                    'total_booking_pending_today' => (int)($bookingStats->pending ?? 0),
+                    'review_today' => $reviewToday,
+                ]
+            );
+        } catch (ServiceException $e) {
+            return ServiceReturn::error($e->getMessage());
+        } catch (\Exception $e) {
+            LogHelper::error("Lỗi UserService@dashboardKtv", $e);
+            return ServiceReturn::error(__('common_error.server_error'));
+        }
+    }
+
+    /**
      * Lấy thống kê tổng quan cho KTV (view ktv admin)
      * @param $userId
      * @return ServiceReturn
@@ -448,7 +536,7 @@ class DashboardService extends BaseService
      */
     public function getKtvDashboardData(User $user, DateRangeDashboard $range): ServiceReturn
     {
-        try {
+        return $this->execute(function () use ($user, $range) {
             $uniqueKey = $range->value . '_' . $user->id;
             $cachedData = Caching::getCache(CacheKey::CACHE_KEY_TOTAL_INCOME, $uniqueKey);
 
@@ -465,16 +553,15 @@ class DashboardService extends BaseService
             if (!$wallet) {
                 throw new ServiceException(__("error.wallet_not_found"));
             };
-
             // 1. Tổng thu nhập (Kỳ này)
-            $totalIncome = $this->bookingRepository->getKtvTotalIncome(
-                ktvId: $user->id,
+            $totalIncome = $this->walletTransactionRepository->sumRealIncomePaymentBooking(
+                ktvUserId: $user->id,
                 from: $fromDate,
                 to: $toDate,
             );
 
-            // 2. Doanh thu thực nhận
-            $receivedIncome = $this->walletTransactionRepository->sumRealIncomePaymentBooking(
+            // 2. Tổng thu nhập tiền di chuyển
+            $transportationIncome = $this->walletTransactionRepository->sumRealIncomeTransportationBooking(
                 ktvUserId: $user->id,
                 from: $fromDate,
                 to: $toDate,
@@ -502,48 +589,18 @@ class DashboardService extends BaseService
                 to: $toDate,
             );
 
-            // 6. Dữ liệu biểu đồ
-            if ($range === DateRangeDashboard::DAY) {
-                $chartData = $this->bookingRepository->query()
-                    ->selectRaw("
-                        CASE
-                            WHEN CAST(to_char(created_at, 'HH24') AS INTEGER) < 6 THEN '00:00-06:00'
-                            WHEN CAST(to_char(created_at, 'HH24') AS INTEGER) < 12 THEN '06:00-12:00'
-                            WHEN CAST(to_char(created_at, 'HH24') AS INTEGER) < 18 THEN '12:00-18:00'
-                            ELSE '18:00-00:00'
-                        END as date,
-                        SUM(price) as total
-                    ")
-                    ->where('ktv_user_id', $user->id)
-                    ->where('status', BookingStatus::COMPLETED->value)
-                    ->whereBetween('booking_time', [$fromDate, $toDate])
-                    ->groupByRaw("date")
-                    ->orderByRaw("MIN(booking_time) ASC")
-                    ->get();
-            }
-            else {
-                // Điều chỉnh logic format ngày cho year, month, week
-                $format = match ($range) {
-                    DateRangeDashboard::YEAR => "to_char(booking_time, 'YYYY-MM')", // Lấy theo tháng nếu là Year
-                    default => "to_char(booking_time, 'YYYY-MM-DD')",
-                };
-
-                $chartData = $this->bookingRepository->query()
-                    ->selectRaw("$format as date, SUM(price) as total")
-                    ->where('ktv_user_id', $user->id)
-                    ->where('status', BookingStatus::COMPLETED->value)
-                    ->whereBetween('booking_time', [$fromDate, $toDate])
-                    ->groupByRaw("date")
-                    ->orderBy('date', 'asc')
-                    ->get();
-            }
+            // 6. Biểu đồ tổng thu nhập theo ngày
+            $chartData = $this->walletTransactionRepository->getChartSumIncomePaymentBooking(
+                ktvUserId: $user->id,
+                range: $range,
+            );
 
             $resultData = [
                 'total_income' => (float)$totalIncome,
-                'received_income' => (float)$receivedIncome,
-                'total_customers' => $totalCustomers,
+                'transportation_income' => (float)$transportationIncome,
+                'total_customers' => (int)$totalCustomers,
                 'affiliate_income' => (float)$affiliateIncome,
-                'total_reviews' => $totalReviews,
+                'total_reviews' => (int)$totalReviews,
                 'chart_data' => $chartData,
                 'type_label' => $range->value
             ];
@@ -554,15 +611,8 @@ class DashboardService extends BaseService
                 uniqueKey: $uniqueKey,
                 expire: 5,
             );
-            return ServiceReturn::success(data: $resultData);
-        }
-        catch (ServiceException $e) {
-            return ServiceReturn::error($e->getMessage());
-        }
-        catch (\Exception $exception) {
-            LogHelper::error("Lỗi BookingService@totalIncome", $exception);
-            return ServiceReturn::error(message: __("common_error.server_error"));
-        }
+            return $resultData;
+        });
     }
 
     /**

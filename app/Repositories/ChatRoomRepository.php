@@ -21,16 +21,24 @@ class ChatRoomRepository extends BaseRepository
     public function queryRoomKTV(): Builder
     {
         return $this->model->query()
-            // Lấy tin nhắn mới nhất trong phòng chat
-            ->with('latestMessage')
-            // Lấy thông tin khách hàng
-            ->with(['customer', 'customer.profile'])
-            // Lấy thời gian tin nhắn mới nhất trong phòng chat
-            ->addSelect(['last_message_at' => Message::query()->select('created_at')
-                ->whereColumn('room_id', 'chat_rooms.id')
-                ->latest()
-                ->take(1)
-            ]);
+            ->with([
+                'latestMessage',
+                'customer',
+                'customer.profile',
+            ])
+            ->addSelect([
+                'last_message_at' => Message::select('created_at')
+                    ->whereColumn('room_id', 'chat_rooms.id')
+                    ->latest()
+                    ->take(1)
+            ])
+            ->orderByRaw('(' .
+                Message::select('created_at')
+                    ->whereColumn('room_id', 'chat_rooms.id')
+                    ->latest()
+                    ->take(1)
+                    ->toSql()
+                . ') DESC NULLS LAST');
     }
 
     public function filterQuery(Builder $query, array $filters): Builder

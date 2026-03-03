@@ -17,7 +17,7 @@ class UpdateLastActive
     }
     public function handle(Request $request, Closure $next): Response
     {
-        if (Auth::check()) {
+        if (auth('sanctum')->check()) {
             $this->authService->heartbeat();
         }
         return $next($request);

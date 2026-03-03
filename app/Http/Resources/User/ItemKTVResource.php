@@ -4,6 +4,7 @@ namespace App\Http\Resources\User;
 
 use App\Core\Helper;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 
 
@@ -21,7 +22,13 @@ class ItemKTVResource extends ListKTVResource
     public function toArray(Request $request): array
     {
         $data = parent::toArray($request);
-
+        $onGoingBooking = $this->ktvBookings->first() ?? null;
+        $data['on_going_booking'] = $onGoingBooking ? [
+            'id' => $onGoingBooking->id,
+            'start_time' => $onGoingBooking->start_time,
+            'duration' => $onGoingBooking->duration,
+            'expect_end_time' => Carbon::make($onGoingBooking->start_time)->copy()->addMinutes($onGoingBooking->duration),
+        ] : null;
         $data['price_transportation'] = $this->priceTransportation;
         $files = $this->gallery;
         $review = $this->whenLoaded('reviewsReceived') ? $this->reviewsReceived->first() : null;

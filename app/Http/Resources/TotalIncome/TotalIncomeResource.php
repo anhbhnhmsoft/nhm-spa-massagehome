@@ -10,7 +10,7 @@ class TotalIncomeResource extends JsonResource
     {
         return [
             'total_income'     => $this->resource['total_income'] ?? 0,
-            'received_income'  => $this->resource['received_income'] ?? 0,
+            'transportation_income'  => $this->resource['transportation_income'] ?? 0,
             'total_customers'  => $this->resource['total_customers'] ?? 0,
             'affiliate_income' => $this->resource['affiliate_income'] ?? 0,
             'total_reviews'    => $this->resource['total_reviews'] ?? 0,

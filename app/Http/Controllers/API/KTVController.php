@@ -52,7 +52,8 @@ class KTVController extends BaseController
      */
     public function dashboard(Request $request): JsonResponse
     {
-        $result = $this->userService->dashboardKtv();
+        $userId = Auth::id();
+        $result = $this->dashboardService->dashboardKtv($userId);
         if ($result->isError()) {
             return $this->sendError(
                 message: $result->getMessage(),

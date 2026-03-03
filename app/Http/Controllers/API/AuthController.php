@@ -220,21 +220,6 @@ class AuthController extends BaseController
         );
     }
 
-    /**
-     * Cập nhật heartbeat cho user.
-     * @return JsonResponse
-     */
-    public function heartbeat(): JsonResponse
-    {
-        $resService = $this->authService->heartbeat();
-        if ($resService->isError()) {
-            return $this->sendError(
-                message: $resService->getMessage(),
-            );
-        }
-        return $this->sendSuccess();
-    }
-
     public function configApplication(): JsonResponse
     {
         $resService = $this->configService->getConfigApplication();

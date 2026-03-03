@@ -130,36 +130,26 @@ class BookingValidator
             }
         }
 
-        // Lấy ra tất cả các booking trong ngày này của kỹ thuật viên
-        $bookingsInDay = $this->bookingRepository->query()
+        // Lấy ra tất cả các booking đang thực hiện trong ngày này của kỹ thuật viên
+        $onBookingInDay = $this->bookingRepository->query()
             ->where('ktv_user_id', $ktvId)
             ->whereDate('booking_time', $startTime->toDateString())
             ->whereIn('status', [
-                BookingStatus::CONFIRMED->value,
                 BookingStatus::ONGOING->value,
-                BookingStatus::PENDING->value
             ])
-            // Sắp xếp theo thời gian book tăng dần
             ->orderBy('booking_time', 'asc')
-            ->get();
-        foreach ($bookingsInDay as $existing) {
-            // Thông tin booking cũ (Booking B)
-            $existingStart = Carbon::parse($existing->booking_time);
-            $existingDuration = (int) $existing->duration;
+            ->first();
+        // Kiểm tra xem kỹ thuật viên có đang có booking nào trong khoảng thời gian này không
+        if ($onBookingInDay) {
+            // Thông tin booking
+            $existingStart = Carbon::parse($onBookingInDay->start_time);
+            $existingDuration = (int) $onBookingInDay->duration;
 
-            // Thời điểm kết thúc của B bao gồm cả thời gian nghỉ
-            // End B = Start B + Duration B + BreakTime
-            $existingEndWithBreak = $existingStart->copy()->addMinutes($existingDuration + $breakTime);
-            /**
-             * LOGIC KIỂM TRA TRÙNG:
-             * Hai khoảng thời gian trùng nhau khi: (StartA < EndB) VÀ (EndA > StartB)
-             * Ở đây End được tính kèm cả BreakTime để đảm bảo khoảng nghỉ.
-             */
-            $isOverlapping = $startTime->lt($existingEndWithBreak) && $endTime->gt($existingStart);
-            if ($isOverlapping) {
-                // Duyệt tiếp các booking sau đó để tìm xem khi nào KTV thực sự rảnh liên tục đủ thời gian của dịch vụ mới
-                // Ở đây ta đơn giản hóa: Gợi ý là ngay sau khi booking này kết thúc
-                $suggestedTime = $existingEndWithBreak->copy()->format('H:i');
+            // giờ làm dự kiến xong = giờ bắt đầu + thời gian làm dịch vụ
+            $existingEndExpected  = $existingStart->copy()->addMinutes($existingDuration);
+
+            if ($startTime->lt($existingEndExpected)) {
+                $suggestedTime = $startTime->copy()->format('H:i');
                 throw new ServiceException(
                     message: __("booking.book_time.overlapping", ['time' => $suggestedTime])
                 );

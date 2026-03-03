@@ -20,7 +20,7 @@ use App\Http\Controllers\API\WithdrawController;
 use Illuminate\Support\Facades\Route;
 
 
-Route::middleware('set-api-locale')->group(function () {
+Route::middleware(['set-api-locale', 'update-last-active'])->group(function () {
     Route::prefix('auth')->group(function () {
         // Guest middleware
         Route::middleware(['throttle:5,1'])->group(function () {
@@ -44,8 +44,6 @@ Route::middleware('set-api-locale')->group(function () {
             Route::get('profile', [AuthController::class, 'getProfile']);
             // Cập nhật ngôn ngữ hệ thống.
             Route::post('set-language', [AuthController::class, 'setLanguage']);
-            // Cập nhật heartbeat cho user.
-            Route::post('heartbeat', [AuthController::class, 'heartbeat']);
             // Cập nhật thông tin thiết bị.
             Route::post('set-device', [AuthController::class, 'setDevice']);
             // edit avatar

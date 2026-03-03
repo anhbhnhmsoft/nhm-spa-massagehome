@@ -16,6 +16,7 @@ class MessageRepository extends BaseRepository
     public function queryByRoom(string|int $roomId): Builder
     {
         return $this->query()
+            ->with(['sender', 'room'])
             ->where('room_id', $roomId);
     }
 

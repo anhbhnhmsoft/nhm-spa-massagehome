@@ -21,6 +21,8 @@ use App\Enums\NotificationType;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserFileType;
 use App\Enums\UserRole;
+use App\Enums\WalletTransactionStatus;
+use App\Enums\WalletTransactionType;
 use App\Jobs\SendNotificationJob;
 use App\Jobs\WalletTransactionJob;
 use App\Repositories\BookingRepository;
@@ -67,97 +69,6 @@ class UserService extends BaseService
         protected DangerSupportRepository         $dangerSupportRepository,
     ) {
         parent::__construct();
-    }
-
-
-    /**
-     * Lấy thông tin dashboard của KTV
-     * @return ServiceReturn
-     */
-    public function dashboardKtv()
-    {
-        try {
-            $user = Auth::user();
-
-            // 1. Chuẩn bị mốc thời gian (Dùng Carbon để chính xác và tận dụng Index DB tốt hơn)
-            $todayStart = Carbon::today();
-            $todayEnd = Carbon::today()->endOfDay();
-            $yesterdayStart = Carbon::yesterday()->startOfDay();
-
-            // 2. Lấy Wallet (Check exists nhanh hơn nếu chỉ cần check, nhưng ở đây cần ID nên giữ nguyên)
-            $wallet = $this->walletRepository->query()
-                ->where('user_id', $user->id)
-                ->select('id')
-                ->first();
-
-            if (!$wallet) {
-                throw new ServiceException(__('error.wallet_not_found'));
-            }
-
-            // 3. TỐI ƯU 1: Gộp doanh thu Hôm nay & Hôm qua vào 1 Query
-            // Thay vì 2 query, ta dùng SUM kết hợp CASE WHEN (hoặc IF trong MySQL)
-            $revenueStats = $this->bookingRepository->query()
-                ->where('ktv_user_id', $user->id)
-                ->where('status', BookingStatus::COMPLETED->value)
-                ->where('booking_time', '>=', $yesterdayStart) // Chỉ quét dữ liệu từ hôm qua đến nay (Tận dụng Index)
-                ->toBase() // Bỏ qua việc hydrate Model để tăng tốc độ (trả về object thuần)
-                ->selectRaw("SUM(CASE WHEN booking_time >= ? THEN price ELSE 0 END) as today", [$todayStart])
-                ->selectRaw("SUM(CASE WHEN booking_time < ? THEN price ELSE 0 END) as yesterday", [$todayStart])
-                ->first();
-
-            // 4. TỐI ƯU 2: Gộp thống kê Booking (Completed & Pending) vào 1 Query
-            $bookingStats = $this->bookingRepository->query()
-                ->where('ktv_user_id', $user->id)
-                ->whereBetween('booking_time', [$todayStart, $todayEnd]) // Tận dụng Index tốt hơn whereDate
-                ->toBase()
-                ->selectRaw("COUNT(CASE WHEN status = ? THEN 1 END) as completed", [BookingStatus::COMPLETED->value])
-                ->selectRaw("COUNT(CASE WHEN status IN (?, ?) THEN 1 END) as pending", [BookingStatus::PENDING->value, BookingStatus::CONFIRMED->value])
-                ->first();
-
-            // 5. Lấy booking sắp tới (hoặc mới nhất)
-            $booking = $this->bookingRepository->query()
-                ->where('ktv_user_id', $user->id)
-                ->whereIn('status', [
-                    BookingStatus::PENDING->value,
-                    BookingStatus::CONFIRMED->value
-                ])
-                ->where('booking_time', '>=', $todayStart)
-                ->where('booking_time', '<=', $todayEnd)
-                ->orderBy('booking_time', 'asc')
-                ->first();
-
-            // 6. Lấy booking đang diễn ra
-            $bookingOnGoing = $this->bookingRepository->query()
-                ->where('ktv_user_id', $user->id)
-                ->where('status', BookingStatus::ONGOING->value)
-                ->first();
-
-
-            // 7. Review mới nhất hôm nay
-            $reviewToday = $this->reviewRepository->query()
-                ->with('reviewer')
-                ->where('user_id', $user->id)
-                ->whereBetween('review_at', [$todayStart, $todayEnd])
-                ->orderBy('review_at', 'desc')
-                ->get();
-
-            return ServiceReturn::success(
-                data: [
-                    'booking' => $booking,
-                    'booking_ongoing' => $bookingOnGoing,
-                    'total_revenue_today' => (float)($revenueStats->today ?? 0),
-                    'total_revenue_yesterday' => (float)($revenueStats->yesterday ?? 0),
-                    'total_booking_completed_today' => (int)($bookingStats->completed ?? 0),
-                    'total_booking_pending_today' => (int)($bookingStats->pending ?? 0),
-                    'review_today' => $reviewToday,
-                ]
-            );
-        } catch (ServiceException $e) {
-            return ServiceReturn::error($e->getMessage());
-        } catch (\Exception $e) {
-            LogHelper::error("Lỗi UserService@dashboardKtv", $e);
-            return ServiceReturn::error(__('common_error.server_error'));
-        }
     }
 
       /**
@@ -226,6 +137,11 @@ class UserService extends BaseService
                                 ->latest('created_at')
                                 ->limit(1);
                         },
+                        'ktvBookings' => function ($query) {
+                            $query->where('status', BookingStatus::ONGOING->value)
+                                ->orderBy('start_time', 'asc')
+                                ->limit(1);
+                        },
                         'categories' => function ($query) {
                             $query->withCount(['bookings as booking_count' => function ($q) {
                                 $q->whereColumn('ktv_user_id', 'services.user_id');
@@ -246,52 +162,6 @@ class UserService extends BaseService
                 ];
             }
         );
-    }
-
-    /**
-     * Lấy file theo path, sử dụng cơ chế cache.
-     * @param string $path
-     * @return ServiceReturn
-     */
-    public function getUserFile(string $path): ServiceReturn
-    {
-        $uniqueKey = hash('sha256', $path);
-
-        try {
-            $file = Caching::getCache(
-                key: CacheKey::CACHE_USER_FILE,
-                uniqueKey: $uniqueKey
-            );
-            if ($file) {
-                return ServiceReturn::success(
-                    data: $file
-                );
-            }
-            $file = $this->userFileRepository->query()->where('file_path', $path)->first();
-            if (!$file) {
-                throw new ServiceException(
-                    message: __("common_error.data_not_found")
-                );
-            }
-            Caching::setCache(
-                key: CacheKey::CACHE_USER_FILE,
-                uniqueKey: $uniqueKey,
-                value: $file,
-                expire: 60
-            );
-
-            return ServiceReturn::success(
-                data: $file
-            );
-        } catch (ServiceException $exception) {
-            LogHelper::error(
-                message: "Lỗi UserService@getUserFile",
-                ex: $exception
-            );
-            return ServiceReturn::error(
-                message: __("common_error.data_not_found")
-            );
-        }
     }
 
     /**

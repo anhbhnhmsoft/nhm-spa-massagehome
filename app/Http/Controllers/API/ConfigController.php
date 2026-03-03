@@ -3,10 +3,8 @@
 namespace App\Http\Controllers\API;
 
 use App\Core\Controller\BaseController;
-use App\Enums\UserRole;
 use App\Services\ConfigService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Auth;
 
 class ConfigController extends BaseController
 {

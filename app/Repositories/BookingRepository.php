@@ -72,6 +72,28 @@ class BookingRepository extends BaseRepository
     }
 
     /**
+     * Lấy thông tin đặt lịch đang diễn ra trong ngày của user khách hàng
+     * @param int $userId
+     */
+    public function getBookingCustomerOnGoingInDay(int $userId)
+    {
+        return $this->query()
+            ->where('user_id', $userId)
+            ->whereIn('status', [
+                BookingStatus::PENDING,
+                BookingStatus::CONFIRMED,
+                BookingStatus::ONGOING,
+            ])
+            ->where(function ($query) {
+                $today = now()->toDateString(); // Lấy 'YYYY-MM-DD'
+                $query->whereDate('booking_time', $today)
+                    ->orWhereDate('start_time', $today);
+            })
+            ->first();
+    }
+
+
+    /**
      * Lấy thông tin đặt lịch theo id và trạng thái
      * @param int $bookingId
      * @param BookingStatus $status
@@ -183,21 +205,7 @@ class BookingRepository extends BaseRepository
             ->count('user_id');
     }
 
-    /**
-     * Lấy doanh thu tổng trong khoảng thời gian của KTV
-     * @param int $ktvId - ID của KTV
-     * @param Carbon $from
-     * @param Carbon $to
-     * @return int
-     */
-    public function getKtvTotalIncome(int $ktvId,Carbon $from, Carbon $to): int
-    {
-        return $this->query()
-            ->where('ktv_user_id', $ktvId)
-            ->whereBetween('created_at', [$from->format('Y-m-d H:i:s'), $to->format('Y-m-d H:i:s')])
-            ->where('status', BookingStatus::COMPLETED->value)
-            ->sum('price');
-    }
+
 
     /**
      * Lấy số lượng đơn đã đặt lịch KTV trong khoảng thời gian

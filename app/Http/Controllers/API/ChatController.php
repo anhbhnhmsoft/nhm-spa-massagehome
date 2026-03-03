@@ -53,7 +53,7 @@ class ChatController extends BaseController
     {
         $dto = $request->getFilterOptions();
         $dto->setSortBy('created_at');
-        $dto->setDirection('desc');
+        $dto->setDirection('asc');
         $result = $this->chatService->messagePagination($dto, $roomId);
 
         if ($result->isError()) {

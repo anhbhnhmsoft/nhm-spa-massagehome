@@ -9,9 +9,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Message extends Model
 {
-    use HasFactory;
-    use HasBigIntId;
-
     protected $fillable = [
         'room_id',
         'sender_by',

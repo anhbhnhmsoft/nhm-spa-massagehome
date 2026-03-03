@@ -1,4 +1,4 @@
-import { config } from '#/core/app.config.js';
+import { config } from '#/core/app.config';
 import { redisPub, redisSub } from '#/core/app.redis.js';
 import {
     _ChatConstant,
@@ -6,6 +6,8 @@ import {
     UserSession,
 } from '#/services/chat/types.js';
 import type { Server, Socket } from 'socket.io';
+import crypto from 'crypto';
+import { safeQuery } from '#/core/app.database';
 
 export class ChatService {
     constructor(private io: Server) {}
@@ -45,28 +47,13 @@ export class ChatService {
             // Xử lý message:new
             if (type === _ChatConstant.CHAT_MESSAGE_NEW && parsed?.payload) {
                 const payload: PayloadNewMessage = parsed?.payload;
-                console.log('ChatService@handleLaravelMessage', payload);
                 if (payload.room_id) {
                     // Format tên phòng phải KHỚP với lúc join
                     const roomName = this.getConversationRoom(payload.room_id);
-                    console.log('room name', roomName);
-
-                    const clientsInRoom = await this.io
-                        .in(roomName)
-                        .fetchSockets();
-                    console.log(`Debug Room [${roomName}]:`, {
-                        clientsCount: clientsInRoom.length, // Nếu bằng 0 thì emit vô ích
-                        socketIds: clientsInRoom.map((s) => s.id),
-                    });
-
                     // Emit tới phòng
-                    const emitResult = this.io
+                    this.io
                         .to(roomName)
                         .emit(_ChatConstant.CHAT_MESSAGE_NEW, payload);
-
-                    console.log('emit result', emitResult);
-
-
                     // Emit riêng cho người nhận để cập nhật conversation
                     if (payload.receiver_id){
                         const receiverPrivateRoom = this.getPrivateUserRoom(payload.receiver_id);
@@ -170,17 +157,10 @@ export class ChatService {
      */
     protected handleDisconnect(socket: Socket) {
         const user = socket.data.user as UserSession;
-        const token = socket.data.token as string;
 
         const userPrivateRoom = this.getPrivateUserRoom(user.id);
         // Rời phòng cá nhân khi ngắt kết nối
         socket.leave(userPrivateRoom);
-
-        // Xóa token khỏi Redis khi ngắt kết nối
-        if (token) {
-            const tokenKey = this.getTokenKey(token);
-            redisPub.del(tokenKey);
-        }
     }
 
     /**
@@ -188,15 +168,6 @@ export class ChatService {
      */
     protected getConversationRoom(roomId: string): string {
         return `conversation:${roomId}`;
-    }
-
-    /**
-     * Lấy key lưu trữ session user trong Redis từ token
-     * @param token
-     * @protected
-     */
-    protected getTokenKey(token: string): string {
-        return `${config.redis.channels.chat_auth}:${token}`;
     }
 
     /**
@@ -208,37 +179,69 @@ export class ChatService {
 
     /**
      * Xác thực token khi client kết nối
+     * @param token
+     * @protected
+     */
+    protected async validateTokenFormat(token: string): Promise<{
+        user: UserSession;
+        token: string;
+    }> {
+        if (!token || typeof token !== 'string' || !token.includes('|')) {
+            console.error('🔒 Auth Error: Token missing or invalid format');
+            throw new Error('Authentication error: Invalid token format');
+        }
+        // 1. Kiểm tra định dạng cơ bản
+        if (!token || !token.includes('|')) {
+            throw new Error('Authentication error: Invalid token format');
+        }
+
+        const [tokenId, plainToken] = token.split('|');
+
+        // Hash Token
+        const hashedToken = crypto
+            .createHash('sha256')
+            .update(plainToken)
+            .digest('hex');
+
+        // Truy vấn Database
+        const query = `
+            SELECT u.id, u.name
+            FROM users u
+            JOIN personal_access_tokens t ON u.id = t.tokenable_id
+            WHERE t.id = $1
+              AND t.token = $2
+              AND t.tokenable_type = 'App\\Models\\User'
+              AND (t.expires_at IS NULL OR t.expires_at > NOW())
+            LIMIT 1
+        `;
+
+        const result = await safeQuery(query, [tokenId, hashedToken]);
+
+        if (!result || result.rows.length === 0) {
+            console.warn(`🚫 Auth Denied: Token ID ${tokenId} not found or expired`);
+            throw new Error('Authentication error: Session expired or invalid');
+        }
+
+        // Trả về thông tin
+        return {
+            user: result.rows[0] as UserSession,
+            token: token,
+        };
+    }
+
+    /**
+     * Xác thực token khi client kết nối
      */
     protected middleware() {
         this.io.use(async (socket, next) => {
             try {
                 const token = socket.handshake.auth.token;
-                if (!token) {
-                    console.error('Middleware error: Token missing');
-                    return next(
-                        new Error('Authentication error: Token missing'),
-                    );
-                }
                 // Key mà Node đang định tìm
-                const rawKey = this.getTokenKey(token);
-                // --- DEBUG LOG ---
-                const rawData = await redisPub.get(rawKey);
-                if (!rawData) {
-                    console.error(
-                        'Middleware error: Session expired or invalid',
-                        rawKey,
-                    );
-                    return next(
-                        new Error(
-                            'Authentication error: Session expired or invalid',
-                        ),
-                    );
-                }
-                const user: UserSession = JSON.parse(rawData);
+                const { user } = await this.validateTokenFormat(token);
                 // Lưu user vào socket data
                 socket.data.user = user;
-                socket.data.token = token;
 
+                socket.data.token = token;
                 next();
             } catch (error) {
                 console.error('Middleware Error:', error);

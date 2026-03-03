@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Core\BaseRepository;
 use App\Core\Helper;
+use App\Enums\DateRangeDashboard;
 use App\Enums\PaymentType;
 use App\Enums\UserRole;
 use App\Enums\WalletTransactionStatus;
@@ -248,6 +249,101 @@ class WalletTransactionRepository extends BaseRepository
             ])
             ->first();
         return ($incomeData->total_received ?? 0) - ($incomeData->total_retrieve ?? 0);
+    }
+
+    /**
+     * Tổng lợi nhuận thực tế từ các booking đã thanh toán của 1 KTV trong khoảng thời gian
+     * @param int $ktvUserId
+     * @param DateRangeDashboard $range
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getChartSumIncomePaymentBooking(int $ktvUserId, DateRangeDashboard $range): \Illuminate\Database\Eloquent\Collection
+    {
+        $dateRange = $range->getDateRange();
+        $fromDate = $dateRange['from'];
+        $toDate = $dateRange['to'];
+
+        // Định nghĩa logic tính tiền thực tế: (Nhận - Hoàn)
+        $sumRealIncomeSql = "
+        SUM(
+            CASE
+                WHEN type = " . WalletTransactionType::PAYMENT_FOR_KTV->value . " THEN point_amount
+                WHEN type = " . WalletTransactionType::RETRIEVE_PAYMENT_REFUND_KTV->value . " THEN -point_amount
+                ELSE 0
+            END
+        ) as total";
+
+        if ($range === DateRangeDashboard::DAY) {
+            $chartData = $this->query()
+                ->selectRaw("
+                CASE
+                    WHEN CAST(to_char(created_at, 'HH24') AS INTEGER) < 6 THEN '00:00-06:00'
+                    WHEN CAST(to_char(created_at, 'HH24') AS INTEGER) < 12 THEN '06:00-12:00'
+                    WHEN CAST(to_char(created_at, 'HH24') AS INTEGER) < 18 THEN '12:00-18:00'
+                    ELSE '18:00-00:00'
+                END as date,
+                $sumRealIncomeSql
+            ")
+                ->whereHas('wallet', function (Builder $query) use ($ktvUserId) {
+                    $query->where('user_id', $ktvUserId);
+                })
+                ->whereIn('type', [
+                    WalletTransactionType::PAYMENT_FOR_KTV->value,
+                    WalletTransactionType::RETRIEVE_PAYMENT_REFUND_KTV->value
+                ])
+                ->where('status', WalletTransactionStatus::COMPLETED->value)
+                ->whereBetween('created_at', [$fromDate, $toDate])
+                ->groupByRaw("date")
+                ->orderByRaw("MIN(created_at) ASC")
+                ->get();
+        } else {
+            $format = match ($range) {
+                DateRangeDashboard::YEAR => "to_char(created_at, 'YYYY-MM')", // Đổi từ booking_time sang created_at cho đồng bộ
+                default => "to_char(created_at, 'YYYY-MM-DD')",
+            };
+
+            $chartData = $this->query()
+                ->selectRaw("$format as date, $sumRealIncomeSql")
+                ->whereHas('wallet', function (Builder $query) use ($ktvUserId) {
+                    $query->where('user_id', $ktvUserId);
+                })
+                ->whereIn('type', [
+                    WalletTransactionType::PAYMENT_FOR_KTV->value,
+                    WalletTransactionType::RETRIEVE_PAYMENT_REFUND_KTV->value
+                ])
+                ->where('status', WalletTransactionStatus::COMPLETED->value)
+                ->whereBetween('created_at', [$fromDate, $toDate])
+                ->groupByRaw("date")
+                ->orderBy('date', 'asc')
+                ->get();
+        }
+
+        return $chartData;
+    }
+
+    /**
+     * Tổng tiền di chuyển thu được từ các booking đã thanh toán của 1 KTV trong khoảng thời gian
+     * @param int $ktvUserId
+     * @param Carbon $from
+     * @param Carbon $to
+     * @return int
+     */
+    public function sumRealIncomeTransportationBooking(int $ktvUserId, Carbon $from, Carbon $to)
+    {
+        $incomeData = $this->query()
+            ->whereHas('wallet.user', function (Builder $query) use ($ktvUserId) {
+                $query->where('user_id', $ktvUserId);
+            })
+            ->where('status', WalletTransactionStatus::COMPLETED->value)
+            ->whereBetween('created_at', [$from->format('Y-m-d H:i:s'), $to->format('Y-m-d H:i:s')])
+            ->toBase()
+            ->selectRaw("
+                    SUM(point_amount) FILTER (WHERE type = ?) as total_earned
+                ", [
+                WalletTransactionType::EARN_TRANSPORT->value,
+            ])
+            ->first();
+        return ($incomeData->total_earned ?? 0);
     }
 
     /**

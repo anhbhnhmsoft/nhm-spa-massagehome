@@ -266,8 +266,6 @@ class AuthService extends BaseService
 
                 // Tạo token đăng nhập
                 $token = $this->createTokenAuth($user);
-                // Lưu token vào Redis
-//                $this->setRedisAuthChatToken($token, $user);
 
                 return [
                     'token' => $token,
@@ -332,11 +330,6 @@ class AuthService extends BaseService
             $user->last_login_at = now();
             $user->save();
             $user->load(['profile', 'primaryAddress']);
-//            $token = request()->bearerToken();
-//            // Lưu token vào Redis nếu có
-//            if ($token) {
-//                $this->setRedisAuthChatToken($token, $user);
-//            }
             return ServiceReturn::success(data: [
                 'user' => $user,
             ]);
@@ -383,7 +376,7 @@ class AuthService extends BaseService
     public function heartbeat(): ServiceReturn
     {
         try {
-            $user = Auth::user();
+            $user = auth('sanctum')->user();
             if (!$user) {
                 return ServiceReturn::error(message: __('auth.error.unauthorized'));
             }
@@ -406,10 +399,6 @@ class AuthService extends BaseService
                 $user->last_login_at = $now;
                 $user->save();
             }
-
-            // --- TẦNG 3: REDIS CHAT AUTH ---
-            // Lưu token vào Redis
-//            $this->setRedisAuthChatToken($token, $user);
 
             return ServiceReturn::success();
         } catch (Exception $exception) {
@@ -773,26 +762,6 @@ class AuthService extends BaseService
 
     }
 
-    /**
-     * Lưu token vào Redis cho việc xác thực chat.
-     * @param string $token
-     * @param User $user
-     * @return void
-     */
-    protected function setRedisAuthChatToken(string $token, $user): void
-    {
-        $key = config('services.node_server.channel_chat_auth') . ":{$token}";
-        $redisPayload = [
-            'id' => (string)$user->id,
-            'name' => $user->name,
-            'role' => $user->role,
-        ];
-        RedisFacade::connection()->setex(
-            $key,
-            60 * 60 * 1, // 1 giờ
-            json_encode($redisPayload)
-        );
-    }
 
     /**
      * Khóa tài khoản.
