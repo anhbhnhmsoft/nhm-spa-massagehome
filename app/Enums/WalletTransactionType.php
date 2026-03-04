@@ -20,9 +20,10 @@ enum WalletTransactionType: int
     case REFERRAL_INVITE_KTV_REWARD = 11; // Nhận hoa hồng khi mời KTV thành công
     case DEPOSIT_WECHAT_PAY = 12; // Nạp tiền qua Wechat Pay
     case FEE_WITHDRAW = 13; // Chi phí rút tiền
-    case FEE_TRANSPORT = 14; // Chi phí di chuyển (Trừ tiền KH)
-    case EARN_TRANSPORT = 15; // Nhận tiền từ di chuyển ( Cộng tiền KTV)
-
+    case PAYMENT_FEE_TRANSPORT = 14; // Chi phí di chuyển (Trừ tiền KH)
+    case PAYMENT_KTV_EARN_TRANSPORT = 15; // Nhận tiền từ di chuyển ( Cộng tiền KTV)
+    case REFUND_CUSTOMER_TRANSPORT = 16; // Hoàn tiền di chuyển cho khách hàng
+    case PAYMENT_REFUND_KTV_FOR_BOOKING_CANCEL = 17; // Hoàn tiền cho KTV khi hủy booking
 
     public function label(): string
     {
@@ -40,8 +41,10 @@ enum WalletTransactionType: int
             self::REFERRAL_INVITE_KTV_REWARD => __('admin.transaction.type.REFERRAL_INVITE_KTV_REWARD'),
             self::DEPOSIT_WECHAT_PAY => __('admin.transaction.type.DEPOSIT_WECHAT_PAY'),
             self::FEE_WITHDRAW => __('admin.transaction.type.FEE_WITHDRAW'),
-            self::FEE_TRANSPORT => __('admin.transaction.type.FEE_TRANSPORT'),
-            self::EARN_TRANSPORT => __('admin.transaction.type.EARN_TRANSPORT'),
+            self::PAYMENT_FEE_TRANSPORT => __('admin.transaction.type.PAYMENT_FEE_TRANSPORT'),
+            self::PAYMENT_KTV_EARN_TRANSPORT => __('admin.transaction.type.PAYMENT_KTV_EARN_TRANSPORT'),
+            self::REFUND_CUSTOMER_TRANSPORT => __('admin.transaction.type.REFUND_CUSTOMER_TRANSPORT'),
+            self::PAYMENT_REFUND_KTV_FOR_BOOKING_CANCEL => __('admin.transaction.type.PAYMENT_REFUND_KTV_FOR_BOOKING_CANCEL')
         };
     }
 
@@ -80,6 +83,7 @@ enum WalletTransactionType: int
     {
         return [
             self::PAYMENT->value,
+            self::PAYMENT_FEE_TRANSPORT->value,
         ];
     }
 
@@ -92,8 +96,12 @@ enum WalletTransactionType: int
         return [
             self::AFFILIATE->value,
             self::PAYMENT_FOR_KTV->value,
+            self::PAYMENT_KTV_EARN_TRANSPORT->value,
             self::REFERRAL_KTV->value,
             self::REFERRAL_INVITE_KTV_REWARD->value,
+            self::REFUND->value,
+            self::PAYMENT_REFUND_KTV_FOR_BOOKING_CANCEL->value,
+            self::REFUND_CUSTOMER_TRANSPORT->value,
         ];
     }
 
@@ -104,7 +112,7 @@ enum WalletTransactionType: int
     public static function transportStatus(): array
     {
         return [
-            self::FEE_TRANSPORT->value,
+            self::PAYMENT_KTV_EARN_TRANSPORT->value,
         ];
     }
 
@@ -115,6 +123,8 @@ enum WalletTransactionType: int
     public static function customerCostStatus(): array
     {
         return [
+            self::REFUND->value,
+            self::REFUND_CUSTOMER_TRANSPORT->value,
             self::AFFILIATE->value,
         ];
     }
@@ -143,6 +153,8 @@ enum WalletTransactionType: int
             self::REFERRAL_KTV->value,
             self::REFERRAL_INVITE_KTV_REWARD->value,
             self::PAYMENT_FOR_KTV->value,
+            self::PAYMENT_KTV_EARN_TRANSPORT->value,
+            self::PAYMENT_REFUND_KTV_FOR_BOOKING_CANCEL->value,
         ];
     }
 

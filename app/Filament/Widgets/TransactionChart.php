@@ -4,27 +4,22 @@ namespace App\Filament\Widgets;
 
 use App\Enums\DateRangeDashboard;
 use Filament\Widgets\ChartWidget;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 
 class TransactionChart extends ChartWidget
 {
-    protected int | string | array $columnSpan = 3;
+    use InteractsWithPageFilters;
 
-    protected ?string $pollingInterval = "5m";
+    protected int | string | array $columnSpan = 3;
 
     public function getHeading(): string
     {
         return __('admin.dashboard.charts.transaction_dashboard');
     }
 
-    protected function getFilters(): ?array
-    {
-        return DateRangeDashboard::toOptions();
-    }
     protected function getData(): array
     {
-        $activeFilter = $this->filter ?? DateRangeDashboard::DAY->value;
-        $dateRange = DateRangeDashboard::from($activeFilter);
-
+        $dateRange = $this->pageFilters['date_range'] ? DateRangeDashboard::tryFrom($this->pageFilters['date_range']) : DateRangeDashboard::ALL;
 
         $dashboardService = app(\App\Services\DashboardService::class);
         $result = $dashboardService->getTransactionChartData($dateRange);

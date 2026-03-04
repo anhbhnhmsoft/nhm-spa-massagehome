@@ -232,7 +232,6 @@
     - money_amount (decimal(15,2), nullable) -- số tiền thực tế (số tiền người dùng nạp, rút)
     - exchange_rate_point (decimal(15,2), nullable, default 0.00) -- tỷ giá đổi tiền (số tiền point đổi thành 1 unit tiền)
     - point_amount (decimal(15,2), nullable) -- số tiền point (số tiền point sau khi đổi tiền)
-    - balance_after (decimal(15,2), nullable) -- số dư ví sau giao dịch (số tiền point sau khi giao dịch)
     - status (smallint) -- trạng thái giao dịch (trong enum TransactionStatus)
     - description (varchar, nullable) -- mô tả giao dịch
     - expired_at (timestamp, nullable) -- thời gian hết hạn (nếu có)

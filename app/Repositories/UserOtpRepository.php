@@ -61,7 +61,7 @@ class UserOtpRepository extends BaseRepository
      * @param int $minutes - Thời gian hiệu lực OTP (mặc định là 30 phút)
      * @return UserOtp|null
      */
-    public function getLatestVerifiedOtp(string $phone, UserOtpType $type, int $minutes = 30): ?UserOtp
+    public function getLatestVerifiedOtp(string $phone, UserOtpType $type, int $minutes): ?UserOtp
     {
         return $this->query()
             ->where('phone', $phone)
@@ -115,5 +115,21 @@ class UserOtpRepository extends BaseRepository
             'ip_address'   => $ip,
             'attempts'     => 0,
         ]);
+    }
+
+
+    /**
+     * Xoá OTP cũ khi đã xác thực thành công
+     * @param string $phone
+     * @param UserOtpType $type
+     * @return void
+     */
+    public function deleteOtpHadVerified(string $phone, UserOtpType $type)
+    {
+        $this->query()
+            ->where('phone', $phone)
+            ->whereNotNull('verified_at')
+            ->where('type', $type)
+            ->delete();
     }
 }

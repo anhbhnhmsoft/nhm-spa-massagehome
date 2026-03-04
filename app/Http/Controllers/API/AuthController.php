@@ -76,9 +76,7 @@ class AuthController extends BaseController
                 message: $resService->getMessage(),
             );
         }
-        return $this->sendSuccess(
-            message: __('auth.success.verify_register'),
-        );
+        return $this->sendSuccess();
     }
 
     /**
@@ -101,12 +99,8 @@ class AuthController extends BaseController
                 message: $resService->getMessage(),
             );
         }
-        $dataService = $resService->getData();
         return $this->sendSuccess(
-            data: [
-                'expire_minutes' => $dataService['expire_minutes'],
-            ],
-            message: __('auth.success.resend_register_otp'),
+            data: $resService->getData(),
         );
     }
 
@@ -171,6 +165,110 @@ class AuthController extends BaseController
             ],
             message: __('auth.success.login'),
         );
+    }
+
+    /**
+     * Quên mật khẩu.
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function forgotPassword(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'phone' => ['required', new PhoneRule()],
+        ]);
+        // Gửi lại OTP đăng ký
+        $resService = $this->authService->forgotPassword(
+            phone: $data['phone'],
+        );
+        if ($resService->isError()) {
+            return $this->sendError(
+                message: $resService->getMessage(),
+            );
+        }
+        return $this->sendSuccess(
+            data: $resService->getData(),
+        );
+    }
+
+    /**
+     * Xác thực OTP quên mật khẩu.
+     * @param Request $request
+     * @return JsonResponse
+     * @throws \Throwable
+     */
+    public function verifyOtpForgotPassword(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'phone' => ['required', new PhoneRule()],
+            'otp' => ['required', 'numeric'],
+        ], [
+            'phone.required' => __('validation.phone.required'),
+            'otp.required' => __('auth.error.invalid_otp'),
+            'otp.numeric' => __('auth.error.invalid_otp'),
+        ]);
+        // Kiểm tra OTP và lấy token
+        $resService = $this->authService->verifyOtpForgotPassword(
+            phone: $data['phone'],
+            otp: $data['otp'],
+        );
+        if ($resService->isError()) {
+            return $this->sendError(
+                message: $resService->getMessage(),
+            );
+        }
+        return $this->sendSuccess();
+    }
+
+    /**
+     * Gửi lại OTP quên mật khẩu.
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function resendOtpForgotPassword(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'phone' => ['required', new PhoneRule()],
+        ]);
+
+        // Gửi lại OTP đăng ký
+        $resService = $this->authService->resendOtpForgotPassword(
+            phone: $data['phone'],
+        );
+        if ($resService->isError()) {
+            return $this->sendError(
+                message: $resService->getMessage(),
+            );
+        }
+        return $this->sendSuccess(
+            data: $resService->getData(),
+        );
+    }
+
+
+    /**
+     * Đổi mật khẩu.
+     * @param Request $request
+     * @return JsonResponse
+     * @throws \Throwable
+     */
+    public function resetPassword(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'phone' => ['required', new PhoneRule()],
+            'password' => ['required', new PasswordRule()],
+        ]);
+        // Đổi mật khẩu
+        $resService = $this->authService->resetPassword(
+            phone: $data['phone'],
+            password: $data['password'],
+        );
+        if ($resService->isError()) {
+            return $this->sendError(
+                message: $resService->getMessage(),
+            );
+        }
+        return $this->sendSuccess();
     }
 
     /**
@@ -380,18 +478,12 @@ class AuthController extends BaseController
      * @param Request $request
      * @return JsonResponse
      */
-    public function lockAccount(Request $request): JsonResponse
+    public function lockAccount(): JsonResponse
     {
         $result = $this->authService->lockAccount();
         if ($result->isError()) {
             return $this->sendError(
                 message: $result->getMessage(),
-            );
-        }
-        $res = $this->authService->lockAccount();
-        if ($res->isError()) {
-            return $this->sendError(
-                message: $res->getMessage(),
             );
         }
         return $this->sendSuccess(

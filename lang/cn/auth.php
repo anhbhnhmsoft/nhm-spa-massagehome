@@ -15,6 +15,7 @@ return [
     ],
     'error' => [
         'phone_verified' => '此手机号码已验证。',
+        'phone_not_verified' => '此手机号码未验证。',
         'blocked' => '错误尝试过多。请在 :minutes 分钟后重试。',
         'already_sent' => 'OTP 验证码已发送。请检查。',
         'invalid_otp' => '无效的 OTP 验证码。',

@@ -515,7 +515,6 @@ class PaymentService extends BaseService
             // Cập nhật trạng thái giao dịch thành công
             $transaction->update([
                 'status' => WalletTransactionStatus::COMPLETED->value,
-                'balance_after' => $wallet->balance + $pointEarned,
                 'metadata' => json_encode($data), // Lưu toàn bộ dữ liệu từ PayOS cập nhật mới nhất
             ]);
 
@@ -532,7 +531,6 @@ class PaymentService extends BaseService
                     'transaction_id' => $transaction->id,
                     'amount' => $dataPayOs['amount'],
                     'point_amount' => $pointEarned,
-                    'balance_after' => $wallet->balance,
                 ]
             );
 
@@ -636,7 +634,6 @@ class PaymentService extends BaseService
             // Cập nhật trạng thái giao dịch thành công
             $transaction->update([
                 'status' => WalletTransactionStatus::COMPLETED->value,
-                'balance_after' => $wallet->balance + $pointEarned,
                 'metadata' => json_encode($data), // Lưu toàn bộ dữ liệu từ ZaloPay cập nhật mới nhất
             ]);
 
@@ -653,7 +650,6 @@ class PaymentService extends BaseService
                     'transaction_id' => $transaction->id,
                     'amount' => $transaction->money_amount,
                     'point_amount' => $pointEarned,
-                    'balance_after' => $wallet->balance,
                 ]
             );
 

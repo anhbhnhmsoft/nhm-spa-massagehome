@@ -2,25 +2,31 @@
 
 namespace App\Filament\Pages;
 
-use App\Enums\UserRole;
+use App\Enums\DateRangeDashboard;
 use App\Filament\Resources\DangerSupports\DangerSupportResource;
 use App\Filament\Widgets\GeneralBookingStats;
 use App\Filament\Widgets\GeneralStats;
 use App\Filament\Widgets\TransactionChart;
 use App\Filament\Widgets\UserStaticStats;
-use App\Models\User;
 use App\Services\DashboardService;
 use Filament\Actions\Action;
-use Filament\Notifications\Notification;
+use Filament\Forms\Components\Select;
 use Filament\Pages\Dashboard as PagesDashboard;
+use Filament\Pages\Dashboard\Actions\FilterAction;
+use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
 
 class Dashboard extends PagesDashboard
 {
+    use HasFiltersForm;
+
+
     public function getColumns(): int
     {
         return 6;
     }
+
     protected string $pollingInterval = '5m';
+
 
     public static function getNavigationLabel(): string
     {
@@ -30,6 +36,18 @@ class Dashboard extends PagesDashboard
     public function getTitle(): string
     {
         return __('dashboard.title');
+    }
+
+    public function filtersForm($schema)
+    {
+        return $schema
+            ->components([
+                Select::make('date_range')
+                    ->label(__('admin.dashboard.filters.date_range'))
+                    ->options(DateRangeDashboard::toOptions())
+                    ->default(DateRangeDashboard::ALL->value)
+                    ->selectablePlaceholder(false),
+            ]);
     }
 
     protected function getHeaderActions(): array

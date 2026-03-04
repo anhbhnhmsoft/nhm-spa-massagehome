@@ -3,18 +3,23 @@
 namespace App\Filament\Widgets;
 
 use App\Core\Helper;
+use App\Enums\DateRangeDashboard;
 use App\Services\DashboardService;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
-
 class GeneralStats extends BaseWidget
 {
+    use InteractsWithPageFilters;
+
     protected function getStats(): array
     {
+        $dateRange = $this->pageFilters['date_range'] ? DateRangeDashboard::tryFrom($this->pageFilters['date_range']) : DateRangeDashboard::ALL;
+
         $dashboardService = app(DashboardService::class);
-        $result = $dashboardService->getGeneralStats();
+        $result = $dashboardService->getGeneralStats($dateRange);
 
         if (!$result->isSuccess()) {
             return [
@@ -36,6 +41,7 @@ class GeneralStats extends BaseWidget
                 ->schema([
                     // Tiền in out hệ thống
                     Section::make(__('dashboard.general_stat.title_income_system'))
+                        ->compact()
                         ->columnSpan(1)
                         ->schema([
                             // Tổng tiền nạp vào hệ thống
@@ -47,6 +53,7 @@ class GeneralStats extends BaseWidget
 
                     // Doanh số hệ thống
                     Section::make(__('dashboard.general_stat.title_revenue_system'))
+                        ->compact()
                         ->columnSpan(3)
                         ->columns(3)
                         ->schema([

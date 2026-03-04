@@ -139,70 +139,6 @@ final class Helper
 
 
     /**
-     * Tính toán số tiền hệ thống phải trừ đi.
-     * @param float $price
-     * @param float $discountRate
-     * @param int $precision
-     * @return float
-     */
-    public static function calculateSystemMinus(float $price, float $discountRate = 0, int $precision = 0): float
-    {
-        // Đảm bảo tỷ lệ chiết khấu hợp lệ
-        $discountRate = max(0, min(100, $discountRate));
-
-        return round($price * ($discountRate / 100), $precision);
-    }
-
-    /**
-     * Tính toán số tiền KTV thực nhận.
-     * * @param float $price Giá dịch vụ (sau khi trừ giảm giá của KTV).
-     * @param float $discountRate Tỷ lệ chiết khấu hệ thống (ví dụ: 10, 20...).
-     * @param int $precision Độ chính xác làm tròn (mặc định là 0 để lấy số nguyên).
-     * @return float
-     */
-    public static function calculatePriceDiscountForKTV(float $price, float $discountRate, int $precision = 0): float
-    {
-        // Tính số tiền Hệ thống thu (Commission) và làm tròn trước
-        $systemMinus = self::calculateSystemMinus($price, $discountRate, $precision);
-
-        // KTV thực nhận = Tổng tiền - Phí sàn
-        return $price - $systemMinus;
-    }
-
-    /**
-     * Tính toán số tiền mà người giới thiệu sẽ nhận được.
-     * @param float $price
-     * @param float $discountRate
-     * @param int $precision
-     * @return float
-     */
-    public static function calculatePriceReferrer(float $price, float $discountRate, int $precision = 0): float
-    {
-        $discountRate = max(0, min(100, $discountRate));
-
-        return round($price * ($discountRate / 100), $precision);
-    }
-
-    /**
-     * Tính toán số tiền hoa hồng mà người giới thiệu sẽ nhận được.
-     * @param float $price Giá dịch vụ (sau khi trừ giảm giá của KTV).
-     * @param float $commissionPercent Tỷ lệ hoa hồng (ví dụ: 10, 20...).
-     * @param float $minCommission Giá trị hoa hồng tối thiểu.
-     * @param float $maxCommission Giá trị hoa hồng tối đa.
-     * @param int $precision Độ chính xác làm tròn (mặc định là 0 để lấy số nguyên).
-     * @return float
-     */
-    public static function calculatePriceAffiliate(float $price, float $commissionPercent, float $minCommission, float $maxCommission, int $precision = 0): float
-    {
-        // Tính số tiền hoa hồng mà người giới thiệu sẽ nhận được
-        $amount = $price * ($commissionPercent / 100);
-        // Clamp giá trị trong khoảng min/max
-        $amount = max($minCommission, min($amount, $maxCommission));
-        // Làm tròn số tiền hoa hồng
-        return round($amount, $precision);
-    }
-
-    /**
      * Tính toán số tiền mà người dùng sẽ nhận được khi rút tiền.
      * @param float $amount Số tiền Point cần rút.
      * @param float $exchangeRate Tỷ giá đổi từ Point sang VND.
@@ -237,6 +173,24 @@ final class Helper
             $phone = '84' . $phone;
         }
         return $phone;
+    }
+
+    /**
+     * Định dạng khoảng cách từ mét sang km hoặc m.
+     * @param $meters
+     * @return string
+     */
+    public static function formatDistanceMeter($meters): string
+    {
+        if (is_null($meters)) {
+            return 'Chưa xác định';
+        }
+
+        if ($meters < 1000) {
+            return round($meters) . ' m';
+        }
+
+        return rtrim(number_format($meters / 1000, 1), '.0') . ' km';
     }
 
     public static function isValidPhone($phone): bool

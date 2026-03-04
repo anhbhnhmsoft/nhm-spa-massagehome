@@ -162,7 +162,8 @@ return
             "label_leader" => "技师组长管理",
             "model_label" => "技师",
             "action" => [
-                "view_services" => "查看服务"
+                "view_services" => "查看服务",
+                'choose_categories' => '选择服务类别',
             ],
             "tooltip" => [
                 "view_services" => "查看技师服务列表"
@@ -200,6 +201,7 @@ return
                 'list_referral_leader' => '推荐技师列表',
                 'transaction_list' => '交易列表',
                 'booking_list' => '预订列表',
+                'customer_affiliate' => '客户推广',
             ],
             'relation_manager' => [
                 'reviews_received' => '收到评价',
@@ -407,6 +409,7 @@ return
                 'time_range' => '开始 - 结束',
                 'end_time' => '结束时间',
                 'price' => '价格',
+                'price_transportation' => '运输价格',
                 'price_before_discount' => '折前价格',
                 'payment_type' => '支付方式',
                 'note' => '备注',
@@ -421,6 +424,7 @@ return
                 'amount_pay_to_ktv' => '支付给技师金额',
                 'amount_pay_back_to_client' => '退还客户金额',
                 'cancel_by' => '取消者',
+                'distance_to_client' => '客户距离',
             ],
             'sections' => [
                 'general_info' => '基本信息',
@@ -567,6 +571,10 @@ return
                 'REFERRAL_INVITE_KTV_REWARD' => '邀请技师奖励',
                 'DEPOSIT_WECHAT_PAY' => '充值 (微信支付)',
                 'FEE_WITHDRAW' => '提现手续费',
+                'PAYMENT_FEE_TRANSPORT' => '交通费用',
+                'PAYMENT_KTV_EARN_TRANSPORT' => '交通费用奖励',
+                'REFUND_CUSTOMER_TRANSPORT' => '客户交通费用退款',
+                'PAYMENT_REFUND_KTV_FOR_BOOKING_CANCEL' => '取消订单退款',
             ],
             'status' => [
                 'PENDING' => '处理中',
@@ -651,6 +659,9 @@ return
             ],
         ],
         'dashboard' => [
+            'filters' => [
+                'date_range' => '时间范围',
+            ],
             'stats' => [
                 'revenue' => '总收入 (积分)',
                 'booking_value' => '预订价值',

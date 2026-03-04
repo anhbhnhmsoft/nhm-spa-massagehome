@@ -229,8 +229,12 @@ class ConfigService extends BaseService
                     $new = $this->affiliateConfigRepository->create($configData);
                     $currentIds[] = $new->id;
                 }
+                // Xóa cache config
+                Caching::deleteCache(
+                    key: CacheKey::CACHE_KEY_CONFIG_AFFILIATE,
+                    uniqueKey: $configData['target_role']
+                );
             }
-
             // Xóa các config không được gửi lên
             $this->affiliateConfigRepository->query()->whereNotIn('id', $currentIds)->delete();
 
@@ -258,13 +262,13 @@ class ConfigService extends BaseService
      */
     public function getConfigAffiliate(UserRole $role): ServiceReturn
     {
-//        $config = Caching::getCache(
-//            key: CacheKey::CACHE_KEY_CONFIG_AFFILIATE,
-//            uniqueKey: $role->value,
-//        );
-//        if ($config) {
-//            return ServiceReturn::success(data: $config);
-//        }
+        $config = Caching::getCache(
+            key: CacheKey::CACHE_KEY_CONFIG_AFFILIATE,
+            uniqueKey: $role->value,
+        );
+        if ($config) {
+            return ServiceReturn::success(data: $config);
+        }
         try {
             $config = $this->affiliateConfigRepository->query()
                 ->where('target_role', $role->value)

@@ -15,6 +15,7 @@ return [
     ],
     'error' => [
         'phone_verified' => 'Số điện thoại này đã được đăng ký.',
+        'phone_not_verified' => 'Số điện thoại này chưa được xác thực.',
         'blocked' => 'Bạn đã nhập sai quá nhiều lần. Vui lòng thử lại sau :minutes phút.',
         'already_sent' => 'Mã OTP đã được gửi. Vui lòng kiểm tra lại.',
         'invalid_otp' => 'Mã OTP không hợp lệ.',

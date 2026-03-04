@@ -3,6 +3,7 @@
 namespace App\Services\Validator;
 
 use App\Core\Helper;
+use App\Core\Helper\CalculatePrice;
 use App\Core\Service\ServiceException;
 use App\Models\Wallet;
 
@@ -19,7 +20,13 @@ class WalletValidator
      */
     public function validateBookingBalance(Wallet $wallet, float $price, float $priceDistance, float $couponDiscount = 0)
     {
-        if ($price > $wallet->balance) {
+        // Tính toán tổng giá trị đơn hàng
+        $finalPrice = CalculatePrice::totalBookingPrice(
+            price: $price,
+            priceDiscount: $couponDiscount,
+            priceTransportation: $priceDistance,
+        );
+        if ($finalPrice > $wallet->balance) {
             throw new ServiceException(
                 message: __("booking.error.user_not_enough_money", [
                     'balance' => Helper::formatPrice($wallet->balance),

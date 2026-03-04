@@ -3,20 +3,26 @@
 namespace App\Filament\Widgets;
 
 use App\Enums\BookingStatus;
+use App\Enums\DateRangeDashboard;
 use App\Filament\Clusters\Service\Resources\Bookings\BookingResource;
 use App\Services\DashboardService;
 use Filament\Schemas\Components\Section;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class GeneralBookingStats extends BaseWidget
 {
+    use InteractsWithPageFilters;
+
     protected function getStats(): array
     {
+        $dateRange = $this->pageFilters['date_range'] ? DateRangeDashboard::tryFrom($this->pageFilters['date_range']) : DateRangeDashboard::ALL;
+
         $dashboardService = app(DashboardService::class);
 
         // Get Revenue stats from GeneralStats
-        $result = $dashboardService->getGeneralBookingStats();
+        $result = $dashboardService->getGeneralBookingStats($dateRange);
         if (!$result->isSuccess()) {
             return [
                 Stat::make('Error', 'Unable to load data')->color('danger'),

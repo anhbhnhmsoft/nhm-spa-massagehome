@@ -29,13 +29,13 @@ class ChatRoomRepository extends BaseRepository
             ->addSelect([
                 'last_message_at' => Message::select('created_at')
                     ->whereColumn('room_id', 'chat_rooms.id')
-                    ->latest()
+                    ->orderBy('created_at', 'DESC')
                     ->take(1)
             ])
             ->orderByRaw('(' .
-                Message::select('created_at')
+                Message::query()->select('created_at')
                     ->whereColumn('room_id', 'chat_rooms.id')
-                    ->latest()
+                    ->orderBy('created_at', 'DESC')
                     ->take(1)
                     ->toSql()
                 . ') DESC NULLS LAST');

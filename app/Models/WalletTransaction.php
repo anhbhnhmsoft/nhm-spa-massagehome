@@ -27,7 +27,6 @@ class WalletTransaction extends Model
         'money_amount',
         'exchange_rate_point',
         'point_amount',
-        'balance_after',
         'status',
         'description',
         'expired_at',
@@ -44,7 +43,6 @@ class WalletTransaction extends Model
         'money_amount' => 'decimal:2',
         'exchange_rate_point' => 'decimal:2',
         'point_amount' => 'decimal:2',
-        'balance_after' => 'decimal:2',
         'expired_at' => 'datetime',
     ];
 

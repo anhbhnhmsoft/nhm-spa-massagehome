@@ -47,11 +47,18 @@ class BookingInfoList
                             ->label(__('admin.booking.fields.service'))
                             ->color('primary')
                             ->weight('bold'),
+
                         TextEntry::make('price')
                             ->label(__('admin.booking.fields.price'))
                             ->formatStateUsing(fn ($state) => number_format($state, 0, '.', ','))
                             ->suffix(' ' . __('admin.currency'))
                             ->icon('heroicon-m-currency-dollar'),
+                        TextEntry::make('price_transportation')
+                            ->label(__('admin.booking.fields.price_transportation'))
+                            ->formatStateUsing(fn ($state) => number_format($state, 0, '.', ','))
+                            ->suffix(' ' . __('admin.currency'))
+                            ->icon('heroicon-m-currency-dollar'),
+
                         TextEntry::make('coupon.name')
                             ->icon('heroicon-m-tag')
                             ->hidden(fn ($record) => !$record->coupon_id)
@@ -98,10 +105,23 @@ class BookingInfoList
                                     })
                                     ->openUrlInNewTab()
                             ),
-                        TextEntry::make('note_address')
+                        TextEntry::make('ktv_address')
+                            ->label(__('admin.booking.fields.ktv_address'))
                             ->icon('heroicon-m-map-pin')
-                            ->label(__('admin.booking.fields.note_address'))
-                            ->placeholder(__('admin.common.empty')),
+                            ->suffixAction(
+                                Action::make('open_map')
+                                    ->label(__('admin.booking.actions.view_map'))
+                                    ->icon('heroicon-o-map')
+                                    ->color('primary')
+                                    ->url(function ($record) {
+                                        // Ưu tiên dùng tọa độ nếu có, nếu không thì dùng địa chỉ text
+                                        if ($record->ktv_latitude && $record->ktv_longitude) {
+                                            return "https://www.google.com/maps/search/?api=1&query={$record->ktv_latitude},{$record->ktv_longitude}";
+                                        }
+                                        return "https://www.google.com/maps/search/?api=1&query=" . urlencode($record->ktv_address);
+                                    })
+                                    ->openUrlInNewTab()
+                            ),
                         TextEntry::make('note')
                             ->label(__('admin.booking.fields.note'))
                             ->columnSpanFull()
@@ -125,15 +145,15 @@ class BookingInfoList
                     ]),
 
 
-                // Dịch vụ thay thế (cho reassign)
-                Section::make(__('admin.booking.actions.reassign.heading'))
-                    ->hidden(fn($record) => $record->status !== BookingStatus::WAITING_CANCEL->value)
-                    ->schema([
-                        ViewEntry::make('similar_services')
-                            ->view('filament.clusters.service.bookings.similar_services_table_wrapper')
-                            ->hiddenLabel(),
-                    ])
-                    ->columnSpanFull(),
+//                // Dịch vụ thay thế (cho reassign)
+//                Section::make(__('admin.booking.actions.reassign.heading'))
+//                    ->hidden(fn($record) => $record->status !== BookingStatus::WAITING_CANCEL->value)
+//                    ->schema([
+//                        ViewEntry::make('similar_services')
+//                            ->view('filament.clusters.service.bookings.similar_services_table_wrapper')
+//                            ->hiddenLabel(),
+//                    ])
+//                    ->columnSpanFull(),
             ]);
     }
 }

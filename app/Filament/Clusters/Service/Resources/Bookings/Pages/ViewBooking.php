@@ -3,9 +3,11 @@
 namespace App\Filament\Clusters\Service\Resources\Bookings\Pages;
 
 use App\Enums\BookingStatus;
+use App\Enums\Jobs\WalletTransCase;
 use App\Enums\UserRole;
 use App\Filament\Clusters\Service\Resources\Bookings\BookingResource;
 use App\Filament\Components\CommonActions;
+use App\Jobs\WalletTransactionBookingJob;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -22,6 +24,7 @@ class ViewBooking extends ViewRecord
         return [
             CommonActions::backAction(static::getResource()),
 
+            // Chuyển booking sang cho KTV khác
             Action::make('reassign_booking')
                 ->visible(function($record) {
                     return $record->status === BookingStatus::WAITING_CANCEL->value || $record->status === BookingStatus::CONFIRMED->value;
@@ -31,50 +34,14 @@ class ViewBooking extends ViewRecord
                 ->modalHeading(__('admin.booking.actions.reassign.heading'))
                 ->modalDescription(__('admin.booking.actions.reassign.description'))
                 ->modalSubmitActionLabel(__('admin.booking.actions.reassign.modal_submit'))
-                ->schema([
-                    \Filament\Forms\Components\Select::make('service_info')
-                        ->label(__('admin.booking.actions.reassign.select_service_placeholder'))
-                        ->placeholder(__('common.placeholder.select'))
-                        ->searchPrompt(__('common.search_prompt'))
-                        ->noSearchResultsMessage(__('common.no_results_found'))
-                        ->loadingMessage(__('common.loading'))
-                        ->options(function ($record, \App\Services\BookingService $service) {
-                            return $service->getSimilarServicesForReassignment($record)
-                                ->mapWithKeys(function ($item) {
-                                    return [$item['user_id'] => $item['user_name']];
-                                });
-                        })
-                        ->required()
-                        ->searchable()
-                        ->preload(),
-                ])
-                ->action(function (array $data, $record) {
-                    $info = json_decode($data['service_info'], true);
-                    \App\Jobs\WalletTransactionJob::dispatch(
-                        [
-                            'booking_id' => $record->id,
-                            'service_id' => $info['service_id'],
-                            'ktv_id' => $info['ktv_id']
-                        ],
-                        \App\Enums\Jobs\WalletTransCase::REASSIGN_BOOKING
-                    );
+                ->modalContent(fn ($record) => view(
+                    'filament.clusters.service.bookings.similar_services_table_wrapper',
+                    ['record' => $record],
+                ))
+                ->slideOver()
+                ->modalFooterActions(fn () => []),
 
-                    Notification::make()
-                        ->title(__('admin.booking.actions.reassign.processing_title'))
-                        ->success()
-                        ->send();
-                })
-                ->modalFooterActions(function ($action) {
-                    return [
-                        $action->getModalCancelAction()
-                            ->label(__('common.action.close'))
-                            ->color('danger'),
-                        $action->getModalSubmitAction()
-                            ->label(__('common.action.submit'))
-                            ->color('success'),
-                    ];
-                }),
-
+            // Xác nhận hủy booking
             Action::make('confirm_cancel')
                 ->hidden(fn($record) => $record->status !== BookingStatus::WAITING_CANCEL->value)
                 ->label(__('admin.booking.actions.confirm_cancel'))
@@ -87,54 +54,26 @@ class ViewBooking extends ViewRecord
                         ->compact()
                         ->description(__('admin.booking.actions.confirm_cancel_helper_text'))
                         ->schema([
-                            TextInput::make('price')
-                                ->label(__('admin.booking.fields.price'))
-                                ->prefix(__('admin.currency'))
-                                ->disabled()
-                                ->formatStateUsing(fn() => number_format($record->price, 0, '.', ',')),
-
                             TextInput::make('amount_pay_back_to_client')
                                 ->label(__('admin.booking.fields.amount_pay_back_to_client'))
                                 ->prefix(__('admin.currency'))
-                                ->numeric()
-                                ->live(onBlur: true)
-                                ->afterStateUpdated(function ($get, $set, ?string $state) use ($record) {
-                                    $price = (float)$record->price;
-                                    $amountClient = (float)$state;
-                                    $amountKtv = round($price - $amountClient);
-                                    $set('amount_pay_to_ktv', $amountKtv);
-                                }),
-
+                                ->numeric(),
                             TextInput::make('amount_pay_to_ktv')
                                 ->label(__('admin.booking.fields.amount_pay_to_ktv'))
                                 ->prefix(__('admin.currency'))
-                                ->numeric()
-                                ->live(onBlur: true)
-                                ->afterStateUpdated(function ($get, $set, ?string $state) use ($record) {
-                                    $price = (float)$record->price;
-                                    $amountKtv = (float)$state;
-                                    $amountClient = round($price - $amountKtv);
-                                    $set('amount_pay_back_to_client', $amountClient);
-                                }),
-                            TextInput::make('cancel_by')
-                                ->disabled()
-                                ->label(__('admin.booking.fields.cancel_by'))
-                                ->dehydrated()
-                                ->formatStateUsing(fn() => UserRole::getLabel($record->cancel_by)),
-                            Textarea::make('reason_cancel')
-                                ->label(__('admin.booking.fields.reason_cancel'))
-                                ->disabled()
-                                ->dehydrated()
-                                ->default($record->reason_cancel),
-
+                                ->numeric(),
                         ])
                 ])
                 ->modalHeading(__('admin.booking.actions.cancel.heading'))
                 ->modalDescription(__('admin.booking.actions.cancel.description'))
                 ->action(function ($record, $data) {
-                    \App\Jobs\WalletTransactionJob::dispatch(
-                        ['booking_id' => $record->id] + $data,
-                        \App\Enums\Jobs\WalletTransCase::CONFIRM_CANCEL_BOOKING
+                    WalletTransactionBookingJob::dispatch(
+                        bookingId: $record->id,
+                        data: [
+                            'amount_pay_back_to_client' => (int)($data['amount_pay_back_to_client'] ?? 0),
+                            'amount_pay_to_ktv' => (int)($data['amount_pay_to_ktv'] ?? 0),
+                        ],
+                        case: WalletTransCase::CONFIRM_CANCEL_BOOKING,
                     );
                     Notification::make()
                         ->title(__('admin.booking.actions.cancel_processing_title'))

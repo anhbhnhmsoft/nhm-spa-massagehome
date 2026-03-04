@@ -163,7 +163,8 @@ return
             "label_leader" => "Technician Leader Management",
             "model_label" => "Technician",
             "action" => [
-                "view_services" => "View Services"
+                "view_services" => "View Services",
+                'choose_categories' => 'Choose Categories',
             ],
             "tooltip" => [
                 "view_services" => "View KTV Services List"
@@ -201,6 +202,7 @@ return
                 'list_referral_leader' => 'List of Referred KTVs',
                 'transaction_list' => 'Transaction List',
                 'booking_list' => 'Booking List',
+                'customer_affiliate' => 'Customer Affiliate',
             ],
             'relation_manager' => [
                 'reviews_received' => 'Reviews Received',
@@ -408,6 +410,7 @@ return
                 'time_range' => 'Start - End',
                 'end_time' => 'End Time',
                 'price' => 'Price',
+                'price_transportation' => 'Price Transportation',
                 'price_before_discount' => 'Price Before Discount',
                 'payment_type' => 'Payment Method',
                 'note' => 'Note',
@@ -422,6 +425,7 @@ return
                 'amount_pay_to_ktv' => 'Amount Pay to KTV',
                 'amount_pay_back_to_client' => 'Amount Pay Back to Client',
                 'cancel_by' => 'Cancelled By',
+                'distance_to_client' => 'Distance to Client',
             ],
             'sections' => [
                 'general_info' => 'General Info',
@@ -568,6 +572,10 @@ return
                 'REFERRAL_INVITE_KTV_REWARD' => 'KTV Invitation Reward',
                 'DEPOSIT_WECHAT_PAY' => 'Deposit (WeChat Pay)',
                 'FEE_WITHDRAW' => 'Withdrawal Fee',
+                'PAYMENT_FEE_TRANSPORT' => 'Payment Fee for Transportation',
+                'PAYMENT_KTV_EARN_TRANSPORT' => 'Payment Earn for Transportation',
+                'REFUND_CUSTOMER_TRANSPORT' => 'Refund Customer for Transportation',
+                'PAYMENT_REFUND_KTV_FOR_BOOKING_CANCEL' => 'Refund KTV for Booking Cancel',
             ],
             'status' => [
                 'PENDING' => 'Pending',
@@ -652,6 +660,9 @@ return
             ],
         ],
         'dashboard' => [
+            'filters' => [
+                'date_range' => 'Date Range',
+            ],
             'stats' => [
                 'revenue' => 'Total Revenue (Points)',
                 'booking_value' => 'Booking Value',

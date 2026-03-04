@@ -409,10 +409,12 @@ return
                 'time_range' => 'Bắt đầu - Kết thúc',
                 'end_time' => 'Thời gian kết thúc',
                 'price' => 'Giá',
+                'price_transportation' => 'Giá di chuyển',
                 'price_before_discount' => 'Giá trước khi giảm',
                 'payment_type' => 'Phương thức thanh toán',
                 'note' => 'Ghi chú',
                 'address' => 'Địa chỉ',
+                'ktv_address' => 'Địa chỉ của KTV',
                 'latitude' => 'Vĩ độ',
                 'longitude' => 'Kinh độ',
                 'rating' => 'Đánh giá',
@@ -423,6 +425,7 @@ return
                 'amount_pay_to_ktv' => 'Số tiền trả cho KTV',
                 'amount_pay_back_to_client' => 'Số tiền trả lại khách hàng',
                 'cancel_by' => 'Bên hủy',
+                'distance_to_client' => 'Khoảng cách đến khách hàng',
                 'price_cancel_helper_text' => 'Số tiền của đơn dịch vụ, nếu bạn không điền số tiền trả lại khách hàng thì sẽ hoàn toàn bộ số tiền này cho khách hàng',
             ],
             'sections' => [
@@ -570,8 +573,10 @@ return
                 'REFERRAL_INVITE_KTV_REWARD' => 'Nhận hoa hồng khi mời KTV thành công',
                 'DEPOSIT_WECHAT_PAY' => 'Nạp tiền qua Wechat Pay',
                 'FEE_WITHDRAW' => 'Phí rút tiền',
-                'FEE_TRANSPORT' => 'Phí di chuyển',
-                'EARN_TRANSPORT' => 'Cộng tiền di chuyển',
+                'PAYMENT_FEE_TRANSPORT' => 'Phí di chuyển',
+                'PAYMENT_KTV_EARN_TRANSPORT' => 'Cộng tiền di chuyển cho KTV',
+                'REFUND_CUSTOMER_TRANSPORT' => 'Hoàn tiền di chuyển cho khách hàng',
+                'PAYMENT_REFUND_KTV_FOR_BOOKING_CANCEL' => 'Hoàn tiền cho KTV khi hủy booking',
             ],
             'status' => [
                 'PENDING' => 'Chờ xử lý',
@@ -655,6 +660,9 @@ return
             ],
         ],
         'dashboard' => [
+            'filters' => [
+                'date_range' => 'Khoảng thời gian',
+            ],
             'stats' => [
                 'revenue' => 'Tổng doanh thu (Điểm)',
                 'booking_value' => 'Giá trị đặt lịch',

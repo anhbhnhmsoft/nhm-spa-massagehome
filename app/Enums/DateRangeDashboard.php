@@ -2,6 +2,7 @@
 
 namespace App\Enums;
 
+use App\Core\Helper\EnumHelper;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
@@ -10,6 +11,7 @@ use Illuminate\Support\Collection;
  */
 enum DateRangeDashboard: string
 {
+    use EnumHelper;
     case DAY = 'day'; // Ngày
     case WEEK = 'week'; // Tuần
     case MONTH = 'month'; // Tháng

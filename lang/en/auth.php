@@ -15,6 +15,7 @@ return [
     ],
     'error' => [
         'phone_verified' => 'This phone number has already been verified.',
+        'phone_not_verified' => 'This phone number has not been verified.',
         'blocked' => 'Too many invalid attempts. Please try again in :minutes minutes.',
         'already_sent' => 'OTP code has already been sent. Please check again.',
         'invalid_otp' => 'Invalid OTP code.',

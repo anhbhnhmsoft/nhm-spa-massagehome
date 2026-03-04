@@ -42,11 +42,11 @@ class DashboardService extends BaseService
      * Lấy thống kê tổng quan (dashboard admin)
      * @return ServiceReturn
      */
-    public function getGeneralStats(): ServiceReturn
+    public function getGeneralStats(DateRangeDashboard $dateRange): ServiceReturn
     {
         try {
             // Lấy khoảng thời gian hiển thị (Là toàn bộ thời gian)
-            $dateRange = DateRangeDashboard::ALL->getDateRange();
+            $dateRange = $dateRange->getDateRange();
             $start = $dateRange['from'];
             $end = $dateRange['to'];
 
@@ -55,10 +55,6 @@ class DashboardService extends BaseService
 
             // Lấy thống kê doanh thu và chi phí
             $revenue = $this->walletTransactionRepository->getFinancialDashboardStats($start, $end);
-
-            // Lấy thống kê đơn hàng
-            $stats = $this->bookingRepository->getBookingStats($start, $end);
-
 
             return ServiceReturn::success([
                 'system_inout' =>[
@@ -88,11 +84,11 @@ class DashboardService extends BaseService
      * Lấy thống kê tổng quan về đơn hàng (dashboard admin)
      * @return ServiceReturn
      */
-    public function getGeneralBookingStats(): ServiceReturn
+    public function getGeneralBookingStats(DateRangeDashboard $dateRange): ServiceReturn
     {
         try {
             // Lấy khoảng thời gian hiển thị (Là toàn bộ thời gian)
-            $dateRange = DateRangeDashboard::ALL->getDateRange();
+            $dateRange = $dateRange->getDateRange();
             $start = $dateRange['from'];
             $end = $dateRange['to'];
 
@@ -139,11 +135,11 @@ class DashboardService extends BaseService
      * Lấy thống kê tổng quan về người dùng (dashboard admin)
      * @return ServiceReturn
      */
-    public function getGeneralUserStats(): ServiceReturn
+    public function getGeneralUserStats(DateRangeDashboard $dateRange): ServiceReturn
     {
         try {
             // Lấy khoảng thời gian hiển thị (Là toàn bộ thời gian)
-            $dateRange = DateRangeDashboard::ALL->getDateRange();
+            $dateRange = $dateRange->getDateRange();
             $start = $dateRange['from'];
             $end = $dateRange['to'];
 

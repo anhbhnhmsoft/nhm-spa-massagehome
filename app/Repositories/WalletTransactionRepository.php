@@ -44,40 +44,6 @@ class WalletTransactionRepository extends BaseRepository
         return $query;
     }
 
-    /**
-     * Tạo giao dịch thanh toán dịch vụ cho khách hàng
-     * @param int $walletCustomerId
-     * @param int $bookingId
-     * @param float $price
-     * @param float $exchangeRate
-     * @param float $balanceAfter
-     * @return void
-     */
-    public function createPaymentServiceBookingForCustomer(
-        int $walletCustomerId,
-        int $bookingId,
-        float $price,
-        float $exchangeRate,
-        float $balanceAfter,
-    )
-    {
-        $this->create([
-            'wallet_id' => $walletCustomerId,
-            'foreign_key' => $bookingId,
-            'money_amount' => $price * $exchangeRate,
-            'exchange_rate_point' => $exchangeRate,
-            'point_amount' => $price,
-            'balance_after' => $balanceAfter,
-            'type' => WalletTransactionType::PAYMENT->value,
-            'status' => WalletTransactionStatus::COMPLETED->value,
-            'transaction_code' => Helper::createDescPayment(PaymentType::BY_POINTS),
-            'description' => __('booking.payment.wallet_customer'),
-            'expired_at' => now(),
-            'transaction_id' => null,
-            'metadata' => null,
-        ]);
-    }
-
 
     /**
      * Lấy thống kê tiền vào và ra hệ thống trong khoảng thời gian
@@ -340,7 +306,7 @@ class WalletTransactionRepository extends BaseRepository
             ->selectRaw("
                     SUM(point_amount) FILTER (WHERE type = ?) as total_earned
                 ", [
-                WalletTransactionType::EARN_TRANSPORT->value,
+                WalletTransactionType::PAYMENT_KTV_EARN_TRANSPORT->value,
             ])
             ->first();
         return ($incomeData->total_earned ?? 0);

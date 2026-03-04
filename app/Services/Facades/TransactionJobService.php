@@ -3,6 +3,7 @@
 namespace App\Services\Facades;
 
 use App\Core\Helper;
+use App\Core\Helper\CalculatePrice;
 use App\Core\LogHelper;
 use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
@@ -11,6 +12,7 @@ use App\Enums\BookingStatus;
 use App\Enums\ConfigName;
 use App\Enums\NotificationType;
 use App\Enums\PaymentType;
+use App\Enums\UserRole;
 use App\Enums\WalletTransactionStatus;
 use App\Enums\WalletTransactionType;
 use App\Jobs\SendNotificationJob;
@@ -18,6 +20,7 @@ use App\Models\User;
 use App\Repositories\BookingRepository;
 use App\Repositories\CouponRepository;
 use App\Repositories\CouponUsedRepository;
+use App\Repositories\UserRepository;
 use App\Repositories\WalletRepository;
 use App\Repositories\WalletTransactionRepository;
 use App\Services\BookingService;
@@ -33,11 +36,13 @@ use Throwable;
 
 class TransactionJobService extends BaseService
 {
+
     public function __construct(
         protected BookingRepository           $bookingRepository,
         protected WalletRepository            $walletRepository,
         protected WalletTransactionRepository $walletTransactionRepository,
         protected CouponRepository            $couponRepository,
+        protected UserRepository              $userRepository,
         protected BookingValidator            $bookingValidator,
         protected CouponValidator             $couponValidator,
         protected WalletValidator             $walletValidator,
@@ -147,16 +152,6 @@ class TransactionJobService extends BaseService
                     couponDiscount: $booking->price_discount ?? 0,
                 );
 
-                $walletKtv = $this->walletRepository->getWalletByUserId(
-                    userId: $booking->ktv_user_id,
-                    lockForUpdate: true,
-                );
-                if (!$walletKtv) {
-                    throw new ServiceException(
-                        message: __("booking.payment.wallet_technician_not_found")
-                    );
-                }
-
                 // Tạo transaction phí dịch vụ cho Khách hàng
                 $balanceAfterBookingService = $walletCustomer->balance - ($booking->price - ($booking->price_discount ?? 0));
                 $this->walletTransactionRepository->create([
@@ -165,7 +160,6 @@ class TransactionJobService extends BaseService
                     'money_amount' => $booking->price * $exchangeRate,
                     'exchange_rate_point' => $exchangeRate,
                     'point_amount' => $booking->price,
-                    'balance_after' => $balanceAfterBookingService,
                     'type' => WalletTransactionType::PAYMENT->value,
                     'status' => WalletTransactionStatus::COMPLETED->value,
                     'transaction_code' => Helper::createDescPayment(PaymentType::BY_POINTS),
@@ -179,8 +173,7 @@ class TransactionJobService extends BaseService
                     'money_amount' => $booking->price_transportation * $exchangeRate,
                     'exchange_rate_point' => $exchangeRate,
                     'point_amount' => $booking->price_transportation,
-                    'balance_after' => $balanceAfterTransportation,
-                    'type' => WalletTransactionType::FEE_TRANSPORT->value,
+                    'type' => WalletTransactionType::PAYMENT_FEE_TRANSPORT->value,
                     'status' => WalletTransactionStatus::COMPLETED->value,
                     'transaction_code' => Helper::createDescPayment(PaymentType::BY_POINTS),
                     'expired_at' => now(),
@@ -189,24 +182,6 @@ class TransactionJobService extends BaseService
                 $walletCustomer->balance = $balanceAfterTransportation;
                 $walletCustomer->save();
 
-                // Tạo transaction nhận tiền phí di chuyển cho KTV
-                $balanceKtvAfterEarTransportation = $walletKtv->balance + $booking->price_transportation;
-                $this->walletTransactionRepository->create([
-                    'wallet_id' => $walletKtv->id,
-                    'foreign_key' => $bookingId,
-                    'money_amount' => $booking->price_transportation * $exchangeRate,
-                    'exchange_rate_point' => $exchangeRate,
-                    'point_amount' => $booking->price_transportation,
-                    'balance_after' => $balanceKtvAfterEarTransportation,
-                    'type' => WalletTransactionType::EARN_TRANSPORT->value,
-                    'status' => WalletTransactionStatus::COMPLETED->value,
-                    'transaction_code' => Helper::createDescPayment(PaymentType::BY_POINTS),
-                    'expired_at' => now(),
-                ]);
-
-                // Cập nhật số dư ví của KTV
-                $walletKtv->balance = $balanceKtvAfterEarTransportation;
-                $walletKtv->save();
 
                 // Cập nhật trạng thái booking thành COMPLETED
                 $booking->status = BookingStatus::CONFIRMED->value;
@@ -235,15 +210,15 @@ class TransactionJobService extends BaseService
                         'booking_time' => $booking->booking_time->format('Y-m-d H:i:s'),
                     ]
                 );
-
-                // Thông báo thay đổi số dư ví cho khách hàng
-                SendNotificationJob::dispatch(
-                    userId: $booking->user_id,
-                    type: NotificationType::PAYMENT_COMPLETE,
-                    data: [
-                        'booking_id' => $booking->id,
-                    ]
-                );
+//
+//                // Thông báo thay đổi số dư ví cho khách hàng
+//                SendNotificationJob::dispatch(
+//                    userId: $booking->user_id,
+//                    type: NotificationType::PAYMENT_COMPLETE,
+//                    data: [
+//                        'booking_id' => $booking->id,
+//                    ]
+//                );
             },
             useTransaction: true
         );
@@ -314,100 +289,124 @@ class TransactionJobService extends BaseService
      */
     public function handleFinishBooking(string $bookingId): ServiceReturn
     {
-        DB::beginTransaction();
-        try {
-            // lấy mức chiết khấu của nhà cung cấp
-            $discountRate = (float)$this->configService->getConfigValue(ConfigName::DISCOUNT_RATE);
-            // Lấy tỷ giá đổi tiền
-            $exchangeRate = (float)$this->configService->getConfigValue(ConfigName::CURRENCY_EXCHANGE_RATE);
+        return $this->execute(
+            callback: function () use ($bookingId){
+                // lấy mức chiết khấu của nhà cung cấp
+                $discountRate = (float)$this->configService->getConfigValue(ConfigName::DISCOUNT_RATE);
+                // Lấy tỷ giá đổi tiền
+                $exchangeRate = (float)$this->configService->getConfigValue(ConfigName::CURRENCY_EXCHANGE_RATE);
 
-            // Lấy thông tin booking
-            $booking = $this->bookingService->getBookingRepository()->query()
-                ->where('id', $bookingId)
-                ->where('status', BookingStatus::COMPLETED->value)
-                ->lockForUpdate()
-                ->first();
-            if (!$booking) {
-                throw new ServiceException(__("error.not_found_booking"));
-            }
+                // Lấy thông tin booking
+                $booking = $this->bookingService->getBookingRepository()->query()
+                    ->where('id', $bookingId)
+                    ->where('status', BookingStatus::COMPLETED->value)
+                    ->first();
+                if (!$booking) {
+                    throw new ServiceException(__("error.not_found_booking"));
+                }
 
-            // Lấy ví của KTV
-            $walletKtv = $this->walletService->getWalletByUserId($booking->ktv_user_id, true);
-            if (!$walletKtv) {
-                throw new ServiceException(
-                    message: __("error.wallet_not_found")
+                // Lấy ví của KTV
+                $walletKtv = $this->walletRepository->getWalletByUserId(
+                    userId: $booking->ktv_user_id,
+                    lockForUpdate: true,
                 );
-            }
+                if (!$walletKtv) {
+                    throw new ServiceException(
+                        message: __("booking.payment.wallet_technician_not_found")
+                    );
+                }
 
-            // Thanh toán cho KTV
-            $this->walletService->createPaymentServiceBookingForKtv(
-                walletKtv: $walletKtv,
-                bookingId: $booking->id,
-                price: $booking->price,
-                exchangeRate: $exchangeRate,
-                discountRate: $discountRate,
-            );
+                //Tính số tiền mà kỹ thuật viên dc hưởng (trừ chiết khấu)
+                $priceServiceEarned = CalculatePrice::calculatePriceDiscountForKTV($booking->price, $discountRate);
 
-            /**
-             * @var User $customer - Khách hàng
-             * @var User $staff - Kỹ thuật viên
-             */
-            $customer = $booking->user;
-            $staff = $booking->ktvUser;
+                // tạo transaction thanh toán dịch vụ cho kỹ thuật viên
+                $this->walletTransactionRepository->create([
+                    'wallet_id' => $walletKtv->id,
+                    'foreign_key' => $booking->id,
+                    'money_amount' => $priceServiceEarned * $exchangeRate,
+                    'exchange_rate_point' => $exchangeRate,
+                    'point_amount' => $priceServiceEarned,
+                    'type' => WalletTransactionType::PAYMENT_FOR_KTV->value,
+                    'status' => WalletTransactionStatus::COMPLETED->value,
+                    'transaction_code' => Helper::createDescPayment(PaymentType::BY_POINTS),
+                    'description' => __('booking.payment.wallet_technician'),
+                    'expired_at' => null,
+                    'metadata' => null,
+                    'transaction_id' => null,
+                ]);
 
-            // Giá trị thực tế hệ thống nhận về
-            $systemIncome = Helper::calculateSystemMinus($booking->price, $discountRate);
+                // tạo transaction thanh toán phí di chuyển cho kỹ thuật viên
+                $this->walletTransactionRepository->create([
+                    'wallet_id' => $walletKtv->id,
+                    'foreign_key' => $booking->id,
+                    'money_amount' => $booking->price_transportation * $exchangeRate,
+                    'exchange_rate_point' => $exchangeRate,
+                    'point_amount' => $booking->price_transportation,
+                    'type' => WalletTransactionType::PAYMENT_KTV_EARN_TRANSPORT->value,
+                    'status' => WalletTransactionStatus::COMPLETED->value,
+                    'transaction_code' => Helper::createDescPayment(PaymentType::BY_POINTS),
+                    'description' => __('booking.payment.wallet_technician'),
+                    'expired_at' => null,
+                    'metadata' => null,
+                    'transaction_id' => null,
+                ]);
 
+                // Cộng số dư ví Kỹ thuật viên
+                $walletKtv->balance += $priceServiceEarned + $booking->price_transportation;
+                $walletKtv->save();
 
-            // xử lý hoa hồng cho khách hàng
-            if ($customer->referred_by_user_id) {
-                $this->walletService->processAffiliateCommission(
-                    referrerId: $customer->referred_by_user_id,
-                    systemIncome: $systemIncome,
-                    bookingId: $bookingId,
-                    exchangeRate: $exchangeRate,
+                /**
+                 * @var User $customer - Khách hàng
+                 * @var User $staff - Kỹ thuật viên
+                 */
+                $customer = $booking->user;
+                $staff = $booking->ktvUser;
+
+                // Giá trị thực tế hệ thống nhận về
+                $systemIncome = CalculatePrice::calculateSystemMinus($booking->price, $discountRate);
+
+                // xử lý hoa hồng cho khách hàng
+                if ($customer->referred_by_user_id) {
+                    $this->processAffiliateCommission(
+                        referrerId: $customer->referred_by_user_id,
+                        systemIncome: $systemIncome,
+                        bookingId: $bookingId,
+                        exchangeRate: $exchangeRate,
+                    );
+                }
+
+                // xử lý hoa hồng cho nhân viên
+                if ($staff->referred_by_user_id) {
+                    $this->processAffiliateCommission(
+                        referrerId: $staff->referred_by_user_id,
+                        systemIncome: $systemIncome,
+                        bookingId: $bookingId,
+                        exchangeRate: $exchangeRate,
+                    );
+                }
+
+                // xử lý hoa hồng cho người giới thiệu kỹ thuật viên (KTV/ Agency)
+                if ($staff->reviewApplication->referrer_id) {
+                    $this->processReferralKtvCommission(
+                        referrerId: $staff->reviewApplication->referrer_id,
+                        systemIncome: $systemIncome,
+                        bookingId: $bookingId,
+                        exchangeRate: $exchangeRate,
+                    );
+                }
+
+                // Thông báo thay đổi số dư ví cho kỹ thuật viên
+                SendNotificationJob::dispatch(
+                    userId: $booking->ktv_user_id,
+                    type: NotificationType::PAYMENT_SERVICE_FOR_TECHNICIAN,
+                    data: [
+                        'booking_id' => $booking->id,
+                    ]
                 );
-            }
-
-            // xử lý hoa hồng cho nhân viên
-            if ($staff->referred_by_user_id) {
-                $this->walletService->processAffiliateCommission(
-                    referrerId: $staff->referred_by_user_id,
-                    systemIncome: $systemIncome,
-                    bookingId: $bookingId,
-                    exchangeRate: $exchangeRate,
-                );
-            }
-
-            // xử lý hoa hồng cho người giới thiệu kỹ thuật viên (KTV/ Agency)
-            if ($staff->reviewApplication->referrer_id) {
-                $this->walletService->processReferralKtvCommission(
-                    referrerId: $staff->reviewApplication->referrer_id,
-                    systemIncome: $systemIncome,
-                    bookingId: $bookingId,
-                    exchangeRate: $exchangeRate,
-                );
-            }
-
-            DB::commit();
-
-            // Thông báo thay đổi số dư ví cho kỹ thuật viên
-            SendNotificationJob::dispatch(
-                userId: $booking->ktv_user_id,
-                type: NotificationType::PAYMENT_SERVICE_FOR_TECHNICIAN,
-                data: [
-                    'booking_id' => $booking->id,
-                ]
-            );
-            return ServiceReturn::success();
-        } catch (\Exception $exception) {
-            DB::rollBack();
-            LogHelper::error(
-                message: "Lỗi TransactionJobService@handleFinishBooking",
-                ex: $exception
-            );
-            return ServiceReturn::error($exception->getMessage());
-        }
+                return ServiceReturn::success();
+            },
+            useTransaction: true,
+        );
     }
 
     /**
@@ -422,116 +421,131 @@ class TransactionJobService extends BaseService
         array  $data
     ): ServiceReturn
     {
-        try {
-            $booking = $this->bookingService->getBookingRepository()->query()
-                ->where('id', $bookingId)
-                ->where('status', BookingStatus::WAITING_CANCEL->value)
-                ->first();
-            if (!$booking) {
-                throw new ServiceException(__("error.not_found_booking"));
-            }
+        return $this->execute(
+            callback: function () use ($bookingId, $data){
+                $booking = $this->bookingService->getBookingRepository()->query()
+                    ->where('id', $bookingId)
+                    ->where('status', BookingStatus::WAITING_CANCEL->value)
+                    ->first();
+                if (!$booking) {
+                    throw new ServiceException(__("error.not_found_booking"));
+                }
 
-            return $this->bookingService->approveCancel($booking, $data);
-        } catch (\Exception $exception) {
-            LogHelper::error(
-                message: "Lỗi TransactionJobService@handleConfirmCancelBooking",
-                ex: $exception
-            );
-            return ServiceReturn::error(
-                message: $exception->getMessage()
-            );
-        }
-    }
+                // chuyển trạng thái đơn hàng sang đã hủy
+                $booking->status = BookingStatus::CANCELED->value;
+                $booking->save();
 
-    /**
-     * Xử lý điều phối booking sang KTV khác
-     * @param int $bookingId
-     * @param int|null $newServiceId
-     * @param int|null $newKtvId
-     * @return ServiceReturn
-     * @throws Throwable
-     */
-    public function handleReassignBooking(
-        int  $bookingId,
-        ?int $newServiceId,
-        ?int $newKtvId
-    ): ServiceReturn
-    {
-        DB::beginTransaction();
-        try {
-            if (!$newServiceId || !$newKtvId) {
-                throw new ServiceException(__("error.invalid_data"));
-            }
+                // Lấy ví khách hàng
+                $clientWallet = $this->walletRepository->getWalletByUserId($booking->user_id);
+                if (!$clientWallet) {
+                    throw new ServiceException(
+                        message: __("booking.payment.wallet_customer_not_found")
+                    );
+                }
+                // Lấy transaction gốc để tham khảo (chỉ đọc, không sửa)
+                $transactionOfCustomer = $this->walletTransactionRepository->query()
+                    ->where("foreign_key", $booking->id)
+                    ->where('type', WalletTransactionType::PAYMENT->value)
+                    ->first();
+                // Lấy transaction phí di chuyển để tham khảo (chỉ đọc, không sửa)
+                $transactionTransportOfCustomer = $this->walletTransactionRepository->query()
+                    ->where("foreign_key", $booking->id)
+                    ->where('type', WalletTransactionType::PAYMENT_FEE_TRANSPORT->value)
+                    ->first();
+                if (!$transactionOfCustomer || !$transactionTransportOfCustomer) {
+                    throw new ServiceException(
+                        message: __("error.transaction_not_found")
+                    );
+                }
+                // Lấy tỷ giá đổi tiền
+                $exchangeRatePoint = $transactionOfCustomer->exchange_rate_point;
+                $exchangeRatePointTransport = $transactionTransportOfCustomer->exchange_rate_point;
 
-            // Tìm booking với lock để tránh race condition
-            $booking = $this->bookingService->getBookingRepository()->query()
-                ->where('id', $bookingId)
-                ->where('status', BookingStatus::WAITING_CANCEL->value)
-                ->lockForUpdate()
-                ->first();
+                // Số tiền hoàn tiền cho khách hàng
+                $amountPayBackToClient = $data['amount_pay_back_to_client'] > 0 ? $data['amount_pay_back_to_client'] : $transactionOfCustomer->point_amount;
 
-            if (!$booking) {
-                throw new ServiceException(__("error.booking_not_found_or_invalid_status"));
-            }
+                // Số tiền trả cho kỹ thuật viên
+                $amountPayToKtv = max($data['amount_pay_to_ktv'], 0);
 
-            // Lưu thông tin KTV cũ để gửi notification
-            $oldKtvId = $booking->ktv_user_id;
+                // tạo transaction hoàn số tiền dịch vụ cho khách hàng
+                $this->walletTransactionRepository->create([
+                    'wallet_id' => $clientWallet->id,
+                    'type' => WalletTransactionType::REFUND->value,
+                    'point_amount' => $amountPayBackToClient * $exchangeRatePoint,
+                    'money_amount' => $amountPayBackToClient,
+                    'exchange_rate_point' => $exchangeRatePoint,
+                    'status' => WalletTransactionStatus::COMPLETED->value,
+                    'transaction_code' => Helper::createDescPayment(PaymentType::REFUND),
+                    'foreign_key' => $booking->id,
+                    'description' => "Hoàn tiền booking #{$booking->id} - lý do: {$data['reason_cancel']}",
+                    'expired_at' => now(),
+                ]);
+                // tạo transaction hoàn số tiền di chuyển cho khách hàng
+                $this->walletTransactionRepository->create([
+                    'wallet_id' => $clientWallet->id,
+                    'type' => WalletTransactionType::REFUND_CUSTOMER_TRANSPORT->value,
+                    'point_amount' => $transactionTransportOfCustomer->point_amount * $exchangeRatePointTransport,
+                    'money_amount' => $transactionTransportOfCustomer->money_amount,
+                    'exchange_rate_point' => $exchangeRatePointTransport,
+                    'status' => WalletTransactionStatus::COMPLETED->value,
+                    'transaction_code' => Helper::createDescPayment(PaymentType::REFUND),
+                    'foreign_key' => $booking->id,
+                    'description' => "Hoàn tiền dịch vụ di chuyển  #{$booking->id} - lý do: {$data['reason_cancel']}",
+                    'expired_at' => now(),
+                ]);
 
-            // Cập nhật booking sang KTV mới
-            $booking->service_id = $newServiceId;
-            $booking->ktv_user_id = $newKtvId;
-            $booking->status = BookingStatus::CONFIRMED->value;
-            $booking->reason_cancel = null; // Xóa lý do hủy
-            $booking->cancel_by = null;
-            $booking->save();
 
-            DB::commit();
+                $clientWallet->balance += $amountPayBackToClient + $transactionTransportOfCustomer->point_amount;
+                $clientWallet->save();
 
-            // Gửi notification cho khách hàng
-            SendNotificationJob::dispatch(
-                userId: $booking->user_id,
-                type: NotificationType::BOOKING_REASSIGNED,
-                data: [
-                    'booking_id' => $booking->id,
-                ]
-            );
+                // Nếu Số tiền trả cho kỹ thuật viên lớn hơn 0
+                if ($amountPayToKtv > 0) {
+                    // Lấy ví kỹ thuật viên
+                    $ktvWallet = $this->walletRepository->getWalletByUserId($booking->ktv_user_id);
+                    if (!$ktvWallet) {
+                        throw new ServiceException(
+                            message: __("booking.payment.wallet_technician_not_found")
+                        );
+                    }
+                    $this->walletTransactionRepository->create([
+                        'wallet_id' => $ktvWallet->id,
+                        'type' => WalletTransactionType::PAYMENT_REFUND_KTV_FOR_BOOKING_CANCEL->value,
+                        'point_amount' => $amountPayToKtv * $exchangeRatePoint,
+                        'money_amount' => $amountPayToKtv,
+                        'exchange_rate_point' => $exchangeRatePoint,
+                        'status' => WalletTransactionStatus::COMPLETED->value,
+                        'transaction_code' => Helper::createDescPayment(PaymentType::REFUND),
+                        'foreign_key' => $booking->id,
+                        'description' => "Hoàn tiền booking #{$booking->id}",
+                        'expired_at' => now(),
+                        'transaction_id' => null,
+                    ]);
+                    $ktvWallet->balance += $amountPayToKtv;
+                    $ktvWallet->save();
+                }
 
-            // Gửi notification cho KTV mới
-            SendNotificationJob::dispatch(
-                userId: $newKtvId,
-                type: NotificationType::NEW_BOOKING_REQUEST,
-                data: [
-                    'booking_id' => $booking->id,
-                    'customer_name' => $booking->user->name ?? '',
-                    'booking_time' => $booking->booking_time?->format('Y-m-d H:i:s'),
-                ]
-            );
-
-            // Gửi notification cho KTV cũ
-            if ($oldKtvId && $oldKtvId != $newKtvId) {
+                // Gửi thông báo cho khách hàng
                 SendNotificationJob::dispatch(
-                    userId: $oldKtvId,
+                    userId: $booking->user_id,
                     type: NotificationType::BOOKING_CANCELLED,
                     data: [
                         'booking_id' => $booking->id,
-                        'reason' => __('booking.reassigned_to_other_ktv'),
+                        'reason' => $data['reason_cancel'],
                     ]
                 );
-            }
 
-            return ServiceReturn::success(
-                message: __("booking.reassign_success")
-            );
-        } catch (\Exception $exception) {
-            DB::rollBack();
-            LogHelper::error(
-                message: "Lỗi TransactionJobService@handleReassignBooking",
-                ex: $exception
-            );
-            return ServiceReturn::error(
-                message: $exception->getMessage()
-            );
-        }
+                // Gửi thông báo cho KTV
+                SendNotificationJob::dispatch(
+                    userId: $booking->ktv_user_id,
+                    type: NotificationType::BOOKING_CANCELLED,
+                    data: [
+                        'booking_id' => $booking->id,
+                        'reason' => $data['reason_cancel'],
+                    ]
+                );
+            },
+            useTransaction: true,
+        );
     }
 
     /**
@@ -546,7 +560,6 @@ class TransactionJobService extends BaseService
         $userId
     )
     {
-
         DB::beginTransaction();
         try {
             if (!$referrerId || !$userId) {
@@ -776,6 +789,194 @@ class TransactionJobService extends BaseService
             );
             DB::rollBack();
             return ServiceReturn::error($exception->getMessage());
+        }
+    }
+
+
+
+
+
+
+
+    /**
+     *  ---- Protected methods ----
+     */
+
+    /**
+     * Xử lý thanh toán hoa hồng Affiliate
+     * @param $referrerId
+     * @param $systemIncome - Số tiền hệ thống thu được sau khi trừ phí
+     * @param $bookingId - Id của booking
+     * @param $exchangeRate - Tỷ giá đổi tiền
+     * @throws ServiceException
+     */
+    public function processAffiliateCommission(
+        $referrerId,
+        $systemIncome,
+        $bookingId,
+        $exchangeRate
+    )
+    {
+        // Lấy thông tin người giới thiệu
+        $referrer = $this->userRepository
+            ->queryUser()
+            ->find($referrerId);
+        if (!$referrer) {
+            throw new ServiceException(
+                message: __("error.user_not_found")
+            );
+        }
+
+        // Lấy ví của người giới thiệu
+        $wallet = $this->walletRepository->getWalletByUserId($referrerId, lockForUpdate: true);
+        if (!$wallet) {
+            throw new ServiceException(
+                message: __("error.wallet_not_found")
+            );
+        }
+
+        // Lấy cấu hình affiliate dựa trên vai trò của người dùng
+        $affiliateConfig = $this->configService->getConfigAffiliate(UserRole::from($referrer->role));
+        if ($affiliateConfig->isError()) {
+            throw new ServiceException(__("error.config_wallet_error"));
+        }
+        $affiliateConfigData = $affiliateConfig->getData();
+
+        // Đối với Khách hàng giới thiệu với Khách hàng -> chỉ được hưởng 1 lần
+        if ($referrer->role === UserRole::CUSTOMER->value) {
+            $checkAffiliate = $this->walletTransactionRepository->query()
+                ->where('wallet_id', $wallet->id)
+                ->where('type', WalletTransactionType::AFFILIATE->value)
+                ->exists();
+            if ($checkAffiliate) {
+                return;
+            }
+        }
+
+        // Kiểm tra xem hoa hồng affiliate đã được thanh toán chưa
+        $existingCommission = $this->walletTransactionRepository->query()
+            ->where('foreign_key', $bookingId)
+            ->where('wallet_id', $wallet->id)
+            ->where('type', WalletTransactionType::AFFILIATE->value)
+            ->exists();
+
+        // Nếu hoa hồng affiliate chưa được thanh toán thì tạo
+        if (!$existingCommission) {
+            // Tính toán hoa hồng affiliate
+            $amount = CalculatePrice::calculatePriceAffiliate(
+                price: $systemIncome,
+                commissionPercent: $affiliateConfigData['commission_rate'],
+                minCommission: $affiliateConfigData['min_commission'],
+                maxCommission: $affiliateConfigData['max_commission'],
+            );
+
+            // Tạo transaction thanh toán hoa hồng affiliate
+            $this->walletTransactionRepository->create([
+                'wallet_id' => $wallet->id,
+                'foreign_key' => $bookingId,
+                'money_amount' => $amount * $exchangeRate,
+                'exchange_rate_point' => $exchangeRate,
+                'point_amount' => $amount,
+                'type' => WalletTransactionType::AFFILIATE->value,
+                'status' => WalletTransactionStatus::COMPLETED->value,
+                'transaction_code' => Helper::createDescPayment(PaymentType::BY_POINTS),
+                'description' => __('booking.payment.wallet_referred_staff_affiliate'),
+                'expired_at' => now(),
+                'transaction_id' => null,
+                'metadata' => null,
+            ]);
+
+            // Cộng số dư ví Người giới thiệu
+            $wallet->increment('balance', $amount);
+        }
+    }
+
+    /**
+     * Xử lý hoa hồng của người giới thiệu kỹ thuật viên
+     * @param $referrerId - Id của người giới thiệu
+     * @param $systemIncome - Số tiền hệ thống thu được sau khi trừ phí
+     * @param $bookingId - Id của booking
+     * @param $exchangeRate - Tỷ giá đổi tiền
+     * @return void
+     * @throws ServiceException
+     */
+    public function processReferralKtvCommission(
+        $referrerId,
+        $systemIncome,
+        $bookingId,
+        $exchangeRate
+    )
+    {
+        // Lấy thông tin người giới thiệu
+        $referrer = $this->userRepository
+            ->queryUser()
+            ->whereIn('role', [
+                UserRole::AGENCY->value,
+                UserRole::KTV->value
+            ])
+            ->find($referrerId);
+        if (!$referrer) {
+            throw new ServiceException(
+                message: __("error.user_not_found")
+            );
+        }
+
+        // Lấy ví của người giới thiệu
+        $wallet = $this->walletRepository->getWalletByUserId($referrerId, lockForUpdate: true);
+        if (!$wallet) {
+            throw new ServiceException(
+                message: __("error.wallet_not_found")
+            );
+        }
+
+        // Lấy cấu hình hoa hồng KTV
+        switch ($referrer->role) {
+            case UserRole::KTV->value:
+                // Nếu KTV là leader
+                if ($referrer->reviewApplication?->is_leader){
+                    $rateDiscount = (float) $this->configService->getConfigValue(ConfigName::DISCOUNT_RATE_REFERRER_KTV_LEADER);
+                }else{
+                    $rateDiscount = (float) $this->configService->getConfigValue(ConfigName::DISCOUNT_RATE_REFERRER_KTV);
+                }
+                break;
+            case UserRole::AGENCY->value:
+                $rateDiscount = (float) $this->configService->getConfigValue(ConfigName::DISCOUNT_RATE_REFERRER_AGENCY);
+                break;
+            default:
+                // Dự phòng cho trường hợp có role mới
+                return;
+        }
+
+
+        // Kiểm tra xem hoa hồng KTV đã được thanh toán chưa
+        $existingCommission = $this->walletTransactionRepository->query()
+            ->where('foreign_key', $bookingId)
+            ->where('wallet_id', $wallet->id)
+            ->where('type', WalletTransactionType::REFERRAL_KTV->value)
+            ->exists();
+
+        if (!$existingCommission && $rateDiscount > 0) {
+            // Tính giá tiền hoa hồng cho người giới thiệu
+            $amount = CalculatePrice::calculatePriceReferrer($systemIncome, $rateDiscount);
+
+            // Tạo transaction thanh toán hoa hồng KTV
+            $this->walletTransactionRepository->create([
+                'wallet_id' => $wallet->id,
+                'foreign_key' => $bookingId,
+                'money_amount' => $amount * $exchangeRate,
+                'exchange_rate_point' => $exchangeRate,
+                'point_amount' => $amount,
+                'type' => WalletTransactionType::REFERRAL_KTV->value,
+                'status' => WalletTransactionStatus::COMPLETED->value,
+                'transaction_code' => Helper::createDescPayment(PaymentType::BY_POINTS),
+                'description' => __('booking.payment.wallet_referred_staff_ktv'),
+                'expired_at' => now(),
+                'transaction_id' => null,
+                'metadata' => null,
+            ]);
+
+            // Cộng số dư ví Người giới thiệu
+            $wallet->increment('balance', $amount);
         }
     }
 }

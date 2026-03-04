@@ -18,5 +18,4 @@ enum WalletTransCase
 
     case CANCEL_WITHDRAW_REQUEST; // Phục vụ việc hủy rút tiền
 
-    case REASSIGN_BOOKING; // Phục vụ việc điều phối booking sang KTV khác
 }

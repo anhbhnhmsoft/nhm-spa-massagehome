@@ -14,7 +14,6 @@ class WalletTransactionResource extends JsonResource
             'money_amount' => $this->money_amount,
             'exchange_rate_point' => $this->exchange_rate_point,
             'point_amount' => $this->point_amount,
-            'balance_after' => $this->balance_after,
             'status' => $this->status,
             'created_at' => $this->created_at,
         ];

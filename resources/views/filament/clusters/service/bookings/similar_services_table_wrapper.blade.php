@@ -1,1 +1,1 @@
-@livewire(\App\Livewire\Booking\SimilarServicesTable::class, ['bookingId' => $getRecord()->id])
+@livewire(\App\Filament\Clusters\Service\Resources\Bookings\Components\SimilarServicesTable::class, ['bookingId' => $record->id])

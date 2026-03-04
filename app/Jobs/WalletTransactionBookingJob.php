@@ -62,13 +62,6 @@ class WalletTransactionBookingJob implements ShouldQueue
                     $this->data
                 );
                 break;
-            case WalletTransCase::REASSIGN_BOOKING:
-                $service->handleReassignBooking(
-                    $this->bookingId,
-                    $this->data['new_service_id'] ?? null,
-                    $this->data['new_ktv_id'] ?? null
-                );
-                break;
         }
     }
 }

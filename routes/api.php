@@ -28,12 +28,21 @@ Route::middleware(['set-api-locale', 'update-last-active'])->group(function () {
             Route::post('authenticate', [AuthController::class, 'authenticate']);
             // Đăng nhập vào hệ thống.
             Route::post('login', [AuthController::class, 'login']);
+            // Quên mật khẩu.
+            Route::post('forgot-password', [AuthController::class, 'forgotPassword']);
+            // Xác thực OTP quên mật khẩu.
+            Route::post('verify-otp-forgot-password', [AuthController::class, 'verifyOtpForgotPassword']);
+            // Gửi lại OTP quên mật khẩu.
+            Route::post('resend-otp-forgot-password', [AuthController::class, 'resendOtpForgotPassword']);
+            // Cập nhật mật khẩu mới.
+            Route::post('reset-password', [AuthController::class, 'resetPassword']);
+            // Đăng ký tài khoản mới.
+            Route::post('register', [AuthController::class, 'register']);
             // Kiểm tra OTP đăng ký và đăng ký tài khoản.
             Route::post('verify-otp-register', [AuthController::class, 'verifyOtpRegister']);
             // Gửi lại OTP đăng ký.
             Route::post('resend-otp-register', [AuthController::class, 'resendOtpRegister']);
-            // Đăng ký tài khoản mới.
-            Route::post('register', [AuthController::class, 'register']);
+
         });
 
         Route::get('config-application', [AuthController::class, 'configApplication']);

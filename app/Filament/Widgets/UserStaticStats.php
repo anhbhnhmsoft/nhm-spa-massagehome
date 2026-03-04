@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Enums\DateRangeDashboard;
 use App\Enums\ReviewApplicationStatus;
 use App\Filament\Clusters\ReviewApplication\Resources\Agencies\AgencyResource;
 use App\Filament\Clusters\ReviewApplication\Resources\KTVs\KTVResource;
@@ -9,20 +10,24 @@ use App\Services\DashboardService;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Support\Icons\Heroicon;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class UserStaticStats extends BaseWidget
 {
+    use InteractsWithPageFilters;
 
     protected int|string|array $columnSpan = 3;
 
     protected function getStats(): array
     {
+        $dateRange = $this->pageFilters['date_range'] ? DateRangeDashboard::tryFrom($this->pageFilters['date_range']) : DateRangeDashboard::ALL;
+
         $dashboardService = app(DashboardService::class);
 
         // Get Revenue stats from GeneralStats
-        $result = $dashboardService->getGeneralUserStats();
+        $result = $dashboardService->getGeneralUserStats($dateRange);
         if (!$result->isSuccess()) {
             return [
                 Stat::make('Error', 'Unable to load data')->color('danger'),

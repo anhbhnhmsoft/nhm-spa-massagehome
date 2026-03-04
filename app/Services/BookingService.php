@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Core\Controller\FilterDTO;
-use App\Core\Helper;
 use App\Core\Helper\CalculatePrice;
 use App\Core\LogHelper;
 use App\Core\Service\BaseService;
@@ -13,23 +12,17 @@ use App\Enums\BookingStatus;
 use App\Enums\Jobs\WalletTransCase;
 use App\Enums\NotificationType;
 use App\Enums\UserRole;
-use App\Jobs\RefundBookingCancelJob;
 use App\Jobs\SendNotificationJob;
 use App\Models\Category;
-use App\Models\CategoryPrice;
-use App\Models\Coupon;
 use App\Models\UserAddress;
 use App\Models\Wallet;
 use App\Repositories\BookingRepository;
-use App\Repositories\CategoryPriceRepository;
 use App\Repositories\CategoryRepository;
 use App\Repositories\CouponRepository;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
 use App\Enums\ConfigName;
 use App\Enums\PaymentType;
-use App\Enums\WalletTransactionStatus;
-use App\Enums\WalletTransactionType;
 use App\Jobs\WalletTransactionBookingJob;
 use App\Models\ServiceBooking;
 use App\Repositories\ServiceOptionRepository;
@@ -41,35 +34,33 @@ use App\Repositories\WalletTransactionRepository;
 use App\Services\Validator\BookingValidator;
 use App\Services\Validator\CouponValidator;
 use App\Services\Validator\WalletValidator;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use function PHPUnit\Framework\callback;
-use function PHPUnit\Framework\matches;
 
 class BookingService extends BaseService
 {
     public function __construct(
-        protected BookingRepository $bookingRepository,
-        protected ServiceRepository $serviceRepository,
-        protected CouponRepository $couponRepository,
-        protected ServiceOptionRepository $serviceOptionRepository,
-        protected CategoryRepository $categoryRepository,
-        protected CouponService $couponService,
-        protected WalletRepository $walletRepository,
-        protected WalletTransactionRepository $walletTransactionRepository,
+        protected BookingRepository               $bookingRepository,
+        protected ServiceRepository               $serviceRepository,
+        protected CouponRepository                $couponRepository,
+        protected ServiceOptionRepository         $serviceOptionRepository,
+        protected CategoryRepository              $categoryRepository,
+        protected CouponService                   $couponService,
+        protected WalletRepository                $walletRepository,
+        protected WalletTransactionRepository     $walletTransactionRepository,
         protected UserReviewApplicationRepository $reviewApplicationRepository,
-        protected UserRepository $userRepository,
-        protected ConfigService $configService,
-        protected WalletService $walletService,
-        protected ReviewRepository $reviewRepository,
-        protected UserAddressRepository $addressRepository,
-        protected BookingValidator $bookingValidator,
-        protected CouponValidator $couponValidator,
-        protected WalletValidator $walletValidator,
-    ) {
+        protected UserRepository                  $userRepository,
+        protected ConfigService                   $configService,
+        protected WalletService                   $walletService,
+        protected ReviewRepository                $reviewRepository,
+        protected UserAddressRepository           $addressRepository,
+        protected BookingValidator                $bookingValidator,
+        protected CouponValidator                 $couponValidator,
+        protected WalletValidator                 $walletValidator,
+    )
+    {
         parent::__construct();
     }
 
@@ -132,7 +123,7 @@ class BookingService extends BaseService
         return $this->execute(function () use ($data) {
             $userId = Auth::id();
 
-            $dataRes =  $this->validateBooking($data, $userId);
+            $dataRes = $this->validateBooking($data, $userId);
 
             $dataBookingToday = $this->bookingRepository->getBookingCustomerOnGoingInDay($userId);
 
@@ -162,8 +153,9 @@ class BookingService extends BaseService
      * @return ServiceReturn
      */
     public function bookService(
-       array $data
-    ): ServiceReturn {
+        array $data
+    ): ServiceReturn
+    {
 
         return $this->execute(
             callback: function () use ($data) {
@@ -257,72 +249,6 @@ class BookingService extends BaseService
         } catch (\Exception $exception) {
             LogHelper::error(
                 message: "Lỗi ServiceService@cancelBooking",
-                ex: $exception
-            );
-            return ServiceReturn::error(
-                message: __("common_error.server_error")
-            );
-        }
-    }
-
-    /**
-     * Xác nhận hủy booking, trường hợp admin xác nhận hủy booking
-     * @param string $bookingId
-     * @return ServiceReturn
-     */
-    public function confirmCancelBooking(string $bookingId): ServiceReturn
-    {
-        try {
-            $booking = $this->bookingRepository->query()
-                ->lockForUpdate()
-                ->find($bookingId);
-            if (!$booking) {
-                throw new ServiceException(
-                    message: __("booking.not_found")
-                );
-            };
-            // Kiểm tra trạng thái booking có thể hủy không
-            if ($booking->status != BookingStatus::WAITING_CANCEL->value) {
-                throw new ServiceException(
-                    message: __("booking.not_permission")
-                );
-            }
-
-            // Cập nhật trạng thái booking thành CANCELED
-            $booking->status = BookingStatus::CANCELED->value;
-            $booking->save();
-            // Gửi thông báo cho khách hàng
-            SendNotificationJob::dispatch(
-                userId: $booking->user_id,
-                type: NotificationType::BOOKING_CANCELLED,
-                data: [
-                    'booking_id' => $booking->id,
-                    'reason' => $booking->reason_cancel,
-                ]
-            );
-            // Gửi thông báo cho KTV
-            SendNotificationJob::dispatch(
-                userId: $booking->ktv_user_id,
-                type: NotificationType::BOOKING_CANCELLED,
-                data: [
-                    'booking_id' => $booking->id,
-                    'reason' => $booking->reason_cancel,
-                ]
-            );
-
-            // Gửi job để hoàn lại tiền cho khách hàng
-            RefundBookingCancelJob::dispatch($booking->id, $booking->reason_cancel);
-
-            return ServiceReturn::success(
-                message: __("booking.canceled")
-            );
-        } catch (ServiceException $exception) {
-            return ServiceReturn::error(
-                message: $exception->getMessage()
-            );
-        } catch (\Exception $exception) {
-            LogHelper::error(
-                message: "Lỗi ServiceService@confirmCancelBooking",
                 ex: $exception
             );
             return ServiceReturn::error(
@@ -590,170 +516,137 @@ class BookingService extends BaseService
         }
     }
 
+
     /**
-     * Summary of approveCancel
-     * @param ServiceBooking $booking
-     * @param array $data
+     * Trả ra query dịch vụ có cùng category, KTV khác, service active
+     * @param int $bookingId
+     */
+    public function findNearbyAvailableKtvs(int $bookingId)
+    {
+        return $this->execute(function () use ($bookingId) {
+            $booking = $this->bookingRepository->query()->find($bookingId);
+            if (!$booking) {
+                throw new ServiceException(
+                    message: __("booking.not_found")
+                );
+            }
+            $lat = $booking->latitude;
+            $lng = $booking->longitude;
+            $categoryId = $booking->category_id;
+            // Nếu booking không có toạ độ, dừng xử lý hoặc trả về mảng rỗng
+            if (!$lat || !$lng) {
+                return collect();
+            }
+            $radiusInMeters = 5000; // Bán kính 5km
+
+            return $this->userRepository->query()
+                // Join với bảng user_address để lấy địa chỉ chính
+                ->join('user_address', function ($join) {
+                    $join->on('users.id', '=', 'user_address.user_id')
+                        ->where('user_address.is_primary', true);
+                })
+                // Lấy thông tin profile của KTV
+                ->with('profile')
+                // Chỉ lấy những KTV có role là KTV
+                ->where('users.role', UserRole::KTV->value)
+                ->where('users.id', '!=', $booking->ktv_user_id)
+                // Điều kiện :Nằm trong bán kính 5km
+                // Ép kiểu (cast) về ::geography để tính toán chính xác theo mét trên bề mặt Trái Đất
+                ->whereRaw("
+                    ST_DWithin(
+                        ST_MakePoint(user_address.longitude, user_address.latitude)::geography,
+                        ST_MakePoint(?, ?)::geography,
+                        ?
+                    )
+                ", [$lng, $lat, $radiusInMeters])
+                // Điều kiện: KTV phải có cung cấp dịch vụ (category_id) này
+                ->whereHas('categories', function ($query) use ($categoryId) {
+                    $query->where('categories.id', $categoryId);
+                })
+
+                // Điều kiện: KTV không có lịch nào đang ONGOING
+                ->whereDoesntHave('ktvBookings', function ($query) {
+                    $query->where('status', BookingStatus::ONGOING->value);
+                })
+                ->select('users.*')
+                ->selectRaw("
+                    ST_Distance(
+                        ST_MakePoint(user_address.longitude, user_address.latitude)::geography,
+                        ST_MakePoint(?, ?)::geography
+                    ) AS distance_in_meters
+                ", [$lng, $lat])
+                // Ưu tiên hiển thị người ở gần nhất lên đầu
+                ->orderBy('distance_in_meters', 'asc')
+                ->limit(10)
+                ->get();
+        });
+    }
+
+
+
+    /**
+     * Xử lý điều phối booking sang KTV khác
+     * @param int $bookingId
+     * @param int $newKtvId
      * @return ServiceReturn
      */
-    public function approveCancel(ServiceBooking $booking, array $data): ServiceReturn
+    public function handleReassignBooking(
+        int  $bookingId,
+        int $newKtvId
+    ): ServiceReturn
     {
-        try {
-            DB::beginTransaction();
-            // chuyển trạng thái đơn hàng sang đã hủy
-            $booking->status = BookingStatus::CANCELED->value;
-            $booking->save();
-            // tiến hành hoàn tiền cho khách hàng
-            $client = $booking->user;
-            $ktv = $booking->ktvUser;
-            $amountPayBackToClient = $data['amount_pay_back_to_client'] ?? 0;
-            $amountPayToKtv = $data['amount_pay_to_ktv'] ?? 0;
-            // nếu số tiền quản trị viên nhập thì trả amount đó cho khách hàng
-            $clientWallet = $client->wallet;
-            // Lấy transaction gốc để tham khảo (chỉ đọc, không sửa)
-            $transactionOfCustomer = $this->walletTransactionRepository->query()
-                ->where("foreign_key", $booking->id)
-                ->where('type', WalletTransactionType::PAYMENT->value)
+        return $this->execute(function () use ($bookingId,  $newKtvId) {
+            // Tìm booking với lock để tránh race condition
+            $booking = $this->bookingRepository->query()
+                ->where('id', $bookingId)
+                ->where('status', BookingStatus::WAITING_CANCEL->value)
+                ->lockForUpdate()
                 ->first();
-            $exchange = $transactionOfCustomer->exchange_rate_point;
-
-            if ($amountPayBackToClient > 0) {
-                // lấy wallet khách
-                if (!$clientWallet) {
-                    throw new ServiceException(
-                        message: __("common_error.server_error")
-                    );
-                }
-                // tạo transaction hoàn số tiền admin muốn trả cho khách hàng
-                $transaction  = $this->walletTransactionRepository->create([
-                    'wallet_id' => $clientWallet->id,
-                    'type' => WalletTransactionType::REFUND->value,
-                    'point_amount' => $amountPayBackToClient * $exchange,
-                    'balance_after' => $clientWallet->balance + $amountPayBackToClient,
-                    'money_amount' => $amountPayBackToClient,
-                    'exchange_rate_point' => $exchange,
-                    'status' => WalletTransactionStatus::COMPLETED->value,
-                    'transaction_code' => Helper::createDescPayment(PaymentType::REFUND),
-                    'foreign_key' => $booking->id,
-                    'description' => "Hoàn tiền booking #{$booking->id} - lý do: {$data['reason_cancel']}",
-                    'expired_at' => now(),
-                    'transaction_id' => null,
-                ]);
-                $clientWallet->balance += $amountPayBackToClient;
-                $clientWallet->save();
-            } else {
-                // nếu không nhập số tiền thì hoàn tiền toàn bộ cho client
-                if (!$clientWallet) {
-                    throw new ServiceException(
-                        message: __("common_error.server_error")
-                    );
-                }
-
-                // tạo transaction
-                $transaction  = $this->walletTransactionRepository->create([
-                    'wallet_id' => $clientWallet->id,
-                    'type' => WalletTransactionType::REFUND->value,
-                    'point_amount' => $transactionOfCustomer->point_amount,
-                    'balance_after' => $clientWallet->balance + $transactionOfCustomer->money_amount,
-                    'money_amount' => $transactionOfCustomer->money_amount,
-                    'exchange_rate_point' => $exchange,
-                    'status' => WalletTransactionStatus::COMPLETED->value,
-                    'transaction_code' => Helper::createDescPayment(PaymentType::REFUND),
-                    'foreign_key' => $booking->id,
-                    'description' => "Hoàn tiền booking #{$booking->id} - lý do: {$data['reason_cancel']}",
-                    'expired_at' => now(),
-                    'transaction_id' => null,
-                ]);
-                $clientWallet->balance += $transactionOfCustomer->total_amount;
-                $clientWallet->save();
+            if (!$booking) {
+                throw new ServiceException(__("error.booking_not_found_or_invalid_status"));
             }
-            if ($amountPayToKtv > 0) {
-                // lấy wallet ktv
-                $ktvWallet = $ktv->wallet;
-                if (!$ktvWallet) {
-                    throw new ServiceException(
-                        message: __("common_error.server_error")
-                    );
-                }
-                $transaction  = $this->walletTransactionRepository->create([
-                    'wallet_id' => $ktvWallet->id,
-                    'type' => WalletTransactionType::REFUND->value,
-                    'point_amount' => $amountPayToKtv * $exchange,
-                    'balance_after' => $ktvWallet->balance + $amountPayToKtv,
-                    'money_amount' => $amountPayToKtv,
-                    'exchange_rate_point' => $exchange,
-                    'status' => WalletTransactionStatus::COMPLETED->value,
-                    'transaction_code' => Helper::createDescPayment(PaymentType::REFUND),
-                    'foreign_key' => $booking->id,
-                    'description' => "Hoàn tiền booking #{$booking->id}",
-                    'expired_at' => now(),
-                    'transaction_id' => null,
-                ]);
-                $ktvWallet->balance += $amountPayToKtv;
-                $ktvWallet->save();
-            }
+            // Lưu thông tin KTV cũ để gửi notification
+            $oldKtvId = $booking->ktv_user_id;
+            // Cập nhật booking sang KTV mới
+            $booking->ktv_user_id = $newKtvId;
+            $booking->status = BookingStatus::CONFIRMED->value;
+            $booking->reason_cancel = null; // Xóa lý do hủy
+            $booking->cancel_by = null;
+            $booking->save();
 
-            DB::commit();
-            // Gửi thông báo cho khách hàng
+            // Gửi notification cho khách hàng
             SendNotificationJob::dispatch(
                 userId: $booking->user_id,
-                type: NotificationType::BOOKING_CANCELLED,
+                type: NotificationType::BOOKING_REASSIGNED,
                 data: [
                     'booking_id' => $booking->id,
-                    'reason' => $data['reason_cancel'],
                 ]
             );
 
-            // Gửi thông báo cho KTV
+            // Gửi notification cho KTV mới
             SendNotificationJob::dispatch(
-                userId: $booking->ktv_user_id,
-                type: NotificationType::BOOKING_CANCELLED,
+                userId: $newKtvId,
+                type: NotificationType::NEW_BOOKING_REQUEST,
                 data: [
                     'booking_id' => $booking->id,
-                    'reason' => $data['reason_cancel'],
+                    'customer_name' => $booking->user->name ?? '',
+                    'booking_time' => $booking->booking_time?->format('Y-m-d H:i:s'),
                 ]
             );
 
-            // Gửi thông báo hoàn tiền cho khách hàng
-            SendNotificationJob::dispatch(
-                userId: $booking->user_id,
-                type: NotificationType::BOOKING_REFUNDED,
-                data: [
-                    'booking_id' => $booking->id,
-                    'amount' => $amountPayBackToClient ?? $booking->price,
-                ]
-            );
-
-            // Gửi thông báo hoàn tiền cho KTV
-            if ($amountPayToKtv > 0) {
+            // Gửi notification cho KTV cũ
+            if ($oldKtvId && $oldKtvId != $newKtvId) {
                 SendNotificationJob::dispatch(
-                    userId: $booking->ktv_user_id,
-                    type: NotificationType::BOOKING_REFUNDED,
+                    userId: $oldKtvId,
+                    type: NotificationType::BOOKING_CANCELLED,
                     data: [
                         'booking_id' => $booking->id,
-                        'amount' => $amountPayToKtv,
+                        'reason' => __('booking.reassigned_to_other_ktv'),
                     ]
                 );
             }
 
-            return ServiceReturn::success(
-                data: $booking
-            );
-        } catch (ServiceException $exception) {
-            DB::rollBack();
-            return ServiceReturn::error(
-                message: $exception->getMessage()
-            );
-        } catch (\Exception $exception) {
-            DB::rollBack();
-            LogHelper::error(
-                message: "Lỗi BookingService@approveCancel",
-                ex: $exception
-            );
-            return ServiceReturn::error(
-                message: __("common_error.server_error")
-            );
-        }
+        });
     }
 
     /**
@@ -790,7 +683,7 @@ class BookingService extends BaseService
      *          price_distance: float, // Giá di chuyển
      *          discount_coupon: float, // Giá trị giảm giá coupon
      *          final_price: float, // Giá cuối cùng (Total = Gía gốc + Giá di chuyển - Giá giảm giá coupon)
-         *  },
+     *  },
      *     walletCustomer: Wallet,
      *     ktvAddress: UserAddress,
      * }
@@ -876,7 +769,6 @@ class BookingService extends BaseService
         );
 
 
-
         // Trả ra data hợp lệ
         return [
             'categoryData' => $categoryData,
@@ -887,50 +779,4 @@ class BookingService extends BaseService
         ];
     }
 
-    /**
-     * Query dịch vụ có cùng category, KTV khác, service active
-     * @param \App\Models\ServiceBooking $booking
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    public function getSimilarServicesQuery(\App\Models\ServiceBooking $booking): \Illuminate\Database\Eloquent\Builder
-    {
-        $currentService = $booking->service;
-        if (!$currentService) {
-            return  $this->serviceRepository->query()->whereNull('id');
-        }
-
-        return $this->serviceRepository->query()
-            ->where('category_id', $currentService->category_id)
-            ->where('user_id', '!=', $booking->ktv_user_id) // KTV khác
-            ->where('is_active', true)
-            ->with(['provider', 'category', 'optionCategoryPrices']);
-    }
-
-    /**
-     * Các dịch vụ có cùng category, KTV khác, service active
-     * @param \App\Models\ServiceBooking $booking
-     * @return \Illuminate\Support\Collection
-     */
-    public function getSimilarServicesForReassignment(\App\Models\ServiceBooking $booking): \Illuminate\Support\Collection
-    {
-        // Lấy service hiện tại để lấy category_id
-        $currentService = $booking->service;
-        if (!$currentService) {
-            return collect([]);
-        }
-
-        // Query KTV đang có dịch vụ khác trong category này
-        return $this->userRepository->queryUser()
-            ->where('role',UserRole::KTV->value)
-            ->whereHas('services', function ($query) use ($currentService) {
-                $query->where('category_id', $currentService->category_id);
-            })
-            ->get()
-            ->map(function ($user) {
-                return [
-                    'user_id' => $user->id,
-                    'user_name' => $user->name ?? '',
-                ];
-            });
-    }
 }

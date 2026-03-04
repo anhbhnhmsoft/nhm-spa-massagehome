@@ -114,6 +114,88 @@ class AuthService extends BaseService
     }
 
     /**
+     * Gửi OTP quên mật khẩu
+     * @param string $phone
+     * @return ServiceReturn
+     * @throws \Throwable
+     */
+    public function forgotPassword(string $phone): ServiceReturn
+    {
+        return $this->execute(
+            callback: function () use ($phone) {
+                // Kiểm tra xem số điện thoại đã được xác thực chưa
+                $user = $this->userRepository->findByPhoneVerified($phone);
+                if (!$user) {
+                    throw new ServiceException(message: __('auth.error.phone_not_verified'));
+                }
+                // Kiểm tra user có bị khóa không
+                if (!$user->is_active) {
+                    throw new ServiceException(message: __('auth.error.disabled'));
+                }
+                // nếu có user thì kiểm tra xem có OTP gửi chưa và còn thời hạn không
+                $otpRecord = $this->getLastOtpNotVerified(
+                    phone: $phone,
+                    type: UserOtpType::FORGOT_PASSWORD,
+                );
+                if ($otpRecord) {
+                    // nếu có OTP gửi rồi và còn thời hạn không thì yêu cầu nhập lại OTP
+                    return [
+                        'case' => 'need_re_enter_otp',
+                        'last_sent_at' => $otpRecord->last_sent_at,
+                        'retry_after_seconds' => self::RETRY_AFTER_SECONDS,
+                    ];
+                }
+                // Kiểm tra xem có OTP đăng ký và xác thực rồi không
+                $otpRecord = $this->userOtpRepository->getLatestVerifiedOtp(
+                    phone: $phone,
+                    type: UserOtpType::FORGOT_PASSWORD,
+                    minutes: self::OTP_TTL_MINUTES,
+                );
+                if ($otpRecord) {
+                    // nếu có OTP rồi thì cần nhập yêu cầu quên mật khẩu lại
+                    return [
+                        'case' => 'need_re_enter_reset_password',
+                    ];
+                }
+                // Tạo OTP đăng ký và lưu vào database
+                $otpRecord = $this->createOtp(
+                    phone: $phone,
+                    type: UserOtpType::FORGOT_PASSWORD,
+                );
+                return [
+                    'case' => 'success',
+                    'last_sent_at' => $otpRecord->last_sent_at,
+                    'retry_after_seconds' => self::RETRY_AFTER_SECONDS,
+                ];
+            },
+            useTransaction: true
+        );
+    }
+
+    /**
+     * Xác thực OTP quên mật khẩu.
+     * @param string $phone
+     * @param string $otp
+     * @return ServiceReturn
+     * @throws \Throwable
+     */
+    public function verifyOtpForgotPassword(string $phone, string $otp): ServiceReturn
+    {
+        return $this->execute(
+            callback: function () use ($phone, $otp) {
+                // Xác thực OTP đăng ký tài khoản
+                $this->verifyOtp(
+                    phone: $phone,
+                    type: UserOtpType::FORGOT_PASSWORD,
+                    otpCode: $otp,
+                );
+                return ServiceReturn::success();
+            },
+            useTransaction: true
+        );
+    }
+
+    /**
      * Xác thực OTP đăng ký tài khoản.
      * @param string $phone
      * @param string $otp
@@ -158,6 +240,28 @@ class AuthService extends BaseService
     }
 
     /**
+     * Gửi lại OTP đăng ký tài khoản.
+     * @param string $phone
+     * @return ServiceReturn
+     */
+    public function resendOtpForgotPassword(string $phone): ServiceReturn
+    {
+        return $this->execute(
+            callback: function () use ($phone) {
+                $otpRecord = $this->createOtp(
+                    phone: $phone,
+                    type: UserOtpType::FORGOT_PASSWORD,
+                );
+                return [
+                    'last_sent_at' => $otpRecord->last_sent_at,
+                    'retry_after_seconds' => self::RETRY_AFTER_SECONDS,
+                ];
+            },
+            useTransaction: true
+        );
+    }
+
+    /**
      * Đăng ký tài khoản mới.
      * @param string $phone -- Số điện thoại dùng để đăng ký tài khoản.
      * @param string $password -- Mật khẩu tài khoản.
@@ -191,6 +295,9 @@ class AuthService extends BaseService
                 if ($user) {
                     throw new ServiceException(message: __('auth.error.phone_verified'));
                 }
+
+                // Xóa OTP đã xác thực (tránh trường hợp người dùng nhập lại)
+                $this->userOtpRepository->deleteOtpHadVerified($phone, UserOtpType::REGISTER);
 
                 /**
                  * Tạo user mới
@@ -245,32 +352,81 @@ class AuthService extends BaseService
             callback: function () use ($phone, $password) {
                 $user = $this->userRepository->findByPhoneVerified($phone);
                 if (!$user) {
-                    return ServiceReturn::error(message: __('auth.error.invalid_login'));
+                    throw new ServiceException(message: __('auth.error.phone_not_verified'));
                 }
                 // Kiểm tra password
                 if (!Hash::check($password, $user->password)) {
-                    return ServiceReturn::error(message: __('auth.error.invalid_login'));
+                    throw new ServiceException(message: __('auth.error.invalid_login'));
                 }
                 // Kiểm tra user có bị khóa không
                 if (!$user->is_active) {
-                    return ServiceReturn::error(message: __('auth.error.disabled'));
+                    throw new ServiceException(message: __('auth.error.disabled'));
+                }
+                // Admin ko được đăng nhập vào hệ thống
+                if ($user->role === UserRole::ADMIN->value) {
+                    throw new ServiceException(message: __('auth.error.unauthorized'));
                 }
 
                 // Xóa token cũ, các thiết bị khác sẽ bị đăng xuất
-                $user->tokens()->delete();
+                $this->logoutAllDevices($user);
                 // Lưu thông tin đăng nhập mới
                 $user->last_login_at = now();
                 $user->save();
                 // Tải thông tin hồ sơ và địa chỉ mặc định của người dùng
                 $user->load(['profile', 'primaryAddress']);
-
                 // Tạo token đăng nhập
                 $token = $this->createTokenAuth($user);
-
                 return [
                     'token' => $token,
                     'user' => $user,
                 ];
+            },
+            useTransaction: true
+        );
+    }
+
+    /**
+     * Đổi mật khẩu
+     * @param string $phone
+     * @param string $password
+     * @return ServiceReturn
+     * @throws \Throwable
+     */
+    public function resetPassword(
+        string $phone,
+        string $password,
+    ): ServiceReturn
+    {
+        return $this->execute(
+            callback: function () use ($phone, $password) {
+                // Kiểm tra xem số điện thoại đã được xác thực chưa
+                $otpRecord = $this->userOtpRepository->getLatestVerifiedOtp(
+                    phone: $phone,
+                    type: UserOtpType::FORGOT_PASSWORD,
+                    minutes: self::OTP_TTL_MINUTES,
+                );
+                if (!$otpRecord) {
+                    throw new ServiceException(__('auth.error.otp_not_verified'));
+                }
+
+                // Kiểm tra xem số điện thoại đã được đăng ký chưa
+                $user = $this->userRepository->findByPhoneVerified($phone);
+                if (!$user) {
+                    throw new ServiceException(message: __('auth.error.phone_not_verified'));
+                }
+
+                // Cập nhật mật khẩu mới
+                $user->update([
+                    'password' => Hash::make($password)
+                ]);
+
+                // Xóa OTP đã xác thực (tránh trường hợp người dùng nhập lại)
+                $this->userOtpRepository->deleteOtpHadVerified($phone, UserOtpType::FORGOT_PASSWORD);
+
+                // Xóa token cũ, các thiết bị khác sẽ bị đăng xuất
+                $this->logoutAllDevices($user);
+
+                return ServiceReturn::success();
             },
             useTransaction: true
         );
@@ -341,8 +497,6 @@ class AuthService extends BaseService
             return ServiceReturn::error(message: __('common_error.server_error'));
         }
     }
-
-
 
     /**
      * Cập nhật ngôn ngữ cho user.
@@ -621,29 +775,45 @@ class AuthService extends BaseService
      */
     public function logout(): ServiceReturn
     {
+        return $this->execute(
+            callback: function () {
+                $user = auth('sanctum')->user();
+                if (!$user) {
+                    throw new ServiceException(message: __('error.unauthorized'));
+                }
+                // Xóa tất cả các thiết bị đã đăng nhập của user
+                $this->logoutAllDevices($user);
+                return ServiceReturn::success();
+            },
+            useTransaction: true
+        );
+    }
+
+    /**
+     * Khóa tài khoản.
+     * @return ServiceReturn
+     */
+    public function lockAccount(): ServiceReturn
+    {
         try {
-            $user = auth('sanctum')->user();
+            $user = Auth::user();
             if (!$user) {
                 return ServiceReturn::error(message: __('error.unauthorized'));
             }
-            $user->currentAccessToken()->delete();
-
-            // Xóa tất cả các thiết bị đã đăng nhập của user
-            $this->userDeviceRepository->query()
-                ->where('user_id', $user->id)
-                ->forceDelete(); // Xóa cứng (xóa luôn khỏi bảng)
+            $user->is_active = false;
+            $user->save();
+            $this->logoutAllDevices($user);
             return ServiceReturn::success(
-                message: __('auth.success.logout'),
+                message: __('auth.success.lock_account'),
             );
         } catch (Exception $exception) {
             LogHelper::error(
-                message: "Lỗi AuthService@logout",
+                message: "Lỗi AuthService@lockAccount",
                 ex: $exception
             );
             return ServiceReturn::error(message: __('common_error.server_error'));
         }
     }
-
 
     /**
      * -------- Private methods --------
@@ -661,6 +831,21 @@ class AuthService extends BaseService
             abilities: ['*'],
             expiresAt: now()->addDays(30),
         )->plainTextToken;
+    }
+
+    /**
+     * Xóa tất cả các thiết bị đã đăng nhập của user.
+     * @param User $user
+     * @return void
+     */
+    protected function logoutAllDevices(User $user): void
+    {
+        // Xóa token cũ, các thiết bị khác sẽ bị đăng xuất
+        $user->tokens()->delete();
+        // Xóa tất cả các thiết bị đã đăng nhập của user
+        $this->userDeviceRepository->query()
+            ->where('user_id', $user->id)
+            ->delete();
     }
 
     /**
@@ -723,7 +908,6 @@ class AuthService extends BaseService
         );
     }
 
-
     /**
      * @param string $phone
      * @param UserOtpType $type
@@ -762,30 +946,4 @@ class AuthService extends BaseService
 
     }
 
-
-    /**
-     * Khóa tài khoản.
-     * @return ServiceReturn
-     */
-    public function lockAccount(): ServiceReturn
-    {
-        try {
-            $user = Auth::user();
-            if (!$user) {
-                return ServiceReturn::error(message: __('error.unauthorized'));
-            }
-            $user->is_active = false;
-            $user->save();
-            $user->currentAccessToken()->delete();
-            return ServiceReturn::success(
-                message: __('auth.success.lock_account'),
-            );
-        } catch (Exception $exception) {
-            LogHelper::error(
-                message: "Lỗi AuthService@lockAccount",
-                ex: $exception
-            );
-            return ServiceReturn::error(message: __('common_error.server_error'));
-        }
-    }
 }
