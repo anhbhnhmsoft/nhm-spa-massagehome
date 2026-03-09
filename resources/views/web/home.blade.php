@@ -353,7 +353,7 @@
                     <h1>Massage tại nhà & Spa chuyên nghiệp</h1>
                     <p>Đặt lịch mát-xa thư giãn, trị liệu chuyên sâu ngay trên ứng dụng. Đội ngũ kỹ thuật viên tay nghề
                         cao sẵn sàng phục vụ bạn mọi lúc, mọi nơi.</p>
-                    <div class="btn-group">
+                    <div class="btn-group" style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap">
                         <a href="{{ $appstore ?? '#' }}" class="btn btn-white" title="Tải cho IOS (Iphone)"><img
                                 src="images/appstore.png"></a>
                         <a href="{{ $chplay ?? '#' }}" class="btn btn-white" title="Tải cho CHPlay"><img
@@ -452,8 +452,8 @@
         <div class="container">
             <h2>Sẵn sàng thư giãn ngay hôm nay?</h2>
             <p>Tải ứng dụng Masa Home iđể nhận ngay voucher giảm giá 20% cho lần đặt lịch đầu tiên.</p>
-            <div class="btn-group">
-                <a href="{{ $appstore ?? '#' }}" class="btn btn-white" title="Tải cho IOS (Iphone)"><img
+            <div class="btn-group" style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap">
+                <a href="{{ $appstore ?? '#' }}" class="btn btn-white" title="Tải cho IOS (Iphone)"><img
                         src="images/appstore.png"></a>
                 <a href="{{ $chplay ?? '#' }}" class="btn btn-white" title="Tải cho CHPlay"><img
                         src="images/chplay.png"></a>

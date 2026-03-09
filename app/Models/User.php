@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements FilamentUser
@@ -46,6 +47,29 @@ class User extends Authenticatable implements FilamentUser
         'referred_at' => 'datetime',
         'is_active' => 'boolean',
     ];
+
+    protected static function booted(): void
+    {
+        static::deleting(function (User $user) {
+            $avatarPath = $user->profile->avatar_url;
+            // 1. Xóa Avatar
+            if ($avatarPath) {
+                Storage::disk('public')->delete($avatarPath);
+            }
+            // 2. Xóa file đính kèm khác (CCCD mặt trước, mặt sau, ảnh KTV...)
+            if ($user->files) {
+                foreach ($user->files as $file) {
+                    if ($file->file_path) {
+                        if ($file->is_public) {
+                            Storage::disk('public')->delete($file->file_path);
+                        }else{
+                            Storage::disk('private')->delete($file->file_path);
+                        }
+                    }
+                }
+            }
+        });
+    }
 
     public function canAccessPanel(Panel $panel): bool
     {

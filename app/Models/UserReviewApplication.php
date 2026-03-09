@@ -27,6 +27,9 @@ class UserReviewApplication extends Model
         'application_date',
         'role',
         'is_leader',
+        'address',
+        'latitude',
+        'longitude',
     ];
 
     protected $casts = [

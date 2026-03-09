@@ -233,6 +233,7 @@ return [
     'date_of_birth' => [
         'required' => 'Vui lòng nhập ngày sinh.',
         'date' => 'Ngày sinh không hợp lệ.',
+        'invalid' => 'Ngày sinh không hợp lệ.',
         'date_format' => 'Ngày sinh phải có định dạng yyyy-MM-dd.',
     ],
     'old_pass' => [
@@ -246,6 +247,8 @@ return [
     'bio' => [
         'required' => 'Vui lòng nhập mô tả ít nhất bằng 1 ngôn ngữ.',
         'invalid' => 'Dữ liệu mô tả không đúng định dạng.',
+        'min' => 'Mô tả quá ngắn (tối thiểu :min ký tự).',
+        'max' => 'Mô tả  quá dài (tối đa :max ký tự).',
         'vi' => [
             'required' => 'Vui lòng nhập mô tả tiếng Việt.',
             'string' => 'Mô tả tiếng Việt phải là chuỗi.',
@@ -265,6 +268,11 @@ return [
             'invalid' => 'Mô tả tiếng Anh không hợp lệ.',
         ],
     ],
+    'avatar' => [
+        'required' => 'Vui lòng tải lên ảnh đại diện.',
+        'invalid' => 'Avatar phải là file hình ảnh (jpg, jpeg, png).',
+        'max' => 'Dung lượng ảnh đại diện tối đa :max MB.',
+    ],
     'experience' => [
         'required' => 'Vui lòng nhập kinh nghiệm.',
         'integer' => 'Kinh nghiệm phải là số nguyên.',
@@ -274,11 +282,25 @@ return [
         'required' => 'Vui lòng tải lên ít nhất 1 ảnh.',
         'array' => 'Danh sách ảnh phải là mảng.',
         'invalid' => 'Dữ liệu ảnh không đúng định dạng và tối đa :max MB mỗi ảnh.',
-        'invalid_type' => 'Loại ảnh không hợp lệ.',
+        'invalid_type' => 'Bạn đang gửi ảnh không hợp lệ.',
         'invalid_type_for_role' => 'Loại ảnh không hợp lệ cho vai trò này.',
         'duplicate_type' => 'Có ảnh đang bị trùng lặp.',
         'invalid_type_count' => 'Số lượng ảnh cho loại này không hợp lệ.',
-        'missing_type' => 'Thiếu yêu cầu ảnh cần có.',
+        'missing' => [
+            'cccd_front' => 'Thiếu yêu cầu ảnh CCCD mặt trước.',
+            'cccd_back' => 'Thiếu yêu cầu ảnh CCCD mặt sau.',
+            'license' => 'Thiếu yêu cầu ảnh giấy phép hoạt đông.',
+            'face_with_id' => 'Thiếu yêu cầu ảnh khuôn mặt với CCCD.',
+            'ktv_image_display' => 'Thiếu yêu cầu ảnh hiển thị cho khách hàng.',
+        ],
+        'count' => [
+            'cccd_front' => 'Chỉ có thể tải lên :count ảnh CCCD mặt trước.',
+            'cccd_back' => 'Chỉ có thể tải lên :count ảnh CCCD mặt sau.',
+            'license' => 'Chỉ có thể tải lên :count ảnh giấy phép hoạt động.',
+            'face_with_id' => 'Chỉ có thể tải lên :count ảnh khuôn mặt với CCCD.',
+            'ktv_image_display' => 'Chỉ có thể tải lên :min - :max ảnh hiển thị cho khách hàng.',
+        ],
+
     ],
      'is_working' => [
         'required' => 'Vui lòng chọn trạng thái.',
@@ -312,5 +334,9 @@ return [
     'nickname' => [
         'required_if' => 'Vui lòng nhập tên hiển thị.',
         'invalid' => 'Tên hiển thị phải là chuỗi và ít nhất 4 ký tự, tối đa 255 ký tự.',
+        'for_real' => [
+            'required' => 'Vui lòng nhập tên thật.',
+            'invalid' => 'Tên thật phải là chuỗi và ít nhất 4 ký tự, tối đa 255 ký tự.',
+        ]
     ],
 ];

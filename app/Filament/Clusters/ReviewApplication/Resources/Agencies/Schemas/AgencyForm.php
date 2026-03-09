@@ -10,6 +10,7 @@ use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserRole;
 use App\Models\Province;
 use App\Services\LocationService;
+use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
@@ -17,6 +18,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Pages\CreateRecord;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Grid;
@@ -99,12 +101,8 @@ class AgencyForm
                                     ->imageEditor()
                                     ->disk('public')
                                     ->directory(DirectFile::KTVA->value)
-                                    ->required()
                                     ->downloadable()
-                                    ->maxSize(102400)
-                                    ->validationMessages([
-                                        'required' => __('common.error.required'),
-                                    ]),
+                                    ->maxSize(102400),
                                 Textarea::make('bio')
                                     ->label(__('admin.common.table.bio'))
                                     ->rows(3),
@@ -118,10 +116,7 @@ class AgencyForm
                                     ]),
                                 DatePicker::make('date_of_birth')
                                     ->label(__('admin.common.table.date_of_birth'))
-                                    ->required()
-                                    ->validationMessages([
-                                        'required' => __('common.error.required'),
-                                    ]),
+                                    ,
                             ]),
 
                     ])
@@ -148,22 +143,31 @@ class AgencyForm
                             ->label(__('admin.common.table.status'))
                             ->default(ReviewApplicationStatus::APPROVED),
 
-                        Textarea::make('bio.' . Language::VIETNAMESE->value)
-                            ->label(__('admin.agency_apply.fields.bio_vi'))
-                            ->rows(3)
+                        TextInput::make('nickname')
+                            ->label(__('admin.common.table.real_name'))
                             ->required()
+                            ->maxLength(255)
                             ->validationMessages([
                                 'required' => __('common.error.required'),
-                            ])
-                            ->columnSpanFull(),
-                        Textarea::make('bio.' . Language::ENGLISH->value)
-                            ->label(__('admin.agency_apply.fields.bio_en'))
-                            ->rows(3)
-                            ->columnSpanFull(),
-                        Textarea::make('bio.' . Language::CHINESE->value)
-                            ->label(__('admin.agency_apply.fields.bio_cn'))
-                            ->rows(3)
-                            ->columnSpanFull(),
+                                'max' => __('common.error.max_length', ['max' => 255])
+                            ]),
+                        TextEntry::make('address')
+                            ->label(__('admin.booking.fields.address'))
+                            ->icon('heroicon-m-map-pin')
+                            ->suffixAction(
+                                Action::make('open_map')
+                                    ->label(__('admin.booking.actions.view_map'))
+                                    ->icon('heroicon-o-map')
+                                    ->color('primary')
+                                    ->url(function ($record) {
+                                        // Ưu tiên dùng tọa độ nếu có, nếu không thì dùng địa chỉ text
+                                        if ($record->latitude && $record->longitude) {
+                                            return "https://www.google.com/maps/search/?api=1&query={$record->latitude},{$record->longitude}";
+                                        }
+                                        return "https://www.google.com/maps/search/?api=1&query=" . urlencode($record->address);
+                                    })
+                                    ->openUrlInNewTab()
+                            ),
                     ])
                     ->columns(2),
 
@@ -200,22 +204,6 @@ class AgencyForm
                                     ->downloadable()
                                     ->columnSpanFull()
                                     ->afterStateHydrated(fn($component, $record) => $component->state($record?->cccdBack()->first()?->file_path)),
-                            ]),
-
-                        Section::make(__('admin.agency_apply.fields.face_with_identity_card'))
-                            ->compact()
-                            ->schema([
-                                FileUpload::make('face_with_identity_card_path')
-                                    ->hiddenLabel()
-                                    ->directory(fn($record) => DirectFile::makePathById(DirectFile::AGENCY, $record?->id ?? Helper::getTimestampAsId()))
-                                    ->disk('private')
-                                    ->required()
-                                    ->image()
-                                    ->maxSize(102400)
-                                    ->downloadable()
-                                    ->columnSpanFull()
-                                    ->deletable()
-                                    ->afterStateHydrated(fn($component, $record) => $component->state($record?->faceWithIdentityCard()->first()?->file_path)),
                             ]),
                     ]),
             ]);

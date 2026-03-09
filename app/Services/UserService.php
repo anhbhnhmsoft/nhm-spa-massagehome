@@ -16,6 +16,7 @@ use App\Enums\ContractFileType;
 use App\Enums\DirectFile;
 use App\Enums\Jobs\WalletTransCase;
 use App\Enums\KTVConfigSchedules;
+use App\Enums\Language;
 use App\Enums\NotificationAdminType;
 use App\Enums\NotificationType;
 use App\Enums\ReviewApplicationStatus;
@@ -26,6 +27,7 @@ use App\Enums\WalletTransactionType;
 use App\Jobs\SendNotificationJob;
 use App\Jobs\WalletTransactionJob;
 use App\Repositories\BookingRepository;
+use App\Repositories\CategoryRepository;
 use App\Repositories\CouponUserRepository;
 use App\Repositories\DangerSupportRepository;
 use App\Repositories\ReviewRepository;
@@ -67,11 +69,13 @@ class UserService extends BaseService
         protected WalletService                   $walletService,
         protected NotificationService             $notificationService,
         protected DangerSupportRepository         $dangerSupportRepository,
-    ) {
+        protected CategoryRepository              $categoryRepository,
+    )
+    {
         parent::__construct();
     }
 
-      /**
+    /**
      * Lấy danh sách KTV
      * @param FilterDTO $dto
      * @return ServiceReturn
@@ -96,8 +100,7 @@ class UserService extends BaseService
             return ServiceReturn::success(
                 data: $paginate
             );
-        }
-        catch (\Exception $exception) {
+        } catch (\Exception $exception) {
             LogHelper::error(
                 message: "Lỗi UserService@pagination",
                 ex: $exception
@@ -155,7 +158,7 @@ class UserService extends BaseService
                         message: __("common_error.data_not_found")
                     );
                 }
-                return  [
+                return [
                     'ktv' => $ktv,
                     'break_time_gap' => $breakTimeGap,
                     'price_transportation' => $priceTransportation,
@@ -172,86 +175,79 @@ class UserService extends BaseService
      */
     public function activeStaffApply(int $id): ServiceReturn
     {
-        DB::beginTransaction();
-        try {
-            $user = $this->userRepository->query()->where('id', $id)->first();
-            if (!$user) {
-                throw new ServiceException(
-                    message: __("common_error.data_not_found")
-                );
-            }
-            $user->is_active = true;
-            $apply = $user->reviewApplication;
-            if ($apply) {
+        return $this->execute(
+            callback: function () use ($id) {
+                $user = $this->userRepository->query()
+                    ->where('id', $id)
+                    ->first();
+                if (!$user) {
+                    throw new ServiceException(
+                        message: __("common_error.data_not_found")
+                    );
+                }
+                $user->is_active = true;
+                $apply = $user->reviewApplication;
+                if (!$apply) {
+                    throw new ServiceException(
+                        message: __("common_error.data_not_found")
+                    );
+                }
                 $apply->status = ReviewApplicationStatus::APPROVED;
                 $apply->effective_date = now();
                 $user->role = $apply->role;
                 $apply->save();
                 $user->save();
-            } else {
-                throw new ServiceException(
-                    message: __("common_error.data_not_found")
-                );
-            }
-            // Tạo lịch làm việc mặc định cho KTV
-            if ($apply->role === UserRole::KTV->value) {
-                $user->schedule()->create([
-                    'is_working' => true,
-                    'working_schedule' => KTVConfigSchedules::getDefaultSchema(),
-                ]);
-            }
-            if ($user->wallet) {
-                $user->wallet->is_active = true;
-                $user->wallet->save();
-            } else {
-                $this->walletRepository->create([
-                    'user_id' => $user->id,
-                    'balance' => 0,
-                    'is_active' => true
-                ]);
-            }
-            DB::commit();
 
+                // Tạo lịch làm việc mặc định cho KTV
+                if ($apply->role === UserRole::KTV->value) {
+                    $user->schedule()->create([
+                        'is_working' => true,
+                        'working_schedule' => KTVConfigSchedules::getDefaultSchema(),
+                    ]);
+                    // Đăng ký hết tất cả các dịch vụ cho KTV
+                    $allCategoryIds = $this->categoryRepository->query()
+                        ->pluck('id')
+                        ->toArray();
+                    $user->categories()->sync($allCategoryIds);
+                }
+                if ($user->wallet) {
+                    $user->wallet->is_active = true;
+                    $user->wallet->save();
+                } else {
+                    $this->walletRepository->create([
+                        'user_id' => $user->id,
+                        'balance' => 0,
+                        'is_active' => true
+                    ]);
+                }
 
-            // Gửi thông báo
-            SendNotificationJob::dispatch(
-                userId: $user->id,
-                type: NotificationType::STAFF_APPLY_SUCCESS,
-                data: [
-                    'user_id' => $user->id,
-                    'role' => $user->role,
-                ]
-            );
-
-            // Trả tiền thưởng cho người giới thiệu nếu có referrer_id và role = KTV
-            if (!empty($apply->referrer_id) && $apply->role == UserRole::KTV->value) {
-                WalletTransactionJob::dispatch(
+                // Gửi thông báo
+                SendNotificationJob::dispatch(
+                    userId: $user->id,
+                    type: NotificationType::STAFF_APPLY_SUCCESS,
                     data: [
-                        'referral_id' => $apply->referrer_id,
-                        'user_id' => $user->id
-                    ],
-                    case: WalletTransCase::REWARD_FOR_KTV_REFERRAL
+                        'user_id' => $user->id,
+                        'role' => $user->role,
+                    ]
                 );
-            }
 
-            return ServiceReturn::success(
-                message: __("common.success.data_updated")
-            );
-        } catch (ServiceException $exception) {
-            DB::rollBack();
-            return ServiceReturn::error(
-                message: $exception->getMessage()
-            );
-        } catch (\Exception $exception) {
-            DB::rollBack();
-            LogHelper::error(
-                message: "Lỗi UserService@activeStaffApply",
-                ex: $exception
-            );
-            return ServiceReturn::error(
-                message: __("common_error.server_error")
-            );
-        }
+                // Trả tiền thưởng cho người giới thiệu nếu có referrer_id và role = KTV
+                if (!empty($apply->referrer_id) && $apply->role == UserRole::KTV->value) {
+                    WalletTransactionJob::dispatch(
+                        data: [
+                            'referral_id' => $apply->referrer_id,
+                            'user_id' => $user->id
+                        ],
+                        case: WalletTransCase::REWARD_FOR_KTV_REFERRAL
+                    );
+                }
+
+                return ServiceReturn::success(
+                    message: __("common.success.data_updated")
+                );
+            },
+            useTransaction: true
+        );
     }
 
     public function rejectStaffApply(int $id, string $note)
@@ -333,11 +329,9 @@ class UserService extends BaseService
             if ($existingReview) {
                 if ($existingReview->status == ReviewApplicationStatus::PENDING) {
                     throw new ServiceException(message: __("error.user_have_review_application_pending"));
-                }
-                else if ($existingReview->status == ReviewApplicationStatus::APPROVED) {
+                } else if ($existingReview->status == ReviewApplicationStatus::APPROVED) {
                     throw new ServiceException(message: __("error.user_have_review_application"));
-                }
-                else if ($existingReview->status == ReviewApplicationStatus::REJECTED) {
+                } else if ($existingReview->status == ReviewApplicationStatus::REJECTED) {
                     // Lấy danh sách file CŨ để chuẩn bị xóa vật lý SAU KHI commit
                     $oldFiles = $this->userFileRepository->query()
                         ->where('user_id', $user->id)
@@ -423,7 +417,7 @@ class UserService extends BaseService
             }
 
             // Gửi thông báo
-            $notificationType = match($data['role']) {
+            $notificationType = match ($data['role']) {
                 UserRole::KTV->value => NotificationAdminType::USER_APPLY_KTV_PARTNER,
                 UserRole::AGENCY->value => NotificationAdminType::USER_APPLY_AGENCY_PARTNER,
                 default => null
@@ -460,6 +454,135 @@ class UserService extends BaseService
             return ServiceReturn::error(message: __("common_error.server_error"));
         }
     }
+
+    /**
+     * Đăng ký làm KTV
+     * @param array $data - dựa theo ApplyTechnicalRequest
+     * @return ServiceReturn
+     * @throws \Throwable
+     */
+    public function applyTechnical(array $data): ServiceReturn
+    {
+        $tempFiles = []; // Chứa các file MỚI vừa upload để xóa nếu lỗi
+        $filesToDeleteOnSuccess = []; // Chứa các file CŨ cần xóa nếu commit thành công
+
+        return $this->execute(
+            callback: function () use ($data, &$filesToDeleteOnSuccess, &$tempFiles) {
+                $user = Auth::user();
+                $profile = $this->userProfileRepository->query()
+                    ->where('user_id', $user->id)
+                    ->first();
+                if (!$profile) {
+                    throw new ServiceException(message: __("common_error.data_not_found"));
+                }
+
+                // Kiểm tra trạng thái review application
+                $filesToDeleteOnSuccess = $this->checkExistReviewApplication($user->id);
+
+                // Kiểm tra referrer_id
+                if (!empty($data['referrer_id'])) {
+                    $agency = $this->userRepository->queryUser()
+                        ->where('id', $data['referrer_id'])
+                        ->whereIn('role', [UserRole::AGENCY->value, UserRole::KTV->value])
+                        ->first();
+                    if (!$agency) {
+                        throw new ServiceException(message: __("error.referrer_not_found"));
+                    }
+                }
+
+                // Chuẩn bị dữ liệu và Lưu review application mới
+                $this->userReviewApplicationRepository->create([
+                    'user_id' => $user->id,
+                    'status' => ReviewApplicationStatus::PENDING->value,
+                    'role' => UserRole::KTV->value,
+                    'referrer_id' => $data['referrer_id'] ?? null,
+                    'is_leader' => $data['is_leader'] ?? false,
+                    'nickname' => $data['nickname'],
+                    'experience' => $data['experience'],
+                    'application_date' => now(),
+                    'bio' => [
+                        Language::VIETNAMESE->value => $data['bio'],
+                        Language::ENGLISH->value => $data['bio'],
+                        Language::CHINESE->value => $data['bio'],
+                    ],
+                ]);
+
+                // Upload files review application
+                $tempFiles = $this->uploadFilesReviewApplication($data['file_uploads'], $user->id, UserRole::KTV);
+
+                // Upload profile avatar
+                if (!$data['avatar'] instanceof UploadedFile) {
+                    throw new ServiceException(message: __("common_error.invalid_parameter"));
+                }
+                $path = $data['avatar']->store(DirectFile::makePathById(
+                    type: DirectFile::AVATAR_USER,
+                    id: $user->id
+                ), 'public');
+
+                $tempFiles[] = ['disk' => 'public', 'path' => $path];
+                // Update Profile
+                $this->userProfileRepository->update($profile->user_id, [
+                    'date_of_birth' => Carbon::make($data['dob'])->format('Y-m-d'),
+                    'avatar_url' => $path,
+                ]);
+
+                return ServiceReturn::success();
+            },
+            useTransaction: true,
+            catchCallback: function () use ($tempFiles) {
+                Helper::cleanupFiles($tempFiles); // Xóa file mới vừa upload lỗi
+            },
+            afterCommitCallback: function () use ($filesToDeleteOnSuccess) {
+                Helper::cleanupFiles($filesToDeleteOnSuccess);
+            }
+        );
+    }
+
+
+    /**
+     * Đăng ký làm KTV
+     * @param array $data - dựa theo ApplyAgencyRequest
+     * @return ServiceReturn
+     * @throws \Throwable
+     */
+    public function applyAgency(array $data): ServiceReturn
+    {
+        $tempFiles = []; // Chứa các file MỚI vừa upload để xóa nếu lỗi
+        $filesToDeleteOnSuccess = []; // Chứa các file CŨ cần xóa nếu commit thành công
+
+        return $this->execute(
+            callback: function () use ($data, &$filesToDeleteOnSuccess, &$tempFiles) {
+                $user = Auth::user();
+                // Kiểm tra trạng thái review application
+                $filesToDeleteOnSuccess = $this->checkExistReviewApplication($user->id);
+
+                // Chuẩn bị dữ liệu và Lưu review application mới
+                $this->userReviewApplicationRepository->create([
+                    'user_id' => $user->id,
+                    'status' => ReviewApplicationStatus::PENDING->value,
+                    'role' => UserRole::AGENCY->value,
+                    'nickname' => $data['nickname'],
+                    'address' => $data['address'],
+                    'latitude' => $data['latitude'],
+                    'longitude' => $data['longitude'],
+                    'application_date' => now(),
+                ]);
+
+                // Upload files review application
+                $tempFiles = $this->uploadFilesReviewApplication($data['file_uploads'], $user->id, UserRole::AGENCY);
+
+                return ServiceReturn::success();
+            },
+            useTransaction: true,
+            catchCallback: function () use ($tempFiles) {
+                Helper::cleanupFiles($tempFiles); // Xóa file mới vừa upload lỗi
+            },
+            afterCommitCallback: function () use ($filesToDeleteOnSuccess) {
+                Helper::cleanupFiles($filesToDeleteOnSuccess);
+            }
+        );
+    }
+
 
     /**
      * Kiểm tra người dùng hiện tại đã nộp đơn ứng tuyển chưa ?
@@ -613,8 +736,7 @@ class UserService extends BaseService
             return ServiceReturn::success(
                 message: __("common.success.data_deleted")
             );
-        }
-        catch (ServiceException $exception) {
+        } catch (ServiceException $exception) {
             DB::rollBack();
             return ServiceReturn::error(
                 message: $exception->getMessage()
@@ -1045,63 +1167,6 @@ class UserService extends BaseService
     }
 
     /**
-     * Cập nhật trạng thái is_leader cho một KTV cụ thể
-     */
-    public function updateKtvLeaderStatus(int|string $referrerId): ServiceReturn
-    {
-        try {
-            // Kiểm tra referrer có tồn tại và là KTV không
-            $referrer = $this->userRepository->query()
-                ->where('id', $referrerId)
-                ->where('role', UserRole::KTV->value)
-                ->where('is_active', true)
-                ->first();
-
-            if (!$referrer) {
-                return ServiceReturn::error(__('common_error.data_not_found'));
-            }
-
-            // Đếm số KTV đã được duyệt mà KTV này giới thiệu
-            $invitedKtvCount = $this->userReviewApplicationRepository->getCountKtvReferrers($referrerId);
-
-            $minReferrals = $this->configService->getKtvLeaderMinReferrals();
-
-            if ($invitedKtvCount < $minReferrals) {
-                return ServiceReturn::success(
-                    data: ['is_updated' => false, 'reason' => 'not_enough_referrals']
-                );
-            }
-
-            // Lấy hồ sơ apply KTV của người giới thiệu
-            $reviewApplication = $this->userReviewApplicationRepository->query()
-                ->where('user_id', $referrerId)
-                ->where('role', UserRole::KTV->value)
-                ->first();
-
-            if (!$reviewApplication) {
-                return ServiceReturn::error(__('common_error.data_not_found'));
-            }
-
-            // Đánh dấu là trưởng nhóm KTV
-            if (!$reviewApplication->is_leader) {
-                $reviewApplication->is_leader = true;
-                $reviewApplication->save();
-            }
-
-            return ServiceReturn::success(
-                data: [
-                    'is_updated' => true,
-                    'referrer_id' => $referrerId,
-                    'invited_count' => $invitedKtvCount,
-                ]
-            );
-        } catch (\Exception $e) {
-            LogHelper::error('Lỗi UserService@updateKtvLeaderStatus', $e);
-            return ServiceReturn::error(__('common_error.server_error'));
-        }
-    }
-
-    /**
      * Cập nhật trạng thái is_leader cho tất cả KTV có đủ số lượng giới thiệu
      * @param int $minReferrals Số lượng giới thiệu tối thiểu để lên trưởng nhóm
      * @return ServiceReturn
@@ -1225,4 +1290,95 @@ class UserService extends BaseService
             return ServiceReturn::error(__('common_error.server_error'));
         }
     }
+
+
+    /**
+     *  ---- Protected methods ----
+     */
+
+    /**
+     * Kiểm tra xem người dùng có tồn tại review application nào không
+     * @param int $userId
+     * @return array<array{disk: string, path: string}> - Mảng chứa thông tin các file cần xóa khi thành công
+     * @throws ServiceException
+     */
+    protected function checkExistReviewApplication(int $userId)
+    {
+        $filesToDeleteOnSuccess = [];
+        // 1. Kiểm tra trạng thái review application
+        $existingReview = $this->userReviewApplicationRepository->query()
+            ->where('user_id', $userId)
+            ->first();
+
+        if ($existingReview) {
+            if ($existingReview->status == ReviewApplicationStatus::PENDING) {
+                throw new ServiceException(message: __("error.user_have_review_application_pending"));
+            } else if ($existingReview->status == ReviewApplicationStatus::APPROVED) {
+                throw new ServiceException(message: __("error.user_have_review_application"));
+            } else if ($existingReview->status == ReviewApplicationStatus::REJECTED) {
+                // Lấy danh sách file CŨ để chuẩn bị xóa vật lý SAU KHI commit
+                $oldFiles = $this->userFileRepository->query()
+                    ->where('user_id', $userId)
+                    ->whereIn('type', [
+                        UserFileType::IDENTITY_CARD_FRONT->value,
+                        UserFileType::IDENTITY_CARD_BACK->value,
+                        UserFileType::KTV_IMAGE_DISPLAY->value,
+                        UserFileType::LICENSE->value,
+                        UserFileType::FACE_WITH_IDENTITY_CARD->value,
+                    ])
+                    ->get();
+
+                foreach ($oldFiles as $file) {
+                    $filesToDeleteOnSuccess[] = [
+                        'disk' => $file->is_public ? 'public' : 'private',
+                        'path' => $file->file_path,
+                    ];
+                    // Chỉ xóa bản ghi trong DB tại đây
+                    $this->userFileRepository->delete($file->id);
+                }
+
+                // Xóa review application cũ trong DB
+                $this->userReviewApplicationRepository->delete($existingReview->id);
+            }
+        }
+
+        return $filesToDeleteOnSuccess;
+    }
+
+    /**
+     * Upload files review application
+     * @param array $files
+     * @param int $userId
+     * @param UserRole $role
+     * @return array
+     * @throws ServiceException
+     */
+    protected function uploadFilesReviewApplication(array $files, int $userId, UserRole $role): array
+    {
+        $tempFiles = [];
+        foreach ($files as $fileUpload) {
+            $typeUpload = $fileUpload['type_upload'];
+            $file = $fileUpload['file'];
+            if (!$file instanceof UploadedFile) {
+                throw new ServiceException(message: __("common_error.invalid_parameter"));
+            }
+            $isPublic = !in_array($typeUpload, UserFileType::getTypeUploadToPrivateDisk());
+            $disk = $isPublic ? 'public' : 'private';
+            $path = $file->store(DirectFile::makePathById(
+                type: DirectFile::USER_FILE_UPLOAD,
+                id: $userId
+            ), $disk);
+            // Lưu vào mảng temp để xóa nếu Rollback
+            $tempFiles[] = ['disk' => $disk, 'path' => $path];
+            $this->userFileRepository->create([
+                'user_id' => $userId,
+                'type' => $typeUpload,
+                'file_path' => $path,
+                'is_public' => $isPublic,
+                'role' => $role->value,
+            ]);
+        }
+        return $tempFiles;
+    }
+
 }

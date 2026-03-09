@@ -32,6 +32,7 @@ class BookingRepository extends BaseRepository
                 'service',
                 'ktvUser',
                 'ktvUser.profile',
+                'ktvUser.reviewApplication',
                 'coupon'
             ]);
     }
@@ -39,7 +40,7 @@ class BookingRepository extends BaseRepository
     public function filterQuery(Builder $query, array $filters): Builder
     {
         // Lọc theo trạng thái
-        if (isset($filters['status'])) {
+        if (isset($filters['status']) && !empty((int)$filters['status'])) {
             $query->where('status', $filters['status']);
         }
 
@@ -56,7 +57,6 @@ class BookingRepository extends BaseRepository
         if (isset($filters['ktv_user_id'])) {
             $query->where('ktv_user_id', $filters['ktv_user_id']);
         }
-
 
         return $query;
     }

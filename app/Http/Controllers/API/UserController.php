@@ -4,6 +4,8 @@ namespace App\Http\Controllers\API;
 
 use App\Core\Controller\BaseController;
 use App\Core\Controller\ListRequest;
+use App\Http\Requests\API\User\ApplyAgencyRequest;
+use App\Http\Requests\API\User\ApplyTechnicalRequest;
 use App\Http\Requests\API\User\ListKTVRequest;
 use App\Http\Requests\ApplyPartnerRequest;
 use App\Http\Resources\User\AddressResource;
@@ -25,7 +27,7 @@ class UserController extends BaseController
     }
 
     /**
-     * User hiện tại đăng ký làm đối tác (tạo hồ sơ chờ duyệt).
+     * User hiện tại đăng ký làm đối tác (xoas bo).
      */
     public function applyPartner(ApplyPartnerRequest $request): JsonResponse
     {
@@ -43,6 +45,37 @@ class UserController extends BaseController
             message: $result->getMessage() ?? __('common.success.data_created')
         );
     }
+
+    /**
+     * Đăng ký KTV
+     * @param ApplyTechnicalRequest $request
+     * @return JsonResponse
+     * @throws \Throwable
+     */
+    public function applyTechnical(ApplyTechnicalRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+        $result = $this->userService->applyTechnical($data);
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage(),
+            );
+        }
+        return $this->sendSuccess();
+    }
+
+    public function applyAgency(ApplyAgencyRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+        $result = $this->userService->applyAgency($data);
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage(),
+            );
+        }
+        return $this->sendSuccess();
+    }
+
 
     /**
      * Kiểm tra thông tin đăng ký đối tác (KTV hoặc Agency)

@@ -38,6 +38,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use function PHPUnit\Framework\callback;
 
 class BookingService extends BaseService
 {
@@ -208,7 +209,7 @@ class BookingService extends BaseService
      */
     public function cancelBooking(string $bookingId, ?string $reason = null): ServiceReturn
     {
-        try {
+        return $this->execute(function () use ($bookingId, $reason) {
             $userCurrent = Auth::user();
 
             // Tìm booking cần hủy và khóa hàng để tránh xung đột
@@ -227,7 +228,12 @@ class BookingService extends BaseService
                 );
             }
             // Kiểm tra quyền hủy booking (chỉ có thể hủy booking của chính mình)
-            if ($userCurrent->id != $booking->user_id && $userCurrent->id != $booking->ktv_user_id) {
+            if (
+                !in_array($userCurrent->role, [UserRole::CUSTOMER->value, UserRole::KTV->value])
+                || ($userCurrent->role === UserRole::CUSTOMER->value && $booking->user_id !== $userCurrent->id)
+                || ($userCurrent->role === UserRole::KTV->value && $booking->ktv_user_id !== $userCurrent->id)
+            )
+            {
                 throw new ServiceException(
                     message: __("booking.not_permission")
                 );
@@ -236,25 +242,12 @@ class BookingService extends BaseService
             // Cập nhật trạng thái booking thành WAITING_CANCEL để admin có thể xử lý hủy
             $booking->status = BookingStatus::WAITING_CANCEL->value;
             $booking->reason_cancel = $reason;
-            $booking->cancel_by = $userCurrent->id == $booking->user_id ? UserRole::CUSTOMER->value : UserRole::KTV->value;
+            $booking->cancel_by = $userCurrent->role;
             $booking->save();
-
             return ServiceReturn::success(
                 message: __("booking.waiting_cancel")
             );
-        } catch (ServiceException $exception) {
-            return ServiceReturn::error(
-                message: $exception->getMessage()
-            );
-        } catch (\Exception $exception) {
-            LogHelper::error(
-                message: "Lỗi ServiceService@cancelBooking",
-                ex: $exception
-            );
-            return ServiceReturn::error(
-                message: __("common_error.server_error")
-            );
-        }
+        });
     }
 
 
@@ -426,94 +419,75 @@ class BookingService extends BaseService
     /**
      * Hoàn thành đơn hàng tiến hành thanh toán cho ktv và  tính phí hoa hồng cho các user khác
      * @param int $bookingId
-     * @param bool $proactive
      * @return ServiceReturn
      */
-    public function finishBooking(int $bookingId, bool $proactive = false)
+    public function finishBooking(int $bookingId): ServiceReturn
     {
-        try {
-            // Lock Booking Row
-            $booking = $this->bookingRepository->query()
-                ->lockForUpdate()
-                ->where('id', $bookingId)
-                ->whereIn('status', [
-                    BookingStatus::ONGOING->value,
-                    BookingStatus::COMPLETED->value,
-                ])
-                ->first();
-            if (!$booking) {
-                throw new ServiceException(message: __("booking.not_found"));
-            }
-
-            // Kiểm tra trạng thái đơn hàng nếu hoàn thành rồi thì return luôn
-            if ($booking->status === BookingStatus::COMPLETED->value) {
-                return ServiceReturn::success(
-                    data: [
-                        'booking_id' => $booking->id,
-                        'end_time' => $booking->end_time,
-                        'already_finished' => true,
-                    ],
-                );
-            }
-
-            $now = now();
-            $startTime = Carbon::make($booking->start_time);
-
-            if ($proactive) {
+        return $this->execute(
+            callback: function () use ($bookingId) {
                 $userCurrent = Auth::user();
+                $booking = $this->bookingRepository->query()
+                    ->lockForUpdate()
+                    ->where('id', $bookingId)
+                    ->whereIn('status', [
+                        BookingStatus::ONGOING->value,
+                        BookingStatus::COMPLETED->value,
+                    ])
+                    ->first();
+                if (!$booking) {
+                    throw new ServiceException(message: __("booking.not_found"));
+                }
                 if ($userCurrent->role == UserRole::KTV->value && $userCurrent->id != $booking->ktv_user_id) {
                     throw new ServiceException(
                         message: __("common_error.unauthorized")
                     );
                 }
-            }
+                if ($booking->status === BookingStatus::COMPLETED->value) {
+                    return [
+                        'booking_id' => $booking->id,
+                        'end_time' => $booking->end_time,
+                        'already_finished' => true,
+                    ];
+                }
 
-            // Chỉ cho phép finish khi đã đến thời gian dự kiến hoặc đã qua
-            // Cho phép finish 10 phút trước khi đến thời gian dự kiến
-            if ($now->lessThan($startTime->copy()->addMinutes($booking->duration)->subMinutes(10))) {
-                throw new ServiceException(
-                    message: __("booking.not_permission_at_this_time")
+                $now = now();
+                $startTime = Carbon::make($booking->start_time);
+                // Chỉ cho phép finish khi đã đến thời gian dự kiến hoặc đã qua
+                // Cho phép finish 10 phút trước khi đến thời gian dự kiến
+                if ($now->lessThan($startTime->copy()->addMinutes($booking->duration)->subMinutes(10))) {
+                    throw new ServiceException(
+                        message: __("booking.not_permission_at_this_time")
+                    );
+                }
+
+                $booking->status = BookingStatus::COMPLETED->value;
+                $booking->end_time = $now;
+                $booking->save();
+
+                // Thanh toán cho KTV và tính phí hoa hồng cho các user khác
+                WalletTransactionBookingJob::dispatch(
+                    bookingId: $booking->id,
+                    case: WalletTransCase::FINISH_BOOKING,
                 );
-            }
 
-            $booking->status = BookingStatus::COMPLETED->value;
-            $booking->end_time = $now;
-            $booking->save();
-
-            // Thanh toán cho KTV và tính phí hoa hồng cho các user khác
-            WalletTransactionBookingJob::dispatch(
-                bookingId: $booking->id,
-                case: WalletTransCase::FINISH_BOOKING,
-            );
-
-            // gửi thông báo cho khách hàng biết rằng lịch đã hoàn thành
-            SendNotificationJob::dispatch(
-                userId: $booking->user_id,
-                type: NotificationType::BOOKING_COMPLETED,
-                data: [
-                    'booking_id' => $booking->id,
-                ]
-            );
-            return ServiceReturn::success(
-                data: [
-                    'booking_id' => $booking->id,
-                    'end_time' => $now,
-                    'already_finished' => false,
-                ],
-            );
-        } catch (ServiceException $exception) {
-            return ServiceReturn::error(
-                message: $exception->getMessage()
-            );
-        } catch (\Exception $exception) {
-            LogHelper::error(
-                message: "Lỗi BookingService@finishBooking",
-                ex: $exception
-            );
-            return ServiceReturn::error(
-                message: __("common_error.server_error")
-            );
-        }
+                // gửi thông báo cho khách hàng biết rằng lịch đã hoàn thành
+                SendNotificationJob::dispatch(
+                    userId: $booking->user_id,
+                    type: NotificationType::BOOKING_COMPLETED,
+                    data: [
+                        'booking_id' => $booking->id,
+                    ]
+                );
+                return ServiceReturn::success(
+                    data: [
+                        'booking_id' => $booking->id,
+                        'end_time' => $now,
+                        'already_finished' => false,
+                    ],
+                );
+            },
+            useTransaction: true
+        );
     }
 
 

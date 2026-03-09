@@ -366,7 +366,7 @@ class TransactionJobService extends BaseService
                 $systemIncome = CalculatePrice::calculateSystemMinus($booking->price, $discountRate);
 
                 // xử lý hoa hồng cho khách hàng
-                if ($customer->referred_by_user_id) {
+                if (!empty($customer->referred_by_user_id)) {
                     $this->processAffiliateCommission(
                         referrerId: $customer->referred_by_user_id,
                         systemIncome: $systemIncome,
@@ -376,7 +376,7 @@ class TransactionJobService extends BaseService
                 }
 
                 // xử lý hoa hồng cho nhân viên
-                if ($staff->referred_by_user_id) {
+                if (!empty($staff->referred_by_user_id)) {
                     $this->processAffiliateCommission(
                         referrerId: $staff->referred_by_user_id,
                         systemIncome: $systemIncome,
@@ -386,7 +386,7 @@ class TransactionJobService extends BaseService
                 }
 
                 // xử lý hoa hồng cho người giới thiệu kỹ thuật viên (KTV/ Agency)
-                if ($staff->reviewApplication->referrer_id) {
+                if (!empty($staff->reviewApplication->referrer_id)) {
                     $this->processReferralKtvCommission(
                         referrerId: $staff->reviewApplication->referrer_id,
                         systemIncome: $systemIncome,
@@ -403,9 +403,10 @@ class TransactionJobService extends BaseService
                         'booking_id' => $booking->id,
                     ]
                 );
-                return ServiceReturn::success();
+                return true;
             },
             useTransaction: true,
+            logServiceError: true,
         );
     }
 
@@ -477,7 +478,7 @@ class TransactionJobService extends BaseService
                     'status' => WalletTransactionStatus::COMPLETED->value,
                     'transaction_code' => Helper::createDescPayment(PaymentType::REFUND),
                     'foreign_key' => $booking->id,
-                    'description' => "Hoàn tiền booking #{$booking->id} - lý do: {$data['reason_cancel']}",
+                    'description' => "Hoàn tiền booking #{$booking->id} - lý do: {$booking->reason_cancel}",
                     'expired_at' => now(),
                 ]);
                 // tạo transaction hoàn số tiền di chuyển cho khách hàng
@@ -490,7 +491,7 @@ class TransactionJobService extends BaseService
                     'status' => WalletTransactionStatus::COMPLETED->value,
                     'transaction_code' => Helper::createDescPayment(PaymentType::REFUND),
                     'foreign_key' => $booking->id,
-                    'description' => "Hoàn tiền dịch vụ di chuyển  #{$booking->id} - lý do: {$data['reason_cancel']}",
+                    'description' => "Hoàn tiền dịch vụ di chuyển  #{$booking->id} - lý do: {$booking->reason_cancel}",
                     'expired_at' => now(),
                 ]);
 
@@ -530,7 +531,7 @@ class TransactionJobService extends BaseService
                     type: NotificationType::BOOKING_CANCELLED,
                     data: [
                         'booking_id' => $booking->id,
-                        'reason' => $data['reason_cancel'],
+                        'reason' => $booking->reason_cancel,
                     ]
                 );
 
@@ -540,7 +541,7 @@ class TransactionJobService extends BaseService
                     type: NotificationType::BOOKING_CANCELLED,
                     data: [
                         'booking_id' => $booking->id,
-                        'reason' => $data['reason_cancel'],
+                        'reason' => $booking->reason_cancel,
                     ]
                 );
             },
@@ -820,7 +821,8 @@ class TransactionJobService extends BaseService
         // Lấy thông tin người giới thiệu
         $referrer = $this->userRepository
             ->queryUser()
-            ->find($referrerId);
+            ->where('id', $referrerId)
+            ->first();
         if (!$referrer) {
             throw new ServiceException(
                 message: __("error.user_not_found")
@@ -914,7 +916,8 @@ class TransactionJobService extends BaseService
                 UserRole::AGENCY->value,
                 UserRole::KTV->value
             ])
-            ->find($referrerId);
+            ->where('id', $referrerId)
+            ->first();
         if (!$referrer) {
             throw new ServiceException(
                 message: __("error.user_not_found")

@@ -17,13 +17,20 @@ class CheckRole
         if (!$user) {
             return $this->sendError('Unauthorized', 401);
         }
-        // Chuyển đổi mảng roles (string) từ route sang mảng các giá trị int hợp lệ của Enum
-        // Ví dụ: ["1", "4"] -> [1, 4]
+        // Chuyển đổi ["customer", "ktv"] thành [1, 2] dựa trên Enum
         $allowedRoleValues = collect($roles)
-            ->map(fn($r) => constant("App\Enums\UserRole::" . strtoupper($r))->value ?? null)
+            ->map(function ($roleName) {
+                // Tìm Case trong Enum có tên trùng với string truyền vào (không phân biệt hoa thường)
+                foreach (UserRole::cases() as $case) {
+                    if (strtolower($case->name) === strtolower($roleName)) {
+                        return $case->value;
+                    }
+                }
+                return null;
+            })
             ->filter()
             ->toArray();
-        // Kiểm tra nếu Role của User không nằm trong danh sách được phép
+
         if (!in_array($user->role, $allowedRoleValues)) {
             return $this->sendError(__('common_error.unauthorized'), 403);
         }

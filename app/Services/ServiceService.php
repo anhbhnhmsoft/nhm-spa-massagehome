@@ -89,7 +89,10 @@ class ServiceService extends BaseService
             $user = Auth::user();
             $categories = $this->categoryRepository
                 ->query()
-                ->with('prices')
+                ->with(['prices'])
+                ->withCount(['bookings' => function ($query) use ($user) {
+                    $query->where('ktv_user_id', $user->id);
+                }])
                 ->withExists(['users as is_registered' => function ($query) use ($user) {
                     $query->where('users.id', $user->id);
                 }])

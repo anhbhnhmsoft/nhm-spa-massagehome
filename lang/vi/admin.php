@@ -44,6 +44,8 @@ return
                 'date_of_birth' => 'Ngày sinh',
                 'gender' => 'Giới tính',
                 'status' => 'Trạng thái',
+                'nickname' => 'Tên hiển thị',
+                'real_name' => 'Tên thật',
                 'last_login' => 'Lần đăng nhập cuối',
                 'basic_info' => 'Thông tin cơ bản',
                 'account_info' => 'Thông tin tài khoản',

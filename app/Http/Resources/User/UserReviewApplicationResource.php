@@ -17,10 +17,7 @@ class UserReviewApplicationResource extends JsonResource
         $cccdFront = $user->cccdFront;
         $cccdBack = $user->cccdBack;
         $faceWithIdentityCard = $user->faceWithIdentityCard;
-
-        $certificate = $user->certificate;
         $gallery = $user->gallery;
-
         return [
             'id' => $this->id,
             'user_id' => $this->user_id,
@@ -33,17 +30,18 @@ class UserReviewApplicationResource extends JsonResource
             'is_leader' => $this->is_leader,
             'application_date' => $this->application_date,
             'experience' => $this->experience,
-
             'gallery' => $gallery ? $gallery->map(function ($item) {
                 if ($item->file_path) {
                     return Helper::getPublicUrl($item->file_path);
                 }
                 return null;
             }) : null,
+            'address' => $this->address ?? null,
+            'latitude' => $this->latitude ?? null,
+            'longitude' => $this->longitude ?? null,
             'cccd_front' => $cccdFront ? Helper::getPrivateUrl($cccdFront->id) : null,
             'cccd_back' => $cccdBack ? Helper::getPrivateUrl($cccdBack->id) : null,
             'face_with_identity_card' => $faceWithIdentityCard ? Helper::getPrivateUrl($faceWithIdentityCard->id) : null,
-            'certificate' => $certificate ? Helper::getPrivateUrl($certificate->id) : null,
         ];
     }
 

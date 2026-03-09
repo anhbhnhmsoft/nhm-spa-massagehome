@@ -13,7 +13,6 @@ class ServiceResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-
         return [
             'id' => $this->id,
             'name' => $this->name,
@@ -22,6 +21,7 @@ class ServiceResource extends JsonResource
             'image_url' => $this->image_url ? Helper::getPublicUrl($this->image_url) : null,
             'is_registered' => (bool)$this->is_registered,
             'is_active' => (bool) $this->is_active,
+            'total_bookings' => $this->bookings_count ?? 0,
             'prices' => $this->prices->map(fn($price) => [
                 'duration' => $price->duration,
                 'price' => $price->price,

@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Booking;
 
 use App\Core\Helper;
+use App\Core\Helper\CalculatePrice;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -13,9 +14,20 @@ class BookingItemResource extends JsonResource
         $service = $this->service;
         $ktvUser = $this->ktvUser;
         $ktvUserProfile = $this->ktvUser->profile;
+        $ktvUserReviewApplication = $this->ktvUser->reviewApplication;
         $user = $this->user;
         $userProfile = $this->user->profile;
         $coupon = $this->coupon ?? null;
+
+        $price = (float)($this->price ?? 0);
+        $priceDiscount = (float)($this->price_discount ?? 0);
+        $priceTransportation = (float)($this->price_transportation ?? 0);
+        $totalPrice = CalculatePrice::totalBookingPrice(
+            price: $price,
+            priceDiscount: $priceDiscount,
+            priceTransportation: $priceTransportation,
+        );
+
         return [
             'id' => $this->id,
             'service' => [
@@ -25,7 +37,7 @@ class BookingItemResource extends JsonResource
             ],
             'ktv_user' => [
                 'id' => $ktvUser->id,
-                'name' => $ktvUser->name,
+                'name' => $ktvUserReviewApplication->nickname ?? "",
                 'avatar_url' => $ktvUserProfile->avatar_url ? Helper::getPublicUrl($ktvUserProfile->avatar_url) : null,
             ],
             'user' => [
@@ -34,7 +46,6 @@ class BookingItemResource extends JsonResource
                 'avatar_url' => $userProfile->avatar_url ? Helper::getPublicUrl($userProfile->avatar_url) : null,
             ],
             'address' => $this->address,
-            'note_address' => $this->note_address,
             'lat' => (string)$this->latitude,
             'lng' => (string)$this->longitude,
             'booking_time' => $this->booking_time,
@@ -43,12 +54,14 @@ class BookingItemResource extends JsonResource
             'note' => $this->note,
             'duration' => $this->duration,
             'status' => $this->status,
-            'price' => $this->price,
+            'price' => $price,
+            'price_discount' => $priceDiscount,
+            'price_transportation' => $priceTransportation,
+            'total_price' => $totalPrice,
             'coupon' => $coupon ? [
                 'id' => $coupon->id,
                 'label' => $coupon->label,
             ] : null,
-            'price_before_discount' => $this->price_before_discount,
             // Số lượng đánh giá
             'has_reviews' => $this->reviews_count > 0,
             'reason_cancel' => (string)($this->reason_cancel ?? null),

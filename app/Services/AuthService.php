@@ -816,6 +816,22 @@ class AuthService extends BaseService
     }
 
     /**
+     * Xóa các OTP đã hết hạn.
+     * @return ServiceReturn
+     * @throws \Throwable
+     */
+    public function deleteExpiredOtpRecord()
+    {
+        return $this->execute(
+            callback: function () {
+                $this->userOtpRepository->deleteExpiredOtp(self::OTP_TTL_MINUTES);
+                return ServiceReturn::success();
+            },
+            useTransaction: true
+        );
+    }
+
+    /**
      * -------- Private methods --------
      */
 
@@ -935,7 +951,7 @@ class AuthService extends BaseService
             // Tăng số lần thử sai (attempts increment)
             $otpRecord->increment('attempts');
             $remaining = self::MAX_OTP_ATTEMPTS - $otpRecord->attempts;
-            throw new ServiceException(__("user.error.otp_incorrect", ['remaining' => $remaining]));
+            throw new ServiceException(__("auth.error.otp_incorrect", ['remaining' => $remaining]));
         }
 
         // Xác thực thành công

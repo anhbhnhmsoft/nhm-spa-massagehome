@@ -5,7 +5,9 @@ namespace App\Services;
 use App\Core\Controller\FilterDTO;
 use App\Core\LogHelper;
 use App\Core\Service\BaseService;
+use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
+use App\Enums\BookingStatus;
 use App\Repositories\BookingRepository;
 use App\Repositories\ReviewRepository;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -31,25 +33,25 @@ class ReviewService extends BaseService
         bool $hidden = false
     ): ServiceReturn
     {
-        try {
+        return $this->execute(function () use ($serviceBookingId, $rating, $comment, $hidden) {
             $user = Auth::user();
-            if (!$user) {
-                return ServiceReturn::error(message: __('common_error.unauthorized'));
-            }
-
             if (!$serviceBookingId) {
                 return ServiceReturn::error(message: __('validation.service_booking_id.required'));
             }
 
             // Kiểm tra booking có tồn tại không
-            $booking = $this->bookingRepository->find($serviceBookingId);
+            $booking = $this->bookingRepository
+                ->query()
+                ->where('id', $serviceBookingId)
+                ->where('status', BookingStatus::COMPLETED->value)
+                ->first();
             if (!$booking) {
-                return ServiceReturn::error(message: __('common_error.data_not_found'));
+                throw new ServiceException(message: __('common_error.data_not_found'));
             }
 
             // Kiểm tra user có quyền đánh giá booking này không (phải là customer của booking)
             if ((string) $booking->user_id !== (string) $user->id) {
-                return ServiceReturn::error(message: __('common_error.unauthorized'));
+                throw new ServiceException(message: __('common_error.unauthorized'));
             }
 
             // Kiểm tra đã đánh giá chưa (không cho đánh giá lại)
@@ -59,22 +61,16 @@ class ReviewService extends BaseService
                 ->first();
 
             if ($existingReview) {
-                return ServiceReturn::error(
+                throw new ServiceException(
                     message: __('review.error.already_reviewed')
                 );
             }
 
-            // Xác định user_id (người nhận review) là KTV của booking
-            $ktvId = $booking->ktv_user_id;
-            if (!$ktvId) {
-                return ServiceReturn::error(message: __('review.error.booking_has_no_ktv'));
-            }
-
             // Tạo review
             $review = $this->reviewRepository->create([
-                'user_id' => $ktvId, // KTV nhận đánh giá
-                'review_by' => $user->id, // Customer viết đánh giá
-                'service_booking_id' => $serviceBookingId,
+                'user_id' => $booking->ktv_user_id, // KTV nhận đánh giá
+                'review_by' =>  $booking->user_id,
+                'service_booking_id' => $booking->id,
                 'rating' => $rating,
                 'comment' => $comment,
                 'review_at' => now(),
@@ -86,16 +82,7 @@ class ReviewService extends BaseService
                 data: $review->load('recipient', 'reviewer', 'serviceBooking'),
                 message: __('review.success.created')
             );
-        } catch (\Throwable $exception) {
-            LogHelper::error(
-                message: 'Lỗi ReviewService@createReview',
-                ex: $exception
-            );
-
-            return ServiceReturn::error(
-                message: __('common_error.server_error')
-            );
-        }
+        });
     }
 
     /**

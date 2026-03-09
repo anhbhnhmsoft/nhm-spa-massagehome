@@ -159,7 +159,6 @@ class BookingController extends BaseController
         );
         $result = $this->bookingService->finishBooking(
             bookingId: $validateData['booking_id'],
-            proactive: true
         );
         if ($result->isError()) {
             return $this->sendError(

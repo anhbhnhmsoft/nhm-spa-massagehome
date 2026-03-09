@@ -113,6 +113,11 @@
     - application_date (timestamp, nullable) -- ngày nộp hồ sơ
     - role (smallint) -- vai trò muốn apply (trong enum UserRole)
     - is_leader (boolean, default false) -- đánh dấu trưởng nhóm KTV (job sẽ tự động set khi số KTV được giới thiệu >= điều kiện)
+
+    - address (varchar, nullable) -- địa chỉ (dành cho Đối tác)
+    - latitude (decimal(10,8), nullable) -- vĩ độ (dành cho Đối tác)
+    - longitude (decimal(11,8), nullable) -- kinh độ (dành cho Đối tác)
+
     
     - timestamps
 
@@ -130,18 +135,6 @@
     - date_of_birth (date, nullable) -- ngày sinh
     - gender (smallint, nullable) -- giới tính (trong enum Gender)
     - bio (text, nullable) -- thông tin cá nhân
-
-    - user_id (bigint, foreign key to users.id) -- id người dùng
-    - nickname (varchar, nullable) -- tên hiển thị
-    - real_name (varchar, nullable) -- tên thật
-    - date_of_birth (date, nullable) -- ngày sinh
-    - gender (smallint, nullable) -- giới tính (trong enum UserGender)
-    - bio (json, nullable) -- thông tin cá nhân (dạng json mô tả thông tin cá nhân - đa ngôn ngữ)
-    - is_leader (boolean, default false) -- đánh dấu trưởng nhóm KTV (job sẽ tự động set khi số KTV được giới thiệu >= điều kiện)
-    - referrer_id (bigint, nullable, foreign key to users.id) -- id người giới thiệu (người mời apply)
-    - experience (unsigned smallint, nullable) -- kinh nghiệm (năm)
-    - timestamps
-    
     - timestamps
 
 # user_files

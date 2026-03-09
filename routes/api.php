@@ -15,7 +15,6 @@ use App\Http\Controllers\API\ChatController;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\AffiliateController;
 use App\Http\Controllers\API\ConfigController;
-use App\Http\Controllers\API\ReviewController;
 use App\Http\Controllers\API\WithdrawController;
 use Illuminate\Support\Facades\Route;
 
@@ -23,7 +22,7 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['set-api-locale', 'update-last-active'])->group(function () {
     Route::prefix('auth')->group(function () {
         // Guest middleware
-        Route::middleware(['throttle:5,1'])->group(function () {
+        Route::middleware(['throttle:10,1'])->group(function () {
             // Xác thực đăng nhập hay đăng ký.
             Route::post('authenticate', [AuthController::class, 'authenticate']);
             // Đăng nhập vào hệ thống.
@@ -44,8 +43,6 @@ Route::middleware(['set-api-locale', 'update-last-active'])->group(function () {
             Route::post('resend-otp-register', [AuthController::class, 'resendOtpRegister']);
 
         });
-
-        Route::get('config-application', [AuthController::class, 'configApplication']);
 
         // Auth middleware
         Route::middleware(['auth:sanctum'])->group(function () {
@@ -111,15 +108,9 @@ Route::middleware(['set-api-locale', 'update-last-active'])->group(function () {
     });
 
     Route::prefix('user')->group(function () {
-        /**
-         * router không cần auth
-         */
         // Lấy danh sách KTV
         Route::get('list-ktv', [UserController::class, 'listKtv']);
 
-        /**
-         * router cần auth
-         */
         Route::middleware(['auth:sanctum'])->group(function () {
             // Lấy thông tin chi tiết KTV
             Route::get('ktv/{id}', [UserController::class, 'detailKtv'])
@@ -129,7 +120,16 @@ Route::middleware(['set-api-locale', 'update-last-active'])->group(function () {
                 ->middleware(['check-role:customer']);
             // User hiện tại đăng ký làm đối tác
             Route::post('apply-partner', [UserController::class, 'applyPartner'])
-                ->middleware(['throttle:5,1', 'check-role:customer']); // Chỉ cho phép Customer đăng ký
+                ->middleware(['throttle:5,1', 'check-role:customer']);
+
+            // Đăng ký Agency
+            Route::post('apply-agency', [UserController::class, 'applyAgency'])
+                ->middleware(['throttle:5,1', 'check-role:customer']);
+
+            // Đăng ký KTV
+            Route::post('apply-technical', [UserController::class, 'applyTechnical'])
+                ->middleware(['throttle:5,1', 'check-role:customer']);
+
             // Lấy danh sách KTV được quản lý bởi Agency hoặc KTV
             Route::get('list-manage-ktv', [UserController::class, 'listKtvManager'])
                 ->middleware(['check-role:agency,ktv']); // Chỉ cho phép Agency hoặc KTV quản lý
@@ -151,9 +151,9 @@ Route::middleware(['set-api-locale', 'update-last-active'])->group(function () {
             // Lấy danh sách mã giảm giá của người dùng
             Route::get('my-list-coupon', [ServiceController::class, 'myListCoupon']);
             // Tạo đánh giá cho booking dịch vụ
-            Route::post('review', [ReviewController::class, 'create'])->middleware(['throttle:10,1']);
+            Route::post('review', [ServiceController::class, 'createReview']);
             // Lấy danh sách đánh giá của dịch vụ
-            Route::get('list-review', [ReviewController::class, 'listReview']);
+            Route::get('list-review', [ServiceController::class, 'listReview']);
         });
     });
 
@@ -177,9 +177,10 @@ Route::middleware(['set-api-locale', 'update-last-active'])->group(function () {
             // Lấy thông tin chi tiết lịch đặt
             Route::get('detail/{id}', [BookingController::class, 'detailBooking'])
                 ->where('id', '[0-9]+');
+
             // Hủy lịch đặt
             Route::post('cancel', [BookingController::class, 'cancelBooking'])
-                ->middleware(['check-role:customer']);
+                ->middleware(['check-role:customer,ktv']);
 
             Route::middleware(['check-role:ktv'])->group(function () {
                 // Xác nhận hoàn thành lịch đặt
@@ -277,11 +278,6 @@ Route::middleware(['set-api-locale', 'update-last-active'])->group(function () {
         });
     });
 
-    Route::prefix('review')->middleware(['auth:sanctum'])->group(function () {
-        // Tạo đánh giá cho booking dịch vụ
-        Route::get('list', [ReviewController::class, 'listReview']);
-    });
-
     Route::prefix('config')->group(function () {
         // Lấy thông tin cấu hình hỗ trợ
         Route::get('support-channels', [ConfigController::class, 'getSupportChannels']);
@@ -321,8 +317,6 @@ Route::middleware(['set-api-locale', 'update-last-active'])->group(function () {
         Route::post('config-schedule', [KTVController::class, 'editConfigSchedule']);
         // Link KTV to Referrer via QR
         Route::post('link-referrer', [KTVController::class, 'linkReferrer']);
-        // Cancel booking
-        Route::post('cancel-booking', [BookingController::class, 'cancelBooking']);
         // Gửi hỗ trợ nguy hiểm
         Route::post('danger-support', [KTVController::class, 'dangerSupport']);
     });

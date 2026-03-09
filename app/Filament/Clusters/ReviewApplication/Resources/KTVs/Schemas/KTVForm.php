@@ -315,22 +315,23 @@ class KTVForm
                             ->deletable()
                             ->afterStateHydrated(fn($component, $record) => $component->state($record?->faceWithIdentityCard()->first()?->file_path)),
 
-                        // Hình ảnh giấy phép KTV
-                        FileUpload::make('certificate_path')
-                            ->label(__('admin.ktv_apply.file_type.license'))
-                            ->directory(fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
-                            ->disk('private')
-                            ->nullable()
-                            ->required()
-                            ->validationMessages([
-                                'required' => __('common.error.required'),
-                            ])
-                            ->image()
-                            ->maxSize(102400)
-                            ->downloadable()
-                            ->deletable()
-                            ->afterStateHydrated(fn($component, $record) => $component->state($record?->certificate()->first()?->file_path)),
+//                        // Hình ảnh giấy phép KTV
+//                        FileUpload::make('certificate_path')
+//                            ->label(__('admin.ktv_apply.file_type.license'))
+//                            ->directory(fn($record) => DirectFile::makePathById(DirectFile::KTVA, $record?->id ?? Helper::getTimestampAsId()))
+//                            ->disk('private')
+//                            ->nullable()
+//                            ->required()
+//                            ->validationMessages([
+//                                'required' => __('common.error.required'),
+//                            ])
+//                            ->image()
+//                            ->maxSize(102400)
+//                            ->downloadable()
+//                            ->deletable()
+//                            ->afterStateHydrated(fn($component, $record) => $component->state($record?->certificate()->first()?->file_path)),
 
+                        // Hình ảnh hiển thị KTV
                         Repeater::make('gallery')
                             ->label(__('admin.ktv_apply.file_type.ktv_image_display', ['min' => 3, 'max' => 5]))
                             ->relationship('gallery')

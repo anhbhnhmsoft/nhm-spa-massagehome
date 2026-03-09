@@ -132,4 +132,22 @@ class UserOtpRepository extends BaseRepository
             ->where('type', $type)
             ->delete();
     }
+
+
+    public function deleteExpiredOtp(int $minutes)
+    {
+        $expirationTime = now()->subMinutes($minutes);
+
+        // 1. Xóa các OTP chưa được xác thực và đã quá thời gian TTL
+        $this->query()
+            ->whereNull('verified_at')
+            ->where('created_at', '<', $expirationTime)
+            ->delete();
+
+        // Xóa các OTP đã xác thực nhưng đã cũ hơn 24h
+        $this->query()
+            ->whereNotNull('verified_at')
+            ->where('verified_at', '<', now()->subDay())
+            ->delete();
+    }
 }

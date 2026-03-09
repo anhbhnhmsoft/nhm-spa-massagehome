@@ -22,3 +22,6 @@ Schedule::command('app:update-all-ktv-leader-status')
     ->name('update-all-ktv-leader-status')
     ->withoutOverlapping()
     ->onOneServer();
+
+// Chạy dọn dẹp OTP mỗi giờ một lần
+Schedule::command('app:delete-expired-otp-record')->hourly();

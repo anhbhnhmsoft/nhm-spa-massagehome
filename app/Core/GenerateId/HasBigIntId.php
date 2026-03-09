@@ -4,9 +4,8 @@ namespace App\Core\GenerateId;
 
 trait HasBigIntId
 {
-    protected static function booted(): void
+    protected static function bootHasBigIntId(): void
     {
-
         static::creating(function ($model) {
             // Chỉ gán nếu ID chưa được set
             if (empty($model->{$model->getKeyName()})) {
