@@ -50,7 +50,7 @@ class DashboardService extends BaseService
             $start = $dateRange['from'];
             $end = $dateRange['to'];
 
-            // Lấy thống kê doanh thu và lợi nhuận
+            // Lấy thống kê tiền nạp vào và rút ra
             $incomeOutcome = $this->walletTransactionRepository->getFinancialInOutStats($start, $end);
 
             // Lấy thống kê doanh thu và chi phí
@@ -69,6 +69,8 @@ class DashboardService extends BaseService
                     'customer_cost' => (float) $revenue->customer_cost,
                     'transportation_cost' => (float) $revenue->transportation_cost,
                     'agency_cost' => (float) $revenue->agency_cost,
+                    'refund_cost' => (float) $revenue->refund_cost,
+                    'discount_cost' => (float) $revenue->discount_cost,
                 ],
             ]);
         } catch (\Exception $exception) {

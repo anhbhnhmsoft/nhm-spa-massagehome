@@ -93,6 +93,13 @@ class WalletTransactionRepository extends BaseRepository
         // Các loại phí riêng cho KTV
         $technicalCostTypes = WalletTransactionType::technicalCostStatus();
 
+        // Trạng thái hoàn tiền
+        $refundCostTypes = WalletTransactionType::refundCostStatus();
+
+        // Trạng thái giảm giá
+        $discountCostTypes = WalletTransactionType::discountCostStatus();
+
+
         return $this->query()
             ->join('wallets', 'wallet_transactions.wallet_id', '=', 'wallets.id')
             ->join('users', 'wallets.user_id', '=', 'users.id')
@@ -116,6 +123,18 @@ class WalletTransactionRepository extends BaseRepository
                 THEN wallet_transactions.point_amount
                 ELSE 0
             END) as transportation_cost,
+
+             SUM(CASE
+                WHEN wallet_transactions.type IN (" . implode(',', $refundCostTypes) . ")
+                THEN wallet_transactions.point_amount
+                ELSE 0
+            END) as refund_cost,
+
+            SUM(CASE
+                WHEN wallet_transactions.type IN (" . implode(',', $discountCostTypes) . ")
+                THEN wallet_transactions.point_amount
+                ELSE 0
+            END) as discount_cost,
 
             SUM(CASE
                 WHEN users.role = ?

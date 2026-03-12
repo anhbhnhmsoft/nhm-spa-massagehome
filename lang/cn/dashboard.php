@@ -43,10 +43,15 @@ return [
         'total_revenue_desc' => '总收益系统',
         'operation_cost' => '运营成本',
         'profit' => '利润',
+
+        'title_operation_system' => '运营成本',
+
         'agency_cost' => '代理成本',
         'ktv_cost' => '技术员成本',
         'customer_cost' => '客户成本',
         'transportation_cost' => '运输成本',
+        'discount_cost' => '折扣成本',
+        'refund_cost' => '退款成本',
     ],
     'user_static_stats' => [
         'title' => '用户概览',

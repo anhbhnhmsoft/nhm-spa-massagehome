@@ -48,6 +48,8 @@ class SimilarServicesTable extends Component implements HasForms, HasTable, HasA
                     ->defaultImageUrl(url('/images/avatar-default.svg')),
                 TextColumn::make('name')
                     ->label(__('admin.common.table.name')),
+                TextColumn::make('phone')
+                    ->label(__('admin.common.table.phone')),
                 TextColumn::make('distance_in_meters')
                     ->label(__('admin.booking.fields.distance_to_client'))
                     ->formatStateUsing(fn($state) => Helper::formatDistanceMeter($state)),
@@ -70,6 +72,7 @@ class SimilarServicesTable extends Component implements HasForms, HasTable, HasA
                         if ($result->isError()) {
                             Notification::make()
                                 ->title(__('admin.booking.actions.reassign.error_title'))
+                                ->body($result->getMessage())
                                 ->danger()
                                 ->send();
                         }else{

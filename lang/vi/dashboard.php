@@ -24,10 +24,15 @@ return [
         'total_revenue_desc' => 'Tổng doanh thu từ hệ thống',
         'operation_cost' => 'Chi phí vận hành',
         'profit' => 'Lợi nhuận',
+
+        'title_operation_system' => 'Chi phí',
+
         'agency_cost' => 'Chi phí đại lý',
         'ktv_cost' => 'Chi phí kỹ thuật viên',
         'customer_cost' => 'Chi phí người dùng',
         'transportation_cost' => 'Chi phí di chuyển',
+        'discount_cost' => 'Chi phí giảm giá',
+        'refund_cost' => 'Chi phí hoàn tiền',
     ],
     'general_booking_stat' => [
         'title' => 'Tổng quan về đơn hàng',

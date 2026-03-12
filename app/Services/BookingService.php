@@ -511,7 +511,7 @@ class BookingService extends BaseService
             if (!$lat || !$lng) {
                 return collect();
             }
-            $radiusInMeters = 5000; // Bán kính 5km
+            $radiusInMeters = 20000; // Bán kính 20km
 
             return $this->userRepository->query()
                 // Join với bảng user_address để lấy địa chỉ chính
@@ -551,7 +551,7 @@ class BookingService extends BaseService
                 ", [$lng, $lat])
                 // Ưu tiên hiển thị người ở gần nhất lên đầu
                 ->orderBy('distance_in_meters', 'asc')
-                ->limit(10)
+                ->limit(20)
                 ->get();
         });
     }
@@ -573,7 +573,10 @@ class BookingService extends BaseService
             // Tìm booking với lock để tránh race condition
             $booking = $this->bookingRepository->query()
                 ->where('id', $bookingId)
-                ->where('status', BookingStatus::WAITING_CANCEL->value)
+                ->whereIn('status', [
+                    BookingStatus::WAITING_CANCEL->value,
+                    BookingStatus::CONFIRMED->value,
+                ])
                 ->lockForUpdate()
                 ->first();
             if (!$booking) {

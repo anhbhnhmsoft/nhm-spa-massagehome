@@ -7,23 +7,100 @@ use App\Core\Helper\EnumHelper;
 enum WalletTransactionType: int
 {
     use EnumHelper;
-    case DEPOSIT_QR_CODE = 1; // Nạp tiền qua mã QR
-    case DEPOSIT_ZALO_PAY = 2; // Nạp tiền qua Zalo Pay
-    case DEPOSIT_MOMO_PAY = 3; // Nạp tiền qua Momo Pay
-    case WITHDRAWAL = 4; // Rút tiền (Yêu cầu)
-    case PAYMENT = 5; // Thanh toán (Booking)
-    case AFFILIATE = 6; // Nhận hoa hồng
-    case PAYMENT_FOR_KTV = 7; // Thanh toán cho KTV
-    case REFUND = 8; // Hoàn tiền cho customer
-    case RETRIEVE_PAYMENT_REFUND_KTV = 9; // thu hồi tiền thanh toán cho KTV khi hủy booking
-    case REFERRAL_KTV = 10; // Nhận hoa hồng từ người giới thiệu KTV
-    case REFERRAL_INVITE_KTV_REWARD = 11; // Nhận hoa hồng khi mời KTV thành công
-    case DEPOSIT_WECHAT_PAY = 12; // Nạp tiền qua Wechat Pay
-    case FEE_WITHDRAW = 13; // Chi phí rút tiền
-    case PAYMENT_FEE_TRANSPORT = 14; // Chi phí di chuyển (Trừ tiền KH)
-    case PAYMENT_KTV_EARN_TRANSPORT = 15; // Nhận tiền từ di chuyển ( Cộng tiền KTV)
-    case REFUND_CUSTOMER_TRANSPORT = 16; // Hoàn tiền di chuyển cho khách hàng
-    case PAYMENT_REFUND_KTV_FOR_BOOKING_CANCEL = 17; // Hoàn tiền cho KTV khi hủy booking
+    /**
+     * Nạp tiền qua mã QR
+     */
+    case DEPOSIT_QR_CODE = 1;
+
+    /**
+     * Nạp tiền qua Zalo Pay
+     */
+    case DEPOSIT_ZALO_PAY = 2;
+
+    /**
+     * Nạp tiền qua Momo Pay
+     */
+    case DEPOSIT_MOMO_PAY = 3;
+
+    /**
+     * Rút tiền (Yêu cầu)
+     */
+    case WITHDRAWAL = 4;
+
+    /**
+     * Thanh toán (Booking)
+     */
+    case PAYMENT = 5;
+
+    /**
+     * Nhận hoa hồng (Affiliate)
+     */
+    case AFFILIATE = 6;
+
+    /**
+     * Thanh toán cho KTV (Kỹ thuật viên)
+     */
+    case PAYMENT_FOR_KTV = 7;
+
+    /**
+     * Hoàn tiền cho khách hàng (Customer)
+     */
+    case REFUND = 8;
+
+    /**
+     * Thu hồi tiền thanh toán cho KTV khi hủy booking
+     */
+    case RETRIEVE_PAYMENT_REFUND_KTV = 9;
+
+    /**
+     * Nhận hoa hồng từ người giới thiệu KTV
+     */
+    case REFERRAL_KTV = 10;
+
+    /**
+     * Nhận hoa hồng khi mời KTV thành công
+     */
+    case REFERRAL_INVITE_KTV_REWARD = 11;
+
+    /**
+     * Nạp tiền qua Wechat Pay
+     */
+    case DEPOSIT_WECHAT_PAY = 12;
+
+    /**
+     * Chi phí rút tiền
+     */
+    case FEE_WITHDRAW = 13;
+
+    /**
+     * Chi phí di chuyển (Trừ tiền khách hàng)
+     */
+    case PAYMENT_FEE_TRANSPORT = 14;
+
+    /**
+     * Nhận tiền từ di chuyển (Cộng tiền KTV)
+     */
+    case PAYMENT_KTV_EARN_TRANSPORT = 15;
+
+    /**
+     * Hoàn tiền di chuyển cho khách hàng
+     */
+    case REFUND_CUSTOMER_TRANSPORT = 16;
+
+    /**
+     * Hoàn tiền cho KTV khi hủy booking
+     */
+    case PAYMENT_REFUND_KTV_FOR_BOOKING_CANCEL = 17;
+
+    /**
+     * Trừ tiền giảm giá dịch vụ (Cộng tiền vào ví khách hàng phần giảm giá)
+     */
+    case SUBTRACT_MONEY_DISCOUNT_SERVICE = 18;
+
+    /**
+     * Hoàn tiền giảm giá dịch vụ (Trừ tiền trong ví khách hàng phần giảm giá)
+     */
+    case REFUND_MONEY_DISCOUNT_SERVICE = 19;
 
     public function label(): string
     {
@@ -44,7 +121,9 @@ enum WalletTransactionType: int
             self::PAYMENT_FEE_TRANSPORT => __('admin.transaction.type.PAYMENT_FEE_TRANSPORT'),
             self::PAYMENT_KTV_EARN_TRANSPORT => __('admin.transaction.type.PAYMENT_KTV_EARN_TRANSPORT'),
             self::REFUND_CUSTOMER_TRANSPORT => __('admin.transaction.type.REFUND_CUSTOMER_TRANSPORT'),
-            self::PAYMENT_REFUND_KTV_FOR_BOOKING_CANCEL => __('admin.transaction.type.PAYMENT_REFUND_KTV_FOR_BOOKING_CANCEL')
+            self::PAYMENT_REFUND_KTV_FOR_BOOKING_CANCEL => __('admin.transaction.type.PAYMENT_REFUND_KTV_FOR_BOOKING_CANCEL'),
+            self::SUBTRACT_MONEY_DISCOUNT_SERVICE => __('admin.transaction.type.SUBTRACT_MONEY_DISCOUNT_SERVICE'),
+            self::REFUND_MONEY_DISCOUNT_SERVICE => __('admin.transaction.type.REFUND_MONEY_DISCOUNT_SERVICE')
         };
     }
 
@@ -82,8 +161,9 @@ enum WalletTransactionType: int
     public static function revenueStatus(): array
     {
         return [
-            self::PAYMENT->value,
-            self::PAYMENT_FEE_TRANSPORT->value,
+            self::PAYMENT->value, // Thanh toán (Booking)
+            self::PAYMENT_FEE_TRANSPORT->value, // Chi phí di chuyển (Trừ tiền KH)
+            self::REFUND_MONEY_DISCOUNT_SERVICE->value, // Hoàn tiền giảm giá dịch vụ
         ];
     }
 
@@ -99,9 +179,10 @@ enum WalletTransactionType: int
             self::PAYMENT_KTV_EARN_TRANSPORT->value,
             self::REFERRAL_KTV->value,
             self::REFERRAL_INVITE_KTV_REWARD->value,
-            self::REFUND->value,
-            self::PAYMENT_REFUND_KTV_FOR_BOOKING_CANCEL->value,
-            self::REFUND_CUSTOMER_TRANSPORT->value,
+            self::REFUND->value, // Hoàn tiền cho customer
+            self::PAYMENT_REFUND_KTV_FOR_BOOKING_CANCEL->value, // Hoàn tiền cho KTV khi hủy booking
+            self::REFUND_CUSTOMER_TRANSPORT->value,  // Hoàn tiền di chuyển cho khách hàng
+            self::SUBTRACT_MONEY_DISCOUNT_SERVICE->value, // Trừ tiền giảm giá dịch vụ(tức là + tiền vào ví khách hàng phần tiền giảm giá)
         ];
     }
 
@@ -123,8 +204,6 @@ enum WalletTransactionType: int
     public static function customerCostStatus(): array
     {
         return [
-            self::REFUND->value,
-            self::REFUND_CUSTOMER_TRANSPORT->value,
             self::AFFILIATE->value,
         ];
     }
@@ -153,8 +232,30 @@ enum WalletTransactionType: int
             self::REFERRAL_KTV->value,
             self::REFERRAL_INVITE_KTV_REWARD->value,
             self::PAYMENT_FOR_KTV->value,
-            self::PAYMENT_KTV_EARN_TRANSPORT->value,
+        ];
+    }
+
+    /**
+     * Trạng thái hoàn tiền
+     * @return array
+     */
+    public static function refundCostStatus()
+    {
+        return [
+            self::REFUND->value,
+            self::REFUND_CUSTOMER_TRANSPORT->value,
             self::PAYMENT_REFUND_KTV_FOR_BOOKING_CANCEL->value,
+        ];
+    }
+
+    /**
+     * Trạng thái giảm giá dịch vụ
+     * @return array
+     */
+    public static function discountCostStatus()
+    {
+        return [
+            self::SUBTRACT_MONEY_DISCOUNT_SERVICE->value,
         ];
     }
 

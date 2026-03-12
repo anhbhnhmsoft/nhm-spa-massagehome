@@ -153,7 +153,6 @@ class TransactionJobService extends BaseService
                 );
 
                 // Tạo transaction phí dịch vụ cho Khách hàng
-                $balanceAfterBookingService = $walletCustomer->balance - ($booking->price - ($booking->price_discount ?? 0));
                 $this->walletTransactionRepository->create([
                     'wallet_id' => $walletCustomer->id,
                     'foreign_key' => $bookingId,
@@ -166,7 +165,6 @@ class TransactionJobService extends BaseService
                     'expired_at' => now(),
                 ]);
                 // Tạo transaction phí di chuyển cho Khách hàng
-                $balanceAfterTransportation = $balanceAfterBookingService - $booking->price_transportation;
                 $this->walletTransactionRepository->create([
                     'wallet_id' => $walletCustomer->id,
                     'foreign_key' => $bookingId,
@@ -178,8 +176,28 @@ class TransactionJobService extends BaseService
                     'transaction_code' => Helper::createDescPayment(PaymentType::BY_POINTS),
                     'expired_at' => now(),
                 ]);
+                // Tạo transaction hoàn tiền giảm giá cho Khách hàng
+                if (($booking->price_discount ?? 0) > 0){
+                    $this->walletTransactionRepository->create([
+                        'wallet_id' => $walletCustomer->id,
+                        'foreign_key' => $bookingId,
+                        'money_amount' => $booking->price_discount * $exchangeRate,
+                        'exchange_rate_point' => $exchangeRate,
+                        'point_amount' => $booking->price_discount,
+                        'type' => WalletTransactionType::SUBTRACT_MONEY_DISCOUNT_SERVICE->value,
+                        'status' => WalletTransactionStatus::COMPLETED->value,
+                        'transaction_code' => Helper::createDescPayment(PaymentType::BY_POINTS),
+                        'expired_at' => now(),
+                    ]);
+                }
+                // Tính tổng tiền phải thanh toán
+                $totalBookingPrice = CalculatePrice::totalBookingPrice(
+                    price: $booking->price,
+                    priceDiscount: $booking->price_discount ?? 0,
+                    priceTransportation: $booking->price_transportation,
+                );
                 // Cập nhật số dư ví của khách hàng
-                $walletCustomer->balance = $balanceAfterTransportation;
+                $walletCustomer->balance -= $totalBookingPrice;
                 $walletCustomer->save();
 
 
@@ -210,15 +228,6 @@ class TransactionJobService extends BaseService
                         'booking_time' => $booking->booking_time->format('Y-m-d H:i:s'),
                     ]
                 );
-//
-//                // Thông báo thay đổi số dư ví cho khách hàng
-//                SendNotificationJob::dispatch(
-//                    userId: $booking->user_id,
-//                    type: NotificationType::PAYMENT_COMPLETE,
-//                    data: [
-//                        'booking_id' => $booking->id,
-//                    ]
-//                );
             },
             useTransaction: true
         );
@@ -290,7 +299,7 @@ class TransactionJobService extends BaseService
     public function handleFinishBooking(string $bookingId): ServiceReturn
     {
         return $this->execute(
-            callback: function () use ($bookingId){
+            callback: function () use ($bookingId) {
                 // lấy mức chiết khấu của nhà cung cấp
                 $discountRate = (float)$this->configService->getConfigValue(ConfigName::DISCOUNT_RATE);
                 // Lấy tỷ giá đổi tiền
@@ -423,7 +432,7 @@ class TransactionJobService extends BaseService
     ): ServiceReturn
     {
         return $this->execute(
-            callback: function () use ($bookingId, $data){
+            callback: function () use ($bookingId, $data) {
                 $booking = $this->bookingService->getBookingRepository()->query()
                     ->where('id', $bookingId)
                     ->where('status', BookingStatus::WAITING_CANCEL->value)
@@ -453,51 +462,100 @@ class TransactionJobService extends BaseService
                     ->where("foreign_key", $booking->id)
                     ->where('type', WalletTransactionType::PAYMENT_FEE_TRANSPORT->value)
                     ->first();
+
                 if (!$transactionOfCustomer || !$transactionTransportOfCustomer) {
                     throw new ServiceException(
                         message: __("error.transaction_not_found")
                     );
                 }
+
+
+
                 // Lấy tỷ giá đổi tiền
                 $exchangeRatePoint = $transactionOfCustomer->exchange_rate_point;
                 $exchangeRatePointTransport = $transactionTransportOfCustomer->exchange_rate_point;
 
                 // Số tiền hoàn tiền cho khách hàng
-                $amountPayBackToClient = $data['amount_pay_back_to_client'] > 0 ? $data['amount_pay_back_to_client'] : $transactionOfCustomer->point_amount;
+                if ($data['amount_pay_back_to_client'] && $data['amount_pay_back_to_client'] > 0) {
+                    // tạo transaction hoàn số tiền dịch vụ cho khách hàng
+                    $this->walletTransactionRepository->create([
+                        'wallet_id' => $clientWallet->id,
+                        'type' => WalletTransactionType::REFUND->value,
+                        'point_amount' => $data['amount_pay_back_to_client'] * $exchangeRatePoint,
+                        'money_amount' => $data['amount_pay_back_to_client'],
+                        'exchange_rate_point' => $exchangeRatePoint,
+                        'status' => WalletTransactionStatus::COMPLETED->value,
+                        'transaction_code' => Helper::createDescPayment(PaymentType::REFUND),
+                        'foreign_key' => $booking->id,
+                        'description' => "Hoàn tiền booking #{$booking->id} - lý do: {$booking->reason_cancel}",
+                        'expired_at' => now(),
+                    ]);
+                    $clientWallet->balance += $data['amount_pay_back_to_client'];
+                } else {
+                    // tạo transaction hoàn số tiền dịch vụ cho khách hàng và phí di chuyển
+                    $this->walletTransactionRepository->create([
+                        'wallet_id' => $clientWallet->id,
+                        'type' => WalletTransactionType::REFUND->value,
+                        'point_amount' => $transactionOfCustomer->point_amount * $exchangeRatePoint,
+                        'money_amount' => $transactionOfCustomer->money_amount,
+                        'exchange_rate_point' => $exchangeRatePoint,
+                        'status' => WalletTransactionStatus::COMPLETED->value,
+                        'transaction_code' => Helper::createDescPayment(PaymentType::REFUND),
+                        'foreign_key' => $booking->id,
+                        'description' => "Hoàn tiền booking #{$booking->id} - lý do: {$booking->reason_cancel}",
+                        'expired_at' => now(),
+                    ]);
+                    // hoàn tiền phí di chuyển
+                    $this->walletTransactionRepository->create([
+                        'wallet_id' => $clientWallet->id,
+                        'type' => WalletTransactionType::REFUND_CUSTOMER_TRANSPORT->value,
+                        'point_amount' => $transactionTransportOfCustomer->point_amount * $exchangeRatePointTransport,
+                        'money_amount' => $transactionTransportOfCustomer->money_amount,
+                        'exchange_rate_point' => $exchangeRatePointTransport,
+                        'status' => WalletTransactionStatus::COMPLETED->value,
+                        'transaction_code' => Helper::createDescPayment(PaymentType::REFUND),
+                        'foreign_key' => $booking->id,
+                        'description' => "Hoàn tiền dịch vụ di chuyển  #{$booking->id} - lý do: {$booking->reason_cancel}",
+                        'expired_at' => now(),
+                    ]);
+
+                    $clientWallet->balance += $transactionOfCustomer->point_amount + $transactionTransportOfCustomer->point_amount;
+
+                    // Kiểm tra có giảm giá cho khách hàng không
+                    if (($booking->price_discount ?? 0) > 0) {
+                        // Lấy transaction giảm giá cho khách hàng
+                        $transactionDiscountOfCustomer = $this->walletTransactionRepository->query()
+                            ->where("foreign_key", $booking->id)
+                            ->where('type', WalletTransactionType::SUBTRACT_MONEY_DISCOUNT_SERVICE->value)
+                            ->first();
+                        if (!$transactionDiscountOfCustomer) {
+                            throw new ServiceException(
+                                message: __("error.transaction_not_found")
+                            );
+                        }
+                        // Lấy tỷ giá đổi điểm cho dịch vụ di chuyển
+                        $exchangeRatePointDiscount = $transactionDiscountOfCustomer->exchange_rate_point;
+
+                        // Trừ tiền giảm giá cho khách hàng
+                        $this->walletTransactionRepository->create([
+                            'wallet_id' => $clientWallet->id,
+                            'type' => WalletTransactionType::REFUND_MONEY_DISCOUNT_SERVICE->value,
+                            'point_amount' => $transactionDiscountOfCustomer->point_amount * $exchangeRatePointDiscount,
+                            'money_amount' => $transactionDiscountOfCustomer->money_amount,
+                            'exchange_rate_point' => $exchangeRatePointDiscount,
+                            'status' => WalletTransactionStatus::COMPLETED->value,
+                            'transaction_code' => Helper::createDescPayment(PaymentType::REFUND),
+                            'foreign_key' => $booking->id,
+                            'description' => "Thu hồi tiền giảm giá #{$booking->id} - lý do: {$booking->reason_cancel}",
+                            'expired_at' => now(),
+                        ]);
+                        $clientWallet->balance -= $transactionDiscountOfCustomer->point_amount;
+                    }
+                }
+                $clientWallet->save();
 
                 // Số tiền trả cho kỹ thuật viên
                 $amountPayToKtv = max($data['amount_pay_to_ktv'], 0);
-
-                // tạo transaction hoàn số tiền dịch vụ cho khách hàng
-                $this->walletTransactionRepository->create([
-                    'wallet_id' => $clientWallet->id,
-                    'type' => WalletTransactionType::REFUND->value,
-                    'point_amount' => $amountPayBackToClient * $exchangeRatePoint,
-                    'money_amount' => $amountPayBackToClient,
-                    'exchange_rate_point' => $exchangeRatePoint,
-                    'status' => WalletTransactionStatus::COMPLETED->value,
-                    'transaction_code' => Helper::createDescPayment(PaymentType::REFUND),
-                    'foreign_key' => $booking->id,
-                    'description' => "Hoàn tiền booking #{$booking->id} - lý do: {$booking->reason_cancel}",
-                    'expired_at' => now(),
-                ]);
-                // tạo transaction hoàn số tiền di chuyển cho khách hàng
-                $this->walletTransactionRepository->create([
-                    'wallet_id' => $clientWallet->id,
-                    'type' => WalletTransactionType::REFUND_CUSTOMER_TRANSPORT->value,
-                    'point_amount' => $transactionTransportOfCustomer->point_amount * $exchangeRatePointTransport,
-                    'money_amount' => $transactionTransportOfCustomer->money_amount,
-                    'exchange_rate_point' => $exchangeRatePointTransport,
-                    'status' => WalletTransactionStatus::COMPLETED->value,
-                    'transaction_code' => Helper::createDescPayment(PaymentType::REFUND),
-                    'foreign_key' => $booking->id,
-                    'description' => "Hoàn tiền dịch vụ di chuyển  #{$booking->id} - lý do: {$booking->reason_cancel}",
-                    'expired_at' => now(),
-                ]);
-
-
-                $clientWallet->balance += $amountPayBackToClient + $transactionTransportOfCustomer->point_amount;
-                $clientWallet->save();
 
                 // Nếu Số tiền trả cho kỹ thuật viên lớn hơn 0
                 if ($amountPayToKtv > 0) {
@@ -936,14 +994,14 @@ class TransactionJobService extends BaseService
         switch ($referrer->role) {
             case UserRole::KTV->value:
                 // Nếu KTV là leader
-                if ($referrer->reviewApplication?->is_leader){
-                    $rateDiscount = (float) $this->configService->getConfigValue(ConfigName::DISCOUNT_RATE_REFERRER_KTV_LEADER);
-                }else{
-                    $rateDiscount = (float) $this->configService->getConfigValue(ConfigName::DISCOUNT_RATE_REFERRER_KTV);
+                if ($referrer->reviewApplication?->is_leader) {
+                    $rateDiscount = (float)$this->configService->getConfigValue(ConfigName::DISCOUNT_RATE_REFERRER_KTV_LEADER);
+                } else {
+                    $rateDiscount = (float)$this->configService->getConfigValue(ConfigName::DISCOUNT_RATE_REFERRER_KTV);
                 }
                 break;
             case UserRole::AGENCY->value:
-                $rateDiscount = (float) $this->configService->getConfigValue(ConfigName::DISCOUNT_RATE_REFERRER_AGENCY);
+                $rateDiscount = (float)$this->configService->getConfigValue(ConfigName::DISCOUNT_RATE_REFERRER_AGENCY);
                 break;
             default:
                 // Dự phòng cho trường hợp có role mới

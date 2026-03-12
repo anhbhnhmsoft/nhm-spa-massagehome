@@ -382,16 +382,16 @@ class NotificationService extends BaseService
                         break;
                     case NotificationAdminType::EMERGENCY_SUPPORT:
                         Notification::make()
-                            ->title(__('notification.emergency_support.title')) 
+                            ->title(__('notification.emergency_support.title'))
                             ->danger()
                             ->body(__('notification.emergency_support.body', [
-                                'booking_id' => $data['booking_id'],
+                                'booking_id' => $data['booking_id'] ?? "Unknow",
                             ]))
                             ->actions([
                                 Action::make(__('notification.detail'))
                                     ->button()
                                     ->color('primary')
-                                    ->url(BookingResource::getUrl('view', ['record' => $data['booking_id']]))
+                                    ->url($data['booking_id'] ? BookingResource::getUrl('view', ['record' => $data['booking_id']]) : null)
                                     ->markAsRead(),
                                 Action::make(__('notification.marked_as_read'))
                                     ->button()

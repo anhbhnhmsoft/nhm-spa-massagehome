@@ -576,6 +576,8 @@ return
                 'PAYMENT_KTV_EARN_TRANSPORT' => 'Payment Earn for Transportation',
                 'REFUND_CUSTOMER_TRANSPORT' => 'Refund Customer for Transportation',
                 'PAYMENT_REFUND_KTV_FOR_BOOKING_CANCEL' => 'Refund KTV for Booking Cancel',
+                'SUBTRACT_MONEY_DISCOUNT_SERVICE' => 'Subtract Discount for Service',
+                'REFUND_MONEY_DISCOUNT_SERVICE' => 'Refund Discount for Service',
             ],
             'status' => [
                 'PENDING' => 'Pending',

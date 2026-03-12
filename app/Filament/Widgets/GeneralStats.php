@@ -63,55 +63,27 @@ class GeneralStats extends BaseWidget
                                 ->color('danger'),
                             Stat::make(__('dashboard.general_stat.profit'), Helper::formatPrice($revenue['profit']))
                                 ->color('success'),
-                            Grid::make()
-                                ->columns(4)
+                            Section::make(__('dashboard.general_stat.title_operation_system'))
+                                ->columns(3)
                                 ->columnSpanFull()
+                                ->compact()
                                 ->schema([
-                                    Stat::make(__('dashboard.general_stat.agency_cost'), Helper::formatPrice($revenue['agency_cost']))
-                                        ->color('danger'),
-                                    Stat::make(__('dashboard.general_stat.ktv_cost'), Helper::formatPrice($revenue['technical_cost']))
-                                        ->color('danger'),
-                                    Stat::make(__('dashboard.general_stat.customer_cost'), Helper::formatPrice($revenue['customer_cost']))
-                                        ->color('danger'),
-                                    Stat::make(__('dashboard.general_stat.transportation_cost'), Helper::formatPrice($revenue['transportation_cost']))
-                                        ->color('danger'),
+                                    // Chi phí đại lý
+                                    Stat::make(__('dashboard.general_stat.agency_cost'), Helper::formatPrice($revenue['agency_cost'])),
+                                    // Chi phí khách hàng
+                                    Stat::make(__('dashboard.general_stat.ktv_cost'), Helper::formatPrice($revenue['technical_cost'])),
+                                    // Chi phí hoàn tiền
+                                    Stat::make(__('dashboard.general_stat.customer_cost'), Helper::formatPrice($revenue['customer_cost'])),
+                                    // Chi phí vận chuyển
+                                    Stat::make(__('dashboard.general_stat.transportation_cost'), Helper::formatPrice($revenue['transportation_cost'])),
+                                    // Chi phí giảm giá
+                                    Stat::make(__('dashboard.general_stat.discount_cost'), Helper::formatPrice($revenue['discount_cost'])),
+                                    // Chi phí hoàn tiền
+                                    Stat::make(__('dashboard.general_stat.refund_cost'), Helper::formatPrice($revenue['refund_cost'])),
                                 ])
 
                         ]),
-
-
                 ])
-//            Section::make(__('dashboard.general_stat.title'))
-//                ->columnSpanFull()
-//                ->columns(4)
-//                ->schema([
-
-//
-//                    // Chi phí vận hành
-//                    Stat::make(__('dashboard.general_stat.operation_cost'), number_format($data['operation_cost'], 0, '.', ','))
-//                        ->description(__('dashboard.general_stat.operation_cost_desc'))
-//                        ->color('danger'),
-//
-//                    // Lợi nhuận
-//                    Stat::make(__('dashboard.general_stat.profit'), number_format($data['profit'], 0, '.', ','))
-//                        ->description(__('dashboard.general_stat.profit_desc'))
-//                        ->color('success'),
-//
-//                    // Chi phí đại lý
-//                    Stat::make(__('dashboard.general_stat.agency_cost'), number_format($data['agency_cost'], 0, '.', ','))
-//                        ->description(__('dashboard.general_stat.agency_cost_desc'))
-//                        ->color('success'),
-//
-//                    // Chi phí KTV
-//                    Stat::make(__('dashboard.general_stat.ktv_cost'), number_format($data['ktv_cost'], 0, '.', ','))
-//                        ->description(__('dashboard.general_stat.ktv_cost_desc'))
-//                        ->color('success'),
-//
-//                    // Chi phí Affiliate
-//                    Stat::make(__('dashboard.general_stat.affiliate_cost'), number_format($data['affiliate_cost'], 0, '.', ','))
-//                        ->description(__('dashboard.general_stat.affiliate_cost_desc'))
-//                        ->color('success'),
-//                ])
         ];
     }
 }

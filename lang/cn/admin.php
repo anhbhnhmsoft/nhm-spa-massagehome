@@ -575,6 +575,8 @@ return
                 'PAYMENT_KTV_EARN_TRANSPORT' => '交通费用奖励',
                 'REFUND_CUSTOMER_TRANSPORT' => '客户交通费用退款',
                 'PAYMENT_REFUND_KTV_FOR_BOOKING_CANCEL' => '取消订单退款',
+                'SUBTRACT_MONEY_DISCOUNT_SERVICE' => '服务折扣退款',
+                'REFUND_MONEY_DISCOUNT_SERVICE' => '服务折扣退款',
             ],
             'status' => [
                 'PENDING' => '处理中',

@@ -24,10 +24,15 @@ return [
         'total_revenue_desc' => 'Total revenue system',
         'operation_cost' => 'Operating cost',
         'profit' => 'Profit',
+
+        'title_operation_system' => 'Operating cost',
+
         'agency_cost' => 'Agency cost',
         'ktv_cost' => 'Technician cost',
         'customer_cost' => 'Customer cost',
         'transportation_cost' => 'Transportation cost',
+        'discount_cost' => 'Discount cost',
+        'refund_cost' => 'Refund cost',
     ],
     'general_booking_stat' => [
         'title' => 'Order overview',

@@ -579,6 +579,8 @@ return
                 'PAYMENT_KTV_EARN_TRANSPORT' => 'Cộng tiền di chuyển cho KTV',
                 'REFUND_CUSTOMER_TRANSPORT' => 'Hoàn tiền di chuyển cho khách hàng',
                 'PAYMENT_REFUND_KTV_FOR_BOOKING_CANCEL' => 'Hoàn tiền cho KTV khi hủy booking',
+                'SUBTRACT_MONEY_DISCOUNT_SERVICE' => 'Hoàn tiền giảm giá',
+                'REFUND_MONEY_DISCOUNT_SERVICE' => 'Thu hồi tiền giảm giá',
             ],
             'status' => [
                 'PENDING' => 'Chờ xử lý',
@@ -590,6 +592,7 @@ return
             'actions' => [
                 'approve' => 'Duyệt',
                 'cancel' => 'Hủy bỏ',
+                'cancel_confirmation_message' => 'Bạn có chắc chắn muốn hủy bỏ giao dịch này?',
                 'transfer' => 'Chuyển tiền ',
                 'fee_transfer' => '(thuộc giao dịch ID: :transaction_id)',
                 'approve_confirmation_message' => 'Bạn có chắc chắn muốn duyệt giao dịch này?',
