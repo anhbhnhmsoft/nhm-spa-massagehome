@@ -9,6 +9,7 @@ use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Widgets\TransactionKt
 use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Widgets\UserReferralLeaderKtvTableWidget;
 use App\Filament\Components\CommonActions;
 use App\Filament\Widgets\CustomerAffiliate;
+use App\Filament\Widgets\WalletStats;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewKTV extends ViewRecord
@@ -35,6 +36,7 @@ class ViewKTV extends ViewRecord
     protected function getFooterWidgets(): array
     {
         return [
+            WalletStats::make(),
             StatisticalStatsKTV::make(),
             BookingListKtv::make(),
             UserReferralLeaderKtvTableWidget::make(),

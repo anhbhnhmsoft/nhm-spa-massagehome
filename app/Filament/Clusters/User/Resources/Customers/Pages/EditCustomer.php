@@ -4,8 +4,8 @@ namespace App\Filament\Clusters\User\Resources\Customers\Pages;
 
 use App\Filament\Clusters\User\Resources\Customers\CustomerResource;
 use App\Filament\Clusters\User\Resources\Customers\Widgets\TransactionCustomerTable;
-use App\Filament\Clusters\User\Resources\Customers\Widgets\WalletCustomer;
 use App\Filament\Components\CommonActions;
+use App\Filament\Widgets\WalletStats;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 
@@ -25,7 +25,7 @@ class EditCustomer extends EditRecord
     protected function getFooterWidgets(): array
     {
         return [
-            WalletCustomer::class,
+            WalletStats::class,
             TransactionCustomerTable::class,
         ];
     }

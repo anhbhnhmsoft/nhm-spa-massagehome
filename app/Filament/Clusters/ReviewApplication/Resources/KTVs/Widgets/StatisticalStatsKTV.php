@@ -17,48 +17,15 @@ class StatisticalStatsKTV extends BaseWidget
 
     protected function getStats(): array
     {
-        $paymentService = app(PaymentService::class);
         $dashboardService = app(DashboardService::class);
-
-        $userWalletInfo = $paymentService->getUserWallet(
-            userId: $this->record?->id,
-            withTotal: true
-        );
 
         $generalKtvDashboard = $dashboardService->getGeneralKtvDashboard(
             userId: $this->record?->id,
         );
 
-        $dataWallet = $userWalletInfo->getData();
         $dataDashboard = $generalKtvDashboard->getData();
 
         return [
-            Grid::make()
-                ->columnSpanFull()
-                ->columns(3)
-                ->schema([
-                    Stat::make(
-                        label: __('admin.ktv.infolist.balance'),
-                        value: Helper::formatPrice($dataWallet['wallet']->balance ?? 0)
-                    )
-                        ->description(__('admin.currency'))
-                        ->icon(Heroicon::Wallet)
-                        ->color('info'),
-                    Stat::make(
-                        label: __('admin.ktv.infolist.total_deposit'),
-                        value: Helper::formatPrice($dataWallet['total_deposit'] ?? 0)
-                    )
-                        ->icon(Heroicon::ArrowUp)
-                        ->description(__('admin.currency'))
-                        ->color('success'),
-                    Stat::make(
-                        label: __('admin.ktv.infolist.total_withdrawal'),
-                        value: Helper::formatPrice($dataWallet['total_withdrawal'] ?? 0)
-                    )
-                        ->icon(Heroicon::ArrowDown)
-                        ->description(__('admin.currency'))
-                        ->color('danger'),
-                ]),
             Grid::make()
                 ->columnSpanFull()
                 ->columns(5)

@@ -29,7 +29,8 @@ return
             'affiliate_qr' => 'QR code giới thiệu',
             'wallet' => 'Ví tiền',
             'balance' => 'Số dư',
-            'total_deposit' => 'Tổng số tiền vào',
+            'total_deposit' => 'Tổng số tiền thu nhập từ hệ thống',
+            'total_income' => 'Tổng số tiền nạp vào ví',
             'total_withdrawal' => 'Tổng số tiền rút',
             'table' => [
                 'id' => 'ID',

@@ -29,7 +29,8 @@ return
             'count_collect' => 'Limit Collect',
             'wallet' => 'Wallet',
             'balance' => 'Balance',
-            'total_deposit' => 'Total Deposit',
+            'total_deposit' => 'Total Income from System',
+            'total_income' => 'Total Income',
             'total_withdrawal' => 'Total Withdrawal',
             'table' => [
                 'id' => 'ID',

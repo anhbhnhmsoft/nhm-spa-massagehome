@@ -129,7 +129,7 @@ enum WalletTransactionType: int
 
 
     /**
-     * Trạng thái nạp vào hệ thống
+     * Trạng thái nạp tiền vào hệ thống
      * @return array
      */
     public static function incomeStatus(): array
@@ -139,7 +139,6 @@ enum WalletTransactionType: int
             self::DEPOSIT_ZALO_PAY->value,
             self::DEPOSIT_MOMO_PAY->value,
             self::DEPOSIT_WECHAT_PAY->value,
-            self::FEE_WITHDRAW->value,
         ];
     }
 
@@ -164,6 +163,7 @@ enum WalletTransactionType: int
             self::PAYMENT->value, // Thanh toán (Booking)
             self::PAYMENT_FEE_TRANSPORT->value, // Chi phí di chuyển (Trừ tiền KH)
             self::REFUND_MONEY_DISCOUNT_SERVICE->value, // Hoàn tiền giảm giá dịch vụ
+            self::FEE_WITHDRAW->value,
         ];
     }
 
@@ -260,18 +260,18 @@ enum WalletTransactionType: int
     }
 
 
-    // Lấy danh sách trạng thái giao dịch nạp vào ví
+    // Lấy danh sách trạng thái tiền vào từ hệ thống
     public static function statusIn()
     {
         return [
-            self::DEPOSIT_QR_CODE->value,
-            self::DEPOSIT_ZALO_PAY->value,
-            self::DEPOSIT_MOMO_PAY->value,
-            self::DEPOSIT_WECHAT_PAY->value,
             self::AFFILIATE->value,
             self::PAYMENT_FOR_KTV->value,
             self::REFERRAL_INVITE_KTV_REWARD->value,
             self::REFERRAL_KTV->value,
+//            self::REFUND->value, // ko tính vào thu nhập của KH
+//            self::REFUND_CUSTOMER_TRANSPORT->value, // ko tính vào thu nhập của KH
+            self::PAYMENT_REFUND_KTV_FOR_BOOKING_CANCEL->value,
+            self::PAYMENT_KTV_EARN_TRANSPORT->value
         ];
     }
 

@@ -84,7 +84,7 @@ class WalletTransactionsTable
                         ->visible(function ($record) {
                             return $record->status == WalletTransactionStatus::PENDING->value
                                 // Chỉ duyệt các giao dịch nạp vào hệ thống
-                                && in_array($record->type, WalletTransactionType::statusIn());
+                                && in_array($record->type, WalletTransactionType::incomeStatus());
                         })
                         ->action(function ($record, PaymentService $paymentService) {
                             $paymentService->handleAdminConfirmTransaction($record);
@@ -186,7 +186,7 @@ class WalletTransactionsTable
                         ->color('danger')
                         ->visible(function ($record) {
                             return $record->status == WalletTransactionStatus::PENDING->value
-                                && (in_array($record->type, WalletTransactionType::statusIn())
+                                && (in_array($record->type, WalletTransactionType::incomeStatus())
                                     || $record->type === WalletTransactionType::WITHDRAWAL->value);
                         })
                         ->action(function ($record) {

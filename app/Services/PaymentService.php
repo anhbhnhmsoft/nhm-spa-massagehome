@@ -62,10 +62,17 @@ class PaymentService extends BaseService
                     ]
                 );
             }
-            // Lấy tổng số điểm đã nạp vào ví
+            // Lấy tổng số tiền vào từ hệ thống
             $totalDeposit = $this->walletTransactionRepository->queryTransaction()
                 ->where('wallet_id', $wallet->id)
                 ->whereIn('type', WalletTransactionType::statusIn())
+                ->where('status', WalletTransactionStatus::COMPLETED)
+                ->sum('point_amount');
+
+            // Lấy tổng số tiền đã nạp vào ví
+            $totalIncome = $this->walletTransactionRepository->queryTransaction()
+                ->where('wallet_id', $wallet->id)
+                ->whereIn('type', WalletTransactionType::incomeStatus())
                 ->where('status', WalletTransactionStatus::COMPLETED)
                 ->sum('point_amount');
 
@@ -80,6 +87,7 @@ class PaymentService extends BaseService
                 data: [
                     'wallet' => $wallet,
                     'total_deposit' => $totalDeposit,
+                    'total_income' => $totalIncome,
                     'total_withdrawal' => $totalWithdrawal,
                 ]
             );
@@ -568,7 +576,7 @@ class PaymentService extends BaseService
         try {
             $record->update(['status' => WalletTransactionStatus::COMPLETED]);
             // Kiểm tra xem transaction có phải là nạp tiền hay không
-            if (in_array($record->type, WalletTransactionType::statusIn())) {
+            if (in_array($record->type, WalletTransactionType::incomeStatus())) {
                 $record->wallet->increment('balance', (float)$record->point_amount);
                 // Thông báo tới người dùng khi nạp tiền thành công
                 SendNotificationJob::dispatch(

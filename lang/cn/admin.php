@@ -28,7 +28,8 @@ return
             'affiliate_qr' => '推广二维码',
             'wallet' => '钱包',
             'balance' => '余额',
-            'total_deposit' => '总充值',
+            'total_deposit' => '总收入从系统',
+            'total_income' => '总收入',
             'total_withdrawal' => '总提现',
             'table' => [
                 'id' => 'ID',
