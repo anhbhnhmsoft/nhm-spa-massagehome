@@ -24,6 +24,7 @@ enum ConfigName: string
     case PRICE_TRANSPORTATION = 'PRICE_TRANSPORTATION'; // Chi phí di chuyển của KTV do khách hàng trả trên mỗi km
     case EXCHANGE_RATE_VND_CNY = 'EXCHANGE_RATE_VND_CNY'; // Tỷ giá đổi tiền VNĐ -> CNY
     case FEE_WITHDRAW_PERCENTAGE = 'FEE_WITHDRAW_PERCENTAGE'; // Phí rút tiền %
+    case GEMINI_API_KEY = 'GEMINI_API_KEY';
 
     /**
      * ---  Các config liên quan đến Zalo

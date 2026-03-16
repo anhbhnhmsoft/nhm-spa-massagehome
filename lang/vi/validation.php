@@ -339,4 +339,17 @@ return [
             'invalid' => 'Tên thật phải là chuỗi và ít nhất 4 ký tự, tối đa 255 ký tự.',
         ]
     ],
+     'message_id' => [
+        'required' => 'Vui lòng nhập ID tin nhắn.',
+        'numeric' => 'ID tin nhắn phải là số.',
+        'exists' => 'Tin nhắn không tồn tại.',
+    ],
+    'review_id' => [
+        'required' => 'Vui lòng nhập ID đánh giá.',
+        'invalid' => 'Đánh giá không tồn tại hoặc không hợp lệ.',
+    ],
+    'lang' => [
+        'required' => 'Vui lòng chọn ngôn ngữ.',
+        'invalid' => 'Ngôn ngữ không hợp lệ.',
+    ],
 ];

@@ -8,6 +8,7 @@ use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
 use App\Enums\BookingStatus;
+use App\Enums\Language;
 use App\Repositories\BookingRepository;
 use App\Repositories\ReviewRepository;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -18,6 +19,7 @@ class ReviewService extends BaseService
     public function __construct(
         protected ReviewRepository $reviewRepository,
         protected BookingRepository $bookingRepository,
+        protected GeminiService      $geminiService,
     ) {
         parent::__construct();
     }
@@ -124,6 +126,47 @@ class ReviewService extends BaseService
                 )
             );
         }
+    }
+
+    /**
+     * Translate review
+     * @param int $reviewId
+     * @param Language $lang
+     * @return ServiceReturn
+     * @throws \Throwable
+     */
+    public function translateReview(int $reviewId, Language $lang): ServiceReturn
+    {
+        return $this->execute(function () use ($reviewId, $lang) {
+            $review = $this->reviewRepository->find($reviewId);
+            if (!$review) {
+                throw new ServiceException(message: __('common_error.data_not_found'));
+            }
+            // Kiểm tra nếu comment rỗng
+            $comment = trim($review->comment);
+            if (!empty($comment)) {
+                return [
+                    'translate' => '',
+                ];
+            }
+            // Kiểm tra nếu comment đã được dịch trước đó
+            $translate = $review->getTranslation('comment_translated', $lang->value,false);
+            if ($translate) {
+                return [
+                    'translate' => $translate,
+                ];
+            }
+            $translate = $this->geminiService->translate(
+                text: $comment,
+                lang: $lang,
+            );
+            // Lưu translation vào review
+            $review->setTranslation('comment_translated', $lang->value, $translate);
+            $review->save();
+            return [
+                'translate' => $translate,
+            ];
+        });
     }
 }
 

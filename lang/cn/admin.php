@@ -496,6 +496,7 @@ return
                 'payos_api_key' => 'PayOS API Key',
                 'payos_checksum_key' => 'PayOS Checksum Key',
                 'goong_api_key' => 'Goong API Key',
+                'gemini_api_key' => 'Gemini API Key',
                 'currency_exchange_rate' => '汇率 (VND -> 积分)',
                 'commission_rate' => '佣金比例',
                 'min_commission' => '最低佣金',

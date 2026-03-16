@@ -497,6 +497,7 @@ return
                 'payos_api_key' => 'PayOS API Key',
                 'payos_checksum_key' => 'PayOS Checksum Key',
                 'goong_api_key' => 'Goong API Key',
+                'gemini_api_key' => 'Gemini API Key',
                 'currency_exchange_rate' => 'Exchange Rate (VND -> Points)',
                 'commission_rate' => 'Commission Rate',
                 'min_commission' => 'Min Commission',

@@ -154,6 +154,7 @@ Route::middleware(['set-api-locale', 'update-last-active'])->group(function () {
             Route::post('review', [ServiceController::class, 'createReview']);
             // Lấy danh sách đánh giá của dịch vụ
             Route::get('list-review', [ServiceController::class, 'listReview']);
+            Route::post('translate-review', [ServiceController::class, 'translateReview']);
         });
     });
 
@@ -271,6 +272,8 @@ Route::middleware(['set-api-locale', 'update-last-active'])->group(function () {
         Route::post('message', [ChatController::class, 'sendMessage']);
         // Đánh dấu xem tin nhắn đã đọc
         Route::post('seen', [ChatController::class, 'seenMessage']);
+        // Translate message
+        Route::post('translate', [ChatController::class, 'translateMessage']);
 
         Route::middleware(['check-role:ktv'])->group(function () {
             // Lấy danh sách phòng chat KTV

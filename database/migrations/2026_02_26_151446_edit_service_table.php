@@ -50,11 +50,7 @@ return new class extends Migration {
             $table->dropForeign(['service_id']);
             $table->dropColumn('service_id');
         });
-        Schema::table('service_bookings', function (Blueprint $table) {
-            $table->dropForeign(['coupon_id']);
-            $table->dropColumn('coupon_id');
 
-        });
     }
 
     /**

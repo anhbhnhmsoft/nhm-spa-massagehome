@@ -4,10 +4,12 @@ namespace App\Models;
 
 use App\Core\GenerateId\HasBigIntId;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Translatable\HasTranslations;
 
 class Review extends Model
 {
-    use HasBigIntId;
+    use HasBigIntId, HasTranslations;
+
 
     protected $table = 'reviews';
 
@@ -22,6 +24,11 @@ class Review extends Model
         'hidden',
         'review_at'
     ];
+
+    protected array $translatable = [
+        'comment_translated',
+    ];
+
 
     protected $casts = [
         'id' => 'string',

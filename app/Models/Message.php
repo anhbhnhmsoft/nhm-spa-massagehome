@@ -6,15 +6,23 @@ use App\Core\GenerateId\HasBigIntId;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Translatable\HasTranslations;
 
 class Message extends Model
 {
+    use HasTranslations;
+
     protected $fillable = [
         'room_id',
         'sender_by',
         'content',
+        'content_translated',
         'seen_at',
         'temp_id',
+    ];
+
+    protected array $translatable = [
+        'content_translated',
     ];
 
     protected $casts = [

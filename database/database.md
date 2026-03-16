@@ -442,6 +442,7 @@
     - service_booking_id (bigint, foreign key to service_bookings.id) id của đơn dịch vụ đã đặt
     - rating (smallint) -- xếp hạng (dạng số từ 1-5)
     - comment (text, nullable) -- bình luận
+    - comment_translated (json, nullable) -- bình luận đã dịch
     - review_at (timestamp) -- thời gian đánh giá
     - hidden (boolean, default false) -- có ẩn hay không
     
@@ -523,6 +524,7 @@
     - room_id (bigint, foreign key to chat_rooms.id) -- ID phòng chat
     - sender_by (bigint, foreign key to users.id) -- ID người gửi tin nhắn
     - content (text) -- Nội dung tin nhắn
+    - content_translated (json, nullable) -- Nội dung tin nhắn đã dịch
     - seen_at (timestamp, nullable) -- Thời gian đã đọc tin nhắn
     - timestamps
 

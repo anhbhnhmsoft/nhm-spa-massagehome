@@ -7,9 +7,11 @@ use App\Core\LogHelper;
 use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
+use App\Enums\Language;
 use App\Enums\NodeServerConstant;
 use App\Enums\UserRole;
 use App\Http\Resources\Chat\MessageSenderResource;
+use App\Models\Message;
 use App\Repositories\ChatRoomRepository;
 use App\Repositories\MessageRepository;
 use App\Core\Controller\FilterDTO;
@@ -29,6 +31,7 @@ class ChatService extends BaseService
         protected ChatRoomRepository $chatRoomRepository,
         protected MessageRepository  $messageRepository,
         protected UserRepository     $userRepository,
+        protected GeminiService      $geminiService,
     )
     {
         parent::__construct();
@@ -291,6 +294,42 @@ class ChatService extends BaseService
                 message: __('common_error.server_error')
             );
         }
+    }
+
+    /**
+     * Translate tin nhắn chat
+     * @param int $messageId
+     * @return ServiceReturn
+     * @throws \Throwable
+     */
+    public function translateMessage(int $messageId, Language $lang): ServiceReturn
+    {
+        return $this->execute(
+            callback: function () use ($messageId, $lang) {
+                $message = $this->messageRepository->find($messageId);
+                if (!$message) {
+                    throw new ServiceException(message: __('common_error.data_not_found'));
+                }
+                // Kiểm tra nếu tin nhắn đã được dịch trước đó
+                $translate = $message->getTranslation('content_translated', $lang->value,false);
+                if ($translate) {
+                    return [
+                        'translate' => $translate,
+                    ];
+                }
+                $translate = $this->geminiService->translate(
+                    text: $message->content,
+                    lang: $lang,
+                );
+                $message->setTranslation('content_translated', $lang->value, $translate);
+                $message->save();
+                return ServiceReturn::success(
+                    data: [
+                        'translate' => $translate,
+                    ]
+                );
+            }
+        );
     }
 
     /**

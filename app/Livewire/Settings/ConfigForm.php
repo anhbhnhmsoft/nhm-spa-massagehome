@@ -88,6 +88,17 @@ class ConfigForm extends Component implements HasSchemas
                                             'required' => __('common.error.required'),
                                             'string' => __('common.error.string'),
                                         ]),
+                                    TextInput::make((string)ConfigName::GEMINI_API_KEY->value)
+                                        ->label(__('admin.setting.fields.gemini_api_key'))
+                                        ->required()
+                                        ->rules([
+                                            'required',
+                                            'string',
+                                        ])
+                                        ->validationMessages([
+                                            'required' => __('common.error.required'),
+                                            'string' => __('common.error.string'),
+                                        ]),
                                     TextInput::make((string)ConfigName::CURRENCY_EXCHANGE_RATE->value)
                                         ->label(__('admin.setting.fields.currency_exchange_rate'))
                                         ->numeric()

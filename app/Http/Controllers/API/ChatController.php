@@ -4,12 +4,14 @@ namespace App\Http\Controllers\API;
 
 use App\Core\Controller\BaseController;
 use App\Core\Controller\ListRequest;
+use App\Enums\Language;
 use App\Http\Resources\Chat\ChatKTVConversationResource;
 use App\Http\Resources\Chat\ChatRoomResource;
 use App\Http\Resources\Chat\MessageResource;
 use App\Services\ChatService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use function Pest\Laravel\json;
 
 class ChatController extends BaseController
@@ -144,6 +146,32 @@ class ChatController extends BaseController
 
         return $this->sendSuccess(
             data: ChatKTVConversationResource::collection($data)->response()->getData(),
+        );
+    }
+
+    public function translateMessage(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'message_id' => ['required', 'numeric', 'exists:messages,id'],
+            'lang' => ['required', Rule::enum(Language::class)],
+        ], [
+            'message_id.required' => __('validation.message_id.required'),
+            'message_id.numeric' => __('validation.message_id.numeric'),
+            'message_id.exists' => __('validation.message_id.exists'),
+            'lang.required' => __('validation.lang.required'),
+            'lang.enum' => __('validation.lang.invalid'),
+        ]);
+        $result = $this->chatService->translateMessage(
+            messageId: $data['message_id'],
+            lang: Language::from($data['lang']),
+        );
+        if ($result->isError()) {
+            return $this->sendError(message: $result->getMessage());
+        }
+        return $this->sendSuccess(
+            data: [
+                'translate' => $result->getData()['translate'] ?? "",
+            ],
         );
     }
 }

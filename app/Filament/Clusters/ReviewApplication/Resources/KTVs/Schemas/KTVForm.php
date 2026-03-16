@@ -281,6 +281,7 @@ class KTVForm
                                 'required' => __('common.error.required'),
                             ])
                             ->image()
+                            ->imageEditor()
                             ->maxSize(102400)
                             ->downloadable()
                             ->deletable()
@@ -297,6 +298,7 @@ class KTVForm
                             ])
                             ->image()
                             ->maxSize(102400)
+                            ->imageEditor()
                             ->downloadable()
                             ->afterStateHydrated(fn($component, $record) => $component->state($record?->cccdBack()->first()?->file_path)),
 
@@ -310,6 +312,7 @@ class KTVForm
                                 'required' => __('common.error.required'),
                             ])
                             ->image()
+                            ->imageEditor()
                             ->maxSize(102400)
                             ->downloadable()
                             ->deletable()
@@ -347,6 +350,7 @@ class KTVForm
                                     ->image()
                                     ->maxSize(102400)
                                     ->downloadable()
+                                    ->imageEditor()
                                     ->columnSpanFull()
                                     ->deletable(),
                                 Hidden::make('role')

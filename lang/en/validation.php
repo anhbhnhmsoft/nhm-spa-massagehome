@@ -312,4 +312,17 @@ return [
         'required_if' => 'Please enter display name.',
         'invalid' => 'Display name must be a string, at least 4 characters, and at most 255 characters.',
     ],
+    'message_id' => [
+        'required' => 'Please enter message ID.',
+        'numeric' => 'Message ID must be a number.',
+        'exists' => 'Message does not exist.',
+    ],
+    'review_id' => [
+        'required' => 'Please enter review ID.',
+        'invalid' => 'Review does not exist or is invalid.',
+    ],
+    'lang' => [
+        'required' => 'Please select language.',
+        'invalid' => 'Language is invalid.',
+    ],
 ];

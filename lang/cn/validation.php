@@ -312,4 +312,17 @@ return [
         'required_if' => '请输入显示名称。',
         'invalid' => '显示名称必须是字符串，且至少 4 个字符，最多 255 个字符。',
     ],
+    'message_id' => [
+        'required' => '请输入消息 ID。',
+        'numeric' => '消息 ID 必须是数字。',
+        'exists' => '消息不存在。',
+    ],
+    'review_id' => [
+        'required' => '请输入评论 ID。',
+        'invalid' => '评论不存在或无效。',
+    ],
+    'lang' => [
+        'required' => '请选择语言。',
+        'invalid' => '语言无效。',
+    ],
 ];

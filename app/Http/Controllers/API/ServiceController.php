@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Core\Controller\BaseController;
 use App\Core\Controller\ListRequest;
+use App\Enums\Language;
 use App\Enums\UserRole;
 use App\Http\Resources\Review\ReviewResource;
 use App\Http\Resources\Service\CategoryResource;
@@ -15,6 +16,7 @@ use App\Services\ServiceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 
 class ServiceController extends BaseController
@@ -147,6 +149,32 @@ class ServiceController extends BaseController
         $result = $this->reviewService->reviewPaginate($dto);
         $data = $result->getData();
         return $this->sendSuccess(data: ReviewResource::collection($data)->response()->getData());
+    }
+
+    public function translateReview(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'review_id' => ['required', 'numeric', 'exists:reviews,id'],
+            'lang' => ['required', Rule::enum(Language::class)],
+        ], [
+            'review_id.required' => __('validation.review_id.required'),
+            'review_id.numeric' => __('validation.review_id.invalid'),
+            'review_id.exists' => __('validation.review_id.invalid'),
+            'lang.required' => __('validation.lang.required'),
+            'lang.enum' => __('validation.lang.invalid'),
+        ]);
+        $result = $this->reviewService->translateReview(
+            reviewId: $data['review_id'],
+            lang: Language::from($data['lang']),
+        );
+        if ($result->isError()) {
+            return $this->sendError(message: $result->getMessage());
+        }
+        return $this->sendSuccess(
+            data: [
+                'translate' => $result->getData()['translate'] ?? "",
+            ],
+        );
     }
 
 }

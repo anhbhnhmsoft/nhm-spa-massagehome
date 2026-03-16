@@ -29,13 +29,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-//        $this->seedProvince();
-//        $this->seedCategory();
-//        $this->seedAdmin();
-////        $this->seedKTV();
-//        $this->seedCoupon();
+        $this->seedCategory();
+        $this->seedAdmin();
         $this->seedConfig();
-//        $this->seedConfigAffiliate();
+        $this->seedConfigAffiliate();
     }
 
     protected function seedAdmin(): void
@@ -43,8 +40,11 @@ class DatabaseSeeder extends Seeder
         DB::beginTransaction();
         try {
             // Seeding admin trước để có thể login vào hệ thống
-            $admin = User::query()->create([
-                'phone' => '012345678910',
+            $admin = User::query()->createOrFirst(
+                [
+                    'phone' => '012345678910',
+                ],
+                [
                 'phone_verified_at' => now(),
                 'password' => Hash::make('Test12345678@'),
                 'name' => 'Admin System',
@@ -52,97 +52,6 @@ class DatabaseSeeder extends Seeder
                 'language' => Language::VIETNAMESE->value,
                 'is_active' => true,
             ]);
-        } catch (\Exception $exception) {
-            dump($exception);
-            DB::rollBack();
-        }
-        DB::commit();
-    }
-
-    protected function seedKTV(): void
-    {
-        $provinces = Province::query()->pluck('code')->toArray();
-        $categories = Category::query()->pluck('id')->toArray();
-        $fake = fake('vi');
-        DB::beginTransaction();
-        try {
-            foreach (range(1, 10) as $index) {
-                $gender = $fake->randomElement(Gender::cases());
-                $provinceCode = $fake->randomElement($provinces);
-                $address = $fake->address();
-                $latitude = $fake->latitude();
-                $longitude = $fake->longitude();
-                $bio = $fake->paragraph();
-
-                $user = User::query()->create([
-                    'phone' => $fake->phoneNumber(),
-                    'phone_verified_at' => now(),
-                    'password' => bcrypt('Test1234568@'),
-                    'name' => $fake->name(),
-                    'role' => UserRole::KTV->value,
-                    'language' => Language::VIETNAMESE->value,
-                    'is_active' => true,
-                ]);
-
-                $wallet = $user->wallet()->create([
-                    'balance' => 0,
-                ]);
-
-                $profile = $user->profile()->create([
-                    'user_id' => $user->id,
-                    'avatar_url' => $fake->imageUrl(),
-                    'date_of_birth' => $fake->date(),
-                    'gender' => $gender->value,
-                    'bio' => $bio,
-                ]);
-
-                $reviewApplication = $user->reviewApplication()->create([
-                    'user_id' => $user->id,
-                    'status' => ReviewApplicationStatus::APPROVED->value,
-                    'province_code' => $provinceCode,
-                    'address' => $address,
-                    'latitude' => $latitude,
-                    'longitude' => $longitude,
-                    'bio' => [
-                        Language::VIETNAMESE->value => fake('vi_VN')->paragraph(),
-                        Language::ENGLISH->value => fake('en_US')->paragraph(),
-                        Language::CHINESE->value => fake('zh_CN')->paragraph(),
-                    ],
-                    'experience' => fake()->numberBetween(0, 10),
-
-                ]);
-                foreach (range(1, 5) as $index) {
-                    $service = $user->services()->create([
-                        'name' => [
-                            Language::VIETNAMESE->value => fake('vi_VN')->paragraph(1),
-                            Language::ENGLISH->value => fake('en_US')->paragraph(1),
-                            Language::CHINESE->value => fake('zh_CN')->paragraph(1),
-                        ],
-                        'category_id' => $fake->randomElement($categories),
-                        'description' => [
-                            Language::VIETNAMESE->value => fake('vi_VN')->paragraph(),
-                            Language::ENGLISH->value => fake('en_US')->paragraph(),
-                            Language::CHINESE->value => fake('zh_CN')->paragraph(),
-                        ],
-                        'is_active' => true,
-                        'image_url' => $fake->imageUrl(),
-                    ]);
-                    foreach (
-                        [
-                            ServiceDuration::FIFTEEN_MINUTE->value,
-                            ServiceDuration::HALF_HOUR->value,
-                            ServiceDuration::ONE_HOUR->value,
-                            ServiceDuration::ONE_AND_HALF_HOUR->value,
-                            ServiceDuration::TWO_HOUR->value,
-                        ] as $duration
-                    ) {
-                        $service->options()->create([
-                            'duration' => $duration,
-                            'price' => $fake->numberBetween(100000, 500000),
-                        ]);
-                    }
-                }
-            }
         } catch (\Exception $exception) {
             dump($exception);
             DB::rollBack();
@@ -252,45 +161,11 @@ class DatabaseSeeder extends Seeder
         return true;
     }
 
-    /**
-     * Seed province from open-api.vn
-     * @return bool
-     */
-    protected function seedProvince(): bool
-    {
-        DB::beginTransaction();
-        try {
-            $responseProvince = Http::get('https://provinces.open-api.vn/api/v1/p/');
-            if ($responseProvince->successful()) {
-                $data = $responseProvince->json();  // Lấy dữ liệu dưới dạng mảng
-                // Lưu dữ liệu vào bảng provinces
-                foreach ($data as $provinceData) {
-                    Province::query()->updateOrCreate(
-                        ['code' => $provinceData['code']],
-                        [
-                            'name' => $provinceData['name'],
-                            'division_type' => $provinceData["division_type"],
-                        ]
-                    );
-                }
-            } else {
-                DB::rollBack();
-                return false;
-            }
-            DB::commit();
-            return true;
-        } catch (\Exception $exception) {
-            DB::rollBack();
-            dump($exception);
-            return false;
-        }
-    }
-
     protected function seedConfig(): bool
     {
         DB::beginTransaction();
         try {
-            Config::query()->updateOrCreate(
+            Config::query()->createOrFirst(
                 ['config_key' => ConfigName::PAYOS_CLIENT_ID->value],
                 [
                     'config_value' => '3199a47f-9162-4d98-9908-9732432cf365',
@@ -298,7 +173,7 @@ class DatabaseSeeder extends Seeder
                     'description' => 'Mã client ID PayOS dùng để tích hợp thanh toán PayOS.',
                 ]
             );
-            Config::query()->updateOrCreate(
+            Config::query()->createOrFirst(
                 ['config_key' => ConfigName::PAYOS_API_KEY->value],
                 [
                     'config_value' => '18e78b87-1300-4e2d-adef-0de1423d89a8',
@@ -306,7 +181,7 @@ class DatabaseSeeder extends Seeder
                     'description' => 'Mã secret key PayOS dùng để tích hợp thanh toán PayOS.',
                 ]
             );
-            Config::query()->updateOrCreate(
+            Config::query()->createOrFirst(
                 ['config_key' => ConfigName::PAYOS_CHECKSUM_KEY->value],
                 [
                     'config_value' => 'bcdaecc9ad73edff55c076519e5ab5e127fd9681c13cfd19de1dfa29d9d8fce9',
@@ -314,16 +189,16 @@ class DatabaseSeeder extends Seeder
                     'description' => 'Mã checksum key PayOS dùng để tích hợp thanh toán PayOS.',
                 ]
             );
-            Config::query()->updateOrCreate(
+            Config::query()->createOrFirst(
                 ['config_key' => ConfigName::CURRENCY_EXCHANGE_RATE->value],
                 [
-                    'config_value' => '1000',
+                    'config_value' => '1',
                     'config_type' => ConfigType::NUMBER->value,
-                    'description' => 'Tỷ giá đổi tiền VNĐ -> Point VD: 1000 VNĐ = 1 Point',
+                    'description' => 'Tỷ giá đổi tiền VNĐ -> Point VD: 1 VNĐ = 1 Point',
                 ]
             );
 
-            Config::query()->updateOrCreate(
+            Config::query()->createOrFirst(
                 ['config_key' => ConfigName::GOONG_API_KEY->value],
                 [
                     'config_value' => 'dpxUCPncHcWczUMJY5EfatOFCpxGI2tB9ADsR4sb',
@@ -331,7 +206,7 @@ class DatabaseSeeder extends Seeder
                     'description' => 'Mã API key Goong dùng để tích hợp tìm kiếm địa chỉ.',
                 ]
             );
-            Config::query()->updateOrCreate(
+            Config::query()->createOrFirst(
                 ['config_key' => ConfigName::BREAK_TIME_GAP->value],
                 [
                     'config_value' => '60',
@@ -339,7 +214,7 @@ class DatabaseSeeder extends Seeder
                     'description' => 'Khoảng cách giữa 2 lần phục vụ của kỹ thuật viên tính bằng phút',
                 ]
             );
-            Config::query()->updateOrCreate(
+            Config::query()->createOrFirst(
                 ['config_key' => ConfigName::DISCOUNT_RATE->value],
                 [
                     'config_value' => '20',
@@ -347,7 +222,7 @@ class DatabaseSeeder extends Seeder
                     'description' => 'Tỷ lệ chiết khấu ứng dụng nhận được',
                 ]
             );
-            Config::query()->updateOrCreate(
+            Config::query()->createOrFirst(
                 ['config_key' => ConfigName::DISCOUNT_RATE_REFERRER_AGENCY->value],
                 [
                     'config_value' => '15',
@@ -355,7 +230,7 @@ class DatabaseSeeder extends Seeder
                     'description' => 'Tỷ lệ chiết khấu dành cho đại lý đối với 1 đơn hoàn thành của 1 KTV mà mình giới thiệu %',
                 ]
             );
-            Config::query()->updateOrCreate(
+            Config::query()->createOrFirst(
                 ['config_key' => ConfigName::DISCOUNT_RATE_REFERRER_KTV->value],
                 [
                     'config_value' => '5',
@@ -363,7 +238,7 @@ class DatabaseSeeder extends Seeder
                     'description' => 'Tỷ lệ chiết khấu dành cho kỹ thuật viên đối với 1 đơn hoàn thành của 1 KTV mà mình giới thiệu %',
                 ]
             );
-            Config::query()->updateOrCreate(
+            Config::query()->createOrFirst(
                 ['config_key' => ConfigName::DISCOUNT_RATE_REFERRER_KTV_LEADER->value],
                 [
                     'config_value' => '10',
@@ -371,7 +246,7 @@ class DatabaseSeeder extends Seeder
                     'description' => 'Tỷ lệ chiết khấu dành cho kỹ thuật viên trưởng đối với 1 đơn hoàn thành của 1 KTV mà mình giới thiệu %',
                 ]
             );
-            Config::query()->updateOrCreate(
+            Config::query()->createOrFirst(
                 ['config_key' => ConfigName::KTV_LEADER_MIN_REFERRALS->value],
                 [
                     'config_value' => '10',
@@ -379,7 +254,7 @@ class DatabaseSeeder extends Seeder
                     'description' => 'Số lượng KTV cần giới thiệu để lên kỹ thuật viên trưởng',
                 ]
             );
-            Config::query()->updateOrCreate(
+            Config::query()->createOrFirst(
                 ['config_key' => ConfigName::KTV_REFERRAL_REWARD_AMOUNT->value],
                 [
                     'config_value' => '0',
@@ -387,7 +262,7 @@ class DatabaseSeeder extends Seeder
                     'description' => 'Số tiền (point) được nhận khi mời KTV thành công. Nếu = 0 thì tắt tính năng này',
                 ]
             );
-            Config::query()->updateOrCreate(
+            Config::query()->createOrFirst(
                 ['config_key' => ConfigName::SP_PHONE->value],
                 [
                     'config_value' => '0865643858',
@@ -395,7 +270,7 @@ class DatabaseSeeder extends Seeder
                     'description' => 'Số điện thoại hỗ trợ',
                 ]
             );
-            Config::query()->updateOrCreate(
+            Config::query()->createOrFirst(
                 ['config_key' => ConfigName::SP_ZALO->value],
                 [
                     'config_value' => 'https://zalo.me/0865643858',
@@ -404,7 +279,7 @@ class DatabaseSeeder extends Seeder
                 ]
             );
 
-            Config::query()->updateOrCreate(
+            Config::query()->createOrFirst(
                 ['config_key' => ConfigName::SP_FACEBOOK->value],
                 [
                     'config_value' => 'https://facebook.com/admin.support',
@@ -413,7 +288,7 @@ class DatabaseSeeder extends Seeder
                 ]
             );
 
-            Config::query()->updateOrCreate(
+            Config::query()->createOrFirst(
                 ['config_key' => ConfigName::SP_WECHAT->value],
                 [
                     'config_value' => 'wechat_admin_support',
@@ -421,7 +296,7 @@ class DatabaseSeeder extends Seeder
                     'description' => 'Link WeChat hỗ trợ của admin',
                 ]
             );
-            Config::query()->updateOrCreate(
+            Config::query()->createOrFirst(
                 ['config_key' => ConfigName::SP_WECHAT_QR_IMAGE->value],
                 [
                     'config_value' => '',
@@ -429,7 +304,7 @@ class DatabaseSeeder extends Seeder
                     'description' => 'Ảnh/URL mã QR thanh toán WeChat Pay',
                 ]
             );
-            Config::query()->updateOrCreate(
+            Config::query()->createOrFirst(
                 ['config_key' => ConfigName::ZALO_MERCHANT_ID->value],
                 [
                     'config_value' => 'zalo_merchant_id',
@@ -437,7 +312,7 @@ class DatabaseSeeder extends Seeder
                     'description' => 'ID Merchant Zalo',
                 ]
             );
-            Config::query()->updateOrCreate(
+            Config::query()->createOrFirst(
                 ['config_key' => ConfigName::ZALO_MERCHANT_KEY_1->value],
                 [
                     'config_value' => 'zalo_merchant_key_1',
@@ -445,7 +320,7 @@ class DatabaseSeeder extends Seeder
                     'description' => 'Key 1 Merchant Zalo',
                 ]
             );
-            Config::query()->updateOrCreate(
+            Config::query()->createOrFirst(
                 ['config_key' => ConfigName::ZALO_MERCHANT_KEY_2->value],
                 [
                     'config_value' => 'zalo_merchant_key_2',
@@ -454,7 +329,7 @@ class DatabaseSeeder extends Seeder
                 ]
             );
 
-            Config::query()->updateOrCreate(
+            Config::query()->createOrFirst(
                 ['config_key' => ConfigName::ZALO_APP_ID->value],
                 [
                     'config_value' => 'zalo_app_id',
@@ -462,7 +337,7 @@ class DatabaseSeeder extends Seeder
                     'description' => 'ID Ứng dụng Zalo',
                 ]
             );
-            Config::query()->updateOrCreate(
+            Config::query()->createOrFirst(
                 ['config_key' => ConfigName::ZALO_APPSECRET_KEY->value],
                 [
                     'config_value' => 'zalo_appsecret_key',
@@ -470,7 +345,7 @@ class DatabaseSeeder extends Seeder
                     'description' => 'Secret Key Ứng dụng Zalo',
                 ]
             );
-            Config::query()->updateOrCreate(
+            Config::query()->createOrFirst(
                 ['config_key' => ConfigName::ZALO_OA_ID->value],
                 [
                     'config_value' => 'zalo_oa_id',
@@ -479,7 +354,7 @@ class DatabaseSeeder extends Seeder
                 ]
             );
 
-            Config::query()->updateOrCreate(
+            Config::query()->createOrFirst(
                 ['config_key' => ConfigName::ZALO_TEMPLATE_ID->value],
                 [
                     'config_value' => 'zalo_template_id',
@@ -488,12 +363,21 @@ class DatabaseSeeder extends Seeder
                 ]
             );
 
-            Config::query()->updateOrCreate(
+            Config::query()->createOrFirst(
                 ['config_key' => ConfigName::PRICE_TRANSPORTATION->value],
                 [
                     'config_value' => '10000',
                     'config_type' => ConfigType::NUMBER->value,
                     'description' => 'Chi phí di chuyển của KTV do khách hàng trả trên mỗi km',
+                ]
+            );
+
+            Config::query()->createOrFirst(
+                ['config_key' => ConfigName::GEMINI_API_KEY->value],
+                [
+                    'config_value' => '',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'API Key của Gemini AI',
                 ]
             );
 
@@ -510,7 +394,7 @@ class DatabaseSeeder extends Seeder
     {
         DB::beginTransaction();
         try {
-            AffiliateConfig::query()->updateOrCreate(
+            AffiliateConfig::query()->createOrFirst(
                 ['target_role' => UserRole::AGENCY->value],
                 [
                     'name' => 'Cấu hình dành cho đại lý',
@@ -520,7 +404,7 @@ class DatabaseSeeder extends Seeder
                     'description' => 'Tỷ lệ hoa hồng đại lý',
                 ]
             );
-            AffiliateConfig::query()->updateOrCreate(
+            AffiliateConfig::query()->createOrFirst(
                 ['target_role' => UserRole::KTV->value],
                 [
                     'name' => 'Cấu hình dành cho kỹ thuật viên',
@@ -530,7 +414,7 @@ class DatabaseSeeder extends Seeder
                     'description' => 'Tỷ lệ hoa hồng kỹ thuật viên',
                 ]
             );
-            AffiliateConfig::query()->updateOrCreate(
+            AffiliateConfig::query()->createOrFirst(
                 ['target_role' => UserRole::CUSTOMER->value],
                 [
                     'name' => 'Cấu hình dành cho khách hàng',
@@ -538,103 +422,6 @@ class DatabaseSeeder extends Seeder
                     'min_commission' => '10000',
                     'max_commission' => '100000',
                     'description' => 'Tỷ lệ hoa hồng khách hàng',
-                ]
-            );
-        } catch (\Exception $e) {
-            DB::rollBack();
-            dump($e);
-            return false;
-        }
-        DB::commit();
-        return true;
-    }
-
-    protected function seedCoupon()
-    {
-        DB::beginTransaction();
-        try {
-            Coupon::query()->updateOrCreate(
-                [
-                    'code' => 'NEW20',
-                    'created_by' => User::query()->where('phone', '012345678910')->first()->id,
-                ],
-                [
-                    'label' => [
-                        Language::VIETNAMESE->value => 'Ưu đãi đặc biệt 20%',
-                        Language::ENGLISH->value => 'Special discount 20%',
-                        Language::CHINESE->value => '特殊折扣 20%',
-                    ],
-                    'description' => [
-                        Language::VIETNAMESE->value => 'Ưu đãi đặc biệt 20% cho khách hàng',
-                        Language::ENGLISH->value => 'Special discount 20% for customers',
-                        Language::CHINESE->value => '特殊折扣 20% 对客户',
-                    ],
-                    'created_by' => User::query()->where('phone', '012345678910')->first()->id,
-                    'for_service_id' => null,
-                    'is_percentage' => true,
-                    'discount_value' => 20,
-                    'max_discount' => 100000,
-                    'start_at' => now(),
-                    'end_at' => now()->addMonth(),
-                    'usage_limit' => 100,
-                    'used_count' => 0,
-                    'is_active' => true,
-                ]
-            );
-            Coupon::query()->updateOrCreate(
-                [
-                    'code' => 'NEW40',
-                    'created_by' => User::query()->where('phone', '012345678910')->first()->id,
-                ],
-                [
-                    'label' => [
-                        Language::VIETNAMESE->value => 'Ưu đãi đặc biệt 40%',
-                        Language::ENGLISH->value => 'Special discount 40%',
-                        Language::CHINESE->value => '特殊折扣 40%',
-                    ],
-                    'description' => [
-                        Language::VIETNAMESE->value => 'Ưu đãi đặc biệt 40% cho khách hàng',
-                        Language::ENGLISH->value => 'Special discount 40% for customers',
-                        Language::CHINESE->value => '特殊折扣 40% 对客户',
-                    ],
-                    'created_by' => User::query()->where('phone', '012345678910')->first()->id,
-                    'for_service_id' => null,
-                    'is_percentage' => true,
-                    'discount_value' => 40,
-                    'max_discount' => 100000,
-                    'start_at' => now(),
-                    'end_at' => now()->addMonth(),
-                    'usage_limit' => 100,
-                    'used_count' => 0,
-                    'is_active' => true,
-                ]
-            );
-            Coupon::query()->updateOrCreate(
-                [
-                    'code' => 'NEW50',
-                    'created_by' => User::query()->where('phone', '012345678910')->first()->id,
-                ],
-                [
-                    'label' => [
-                        Language::VIETNAMESE->value => 'Ưu đãi đặc biệt 50%',
-                        Language::ENGLISH->value => 'Special discount 50%',
-                        Language::CHINESE->value => '特殊折扣 50%',
-                    ],
-                    'description' => [
-                        Language::VIETNAMESE->value => 'Ưu đãi đặc biệt 50% cho khách hàng',
-                        Language::ENGLISH->value => 'Special discount 50% for customers',
-                        Language::CHINESE->value => '特殊折扣 50% 对客户',
-                    ],
-                    'created_by' => User::query()->where('phone', '012345678910')->first()->id,
-                    'for_service_id' => null,
-                    'is_percentage' => true,
-                    'discount_value' => 40,
-                    'max_discount' => 100000,
-                    'start_at' => now(),
-                    'end_at' => now()->addMonth(),
-                    'usage_limit' => 100,
-                    'used_count' => 0,
-                    'is_active' => true,
                 ]
             );
         } catch (\Exception $e) {

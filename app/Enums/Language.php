@@ -15,4 +15,13 @@ enum Language: string
     case VIETNAMESE = 'vi';
     case CHINESE = 'cn';
 
+
+    public function getFullLanguageName(): string
+    {
+        return match ($this) {
+            self::ENGLISH => 'English',
+            self::VIETNAMESE => 'Vietnamese',
+            self::CHINESE => 'Chinese',
+        };
+    }
 }

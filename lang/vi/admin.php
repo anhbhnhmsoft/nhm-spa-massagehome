@@ -500,6 +500,7 @@ return
                 'payos_api_key' => 'PayOS API Key',
                 'payos_checksum_key' => 'PayOS Checksum Key',
                 'goong_api_key' => 'Goong API Key',
+                'gemini_api_key' => 'API Key của Gemini AI',
                 'currency_exchange_rate' => 'Tỷ giá (VNĐ -> Điểm)',
                 'commission_rate' => 'Tỷ lệ hoa hồng',
                 'min_commission' => 'Hoa hồng tối thiểu',
