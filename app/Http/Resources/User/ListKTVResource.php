@@ -30,7 +30,7 @@ class ListKTVResource extends JsonResource
             'rating' => round($this->reviews_received_avg_rating ?? 0, 1),
             'review_count' => $this->reviews_received_count ?? 0,
             'service_count' => $this->services_count ?? 0,
-            'jobs_received_count' => $this->ktv_bookings_count ?? 0,
+            'jobs_received_count' => $this->services_sum_performed_count ?? 0,
             'profile' => [
                 'avatar_url' => $profile->avatar_url ? Storage::disk('public')->url($profile->avatar_url) : null,
                 'date_of_birth' => $profile->date_of_birth,

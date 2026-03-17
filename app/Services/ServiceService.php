@@ -3,12 +3,10 @@
 namespace App\Services;
 
 use App\Core\Controller\FilterDTO;
-use App\Core\Helper;
 use App\Core\LogHelper;
 use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
-use App\Enums\DirectFile;
 use App\Enums\UserRole;
 use App\Models\User;
 use App\Repositories\BookingRepository;
@@ -20,8 +18,6 @@ use App\Repositories\ServiceRepository;
 use App\Repositories\UserRepository;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 
 class ServiceService extends BaseService
 {
@@ -32,7 +28,8 @@ class ServiceService extends BaseService
         protected CouponUserRepository    $couponUserRepository,
         protected CouponService           $couponService,
         protected CategoryPriceRepository $categoryPriceRepository,
-        protected UserRepository           $userRepository,
+        protected UserRepository          $userRepository,
+        protected ServiceRepository       $serviceRepository,
     )
     {
         parent::__construct();
@@ -195,4 +192,23 @@ class ServiceService extends BaseService
 
     }
 
+    /**
+     * Cập nhật số lượng dịch vụ đã thực hiện (buff ảo)
+     * @param array $data
+     * @return ServiceReturn
+     * @throws \Throwable
+     */
+    public function updateServicePerformedCount(array $data): ServiceReturn
+    {
+        return $this->execute(
+            callback: function () use ($data) {
+                foreach ($data as $service) {
+                    $this->serviceRepository->update($service['id'],[
+                            'performed_count' => (int)$service['performed_count'],
+                    ]);
+                }
+            },
+            useTransaction: true
+        );
+    }
 }

@@ -20,12 +20,11 @@ use App\Repositories\BookingRepository;
 use App\Repositories\CategoryRepository;
 use App\Repositories\CouponRepository;
 use App\Repositories\ReviewRepository;
-use App\Repositories\ServiceRepository;
 use App\Enums\ConfigName;
 use App\Enums\PaymentType;
 use App\Jobs\WalletTransactionBookingJob;
-use App\Models\ServiceBooking;
 use App\Repositories\ServiceOptionRepository;
+use App\Repositories\ServiceRepository;
 use App\Repositories\UserAddressRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\UserReviewApplicationRepository;
@@ -38,13 +37,11 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use function PHPUnit\Framework\callback;
 
 class BookingService extends BaseService
 {
     public function __construct(
         protected BookingRepository               $bookingRepository,
-        protected ServiceRepository               $serviceRepository,
         protected CouponRepository                $couponRepository,
         protected ServiceOptionRepository         $serviceOptionRepository,
         protected CategoryRepository              $categoryRepository,
@@ -60,6 +57,7 @@ class BookingService extends BaseService
         protected BookingValidator                $bookingValidator,
         protected CouponValidator                 $couponValidator,
         protected WalletValidator                 $walletValidator,
+        protected ServiceRepository               $serviceRepository,
     )
     {
         parent::__construct();
@@ -187,6 +185,13 @@ class BookingService extends BaseService
                     'ktv_latitude' => $resultValidate['ktvAddress']['latitude'] ?? 0,
                     'ktv_longitude' => $resultValidate['ktvAddress']['longitude'] ?? 0,
                 ]);
+
+                // Cộng thêm performed_count của service luôn (ko cần biết là hoàn thành hay ko)
+                $this->serviceRepository->incrementPerformedCount(
+                    userId: $data['ktv_id'],
+                    serviceId: $data['category_id'],
+                );
+
 
                 // xử lý giao dịch, ghi lại lịch sử dùng coupon
                 WalletTransactionBookingJob::dispatch(

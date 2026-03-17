@@ -61,6 +61,7 @@ return
                 'effective_date' => '生效日期',
                 'application_date' => '申请日期',
                 'creator' => '创建者',
+                'performed_count' => '执行次数',
             ],
             'action' => [
                 'view' => '查看',
@@ -81,6 +82,7 @@ return
                 'create' => '创建新',
                 'detail' => '详情',
                 'view_service' => '查看服务',
+                'buff_service' => '缓冲区服务使用',
                 'view_ktv_manager_agency' => '查看管理 KTV',
                 'agency_dashboard' => '合作伙伴仪表盘',
                 'ktv_dashboard' => '技师仪表盘',
@@ -633,6 +635,22 @@ return
                 'updated_at' => '更新时间',
                 'user' => '员工',
             ],
+            'action' => [
+                'virtual' => [
+                    'title' => '创建虚拟评论',
+                    'virtual_name' => '评论者姓名（虚拟）',
+                    'virtual_name_helper_text' => '不填将默认匿名评论',
+                    'rating' => '星级',
+                    'target_language' => '评论语言',
+                    'target_language_helper_text' => '选择评论语言，AI将自动生成评论',
+                    'comment' => '评论内容',
+                    'comment_hint' => '您可以自行填写，或使用旁边的AI按钮',
+                    'comment_helper_text' => '可以使用AI自动生成评论，或自行评价，如果没有内容，请留空。',
+                    'generate_ai_comment_tooltip' => '使用 Gemini 根据星级自动生成评论',
+                    'generate_ai_comment_success' => '已通过 AI 生成内容',
+                    'generate_ai_comment_error' => '调用 AI 时出错',
+                ]
+            ]
         ],
         'wallet_transaction' => [
             'label' => '钱包交易',

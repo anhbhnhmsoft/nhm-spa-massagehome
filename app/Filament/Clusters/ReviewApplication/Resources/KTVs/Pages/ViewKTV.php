@@ -3,14 +3,15 @@
 namespace App\Filament\Clusters\ReviewApplication\Resources\KTVs\Pages;
 
 use App\Filament\Clusters\ReviewApplication\Resources\KTVs\KTVResource;
-use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Widgets\BookingListKtv;
+use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Widgets\BookingListTableWidget;
 use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Widgets\StatisticalStatsKTV;
-use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Widgets\TransactionKtvTable;
-use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Widgets\UserReferralLeaderKtvTableWidget;
 use App\Filament\Components\CommonActions;
-use App\Filament\Widgets\CustomerAffiliate;
+use App\Filament\Widgets\CustomerAffiliateTableWidget;
+use App\Filament\Widgets\TransactionListTableWidget;
+use App\Filament\Widgets\UserReferralKtvTableWidget;
 use App\Filament\Widgets\WalletStats;
 use Filament\Resources\Pages\ViewRecord;
+
 
 class ViewKTV extends ViewRecord
 {
@@ -19,7 +20,12 @@ class ViewKTV extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            // Quay lại
             CommonActions::backAction(static::getResource()),
+            // Tạo đánh giá ảo
+            CommonActions::reviewVirtualAction(),
+            // Cập nhật số lượng dịch vụ đã thực hiện (buff ảo)
+            CommonActions::buffServiceAction(),
         ];
     }
 
@@ -36,12 +42,18 @@ class ViewKTV extends ViewRecord
     protected function getFooterWidgets(): array
     {
         return [
+            // Thống kê wallet
             WalletStats::make(),
+            // Thông kê
             StatisticalStatsKTV::make(),
-            BookingListKtv::make(),
-            UserReferralLeaderKtvTableWidget::make(),
-            CustomerAffiliate::make(),
-            TransactionKtvTable::make(),
+            // Danh sách booking của KTV
+            BookingListTableWidget::make(),
+            // Giới thiệu KTV
+            UserReferralKtvTableWidget::make(),
+            // Khách hàng affiliate
+            CustomerAffiliateTableWidget::make(),
+            // Danh sách giao dịch
+            TransactionListTableWidget::make(),
         ];
     }
 }

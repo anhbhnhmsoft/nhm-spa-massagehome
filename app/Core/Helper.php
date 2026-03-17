@@ -241,6 +241,27 @@ final class Helper
      */
     public static function formatPrice(float $price): string
     {
-        return number_format($price, 0, ',', '.') . ' ₫';
+        return number_format($price, 0, ',', '.');
+    }
+
+    /**
+     * Định dạng dữ liệu đa ngôn ngữ thành mảng có cấu trúc:
+     * [
+     *     'en' => 'English translation',
+     *     'vi' => 'Tiếng Việt translation',
+     *     ...
+     * ]
+     * @param array $data
+     * @param string $fallback
+     * @return array
+     */
+    public static function formatMultiLang(array $data, string $fallback = ''): array
+    {
+        $allTranslations = collect(Language::cases())->mapWithKeys(function ($lang) use ($data, $fallback) {
+            return [
+                $lang->value => $data[$lang->value] ?? $fallback
+            ];
+        })->toArray();
+        return $allTranslations;
     }
 }

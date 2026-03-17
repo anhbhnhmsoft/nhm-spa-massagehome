@@ -6,23 +6,19 @@ use App\Enums\Gender;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserRole;
 use App\Filament\Clusters\ReviewApplication\Resources\KTVs\KTVResource;
+use App\Filament\Components\CommonActions;
 use App\Filament\Components\CommonFields;
-use App\Repositories\CategoryRepository;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
-use Filament\Forms\Components\CheckboxList;
-use Filament\Infolists\Components\TextEntry;
-use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Filament\Tables\Enums\FiltersLayout;
-use Illuminate\Support\HtmlString;
 
 
 class KTVsTable
@@ -63,66 +59,32 @@ class KTVsTable
             ])
             ->recordActions([
                 ActionGroup::make([
+                    // Xem chi tiết + chỉnh sửa
                     Action::make('edit')
                         ->label(__('admin.common.action.detail'))
                         ->url(fn($record): string => KTVResource::getUrl('edit', ['record' => $record]))
                         ->icon('heroicon-o-identification'),
-                    Action::make('view_service')
-                        ->label(__('admin.common.action.view_service'))
-                        ->icon('heroicon-o-tag')
-                        ->hidden(fn($record) => $record->reviewApplication->status !== ReviewApplicationStatus::APPROVED)
-                        ->color('success')
-                        ->fillForm(fn ($record) => [
-                            'categories' => $record->categories->pluck('id')->toArray(),
 
-                        ])
-                        ->action(function ($record, array $data): void {
-                            $record->categories()->sync($data['categories']);
-                            Notification::make()
-                                ->success()
-                                ->title(__('common.success.success'))
-                                ->body(__('common.success.data_updated'))
-                                ->send();
-                        })
-                        ->modal()
-                        ->modalSubmitActionLabel(__('admin.common.action.save'))
-                        ->modalCancelActionLabel(__('admin.common.action.cancel'))
-                        ->schema([
-                            CheckboxList::make('categories')
-                                ->label(__('admin.ktv.action.choose_categories'))
-                                ->options(fn (CategoryRepository $repo) =>
-                                    $repo->pluckNameAndId()
-                                )
-                                ->columns(2)
-                        ]),
-
+                    // Xem dashboard KTV
                     Action::make('view')
-                        ->hidden(fn($record) => $record->reviewApplication->status !== ReviewApplicationStatus::APPROVED)
+                        ->visible(fn($record) => $record->reviewApplication->status === ReviewApplicationStatus::APPROVED)
                         ->label(__('admin.common.action.ktv_dashboard'))
                         ->url(fn($record): string => KTVResource::getUrl('view', ['record' => $record]))
                         ->icon(Heroicon::ChartBar),
-                    Action::make('qr_affiliate')
-                        ->label(__('admin.common.affiliate_qr'))
-                        ->icon('heroicon-o-qr-code')
-                        ->modalHeading(__('admin.common.affiliate_qr'))
-                        ->modalSubmitAction(false) // Ẩn nút Submit vì chỉ để xem
-                        ->modalWidth('sm')
-                        ->schema([
-                            TextEntry::make('qr_code_placeholder')
-                                ->hiddenLabel()
-                                ->state(function ($record) {
-                                    $url = route('affiliate.link', ['referrerId' => $record->id]);
-                                    $qrUrl = "https://quickchart.io/qr?text=" . urlencode($url) . "&size=250";
-                                    return new HtmlString("
-                                        <div class='flex flex-col items-center justify-center space-y-4'>
-                                              <img src='{$qrUrl}' alt='QR Code' class='w-64 h-64'>
-                                            <div class='text-center text-sm font-mono text-gray-500 break-all'>
-                                                {$url}
-                                            </div>
-                                        </div>
-                                    ");
-                                })
-                        ]),
+
+                     // Xem dịch vụ của KTV
+                    CommonActions::viewServiceAction(),
+
+                    // Hiển QR code giới thiệu affiliate
+                    CommonActions::qrAffiliateAction(),
+
+                    // đánh giá ảo
+                    CommonActions::reviewVirtualAction(),
+
+                    // Cập nhật số lượng dịch vụ đã thực hiện (buff ảo)
+                    CommonActions::buffServiceAction(),
+
+                    // Xóa KTV
                     DeleteAction::make()
                         ->label(__('admin.common.action.delete'))
                         ->tooltip(__('admin.common.tooltip.delete'))

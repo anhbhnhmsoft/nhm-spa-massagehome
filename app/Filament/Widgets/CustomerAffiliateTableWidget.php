@@ -11,11 +11,15 @@ use Filament\Widgets\TableWidget;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Model;
 
-class CustomerAffiliate extends TableWidget
+/**
+ * Widget hiển thị danh sách khách affiliate
+ */
+class CustomerAffiliateTableWidget extends TableWidget
 {
+    protected static bool $isLazy = true;
     public ?Model $record = null;
 
-    protected int | string | array $columnSpan = 2;
+    protected int | string | array $columnSpan = 1;
 
     protected function getTableHeading(): string|Htmlable|null
     {
@@ -28,7 +32,8 @@ class CustomerAffiliate extends TableWidget
             ->defaultPaginationPageOption(5)
             ->filters([])
             ->query(function (UserRepository $repository){
-                return $repository->queryUser()->with('profile')
+                return $repository->queryUser()
+                    ->with('profile')
                     ->where('role', UserRole::CUSTOMER->value)
                     ->where('referred_by_user_id', $this->record->id);
             });

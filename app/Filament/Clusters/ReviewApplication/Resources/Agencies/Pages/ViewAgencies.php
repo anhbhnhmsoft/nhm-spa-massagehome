@@ -5,10 +5,10 @@ namespace App\Filament\Clusters\ReviewApplication\Resources\Agencies\Pages;
 
 use App\Filament\Clusters\ReviewApplication\Resources\Agencies\AgencyResource;
 use App\Filament\Clusters\ReviewApplication\Resources\Agencies\Widgets\StatisticalStatsAgency;
-use App\Filament\Clusters\ReviewApplication\Resources\Agencies\Widgets\TransactionAgencyTable;
-use App\Filament\Clusters\ReviewApplication\Resources\Agencies\Widgets\UserReferralLeaderAgencyTableWidget;
 use App\Filament\Components\CommonActions;
-use App\Filament\Widgets\CustomerAffiliate;
+use App\Filament\Widgets\CustomerAffiliateTableWidget;
+use App\Filament\Widgets\TransactionListTableWidget;
+use App\Filament\Widgets\UserReferralKtvTableWidget;
 use App\Filament\Widgets\WalletStats;
 use Filament\Resources\Pages\ViewRecord;
 
@@ -33,9 +33,12 @@ class ViewAgencies extends ViewRecord
         return [
             WalletStats::make(),
             StatisticalStatsAgency::make(),
-            TransactionAgencyTable::make(),
-            CustomerAffiliate::make(),
-            UserReferralLeaderAgencyTableWidget::make(),
+            // Giới thiệu KTV
+            UserReferralKtvTableWidget::make(),
+            // Khách hàng affiliate
+            CustomerAffiliateTableWidget::make(),
+            // Danh sách giao dịch
+            TransactionListTableWidget::make(),
         ];
     }
 }

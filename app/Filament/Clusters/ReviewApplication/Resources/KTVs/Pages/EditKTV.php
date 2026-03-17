@@ -40,14 +40,14 @@ class EditKTV extends EditRecord
     {
         return [
             CommonActions::backAction(static::getResource()),
+            // Hiển thị nút Chỉnh sửa Service nếu trạng thái là APPROVED
             Action::make('view_service')
                 ->label(__('admin.common.action.view_service'))
                 ->icon('heroicon-o-tag')
-                ->hidden(fn($record) => $record->reviewApplication->status !== ReviewApplicationStatus::APPROVED)
+                ->visible(fn($record) => $record->reviewApplication?->status === ReviewApplicationStatus::APPROVED)
                 ->color('success')
                 ->fillForm(fn ($record) => [
                     'categories' => $record->categories->pluck('id')->toArray(),
-
                 ])
                 ->action(function ($record, array $data): void {
                     $record->categories()->sync($data['categories']);
@@ -63,13 +63,11 @@ class EditKTV extends EditRecord
                 ->schema([
                     CheckboxList::make('categories')
                         ->label(__('admin.ktv.action.choose_categories'))
-                        ->options(fn (CategoryRepository $repo) =>
-                        $repo->pluckNameAndId()
-                        )
+                        ->options(fn(CategoryRepository $repo) => $repo->pluckNameAndId())
                         ->columns(2)
                 ]),
 
-            // Hiển thị nút Approve nếu trạng thái là PENDING hoặc REJECTED
+            //  Approve đơn đăng ký KTV nếu trạng thái là PENDING
             Action::make('approve')
                 ->label(__('admin.ktv_apply.actions.approve.label'))
                 ->icon('heroicon-o-check-circle')
@@ -77,13 +75,7 @@ class EditKTV extends EditRecord
                 ->requiresConfirmation()
                 ->modalHeading(__('admin.ktv_apply.actions.approve.heading'))
                 ->modalDescription(__('admin.ktv_apply.actions.approve.description'))
-                ->visible(function() {
-                    $status = $this->record->reviewApplication?->status;
-                    return in_array($status, [
-                        ReviewApplicationStatus::PENDING,
-                        ReviewApplicationStatus::REJECTED,
-                    ]);
-                })
+                ->visible(fn($record) => $record->reviewApplication?->status === ReviewApplicationStatus::PENDING)
                 ->action(function () {
                     $result = $this->userService->activeStaffApply($this->record->id);
 
@@ -103,6 +95,7 @@ class EditKTV extends EditRecord
                     return redirect()->to($this->getResource()::getUrl('index'));
                 }),
 
+            // Reject đơn đăng ký KTV nếu trạng thái là PENDING
             Action::make('reject')
                 ->label(__('admin.ktv_apply.actions.reject.label'))
                 ->icon('heroicon-o-x-circle')
@@ -110,6 +103,7 @@ class EditKTV extends EditRecord
                 ->requiresConfirmation()
                 ->modalHeading(__('admin.ktv_apply.actions.reject.heading'))
                 ->modalDescription(__('admin.ktv_apply.actions.reject.description'))
+                ->visible(fn() => $this->record->reviewApplication?->status == ReviewApplicationStatus::PENDING)
                 ->schema([
                     Textarea::make('note')
                         ->label(__('admin.ktv_apply.actions.reject.reason_label'))
@@ -121,7 +115,6 @@ class EditKTV extends EditRecord
                             'max'      => __('common.error.max_length', ['max' => 500]),
                         ]),
                 ])
-                ->visible(fn() => $this->record->reviewApplication?->status == ReviewApplicationStatus::PENDING)
                 ->action(function (array $data) {
                     $result = $this->userService->rejectStaffApply($this->record->id, $data['note']);
 
@@ -141,6 +134,7 @@ class EditKTV extends EditRecord
                     return redirect()->to($this->getResource()::getUrl('index'));
                 }),
 
+            // Delete đơn đăng ký KTV
             DeleteAction::make()
                 ->label(__('common.action.delete')),
         ];

@@ -51,4 +51,6 @@ enum ReviewApplicationStatus: int
     {
         return self::tryFrom($value)?->color() ?? '';
     }
+
+
 }

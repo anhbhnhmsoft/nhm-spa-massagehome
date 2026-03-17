@@ -30,6 +30,7 @@ class UserReviewApplication extends Model
         'address',
         'latitude',
         'longitude',
+        'service_performed_count',
     ];
 
     protected $casts = [

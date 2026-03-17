@@ -13,6 +13,7 @@ class Service extends Model
     protected $fillable = [
         'user_id',
         'category_id',
+        'performed_count'
     ];
 
     protected $casts = [
@@ -39,18 +40,4 @@ class Service extends Model
         return $this->belongsTo(Category::class, 'category_id');
     }
 
-    /**
-     * Mối quan hệ n-n với bảng category_prices thông qua bảng service_options
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
-     */
-    public function optionCategoryPrices()
-    {
-        // Tham số thứ 2 là tên bảng trung gian: 'service_options'
-        return $this->belongsToMany(
-            CategoryPrice::class,
-            'service_options',
-            'service_id',
-            'category_price_id'
-        )->withTimestamps();
-    }
 }

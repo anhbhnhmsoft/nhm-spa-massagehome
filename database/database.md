@@ -37,6 +37,19 @@
     - raw_data (json, nullable) -- dữ liệu thô trả về từ  API
     - timestamps
 
+# admin_users
+    # note
+    - Bảng admin_users lưu trữ thông tin người dùng admin.
+
+    # cấu trúc
+    - id (bigint, primary key, auto-increment)
+    - username (varchar, unique) -- tên đăng nhập
+    - password (varchar) -- mật khẩu đã được mã hóa
+    - role (unsigned smallint) -- vai trò admin (trong enum AdminRole)
+    - remember_token (varchar, nullable) -- token nhớ đăng nhập
+    - timestamps
+
+
 # users
     # note
     - Bảng users lưu trữ thông tin người dùng của hệ thống.
@@ -118,7 +131,6 @@
     - latitude (decimal(10,8), nullable) -- vĩ độ (dành cho Đối tác)
     - longitude (decimal(11,8), nullable) -- kinh độ (dành cho Đối tác)
 
-    
     - timestamps
 
 # user_profiles
@@ -326,6 +338,7 @@
     - id (bigint, primary key, auto-increment)
     - user_id (bigint, foreign key to users.id) -- id người dùng cung cấp dịch vụ
     - category_id (bigint, foreign key to categories.id) -- id danh mục dịch vụ
+    - performed_count (unsigned integer, default 0) -- số lượng dịch vụ đã làm
     - timestamps
 
 # service_bookings
@@ -438,14 +451,16 @@
     # cấu trúc
     - id (bigint, primary key, auto-increment)
     - user_id (bigint, foreign key to users.id) -- id người được đánh giá
-    - review_by (bigint, foreign key to users.id) -- id người dùng đánh giá
-    - service_booking_id (bigint, foreign key to service_bookings.id) id của đơn dịch vụ đã đặt
+    - review_by (bigint, nullable, foreign key to users.id) -- id người dùng đánh giá - null tức là review ảo
+    - service_booking_id (bigint, nullable, foreign key to service_bookings.id) -- id của đơn dịch vụ đã đặt - null tức là review ảo
     - rating (smallint) -- xếp hạng (dạng số từ 1-5)
     - comment (text, nullable) -- bình luận
     - comment_translated (json, nullable) -- bình luận đã dịch
     - review_at (timestamp) -- thời gian đánh giá
-    - hidden (boolean, default false) -- có ẩn hay không
-    
+    - hidden (boolean, default false) -- có ẩn danh hay không
+    - is_virtual (boolean, default false) -- có phải là đánh giá ảo hay không
+    - virtual_name (varchar, nullable) -- tên người đánh giá (Ảo)
+
     - timestamps
 
 # configs

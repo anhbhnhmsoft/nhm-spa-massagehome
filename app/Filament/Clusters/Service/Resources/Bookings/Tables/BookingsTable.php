@@ -107,6 +107,6 @@ class BookingsTable
             ->filtersLayout(FiltersLayout::AboveContent)
             ->filtersFormColumns(5)
             ->defaultSort('created_at', 'desc')
-            ->poll('1m');
+            ->poll('5m');
     }
 }

@@ -57,6 +57,7 @@ class CategoryRepository extends BaseRepository
             ->pluck('name', 'id');
     }
 
+
     /**
      * Lấy danh mục theo id và id của KTV có sẵn dịch vụ và giá dịch vụ
      * @param  $id

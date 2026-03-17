@@ -23,7 +23,7 @@ class ApplyTechnicalRequest extends FormRequest
             'experience' => ['required', 'integer', 'min:1', 'max:20'],
             'is_leader' => ['nullable', 'boolean'],
             'bio' => ['required', 'string', 'min:10', 'max:1000'],
-            'avatar' => ['required', 'file', 'mimes:jpg,jpeg,png', 'max:5120'], // Giảm max xuống 5MB
+            'avatar' => ['required', 'file', 'image', '', 'max:20480'], // max 20MB
             'dob' => ['required', 'date_format:Y-m-d'],
 
             // Validate mảng tổng thể
@@ -35,7 +35,7 @@ class ApplyTechnicalRequest extends FormRequest
                 // Trực tiếp check type có nằm trong Enum hay không
                 Rule::enum(UserFileType::class)
             ],
-            'file_uploads.*.file' => ['required', 'file', 'mimes:jpg,jpeg,png', 'max:20480'], // max 20MB cho giấy tờ/ảnh
+            'file_uploads.*.file' => ['required', 'file', 'image', 'max:20480'], // max 20MB cho giấy tờ/ảnh
         ];
     }
 
@@ -64,7 +64,7 @@ class ApplyTechnicalRequest extends FormRequest
 
             'avatar.required' => __('validation.avatar.required'),
             'avatar.file' => __('validation.avatar.invalid'),
-            'avatar.mimes' => __('validation.avatar.invalid'),
+            'avatar.image' => __('validation.avatar.invalid'),
             'avatar.max' => __('validation.avatar.max', ['max' => 20]),
 
             'file_uploads.required' => __('validation.file_apply_partner_uploads.required'),
@@ -73,7 +73,7 @@ class ApplyTechnicalRequest extends FormRequest
             'file_uploads.*.type_upload.in' => __('validation.file_apply_partner_uploads.invalid_type'),
             'file_uploads.*.file.required' => __('validation.file_apply_partner_uploads.invalid', ['max' => 20]),
             'file_uploads.*.file.file' => __('validation.file_apply_partner_uploads.invalid', ['max' => 20]),
-            'file_uploads.*.file.mimes' => __('validation.file_apply_partner_uploads.invalid', ['max' => 20]),
+            'file_uploads.*.file.image' => __('validation.file_apply_partner_uploads.invalid', ['max' => 20]),
             'file_uploads.*.file.max' => __('validation.file_apply_partner_uploads.invalid', ['max' => 20]),
 
         ];

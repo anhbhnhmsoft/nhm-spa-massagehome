@@ -49,8 +49,8 @@ class UserRepository extends BaseRepository
             })
             ->withCount([
                 'services',
-                'ktvBookings'
             ])
+            ->withSum('services', 'performed_count')
             ->with(['profile', 'reviewApplication', 'schedule', 'primaryAddress']);
 
         // Tính Trung bình Rating và Đếm Reviews
@@ -109,27 +109,29 @@ class UserRepository extends BaseRepository
         if (isset($filters['lat'], $filters['lng']) && is_numeric($filters['lat']) && is_numeric($filters['lng'])) {
             $targetLat = (float) $filters['lat'];
             $targetLng = (float) $filters['lng'];
-            // LeftJoin lấy cả người không có địa chỉ (distance sẽ là NULL)
-            $query->leftJoin('user_address', function($join) {
+            // Chỉ lấy người có địa chỉ chính thức
+            $query->join('user_address', function($join) {
                 $join->on('users.id', '=', 'user_address.user_id')
                     ->where('user_address.is_primary', true);
             });
 
             // Định nghĩa công thức tính khoảng cách (Distance)
-            $distanceSelect = sprintf("
+            $distanceFormula = sprintf("
                 (ST_DistanceSphere(
                     ST_MakePoint(user_address.longitude::float, user_address.latitude::float),
                     ST_MakePoint(%f, %f)
-                ) / 1000) AS distance
+                ) / 1000)
             ", $targetLng, $targetLat);
 
             // Select dữ liệu
             // Quan trọng: Phải select users.* để không bị mất dữ liệu user sau khi join
             $query->addSelect('users.*');
-            $query->selectRaw($distanceSelect);
-
-            // 4. Sắp xếp theo khoảng cách
-            $query->orderByRaw('distance ASC NULLS LAST');
+            //Select dữ liệu và gán alias 'distance' để Frontend hiển thị
+            $query->selectRaw("$distanceFormula AS distance");
+            // Lọc chỉ lấy những người trong bán kính 50km
+            $query->whereRaw("$distanceFormula <= ?", [50]);
+            //  Sắp xếp theo khoảng cách
+            $query->orderByRaw('distance ASC');
         }
 
         return $query;

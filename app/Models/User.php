@@ -139,7 +139,7 @@ class User extends Authenticatable implements FilamentUser
     public function categories()
     {
         return $this->belongsToMany(Category::class, 'services', 'user_id', 'category_id')
-            ->withPivot('id') // lấy ID của service
+            ->withPivot('id','performed_count') // lấy ID của service và số lần thực hiện dịch vụ
             ->withTimestamps();
     }
 

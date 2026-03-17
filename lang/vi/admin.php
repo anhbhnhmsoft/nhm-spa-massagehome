@@ -62,6 +62,7 @@ return
                 'effective_date' => 'Ngày hiệu lực',
                 'application_date' => 'Ngày đăng ký',
                 'creator' => 'Tạo bởi',
+                'performed_count' => 'Số lần thực hiện',
                 'status_review' => 'Trạng thái hồ sơ',
                 'password_desc' => 'Mật khẩu phải có ít nhất 8 kí tự, bao gồm chữ hoa, chữ thường, số và kí tự đặc biệt, 1 khi thay đổi mật khẩu mới, Người dùng sẽ không được sử dụng mật khẩu cũ.',
             ],
@@ -84,6 +85,7 @@ return
                 'close' => 'Đóng',
                 'create' => 'Tạo mới',
                 'view_service' => 'Dịch vụ của KTV',
+                'buff_service' => 'Buff số lượt đặt dịch vụ',
                 'view_ktv_manager_agency' => 'Danh sách KTV của đối tác',
                 'agency_dashboard' => 'Thống kê của đối tác',
                 'ktv_dashboard' => 'Thống kê của KTV',
@@ -637,6 +639,22 @@ return
                 'updated_at' => 'Ngày cập nhật',
                 'user' => 'Nhân viên',
             ],
+            'action' => [
+                'virtual' => [
+                    'title' => 'Tạo đánh giá ảo',
+                    'virtual_name' => 'Tên người đánh giá (Ảo)',
+                    'virtual_name_helper_text' => 'Không để tên sẽ mặc định là đánh giá ẩn danh',
+                    'rating' => 'Số sao',
+                    'target_language' => 'Ngôn ngữ đánh giá',
+                    'target_language_helper_text' => 'Chọn ngôn ngữ đánh giá để AI tự viết đánh giá',
+                    'comment' => 'Nội dung đánh giá',
+                    'comment_hint' => 'Bạn có thể tự viết hoặc dùng nút AI bên cạnh',
+                    'comment_helper_text' => 'Có thể dùng AI để tự động viết đánh giá, hoặc tự đánh giá, nếu không có gì để viết, hãy để trống.',
+                    'generate_ai_comment_tooltip' => 'Sử dụng Gemini để tự động viết đánh giá dựa trên số sao',
+                    'generate_ai_comment_success' => 'Đã tạo nội dung bằng AI',
+                    'generate_ai_comment_error' => 'Lỗi khi gọi AI',
+                ]
+            ]
         ],
         'wallet_transaction' => [
             'label' => 'Giao dịch ví',

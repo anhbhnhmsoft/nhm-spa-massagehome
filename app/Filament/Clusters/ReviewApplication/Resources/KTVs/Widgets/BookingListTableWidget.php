@@ -11,12 +11,17 @@ use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class BookingListKtv extends TableWidget
+/**
+ * Lấy danh sách booking của KTV
+ */
+class BookingListTableWidget extends TableWidget
 {
+
+    protected static bool $isLazy = true;
 
     public ?Model $record = null;
 
-    protected int | string | array $columnSpan = 2;
+    protected int | string | array $columnSpan = 1;
 
     protected function getTableHeading(): string|Htmlable|null
     {
@@ -29,6 +34,7 @@ class BookingListKtv extends TableWidget
         return BookingsTable::configure($table)
             ->recordUrl(fn (Model $record): string => BookingResource::getUrl('view', ['record' => $record]))
             ->defaultPaginationPageOption(5)
+            ->filters([])
             ->query(function () use ($bookingRepository) {
                 return $bookingRepository->query()
                     ->with([

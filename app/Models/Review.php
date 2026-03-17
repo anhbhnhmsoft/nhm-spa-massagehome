@@ -21,8 +21,11 @@ class Review extends Model
         'service_booking_id', // ID booking dịch vụ được đánh giá
         'rating',
         'comment',
+        'comment_translated',
         'hidden',
-        'review_at'
+        'review_at',
+        'is_virtual',
+        'virtual_name',
     ];
 
     protected array $translatable = [
@@ -38,6 +41,7 @@ class Review extends Model
         'rating' => 'integer',
         'review_at' => 'datetime',
         'hidden' => 'boolean',
+        'is_virtual' => 'boolean',
     ];
 
     // Người nhận đánh giá (Provider)

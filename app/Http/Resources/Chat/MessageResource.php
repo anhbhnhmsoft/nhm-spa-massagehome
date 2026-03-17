@@ -13,10 +13,13 @@ class MessageResource extends JsonResource
     {
         $sender = $this->sender;
         $senderProfile = $sender->profile;
+        $translationMessages = $this->getTranslations('content_translated');
+        $allTranslationMessages = Helper::formatMultiLang($translationMessages);
         return [
             'id' => (string) $this->id,
             'room_id' => (string) $this->room_id,
             'content' => $this->content,
+            'content_translated' => $allTranslationMessages,
             'sender_id' => (string) $sender->id,
             'sender_name' => $sender->name, // Thêm tên để hiển thị trên Socket
             'sender_avatar' => $senderProfile->avatar_url ? Helper::getPublicUrl($senderProfile->avatar_url) : null, // Thêm avatar để hiển thị trên Socket

@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class WalletStats extends BaseWidget
 {
+    protected static bool $isLazy = true;
     public ?Model $record = null;
 
     protected function getStats(): array

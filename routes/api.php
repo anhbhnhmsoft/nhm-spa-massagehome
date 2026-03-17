@@ -22,27 +22,25 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['set-api-locale', 'update-last-active'])->group(function () {
     Route::prefix('auth')->group(function () {
         // Guest middleware
-        Route::middleware(['throttle:10,1'])->group(function () {
-            // Xác thực đăng nhập hay đăng ký.
-            Route::post('authenticate', [AuthController::class, 'authenticate']);
-            // Đăng nhập vào hệ thống.
-            Route::post('login', [AuthController::class, 'login']);
-            // Quên mật khẩu.
-            Route::post('forgot-password', [AuthController::class, 'forgotPassword']);
-            // Xác thực OTP quên mật khẩu.
-            Route::post('verify-otp-forgot-password', [AuthController::class, 'verifyOtpForgotPassword']);
-            // Gửi lại OTP quên mật khẩu.
-            Route::post('resend-otp-forgot-password', [AuthController::class, 'resendOtpForgotPassword']);
-            // Cập nhật mật khẩu mới.
-            Route::post('reset-password', [AuthController::class, 'resetPassword']);
-            // Đăng ký tài khoản mới.
-            Route::post('register', [AuthController::class, 'register']);
-            // Kiểm tra OTP đăng ký và đăng ký tài khoản.
-            Route::post('verify-otp-register', [AuthController::class, 'verifyOtpRegister']);
-            // Gửi lại OTP đăng ký.
-            Route::post('resend-otp-register', [AuthController::class, 'resendOtpRegister']);
+        // Xác thực đăng nhập hay đăng ký.
+        Route::post('authenticate', [AuthController::class, 'authenticate']);
+        // Đăng nhập vào hệ thống.
+        Route::post('login', [AuthController::class, 'login']);
+        // Quên mật khẩu.
+        Route::post('forgot-password', [AuthController::class, 'forgotPassword']);
+        // Xác thực OTP quên mật khẩu.
+        Route::post('verify-otp-forgot-password', [AuthController::class, 'verifyOtpForgotPassword']);
+        // Gửi lại OTP quên mật khẩu.
+        Route::post('resend-otp-forgot-password', [AuthController::class, 'resendOtpForgotPassword']);
+        // Cập nhật mật khẩu mới.
+        Route::post('reset-password', [AuthController::class, 'resetPassword']);
+        // Đăng ký tài khoản mới.
+        Route::post('register', [AuthController::class, 'register']);
+        // Kiểm tra OTP đăng ký và đăng ký tài khoản.
+        Route::post('verify-otp-register', [AuthController::class, 'verifyOtpRegister']);
+        // Gửi lại OTP đăng ký.
+        Route::post('resend-otp-register', [AuthController::class, 'resendOtpRegister']);
 
-        });
 
         // Auth middleware
         Route::middleware(['auth:sanctum'])->group(function () {
@@ -118,9 +116,7 @@ Route::middleware(['set-api-locale', 'update-last-active'])->group(function () {
             // Kiểm tra quyền đăng ký đối tác
             Route::get('check-apply-partner', [UserController::class, 'checkApplyPartner'])
                 ->middleware(['check-role:customer']);
-            // User hiện tại đăng ký làm đối tác
-            Route::post('apply-partner', [UserController::class, 'applyPartner'])
-                ->middleware(['throttle:5,1', 'check-role:customer']);
+
 
             // Đăng ký Agency
             Route::post('apply-agency', [UserController::class, 'applyAgency'])
@@ -154,6 +150,7 @@ Route::middleware(['set-api-locale', 'update-last-active'])->group(function () {
             Route::post('review', [ServiceController::class, 'createReview']);
             // Lấy danh sách đánh giá của dịch vụ
             Route::get('list-review', [ServiceController::class, 'listReview']);
+            // Dịch vụ dịch ngôn ngữ
             Route::post('translate-review', [ServiceController::class, 'translateReview']);
         });
     });

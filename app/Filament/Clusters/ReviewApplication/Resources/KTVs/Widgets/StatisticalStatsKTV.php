@@ -13,6 +13,7 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class StatisticalStatsKTV extends BaseWidget
 {
+    protected static bool $isLazy = true;
     public ?Model $record = null;
 
     protected function getStats(): array

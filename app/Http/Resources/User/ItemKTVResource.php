@@ -5,7 +5,6 @@ namespace App\Http\Resources\User;
 use App\Core\Helper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Storage;
 
 
 class ItemKTVResource extends ListKTVResource
@@ -31,8 +30,7 @@ class ItemKTVResource extends ListKTVResource
         ] : null;
         $data['price_transportation'] = $this->priceTransportation;
         $files = $this->gallery;
-        $review = $this->whenLoaded('reviewsReceived') ? $this->reviewsReceived->first() : null;
-        $reviewer = $review ? $review->reviewer : null;
+
         $data['display_image'] = $files->map(function ($file) {
             ;
             return [
@@ -40,23 +38,51 @@ class ItemKTVResource extends ListKTVResource
                 'url' => $file->file_path ? Helper::getPublicUrl($file->file_path) : null,
             ];
         })->toArray();
-        $data['first_review'] = $review ? [
-            'review_by' => [
-                'id' => $reviewer->id,
-                'name' => $reviewer->name,
-                'avatar_url' => $reviewer->profile->avatar_url ? Storage::disk('public')->url($reviewer->profile->avatar_url) : null,
-            ],
-            'comment' => $review->comment,
-            'rating' => $review->rating,
-            'created_at' => $review->created_at,
-        ] : null;
+
+        // Review đầu tiên
+        $review = $this->reviewsReceived->first();
+
+        $firstReview = null;
+
+        if ($review) {
+            $isVirtual = $review->is_virtual && !empty($review->virtual_name) && !$review->hidden;
+            $reviewerData = null;
+            if ($isVirtual) {
+                $reviewerData = [
+                    'id'   => "123456789",
+                    'name' => $review->virtual_name,
+                    'avatar_url' => null,
+                ];
+            } elseif (!$review->hidden) {
+                $reviewer = $review->reviewer ?? null;
+                if ($reviewer) {
+                    $reviewerData = [
+                        'id' => $reviewer->id,
+                        'name' => $reviewer->name,
+                        'avatar_url' => $reviewer->profile?->avatar_url
+                            ? Helper::getPublicUrl($reviewer->profile->avatar_url)
+                            : null,
+                    ];
+                }
+            }
+
+            // 3. Gom nhóm dữ liệu trả về
+            $firstReview = [
+                'review_by' => $reviewerData,
+                'comment'   => $review->comment ?? '',
+                'rating'    => $review->rating,
+                'created_at' => $review->review_at ?? $review->created_at,
+            ];
+        }
+
+        $data['first_review'] = $firstReview;
 
         $data['service_categories'] = $this->categories->map(function ($category) {
             return [
                 'id' => $category->id,
                 'name' => $category->name,
                 'description' => $category->description,
-                'booking_count' => $category->booking_count ?? 0,
+                'booking_count' => $category->pivot->performed_count ?? 0,
                 'image_url' => $category->image_url ? Helper::getPublicUrl($category->image_url) : null,
                 'prices' => $category->prices->map(function ($price) {
                     return [

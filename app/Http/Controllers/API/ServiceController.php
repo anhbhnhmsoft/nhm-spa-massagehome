@@ -151,6 +151,12 @@ class ServiceController extends BaseController
         return $this->sendSuccess(data: ReviewResource::collection($data)->response()->getData());
     }
 
+    /**
+     * Dịch ngôn ngữ đánh giá
+     * @param Request $request
+     * @return JsonResponse
+     * @throws \Throwable
+     */
     public function translateReview(Request $request): JsonResponse
     {
         $data = $request->validate([

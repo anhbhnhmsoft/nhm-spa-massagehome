@@ -15,8 +15,7 @@ enum Language: string
     case VIETNAMESE = 'vi';
     case CHINESE = 'cn';
 
-
-    public function getFullLanguageName(): string
+    public function label(): string
     {
         return match ($this) {
             self::ENGLISH => 'English',

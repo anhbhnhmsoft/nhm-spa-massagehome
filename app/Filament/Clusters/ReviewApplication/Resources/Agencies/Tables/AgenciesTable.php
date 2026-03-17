@@ -6,26 +6,20 @@ use App\Enums\Gender;
 use App\Enums\ReviewApplicationStatus;
 use App\Filament\Clusters\ReviewApplication\Resources\Agencies\AgencyResource;
 use App\Filament\Clusters\ReviewApplication\Resources\KTVs\KTVResource;
+use App\Filament\Components\CommonActions;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Actions\ForceDeleteBulkAction;
-use Filament\Actions\RestoreAction;
-use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
-use Filament\Forms\Components\Placeholder;
-use Filament\Infolists\Components\TextEntry;
-use Filament\Schemas\Components\Image;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-use Illuminate\Support\HtmlString;
 
 class AgenciesTable
 {
@@ -68,39 +62,17 @@ class AgenciesTable
             ->defaultSort('created_at', 'desc')
             ->recordActions([
                 ActionGroup::make([
+                    // Xem chi tiết + chỉnh sửa
                     EditAction::make('edit')
                         ->label(__('admin.common.action.detail'))
                         ->icon('heroicon-o-identification'),
-                    Action::make('view_service')
-                        ->label(__('admin.common.action.view_ktv_manager_agency'))
-                        ->icon(Heroicon::UserGroup)
-                        ->url(fn ($record): string => KTVResource::getUrl('index', ['filters[reviewApplication][referrer_id][value]' => $record->id])),
+                    // Xem dashboard đại lý
                     ViewAction::make('view')
                         ->label(__('admin.common.action.agency_dashboard'))
                         ->icon(Heroicon::ChartBar),
-                    Action::make('qr_affiliate')
-                        ->label(__('admin.common.affiliate_qr'))
-                        ->icon('heroicon-o-qr-code')
-                        ->modalHeading(__('admin.common.affiliate_qr'))
-                        ->modalSubmitAction(false) // Ẩn nút Submit vì chỉ để xem
-                        ->modalWidth('sm')
-                        ->modalCancelActionLabel(__('common.action.close'))
-                        ->schema([
-                            TextEntry::make('qr_code_placeholder')
-                                ->hiddenLabel()
-                                ->state(function ($record) {
-                                    $url = route('affiliate.link', ['referrerId' => $record->id]);
-                                    $qrUrl = "https://quickchart.io/qr?text=" . urlencode($url) . "&size=250";
-                                    return new HtmlString("
-                                        <div class='flex flex-col items-center justify-center space-y-4'>
-                                              <img src='{$qrUrl}' alt='QR Code' class='w-64 h-64'>
-                                            <div class='text-center text-sm font-mono text-gray-500 break-all'>
-                                                {$url}
-                                            </div>
-                                        </div>
-                                    ");
-                                })
-                        ]),
+
+                    // Hiển QR code giới thiệu affiliate
+                    CommonActions::qrAffiliateAction(),
 
                     DeleteAction::make('delete')
                         ->label(__('admin.common.action.delete'))

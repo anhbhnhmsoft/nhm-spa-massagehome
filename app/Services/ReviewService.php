@@ -144,7 +144,7 @@ class ReviewService extends BaseService
             }
             // Kiểm tra nếu comment rỗng
             $comment = trim($review->comment);
-            if (!empty($comment)) {
+            if (empty($comment)) {
                 return [
                     'translate' => '',
                 ];
@@ -167,6 +167,44 @@ class ReviewService extends BaseService
                 'translate' => $translate,
             ];
         });
+    }
+
+    /**
+     * Tạo đánh giá ảo
+     * @param array $data
+     * @return ServiceReturn
+     * @throws \Throwable
+     */
+    public function createReviewVirtual(array $data): ServiceReturn
+    {
+        return $this->execute(
+            callback: function () use ($data) {
+                // Tạo ngẫu nhiên thời gian đánh giá trong vòng 7 ngày
+                $randomDate = now()
+                    ->subDays(rand(0, 6))
+                    ->subHours(rand(0, 23))
+                    ->subMinutes(rand(0, 59));
+                $targetLanguage = Language::tryFrom($data['target_language']) ?? Language::VIETNAMESE;
+
+                $review = $this->reviewRepository->create([
+                    'user_id' => $data['user_id'], // KTV nhận đánh giá
+                    'review_by' =>  null,
+                    'service_booking_id' => null,
+                    'rating' => $data['rating'] ?? 5,
+                    'comment' => $data['comment'] ?? null,
+                    'review_at' => $randomDate,
+                    'hidden' => empty($data['virtual_name']),
+                    'is_virtual' => true,
+                    'virtual_name' => $data['virtual_name'] ?? null,
+                ]);
+                // Kiểm tra nếu comment rỗng thì set luôn bản dịch
+                if (!empty($data['comment']) && !empty(trim($data['comment']))) {
+                    $review->setTranslation('comment_translated', $targetLanguage->value, $data['comment']);
+                    $review->save();
+                }
+            },
+            useTransaction: true
+        );
     }
 }
 

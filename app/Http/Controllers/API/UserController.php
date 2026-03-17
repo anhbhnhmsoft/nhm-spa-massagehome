@@ -7,7 +7,6 @@ use App\Core\Controller\ListRequest;
 use App\Http\Requests\API\User\ApplyAgencyRequest;
 use App\Http\Requests\API\User\ApplyTechnicalRequest;
 use App\Http\Requests\API\User\ListKTVRequest;
-use App\Http\Requests\ApplyPartnerRequest;
 use App\Http\Resources\User\AddressResource;
 use App\Http\Resources\User\ItemKTVResource;
 use App\Http\Resources\User\ListAddressResource;
@@ -26,25 +25,7 @@ class UserController extends BaseController
     {
     }
 
-    /**
-     * User hiện tại đăng ký làm đối tác (xoas bo).
-     */
-    public function applyPartner(ApplyPartnerRequest $request): JsonResponse
-    {
-        $data = $request->validated();
-        $result = $this->userService->applyPartnerForCurrentUser($data);
 
-        if ($result->isError()) {
-            return $this->sendError(
-                message: $result->getMessage(),
-            );
-        }
-
-        return $this->sendSuccess(
-            data: $result->getData(),
-            message: $result->getMessage() ?? __('common.success.data_created')
-        );
-    }
 
     /**
      * Đăng ký KTV
