@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\ReviewApplication\Resources\Agencies\Pages;
 
+use App\Enums\Admin\AdminGate;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserFileType;
 use App\Enums\UserRole;
@@ -14,6 +15,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Support\Facades\Gate;
 
 class EditAgency extends EditRecord
 {
@@ -104,8 +106,7 @@ class EditAgency extends EditRecord
                     return redirect()->to($this->getResource()::getUrl('index'));
                 }),
 
-            DeleteAction::make()
-                ->label(__('common.action.delete')),
+            CommonActions::deleteAction(),
         ];
     }
 
@@ -151,11 +152,15 @@ class EditAgency extends EditRecord
     protected function getSaveFormAction(): Action
     {
         $record = $this->getRecord();
-        $status = $record->reviewApplication?->status;
-        $isLocked = in_array($status, [
-            ReviewApplicationStatus::PENDING,
-            ReviewApplicationStatus::REJECTED,
-        ]);
+        if (Gate::check(AdminGate::ALLOW_EMPLOYEE)){
+            $status = $record->reviewApplication?->status;
+            $isLocked = in_array($status, [
+                ReviewApplicationStatus::PENDING,
+                ReviewApplicationStatus::REJECTED,
+            ]);
+        }else{
+            $isLocked = true;
+        }
         return parent::getSaveFormAction()
             // 3. Đổi màu sang xám nếu bị khóa (tạo cảm giác disabled)
             ->color($isLocked ? 'gray' : 'primary')

@@ -2,12 +2,14 @@
 
 namespace App\Filament\Widgets;
 
+use App\Enums\Admin\AdminGate;
 use App\Enums\DangerSupportStatus;
 use App\Filament\Resources\DangerSupports\DangerSupportResource;
 use App\Models\DangerSupport;
 use App\Services\DashboardService;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Illuminate\Support\Facades\Gate;
 
 class DangerSupportStats extends BaseWidget
 {
@@ -16,6 +18,10 @@ class DangerSupportStats extends BaseWidget
 
     public static function canView(): bool
     {
+        if (!Gate::allows(AdminGate::ALLOW_FULL)) {
+            return false;
+        }
+
         return DangerSupport::query()
             ->where('status', DangerSupportStatus::PENDING->value)->exists();
     }

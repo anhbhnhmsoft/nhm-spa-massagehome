@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\StaticContracts;
 
+use App\Enums\Admin\AdminRole;
 use App\Filament\Resources\StaticContracts\Pages\CreateStaticContract;
 use App\Filament\Resources\StaticContracts\Pages\EditStaticContract;
 use App\Filament\Resources\StaticContracts\Pages\ListStaticContracts;
@@ -14,7 +15,6 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class StaticContractResource extends Resource
 {
@@ -23,6 +23,11 @@ class StaticContractResource extends Resource
     protected static string|BackedEnum|null $navigationIcon = Heroicon::ClipboardDocument;
 
     protected static ?string $recordTitleAttribute = 'Contract';
+
+    public static function canViewAny(): bool
+    {
+        return auth('web')->user()->role === AdminRole::ADMIN;
+    }
 
     public static function form(Schema $schema): Schema
     {
@@ -50,6 +55,7 @@ class StaticContractResource extends Resource
             //
         ];
     }
+
 
     public static function getPages(): array
     {

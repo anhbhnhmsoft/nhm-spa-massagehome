@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\User\Resources\ChatRooms;
 
+use App\Enums\Admin\AdminGate;
 use App\Filament\Clusters\User\Resources\ChatRooms\Pages\DetailChatRoom;
 use App\Filament\Clusters\User\Resources\ChatRooms\Pages\ListChatRooms;
 use App\Filament\Clusters\User\Resources\ChatRooms\Tables\ChatRoomsTable;
@@ -10,6 +11,7 @@ use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Gate;
 
 class ChatRoomResource extends Resource
 {
@@ -17,6 +19,10 @@ class ChatRoomResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::ChatBubbleLeftRight;
 
+    public static function canViewAny(): bool
+    {
+        return Gate::allows(AdminGate::ALLOW_EMPLOYEE);
+    }
     public static function getModelLabel(): string
     {
         return __('admin.chat_room.label');

@@ -18,8 +18,8 @@ enum KTVConfigSchedules: int
         foreach (self::cases() as $case) {
             $schema[] = [
                 'day_key'   => $case->value,
-                'start_time'     => '08:00',
-                'end_time'       => '17:00',
+                'start_time'     => '00:01',
+                'end_time'       => '23:59',
                 'active'    => true,
             ];
         }

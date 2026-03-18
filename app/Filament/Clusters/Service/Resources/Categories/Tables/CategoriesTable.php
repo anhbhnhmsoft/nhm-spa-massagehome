@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\Service\Resources\Categories\Tables;
 
+use App\Filament\Components\CommonActions;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -54,37 +55,14 @@ class CategoriesTable
                 TextColumn::make('usage_count')
                     ->label(__('admin.common.table.usage_count')),
             ])
-            ->defaultSort('created_at', 'desc')
             ->recordActions([
                 ActionGroup::make([
-                    ViewAction::make()
-                        ->label(__('admin.common.action.view'))
-                        ->tooltip(__('admin.common.tooltip.view'))
-                        ->modalCancelActionLabel(__('common.action.cancel'))
-                        ->icon('heroicon-o-eye')
-                        ->modalHeading(__('common.modal.view_title'))
-                        ->modalSubmitAction(false)
-                        ->modalFooterActions(function ($action) {
-                            return [
-                                $action->getModalCancelAction()
-                                    ->label(__('common.action.close'))
-                                    ->color('danger'),
-                            ];
-                        }),
                     EditAction::make()
                         ->label(__('admin.common.action.edit'))
                         ->tooltip(__('admin.common.tooltip.edit'))
                         ->icon('heroicon-o-pencil-square'),
 
-                    DeleteAction::make()
-                        ->label(__('admin.common.action.delete'))
-                        ->tooltip(__('admin.common.tooltip.delete'))
-                        ->icon('heroicon-o-trash')
-                        ->requiresConfirmation()
-                        ->modalHeading(__('admin.common.modal.delete_title'))
-                        ->modalDescription(__('admin.common.modal.delete_confirm'))
-                        ->modalSubmitActionLabel(__('admin.common.action.confirm_delete'))
-                        ->modalCancelActionLabel(__('common.action.cancel'))
+                   CommonActions::deleteAction()
                 ]),
             ])
             ->filters([
@@ -101,17 +79,6 @@ class CategoriesTable
                     ])
                     ->label(__('admin.common.filter.is_featured')),
             ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make()
-                        ->label(__('admin.common.action.delete'))
-                        ->requiresConfirmation()
-                        ->modalHeading(__('admin.common.modal.delete_title'))
-                        ->modalDescription(__('admin.common.modal.delete_confirm'))
-                        ->modalSubmitActionLabel(__('admin.common.action.confirm_delete')),
-                ]),
-            ])
-            ->defaultSort('created_at', 'desc')
-            ->poll('5m');
+            ->defaultSort('created_at', 'desc');
     }
 }

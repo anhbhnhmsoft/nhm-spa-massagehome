@@ -2,9 +2,9 @@
 
 namespace App\Providers\Filament;
 
+use App\Enums\Admin\AdminRole;
 use App\Filament\Pages\Dashboard as PagesDashboard;
 use App\Filament\Pages\Login;
-use Filament\Enums\DatabaseNotificationsPosition;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -15,9 +15,9 @@ use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\Width;
 use Filament\View\PanelsRenderHook;
-use Illuminate\Contracts\View\View;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
+use Illuminate\Contracts\View\View;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -34,6 +34,8 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
+            ->authGuard('web')
+            ->authPasswordBroker('admin_users')
             ->login(Login::class)
             ->colors([
                 'primary' => Color::Sky,
@@ -78,6 +80,7 @@ class AdminPanelProvider extends PanelProvider
             ->databaseNotificationsPolling('30s')
             ->navigationItems([
                 NavigationItem::make(__('System Logs'))
+                    ->visible(fn () => auth('web')->user()?->role === AdminRole::ADMIN)
                     ->url(url('system-log-viewer'), shouldOpenInNewTab: true)
                     ->icon('heroicon-o-document-magnifying-glass'),
             ])

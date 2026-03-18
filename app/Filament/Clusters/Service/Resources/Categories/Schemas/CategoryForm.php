@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\Service\Resources\Categories\Schemas;
 
+use App\Enums\Admin\AdminGate;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Textarea;
@@ -11,12 +12,14 @@ use Filament\Resources\Pages\CreateRecord;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Gate;
 
 class CategoryForm
 {
     public static function configure(Schema $schema): Schema
     {
         return $schema
+            ->disabled(fn() => !Gate::allows(AdminGate::ALLOW_ADMIN))
             ->components([
                 Section::make(__('admin.category.basic_info'))
                     ->compact()

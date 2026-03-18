@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\ReviewApplication\Resources\Agencies\Widgets;
 
+use App\Enums\Admin\AdminGate;
 use App\Enums\DateRangeDashboard;
 use App\Services\DashboardService;
 use App\Services\PaymentService;
@@ -10,6 +11,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Gate;
 
 class StatisticalStatsAgency extends BaseWidget
 {
@@ -31,12 +33,15 @@ class StatisticalStatsAgency extends BaseWidget
         return [
             Grid::make()
                 ->columnSpanFull()
-                ->columns(5)
+                ->columns(function () {
+                    return Gate::allows(AdminGate::ALLOW_ACCOUNTANT) ? 5 : 3;
+                })
                 ->schema([
                     Stat::make(
                         label: __('admin.agency.infolist.total_profit_referral_ktv'),
                         value: number_format(($dataDashboard['total_profit_referral_ktv'] ?? 0), 2)
                     )
+                        ->visible(fn() => Gate::allows(AdminGate::ALLOW_ACCOUNTANT))
                         ->description(__('admin.agency.infolist.total_profit_referral_ktv_desc'))
                         ->icon(Heroicon::CurrencyDollar)
                         ->color('info'),
@@ -44,6 +49,7 @@ class StatisticalStatsAgency extends BaseWidget
                         label: __('admin.agency.infolist.total_profit_affiliate'),
                         value: number_format(($dataDashboard['total_profit_affiliate'] ?? 0), 2)
                     )
+                        ->visible(fn() => Gate::allows(AdminGate::ALLOW_ACCOUNTANT))
                         ->description(__('admin.agency.infolist.total_profit_affiliate'))
                         ->icon(Heroicon::CurrencyDollar)
                         ->color('info'),

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Enums\Admin\AdminRole;
 use App\Enums\DateRangeDashboard;
 use Filament\Widgets\ChartWidget;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
@@ -17,6 +18,16 @@ class TransactionChart extends ChartWidget
         return __('admin.dashboard.charts.transaction_dashboard');
     }
 
+    public static function canView(): bool
+    {
+        // Chỉ cho phép ADMIN và ACCOUNTANT nhìn thấy Widget này
+        $user = auth('web')->user();
+
+        return $user && in_array($user->role, [
+                AdminRole::ADMIN,
+                AdminRole::ACCOUNTANT
+            ]);
+    }
     protected function getData(): array
     {
         $dateRange = $this->pageFilters['date_range'] ? DateRangeDashboard::tryFrom($this->pageFilters['date_range']) : DateRangeDashboard::ALL;

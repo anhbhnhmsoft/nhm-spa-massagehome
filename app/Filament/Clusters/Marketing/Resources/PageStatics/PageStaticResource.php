@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\Marketing\Resources\PageStatics;
 
+use App\Filament\Clusters\Marketing\MarketingCluster;
 use App\Filament\Clusters\Marketing\Resources\PageStatics\Pages\CreatePageStatic;
 use App\Filament\Clusters\Marketing\Resources\PageStatics\Pages\EditPageStatic;
 use App\Filament\Clusters\Marketing\Resources\PageStatics\Pages\ListPageStatics;
@@ -20,6 +21,10 @@ class PageStaticResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
+    public static function canViewAny(): bool
+    {
+        return MarketingCluster::canAccess();
+    }
     public static function getNavigationGroup(): \UnitEnum|string|null
     {
         return __('filament.navigation.marketing');

@@ -34,6 +34,7 @@ return
             'table' => [
                 'id' => 'ID',
                 'name' => '姓名',
+                'username' => '用户名',
                 'email' => '电子邮件',
                 'address' => '地址',
                 'created_at' => '创建时间',
@@ -631,6 +632,7 @@ return
                 'rating' => '评分',
                 'comment' => '评论',
                 'hidden' => '隐藏',
+                'is_virtual' => '虚拟评论',
                 'created_at' => '创建时间',
                 'updated_at' => '更新时间',
                 'user' => '员工',
@@ -968,5 +970,13 @@ return
             'quarter' => '本季度',
             'year' => '本年',
             'all' => '全部时间',
+        ],
+        'admin_role' => [
+            'ADMIN' => '管理员',
+            'ACCOUNTANT' => '会计',
+            'EMPLOYEE' => '员工',
+        ],
+        'admin_user' => [
+            'label' => '员工',
         ],
     ];

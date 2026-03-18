@@ -35,6 +35,7 @@ return
             'table' => [
                 'id' => 'ID',
                 'name' => 'Name',
+                'username' => 'Username',
                 'email' => 'Email',
                 'address' => 'Address',
                 'created_at' => 'Created At',
@@ -632,6 +633,7 @@ return
                 'rating' => 'Rating',
                 'comment' => 'Comment',
                 'hidden' => 'Hidden',
+                'is_virtual' => 'Virtual Review',
                 'created_at' => 'Created At',
                 'updated_at' => 'Updated At',
                 'user' => 'Staff',
@@ -969,5 +971,13 @@ return
             'quarter' => 'This Quarter',
             'year' => 'This Year',
             'all' => 'All Time',
+        ],
+        'admin_role' => [
+            'ADMIN' => 'Admin',
+            'ACCOUNTANT' => 'Accountant',
+            'EMPLOYEE' => 'Employee',
+        ],
+        'admin_user' => [
+            'label' => 'Staff',
         ],
     ];

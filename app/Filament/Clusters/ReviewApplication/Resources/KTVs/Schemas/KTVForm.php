@@ -3,6 +3,7 @@
 namespace App\Filament\Clusters\ReviewApplication\Resources\KTVs\Schemas;
 
 use App\Core\Helper;
+use App\Enums\Admin\AdminGate;
 use App\Enums\DirectFile;
 use App\Enums\Gender;
 use App\Enums\KTVConfigSchedules;
@@ -26,6 +27,7 @@ use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Gate;
 
 class KTVForm
 {
@@ -33,15 +35,17 @@ class KTVForm
     {
         return $schema
             ->disabled(function ($record) {
-                if (!$record) {
-                    return false;
+                if (Gate::allows(AdminGate::ALLOW_EMPLOYEE)){
+                    if (!$record) {
+                        return false;
+                    }
+                    $status = $record->reviewApplication?->status;
+                    return in_array($status, [
+                        ReviewApplicationStatus::PENDING,
+                        ReviewApplicationStatus::REJECTED,
+                    ]);
                 }
-                $status = $record->reviewApplication?->status;
-
-                return in_array($status, [
-                    ReviewApplicationStatus::PENDING,
-                    ReviewApplicationStatus::REJECTED,
-                ]);
+                return true;
             })
             ->components([
                 // Thông tin cơ bản

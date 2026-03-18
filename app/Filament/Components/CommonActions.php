@@ -2,6 +2,7 @@
 
 namespace App\Filament\Components;
 
+use App\Enums\Admin\AdminGate;
 use App\Enums\Language;
 use App\Enums\ReviewApplicationStatus;
 use App\Models\User;
@@ -11,6 +12,7 @@ use App\Services\GeminiService;
 use App\Services\ReviewService;
 use App\Services\ServiceService;
 use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
@@ -23,6 +25,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Support\Enums\Width;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\HtmlString;
 
 class CommonActions
@@ -36,6 +39,20 @@ class CommonActions
             ->icon('heroicon-m-chevron-left');
     }
 
+    public static function deleteAction(): Action
+    {
+        return  DeleteAction::make()
+            ->visible(fn() => Gate::allows(AdminGate::ALLOW_ADMIN))
+            ->label(__('admin.common.action.delete'))
+            ->tooltip(__('admin.common.tooltip.delete'))
+            ->icon('heroicon-o-trash')
+            ->requiresConfirmation()
+            ->modalHeading(__('admin.common.modal.delete_title'))
+            ->modalDescription(__('admin.common.modal.delete_confirm'))
+            ->modalSubmitActionLabel(__('admin.common.action.confirm_delete'))
+            ->modalCancelActionLabel(__('common.action.cancel'));
+    }
+
     /**
      * Tạo đánh giá ảo (dùng cho các màn của KTV)
      * @return Action
@@ -46,6 +63,12 @@ class CommonActions
             ->label(__('admin.review.action.virtual.title'))
             ->icon('heroicon-o-sparkles')
             ->color('info')
+            ->visible(function (User $record) {
+                if (Gate::check(AdminGate::ALLOW_EMPLOYEE)){
+                    return $record->reviewApplication?->status === ReviewApplicationStatus::APPROVED;
+                }
+                return false;
+            })
             ->modal()
             ->schema([
                 TextInput::make('virtual_name')
@@ -151,7 +174,12 @@ class CommonActions
         return Action::make('view_service')
             ->label(__('admin.common.action.view_service'))
             ->icon('heroicon-o-tag')
-            ->visible(fn(User $record) => $record->reviewApplication->status === ReviewApplicationStatus::APPROVED)
+            ->visible(function (User $record) {
+                if (Gate::check(AdminGate::ALLOW_EMPLOYEE)){
+                    return $record->reviewApplication?->status === ReviewApplicationStatus::APPROVED;
+                }
+                return false;
+            })
             ->color('success')
             ->fillForm(fn(User $record) => [
                 'categories' => $record->categories->pluck('id')->toArray(),
@@ -184,7 +212,12 @@ class CommonActions
         return Action::make('buff_service')
             ->label(__('admin.common.action.buff_service'))
             ->icon('heroicon-o-tag')
-            ->visible(fn(User $record) => $record->reviewApplication?->status === ReviewApplicationStatus::APPROVED)
+            ->visible(function (User $record) {
+                if (Gate::check(AdminGate::ALLOW_EMPLOYEE)){
+                    return $record->reviewApplication?->status === ReviewApplicationStatus::APPROVED;
+                }
+                return false;
+            })
             ->color('success')
             ->modalWidth(Width::FiveExtraLarge)
             ->modal()
@@ -200,7 +233,7 @@ class CommonActions
                         ->title(__('common.success.success'))
                         ->body(__('common.success.data_updated'))
                         ->send();
-                }else{
+                } else {
                     Notification::make()
                         ->danger()
                         ->title(__('common.error.title'))
@@ -242,6 +275,9 @@ class CommonActions
         return Action::make('qr_affiliate')
             ->label(__('admin.common.affiliate_qr'))
             ->icon('heroicon-o-qr-code')
+            ->visible(function (User $record) {
+                return $record->is_active;
+            })
             ->modalHeading(__('admin.common.affiliate_qr'))
             ->modalSubmitAction(false) // Ẩn nút Submit vì chỉ để xem
             ->modalWidth('sm')

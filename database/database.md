@@ -44,8 +44,11 @@
     # cấu trúc
     - id (bigint, primary key, auto-increment)
     - username (varchar, unique) -- tên đăng nhập
+    - name (varchar) -- tên người dùng
+    - language (varchar, nullable) -- ngôn ngữ (trong enum Language)
     - password (varchar) -- mật khẩu đã được mã hóa
     - role (unsigned smallint) -- vai trò admin (trong enum AdminRole)
+    - is_active (boolean) -- trạng thái bị khóa
     - remember_token (varchar, nullable) -- token nhớ đăng nhập
     - timestamps
 

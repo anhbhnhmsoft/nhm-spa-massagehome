@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Enums\Admin\AdminRole;
 use BackedEnum;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
@@ -11,6 +12,10 @@ class Setting extends Page
 {
     protected static ?string $navigationLabel = null;
 
+    public static function canAccess(): bool
+    {
+        return auth('web')->user()?->role === AdminRole::ADMIN;
+    }
     public static function getNavigationLabel(): string
     {
         return __('admin.setting.label');

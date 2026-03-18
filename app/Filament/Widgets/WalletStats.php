@@ -3,18 +3,24 @@
 namespace App\Filament\Widgets;
 
 use App\Core\Helper;
+use App\Enums\Admin\AdminGate;
 use App\Services\PaymentService;
 use Filament\Schemas\Components\Grid;
 use Filament\Support\Icons\Heroicon;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Gate;
 
 class WalletStats extends BaseWidget
 {
     protected static bool $isLazy = true;
     public ?Model $record = null;
 
+    public static function canView(): bool
+    {
+        return Gate::allows(AdminGate::ALLOW_ACCOUNTANT);
+    }
     protected function getStats(): array
     {
         $paymentService = app(PaymentService::class);

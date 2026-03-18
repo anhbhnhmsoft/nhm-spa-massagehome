@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
-use App\Enums\UserRole;
+use App\Enums\Admin\AdminGate;
+use App\Enums\Admin\AdminRole;
 use App\Filament\Pages\Dashboard;
+use App\Models\AdminUser;
 use App\Models\Banner;
 use App\Models\Category;
 use App\Models\Config;
@@ -22,15 +24,18 @@ use App\Observers\ServiceObserver;
 use App\Observers\StaticContractObserver;
 use App\Observers\UserFileObserver;
 use App\Observers\UserProfileObserver;
+use App\Repositories\AdminUserRepository;
 use App\Repositories\AffiliateConfigRepository;
 use App\Repositories\BookingRepository;
 use App\Repositories\CategoryPriceRepository;
 use App\Repositories\CategoryRepository;
+use App\Repositories\ChatRoomRepository;
 use App\Repositories\ConfigRepository;
 use App\Repositories\CouponRepository;
 use App\Repositories\CouponUsedRepository;
 use App\Repositories\CouponUserRepository;
 use App\Repositories\DangerSupportRepository;
+use App\Repositories\MessageRepository;
 use App\Repositories\NotificationRepository;
 use App\Repositories\ProvinceRepository;
 use App\Repositories\ReviewRepository;
@@ -46,9 +51,8 @@ use App\Repositories\UserReviewApplicationRepository;
 use App\Repositories\UserWithdrawInfoRepository;
 use App\Repositories\WalletRepository;
 use App\Repositories\WalletTransactionRepository;
-use App\Repositories\ChatRoomRepository;
-use App\Repositories\MessageRepository;
 use App\Repositories\ZaloTokenRepository;
+use App\Services\AffiliateService;
 use App\Services\AgencyService;
 use App\Services\AuthService;
 use App\Services\BookingService;
@@ -63,16 +67,17 @@ use App\Services\PaymentService;
 use App\Services\PayOsService;
 use App\Services\ProfileService;
 use App\Services\ProvinceService;
+use App\Services\ReviewService;
 use App\Services\ServiceService;
+use App\Services\UserFileService;
 use App\Services\UserService;
 use App\Services\UserWithdrawInfoService;
 use App\Services\Validator\BookingValidator;
 use App\Services\Validator\CouponValidator;
 use App\Services\WalletService;
-use App\Services\AffiliateService;
-use App\Services\ReviewService;
-use App\Services\UserFileService;
 use App\Services\ZaloService;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Opcodes\LogViewer\Facades\LogViewer;
 
@@ -87,6 +92,7 @@ class AppServiceProvider extends ServiceProvider
         $this->registerRepository();
 
         // Register Validator
+        $this->registerValidator();
 
         // Register services
         $this->registerService();
@@ -103,13 +109,12 @@ class AppServiceProvider extends ServiceProvider
         // Register observers
         $this->registerObservers();
 
-        LogViewer::auth(function ($request) {
-            $user = $request->user();
-            if (!$user) {
-                return false;
-            }
-            return $user->role === UserRole::ADMIN->value;
-        });
+        // Register log viewer
+        $this->registerLogViewer();
+
+        // Register admin gates
+        $this->registerAdminGate();
+
     }
 
     /**
@@ -119,6 +124,7 @@ class AppServiceProvider extends ServiceProvider
     protected function registerRepository(): void
     {
         $this->app->singleton(ConfigRepository::class);
+        $this->app->singleton(AdminUserRepository::class);
         $this->app->singleton(UserRepository::class);
         $this->app->singleton(UserDeviceRepository::class);
         $this->app->singleton(UserProfileRepository::class);
@@ -149,7 +155,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(UserOtpRepository::class);
     }
 
-
     /**
      * Register validators.
      * @return void
@@ -158,8 +163,9 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(BookingValidator::class);
         $this->app->singleton(CouponValidator::class);
-
     }
+
+
     /**
      * Register services.
      * @return void
@@ -216,5 +222,54 @@ class AppServiceProvider extends ServiceProvider
         UserProfile::observe(UserProfileObserver::class);
         StaticContract::observe(StaticContractObserver::class);
         Config::observe(ConfigObserver::class);
+    }
+
+    /**
+     * Register log viewer.
+     * @return void
+     */
+    protected function registerLogViewer(): void
+    {
+        LogViewer::auth(function () {
+            $user = Auth::guard('web')->user();
+            if (!$user) {
+                return false;
+            }
+            if (!$user->hasRole(AdminRole::ADMIN)) {
+                return false;
+            }
+            return true;
+        });
+    }
+
+    /**
+     * Đăng ký các gate cho admin.
+     * @return void
+     */
+    protected function registerAdminGate(): void
+    {
+        Gate::define(AdminGate::ALLOW_ADMIN, function (AdminUser $user) {
+            return $user->hasRole(AdminRole::ADMIN);
+        });
+
+        Gate::define(AdminGate::ALLOW_ACCOUNTANT, function (AdminUser $user) {
+            return $user->hasAnyRole([AdminRole::ADMIN, AdminRole::ACCOUNTANT]);
+        });
+
+        Gate::define(AdminGate::ALLOW_ACCOUNTANT_SELF, function (AdminUser $user) {
+            return $user->hasRole(AdminRole::ACCOUNTANT);
+        });
+
+        Gate::define(AdminGate::ALLOW_EMPLOYEE, function (AdminUser $user) {
+            return $user->hasAnyRole([AdminRole::ADMIN, AdminRole::EMPLOYEE]);
+        });
+
+        Gate::define(AdminGate::ALLOW_EMPLOYEE_SELF, function (AdminUser $user) {
+            return $user->hasRole(AdminRole::EMPLOYEE);
+        });
+
+        Gate::define(AdminGate::ALLOW_FULL, function (AdminUser $user) {
+            return $user->hasAnyRole([AdminRole::ADMIN, AdminRole::ACCOUNTANT, AdminRole::EMPLOYEE]);
+        });
     }
 }

@@ -39,6 +39,7 @@ return [
     ],
 
     'admin' => [
+        'username' => '用户名。',
         'phone' => '手机号码。',
         'password' => '密码。',
         'remember' => '记住我',

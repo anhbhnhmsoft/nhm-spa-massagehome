@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\User\Resources\Reviews;
 
+use App\Enums\Admin\AdminGate;
 use App\Filament\Clusters\User\Resources\Reviews\Pages\ListReviews;
 use App\Filament\Clusters\User\Resources\Reviews\Tables\ReviewsTable;
 use App\Models\Review;
@@ -11,6 +12,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Gate;
 
 class ReviewResource extends Resource
 {
@@ -18,6 +20,10 @@ class ReviewResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::ChatBubbleBottomCenter;
 
+    public static function canViewAny(): bool
+    {
+        return Gate::allows(AdminGate::ALLOW_EMPLOYEE);
+    }
     public static function getNavigationGroup(): \UnitEnum|string|null
     {
         return __('filament.navigation.user');

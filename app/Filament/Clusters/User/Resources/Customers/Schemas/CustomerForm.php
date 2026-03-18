@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\User\Resources\Customers\Schemas;
 
+use App\Enums\Admin\AdminGate;
 use App\Enums\DirectFile;
 use App\Enums\Gender;
 use Filament\Forms\Components\DatePicker;
@@ -13,12 +14,14 @@ use Filament\Forms\Components\Toggle;
 use Filament\Resources\Pages\CreateRecord;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Gate;
 
 class CustomerForm
 {
     public static function configure(Schema $schema): Schema
     {
         return $schema
+            ->disabled(fn(): bool => ! Gate::allows(AdminGate::ALLOW_ADMIN))
             ->components([
                 // Thông tin cơ bản
                 Section::make(__('admin.common.table.basic_info'))

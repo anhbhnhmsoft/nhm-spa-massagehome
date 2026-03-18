@@ -2,13 +2,12 @@
 
 namespace App\Filament\Clusters\User\Resources\Customers;
 
+use App\Enums\Admin\AdminGate;
 use App\Enums\UserRole;
-use App\Filament\Clusters\User\Resources\Customers\Pages\CreateCustomer;
 use App\Filament\Clusters\User\Resources\Customers\Pages\EditCustomer;
 use App\Filament\Clusters\User\Resources\Customers\Pages\ListCustomers;
 use App\Filament\Clusters\User\Resources\Customers\Schemas\CustomerForm;
 use App\Filament\Clusters\User\Resources\Customers\Tables\CustomersTable;
-use App\Filament\Clusters\User\UserCluster;
 use App\Models\User;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -17,6 +16,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Gate;
 
 class CustomerResource extends Resource
 {
@@ -24,6 +24,10 @@ class CustomerResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
+    public static function canViewAny(): bool
+    {
+        return Gate::allows(AdminGate::ALLOW_FULL);
+    }
     public static function getNavigationGroup(): \UnitEnum|string|null
     {
         return __('filament.navigation.user');

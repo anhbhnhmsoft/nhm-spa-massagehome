@@ -40,6 +40,7 @@ return [
     ],
 
     'admin' => [
+        'username' => 'Tên đăng nhập.',
         'phone' => 'Số điện thoại.',
         'password' => 'Mật khẩu.',
         'remember' => 'Ghi nhớ đăng nhập'

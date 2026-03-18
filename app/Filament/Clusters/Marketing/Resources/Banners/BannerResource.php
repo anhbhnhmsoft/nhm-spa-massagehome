@@ -20,7 +20,10 @@ class BannerResource extends Resource
     protected static ?string $model = Banner::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedPhoto;
-
+    public static function canViewAny(): bool
+    {
+        return MarketingCluster::canAccess();
+    }
     public static function getNavigationGroup(): \UnitEnum|string|null
     {
         return __('filament.navigation.marketing');

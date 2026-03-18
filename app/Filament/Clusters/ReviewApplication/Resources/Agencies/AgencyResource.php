@@ -10,6 +10,7 @@ use App\Filament\Clusters\ReviewApplication\Resources\Agencies\Pages\ViewAgencie
 use App\Filament\Clusters\ReviewApplication\Resources\Agencies\Schemas\AgencyForm;
 use App\Filament\Clusters\ReviewApplication\Resources\Agencies\Schemas\AgencyInfolist;
 use App\Filament\Clusters\ReviewApplication\Resources\Agencies\Tables\AgenciesTable;
+use App\Filament\Clusters\ReviewApplication\ReviewApplicationCluster;
 use App\Models\User;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -25,7 +26,11 @@ class AgencyResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::UserGroup;
 
-
+    public static function canViewAny(): bool
+    {
+        // Gọi trực tiếp hàm canAccess của Cluster để đồng bộ
+        return ReviewApplicationCluster::canAccess();
+    }
     public static function getNavigationGroup(): \UnitEnum|string|null
     {
         return __('admin.nav.review_application');

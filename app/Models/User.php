@@ -5,19 +5,18 @@ namespace App\Models;
 use App\Core\GenerateId\HasBigIntId;
 use App\Enums\UserRole;
 use App\Enums\UserFileType;
-use Filament\Models\Contracts\FilamentUser;
+
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\DatabaseNotification;
-use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasBigIntId, HasApiTokens;
+    use HasFactory,  HasBigIntId, HasApiTokens;
 
     protected $fillable = [
         'id',
@@ -69,11 +68,6 @@ class User extends Authenticatable implements FilamentUser
                 }
             }
         });
-    }
-
-    public function canAccessPanel(Panel $panel): bool
-    {
-        return true;
     }
 
     // Relations

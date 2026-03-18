@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\ReviewApplication\Resources\KTVs\Tables;
 
+use App\Enums\Admin\AdminGate;
 use App\Enums\Gender;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserRole;
@@ -19,6 +20,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Filament\Tables\Enums\FiltersLayout;
+use Illuminate\Support\Facades\Gate;
 
 
 class KTVsTable
@@ -85,14 +87,7 @@ class KTVsTable
                     CommonActions::buffServiceAction(),
 
                     // Xóa KTV
-                    DeleteAction::make()
-                        ->label(__('admin.common.action.delete'))
-                        ->tooltip(__('admin.common.tooltip.delete'))
-                        ->icon('heroicon-o-trash')
-                        ->requiresConfirmation()
-                        ->modalHeading(__('admin.common.modal.delete_title'))
-                        ->modalDescription(__('admin.common.modal.delete_confirm'))
-                        ->modalSubmitActionLabel(__('admin.common.action.confirm_delete'))
+                    CommonActions::deleteAction(),
                 ]),
             ])
             ->filters([

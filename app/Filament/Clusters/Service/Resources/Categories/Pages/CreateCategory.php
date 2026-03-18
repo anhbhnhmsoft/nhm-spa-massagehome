@@ -18,7 +18,7 @@ class CreateCategory extends CreateRecord
             CommonActions::backAction(static::getResource())
         ];
     }
-    
+
     protected function getFormActions(): array
     {
         return [
@@ -29,8 +29,8 @@ class CreateCategory extends CreateRecord
             $this->getCancelFormAction()
                 ->label(__('common.action.cancel')),
         ];
-    }   
-    
+    }
+
     public function getBreadcrumb(): string
     {
         return __('common.breadcrumb.create');

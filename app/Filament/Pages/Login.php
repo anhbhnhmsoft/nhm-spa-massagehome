@@ -15,7 +15,6 @@ use Filament\Support\Assets\Css;
 use Filament\Support\Facades\FilamentAsset;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Vite;
-use Throwable;
 
 class Login extends PagesLogin
 {
@@ -42,11 +41,11 @@ class Login extends PagesLogin
     public function form(Schema $schema): Schema
     {
         return $schema->components([
-            TextInput::make('phone')
-                ->label(__('auth.admin.phone'))
+            TextInput::make('username')
+                ->label(__('auth.admin.username'))
                 ->string()
                 ->required()
-                ->autocomplete('phone')
+                ->autocomplete('username')
                 ->extraInputAttributes(['tabindex' => 1])
                 ->validationMessages([
                     'required' => __('common.error.required'),
@@ -74,9 +73,6 @@ class Login extends PagesLogin
         $this->dispatch('$refresh');
     }
 
-    /**
-     * @throws ValidationException
-     */
     public function authenticate(): ?LoginResponse
     {
         try {
@@ -96,7 +92,7 @@ class Login extends PagesLogin
         }
         $data = $this->form->getState();
 
-        $result = $this->authService->loginAdmin($data['phone'], $data['password']);
+        $result = $this->authService->loginAdmin($data['username'], $data['password'], $data['remember']);
 
         if ($result->isError()) {
             Notification::make()

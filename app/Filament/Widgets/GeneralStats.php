@@ -3,6 +3,8 @@
 namespace App\Filament\Widgets;
 
 use App\Core\Helper;
+use App\Enums\Admin\AdminGate;
+use App\Enums\Admin\AdminRole;
 use App\Enums\DateRangeDashboard;
 use App\Services\DashboardService;
 use Filament\Schemas\Components\Grid;
@@ -10,10 +12,16 @@ use Filament\Schemas\Components\Section;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Illuminate\Support\Facades\Gate;
+
 class GeneralStats extends BaseWidget
 {
     use InteractsWithPageFilters;
 
+    public static function canView(): bool
+    {
+        return Gate::allows(AdminGate::ALLOW_ACCOUNTANT);
+    }
     protected function getStats(): array
     {
         $dateRange = $this->pageFilters['date_range'] ? DateRangeDashboard::tryFrom($this->pageFilters['date_range']) : DateRangeDashboard::ALL;

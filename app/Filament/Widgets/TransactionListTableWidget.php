@@ -2,12 +2,14 @@
 
 namespace App\Filament\Widgets;
 
+use App\Enums\Admin\AdminGate;
 use App\Filament\Clusters\Transaction\Resources\WalletTransactions\Tables\WalletTransactionsTable;
 use App\Repositories\WalletTransactionRepository;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Gate;
 
 class TransactionListTableWidget extends TableWidget
 {
@@ -16,6 +18,10 @@ class TransactionListTableWidget extends TableWidget
 
     protected int | string | array $columnSpan = 1;
 
+    public static function canView(): bool
+    {
+        return Gate::allows(AdminGate::ALLOW_ACCOUNTANT);
+    }
     protected function getTableHeading(): string|Htmlable|null
     {
         return __('admin.ktv.infolist.transaction_list');

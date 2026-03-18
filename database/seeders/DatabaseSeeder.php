@@ -30,33 +30,8 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->seedCategory();
-        $this->seedAdmin();
         $this->seedConfig();
         $this->seedConfigAffiliate();
-    }
-
-    protected function seedAdmin(): void
-    {
-        DB::beginTransaction();
-        try {
-            // Seeding admin trước để có thể login vào hệ thống
-            $admin = User::query()->createOrFirst(
-                [
-                    'phone' => '012345678910',
-                ],
-                [
-                'phone_verified_at' => now(),
-                'password' => Hash::make('Test12345678@'),
-                'name' => 'Admin System',
-                'role' => UserRole::ADMIN->value,
-                'language' => Language::VIETNAMESE->value,
-                'is_active' => true,
-            ]);
-        } catch (\Exception $exception) {
-            dump($exception);
-            DB::rollBack();
-        }
-        DB::commit();
     }
 
     /**

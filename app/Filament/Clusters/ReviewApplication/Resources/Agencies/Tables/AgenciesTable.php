@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\ReviewApplication\Resources\Agencies\Tables;
 
+use App\Enums\Admin\AdminGate;
 use App\Enums\Gender;
 use App\Enums\ReviewApplicationStatus;
 use App\Filament\Clusters\ReviewApplication\Resources\Agencies\AgencyResource;
@@ -20,6 +21,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Gate;
 
 class AgenciesTable
 {
@@ -74,14 +76,7 @@ class AgenciesTable
                     // Hiển QR code giới thiệu affiliate
                     CommonActions::qrAffiliateAction(),
 
-                    DeleteAction::make('delete')
-                        ->label(__('admin.common.action.delete'))
-                        ->tooltip(__('admin.common.tooltip.delete'))
-                        ->icon('heroicon-o-trash')
-                        ->requiresConfirmation()
-                        ->modalHeading(__('admin.common.modal.delete_title'))
-                        ->modalDescription(__('admin.common.modal.delete_confirm'))
-                        ->modalSubmitActionLabel(__('admin.common.action.confirm_delete'))
+                    CommonActions::deleteAction(),
                 ]),
             ])
             ->filtersLayout(FiltersLayout::AboveContent)
@@ -104,16 +99,6 @@ class AgenciesTable
                         false => __('admin.common.status.inactive'),
                     ])
                     ->label(__('admin.common.filter.status')),
-            ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make()
-                        ->label(__('admin.common.action.delete'))
-                        ->requiresConfirmation()
-                        ->modalHeading(__('admin.common.modal.delete_title'))
-                        ->modalDescription(__('admin.common.modal.delete_confirm'))
-                        ->modalSubmitActionLabel(__('admin.common.action.confirm_delete')),
-                ]),
             ])
             ->defaultSort('reviewApplication.status', 'asc')
             ->poll('5m');

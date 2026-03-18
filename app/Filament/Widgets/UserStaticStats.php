@@ -2,6 +2,8 @@
 
 namespace App\Filament\Widgets;
 
+use App\Enums\Admin\AdminGate;
+use App\Enums\Admin\AdminRole;
 use App\Enums\DateRangeDashboard;
 use App\Enums\ReviewApplicationStatus;
 use App\Filament\Clusters\ReviewApplication\Resources\Agencies\AgencyResource;
@@ -13,12 +15,25 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Illuminate\Support\Facades\Gate;
 
 class UserStaticStats extends BaseWidget
 {
     use InteractsWithPageFilters;
 
-    protected int|string|array $columnSpan = 3;
+    public function getColumnSpan(): int|string|array
+    {
+        if (Gate::allows(AdminGate::ALLOW_EMPLOYEE_SELF)) {
+            return 'full';
+        }
+
+        return 3;
+    }
+    public static function canView(): bool
+    {
+        return Gate::allows(AdminGate::ALLOW_EMPLOYEE);
+
+    }
 
     protected function getStats(): array
     {

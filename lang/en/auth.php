@@ -39,6 +39,7 @@ return [
     ],
 
     'admin' => [
+        'username' => 'Username.',
         'phone' => 'Phone number.',
         'password' => 'Password.',
         'remember' => 'Remember me',

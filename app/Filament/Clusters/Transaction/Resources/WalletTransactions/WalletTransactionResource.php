@@ -21,6 +21,10 @@ class WalletTransactionResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
+    public static function canAccess(): bool
+    {
+        return TransactionCluster::canAccess();
+    }
     public static function getNavigationGroup(): \UnitEnum|string|null
     {
         return __('filament.navigation.transaction');

@@ -22,7 +22,10 @@ class CouponResource extends Resource
     protected static ?string $model = Coupon::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
-
+    public static function canViewAny(): bool
+    {
+        return MarketingCluster::canAccess();
+    }
     public static function getNavigationGroup(): \UnitEnum|string|null
     {
         return __('filament.navigation.marketing');

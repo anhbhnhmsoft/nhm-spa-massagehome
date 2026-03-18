@@ -2,12 +2,14 @@
 
 namespace App\Filament\Clusters\User\Resources\Customers\Pages;
 
+use App\Enums\Admin\AdminGate;
 use App\Filament\Clusters\User\Resources\Customers\CustomerResource;
 use App\Filament\Clusters\User\Resources\Customers\Widgets\TransactionCustomerTable;
 use App\Filament\Components\CommonActions;
 use App\Filament\Widgets\WalletStats;
-use Filament\Actions\DeleteAction;
+use Filament\Actions\Action;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Support\Facades\Gate;
 
 class EditCustomer extends EditRecord
 {
@@ -17,8 +19,8 @@ class EditCustomer extends EditRecord
     {
         return [
             CommonActions::backAction(static::getResource()),
-            DeleteAction::make()
-                ->label(__('common.action.delete')),
+            CommonActions::deleteAction(),
+
         ];
     }
 
@@ -36,9 +38,16 @@ class EditCustomer extends EditRecord
         return [
             $this->getSaveFormAction()
                 ->label(__('common.action.save')),
-            $this->getCancelFormAction()
-                ->label(__('common.action.cancel')),
         ];
+    }
+
+    protected function getSaveFormAction(): Action
+    {
+        $isLocked = !Gate::allows(AdminGate::ALLOW_ADMIN);
+        return parent::getSaveFormAction()
+            ->color($isLocked ? 'gray' : 'primary')
+            ->icon($isLocked ? 'heroicon-m-lock-closed' : 'heroicon-m-check')
+            ->disabled($isLocked);
     }
 
     public function getBreadcrumb(): string

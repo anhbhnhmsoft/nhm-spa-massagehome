@@ -35,6 +35,7 @@ return
             'table' => [
                 'id' => 'ID',
                 'name' => 'Tên',
+                'username' => 'Tên đăng nhập',
                 'email' => 'Email',
                 'address' => 'Địa chỉ',
                 'created_at' => 'Ngày tạo',
@@ -635,6 +636,7 @@ return
                 'rating' => 'Đánh giá',
                 'comment' => 'Bình luận',
                 'hidden' => 'Ẩn danh',
+                'is_virtual' => 'Đánh giá ảo',
                 'created_at' => 'Ngày tạo',
                 'updated_at' => 'Ngày cập nhật',
                 'user' => 'Nhân viên',
@@ -970,5 +972,13 @@ return
                 'required' => 'Vui lòng nhập thông tin',
                 'max_length' => 'Độ dài tối đa là :max ký tự',
             ],
+        ],
+        'admin_role' => [
+            'ADMIN' => 'Quản trị viên',
+            'ACCOUNTANT' => 'Quản lý tài chính',
+            'EMPLOYEE' => 'Nhân viên',
+        ],
+        'admin_user' => [
+            'label' => 'Nhân sự',
         ],
     ];

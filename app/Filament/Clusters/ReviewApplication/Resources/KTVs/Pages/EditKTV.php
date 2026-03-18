@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\ReviewApplication\Resources\KTVs\Pages;
 
+use App\Enums\Admin\AdminGate;
 use App\Enums\ReviewApplicationStatus;
 use App\Filament\Clusters\ReviewApplication\Resources\KTVs\KTVResource;
 use App\Enums\UserRole;
@@ -17,6 +18,7 @@ use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Model;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Support\Facades\Gate;
 
 class EditKTV extends EditRecord
 {
@@ -41,31 +43,7 @@ class EditKTV extends EditRecord
         return [
             CommonActions::backAction(static::getResource()),
             // Hiển thị nút Chỉnh sửa Service nếu trạng thái là APPROVED
-            Action::make('view_service')
-                ->label(__('admin.common.action.view_service'))
-                ->icon('heroicon-o-tag')
-                ->visible(fn($record) => $record->reviewApplication?->status === ReviewApplicationStatus::APPROVED)
-                ->color('success')
-                ->fillForm(fn ($record) => [
-                    'categories' => $record->categories->pluck('id')->toArray(),
-                ])
-                ->action(function ($record, array $data): void {
-                    $record->categories()->sync($data['categories']);
-                    Notification::make()
-                        ->success()
-                        ->title(__('common.success.success'))
-                        ->body(__('common.success.data_updated'))
-                        ->send();
-                })
-                ->modal()
-                ->modalSubmitActionLabel(__('admin.common.action.save'))
-                ->modalCancelActionLabel(__('admin.common.action.cancel'))
-                ->schema([
-                    CheckboxList::make('categories')
-                        ->label(__('admin.ktv.action.choose_categories'))
-                        ->options(fn(CategoryRepository $repo) => $repo->pluckNameAndId())
-                        ->columns(2)
-                ]),
+            CommonActions::viewServiceAction(),
 
             //  Approve đơn đăng ký KTV nếu trạng thái là PENDING
             Action::make('approve')
@@ -134,9 +112,8 @@ class EditKTV extends EditRecord
                     return redirect()->to($this->getResource()::getUrl('index'));
                 }),
 
-            // Delete đơn đăng ký KTV
-            DeleteAction::make()
-                ->label(__('common.action.delete')),
+            // Delete KTV
+            CommonActions::deleteAction(),
         ];
     }
 
@@ -239,11 +216,15 @@ class EditKTV extends EditRecord
     protected function getSaveFormAction(): Action
     {
         $record = $this->getRecord();
-        $status = $record->reviewApplication?->status;
-        $isLocked = in_array($status, [
-            ReviewApplicationStatus::PENDING,
-            ReviewApplicationStatus::REJECTED,
-        ]);
+        if (Gate::check(AdminGate::ALLOW_EMPLOYEE)){
+            $status = $record->reviewApplication?->status;
+            $isLocked = in_array($status, [
+                ReviewApplicationStatus::PENDING,
+                ReviewApplicationStatus::REJECTED,
+            ]);
+        }else{
+            $isLocked = true;
+        }
         return parent::getSaveFormAction()
             // 3. Đổi màu sang xám nếu bị khóa (tạo cảm giác disabled)
             ->color($isLocked ? 'gray' : 'primary')

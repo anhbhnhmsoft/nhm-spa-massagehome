@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Core\Cache\CacheKey;
 use App\Core\Cache\Caching;
-use App\Core\Helper;
 use App\Core\LogHelper;
 use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
@@ -15,6 +14,7 @@ use App\Enums\Language;
 use App\Enums\UserOtpType;
 use App\Enums\UserRole;
 use App\Models\User;
+use App\Repositories\AdminUserRepository;
 use App\Repositories\UserDeviceRepository;
 use App\Repositories\UserOtpRepository;
 use App\Repositories\UserProfileRepository;
@@ -26,7 +26,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Redis as RedisFacade;
 use Illuminate\Support\Facades\Storage;
 
 
@@ -45,6 +44,7 @@ class AuthService extends BaseService
         protected ZaloService $zaloService,
         protected ConfigService $configService,
         protected UserOtpRepository $userOtpRepository,
+        protected AdminUserRepository $adminUserRepository,
     )
     {
         parent::__construct();
@@ -362,11 +362,6 @@ class AuthService extends BaseService
                 if (!$user->is_active) {
                     throw new ServiceException(message: __('auth.error.disabled'));
                 }
-                // Admin ko được đăng nhập vào hệ thống
-                if ($user->role === UserRole::ADMIN->value) {
-                    throw new ServiceException(message: __('auth.error.unauthorized'));
-                }
-
                 // Xóa token cũ, các thiết bị khác sẽ bị đăng xuất
                 $this->logoutAllDevices($user);
                 // Lưu thông tin đăng nhập mới
@@ -434,41 +429,39 @@ class AuthService extends BaseService
 
     /**
      * Đăng nhập cho admin
-     * @param string $phone
+     * @param string $username
      * @param string $password
      * @return ServiceReturn
      */
     public function loginAdmin(
-        string $phone,
+        string $username,
         string $password,
+        bool $remember = false,
     ): ServiceReturn
     {
-        try {
-            // Kiểm tra user có tồn tại không
-            $user = $this->userRepository->findByPhoneVerified($phone);
-            if (!$user) {
-                return ServiceReturn::error(message: __('auth.error.invalid_login'));
-            }
-            if ($user->role != UserRole::ADMIN->value) {
-                return ServiceReturn::error(message: __('auth.error.invalid_login'));
-            }
-            // Kiểm tra password
-            if (!Hash::check($password, $user->password)) {
-                return ServiceReturn::error(message: __('auth.error.invalid_login'));
-            }
+       return $this->execute(
+           callback: function () use ($username, $password, $remember) {
+               // Kiểm tra user có tồn tại không
+               $user = $this->adminUserRepository->findByUsername($username);
+               if (!$user) {
+                   return ServiceReturn::error(message: __('auth.error.invalid_login'));
+               }
+               if (!$user->is_active) {
+                   throw new ServiceException(message: __('auth.error.disabled'));
+               }
+               // Kiểm tra password
+               if (!Hash::check($password, $user->password)) {
+                   return ServiceReturn::error(message: __('auth.error.invalid_login'));
+               }
 
-            Auth::login($user);
+               // Xác thực user
+               Auth::guard('web')->login($user, $remember);
 
-            return ServiceReturn::success(data: [
-                'user' => $user,
-            ]);
-        } catch (Exception $exception) {
-            LogHelper::error(
-                message: "Lỗi AuthService@loginAdmin",
-                ex: $exception
-            );
-            return ServiceReturn::error(message: __('common_error.server_error'));
-        }
+               return ServiceReturn::success(data: [
+                   'user' => $user,
+               ]);
+           },
+       );
     }
 
     /**

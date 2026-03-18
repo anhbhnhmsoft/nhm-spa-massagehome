@@ -10,6 +10,7 @@ use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Tables\KTVsTable;
 use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Pages\ListKTVs;
 use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Schemas\KTVForm;
 use App\Filament\Clusters\ReviewApplication\Resources\KTVs\Pages\EditKTV;
+use App\Filament\Clusters\ReviewApplication\ReviewApplicationCluster;
 use App\Models\User;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -24,7 +25,11 @@ class KTVResource extends Resource
     protected static ?string $model = User::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::User;
-
+    public static function canViewAny(): bool
+    {
+        // Gọi trực tiếp hàm canAccess của Cluster để đồng bộ
+        return ReviewApplicationCluster::canAccess();
+    }
     public static function getNavigationGroup(): \UnitEnum|string|null
     {
         return __('admin.nav.review_application');

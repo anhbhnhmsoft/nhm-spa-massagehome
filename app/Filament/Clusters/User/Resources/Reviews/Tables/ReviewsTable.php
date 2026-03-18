@@ -38,6 +38,11 @@ class ReviewsTable
                 TextColumn::make('comment')
                     ->label(__('admin.review.fields.comment'))
                     ->limit(50),
+                TextColumn::make('is_virtual')
+                    ->label(__('admin.review.fields.hidden'))
+                    ->badge()
+                    ->formatStateUsing(fn ($state) => $state ? __('admin.common.yes') : __('admin.common.no'))
+                    ->color(fn ($state) => $state ? 'danger' : 'success'),
                 TextColumn::make('hidden')
                     ->label(__('admin.review.fields.hidden'))
                     ->badge()

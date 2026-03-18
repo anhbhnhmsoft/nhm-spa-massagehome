@@ -30,6 +30,7 @@ class ViewAgencies extends ViewRecord
 
     public function getHeaderWidgets(): array
     {
+
         return [
             WalletStats::make(),
             StatisticalStatsAgency::make(),

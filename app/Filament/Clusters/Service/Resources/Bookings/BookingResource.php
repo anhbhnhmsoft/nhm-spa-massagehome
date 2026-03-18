@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\Service\Resources\Bookings;
 
+use App\Enums\Admin\AdminGate;
 use App\Filament\Clusters\Service\Resources\Bookings\Pages\ListBookings;
 use App\Filament\Clusters\Service\Resources\Bookings\Pages\ViewBooking;
 use App\Filament\Clusters\Service\Resources\Bookings\Schemas\BookingInfoList;
@@ -13,7 +14,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Gate;
 
 class BookingResource extends Resource
 {
@@ -21,6 +22,10 @@ class BookingResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
+    public static function canViewAny(): bool
+    {
+        return Gate::allows(AdminGate::ALLOW_EMPLOYEE);
+    }
     public static function getNavigationGroup(): \UnitEnum|string|null
     {
         return __('filament.navigation.service');
