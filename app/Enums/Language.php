@@ -14,6 +14,8 @@ enum Language: string
     case ENGLISH = 'en';
     case VIETNAMESE = 'vi';
     case CHINESE = 'cn';
+    case JAPANESE = 'jp';
+    case KOREAN = 'kr';
 
     public function label(): string
     {
@@ -21,6 +23,8 @@ enum Language: string
             self::ENGLISH => 'English',
             self::VIETNAMESE => 'Vietnamese',
             self::CHINESE => 'Chinese',
+            self::JAPANESE => 'Japanese',
+            self::KOREAN => 'Korean',
         };
     }
 }

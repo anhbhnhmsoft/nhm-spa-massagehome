@@ -109,6 +109,7 @@ class PaymentController extends BaseController
                 PaymentType::ZALO_PAY->value,
                 PaymentType::MOMO_PAY->value,
                 PaymentType::WECHAT->value,
+                PaymentType::ALIPAY->value,
             ])],
         ], [
             'amount.required' => __('validation.amount.required'),

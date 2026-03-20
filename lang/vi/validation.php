@@ -182,18 +182,18 @@ return [
     ],
     'image' => [
         'required' => 'Vui lòng tải lên ảnh đại diện.',
-        'max'      => 'Ảnh không được vượt quá 20MB.',
-        'mimes'    => 'Định dạng ảnh không hợp lệ (chỉ chấp nhận jpeg, png, jpg).',
+        'max' => 'Ảnh không được vượt quá 20MB.',
+        'mimes' => 'Định dạng ảnh không hợp lệ (chỉ chấp nhận jpeg, png, jpg).',
     ],
     'name_service' => [
         'required' => 'Vui lòng nhập tên dịch vụ ít nhất bằng 1 ngôn ngữ.',
         'invalid' => 'Dữ liệu tên dịch vụ không đúng định dạng.',
-        'max'    => 'Tên dịch vụ quá dài (tối đa 255 ký tự).',
+        'max' => 'Tên dịch vụ quá dài (tối đa 255 ký tự).',
     ],
     'description_service' => [
         'required' => 'Vui lòng nhập mô tả dịch vụ ít nhất bằng 1 ngôn ngữ.',
         'invalid' => 'Dữ liệu mô tả dịch vụ không đúng định dạng.',
-        'max'    => 'Mô tả quá dài (tối đa 1000 ký tự).',
+        'max' => 'Mô tả quá dài (tối đa 1000 ký tự).',
     ],
     'option_service' => [
         'required' => 'Vui lòng thêm ít nhất 1 lựa chọn dịch vụ.',
@@ -302,7 +302,7 @@ return [
         ],
 
     ],
-     'is_working' => [
+    'is_working' => [
         'required' => 'Vui lòng chọn trạng thái.',
         'invalid' => 'Trạng thái không hợp lệ.',
     ],
@@ -339,7 +339,7 @@ return [
             'invalid' => 'Tên thật phải là chuỗi và ít nhất 4 ký tự, tối đa 255 ký tự.',
         ]
     ],
-     'message_id' => [
+    'message_id' => [
         'required' => 'Vui lòng nhập ID tin nhắn.',
         'numeric' => 'ID tin nhắn phải là số.',
         'exists' => 'Tin nhắn không tồn tại.',
@@ -352,4 +352,13 @@ return [
         'required' => 'Vui lòng chọn ngôn ngữ.',
         'invalid' => 'Ngôn ngữ không hợp lệ.',
     ],
+    'username' => [
+        'required' => 'Tên đăng nhập không hợp lệ.',
+        'string' => 'Tên đăng nhập phải là chuỗi ký tự.',
+        'email_or_phone' => 'Tên đăng nhập phải là email hoặc số điện thoại hợp lệ.',
+    ],
+    'type_authenticate' => [
+        'required' => 'Vui lòng chọn phương thức xác thực.',
+        'invalid' => 'Phương thức xác thực không hợp lệ.',
+    ]
 ];

@@ -13,6 +13,7 @@ class UserOtp extends Model
 
     protected $fillable = [
         'phone',
+        'email',
         'otp_hash',
         'type',
         'attempts',

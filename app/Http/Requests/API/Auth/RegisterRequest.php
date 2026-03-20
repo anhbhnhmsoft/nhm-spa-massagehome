@@ -4,6 +4,7 @@ namespace App\Http\Requests\API\Auth;
 
 use App\Enums\Gender;
 use App\Enums\Language;
+use App\Enums\TypeAuthenticate;
 use App\Rules\PasswordRule;
 use App\Rules\PhoneRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -19,7 +20,8 @@ class RegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'phone' => ['required', new PhoneRule()],
+            'username' => ['required', 'string', 'max:255'],
+            'type_authenticate' => ['required', Rule::in(TypeAuthenticate::cases())],
             'password' => ['required', new PasswordRule()],
             'name' => ['required', 'string', 'max:255'],
             'gender' => ['required', Rule::in(Gender::cases())],
@@ -30,7 +32,9 @@ class RegisterRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'phone.required' => __('validation.phone.required'),
+            'username.required' => __('validation.username.required'),
+            'type_authenticate.required' => __('validation.type_authenticate.required'),
+            'type_authenticate.in' => __('validation.type_authenticate.in'),
             'password.required' => __('validation.password.required'),
             'name.required' => __('validation.name.required'),
             'name.string' => __('validation.name.string'),

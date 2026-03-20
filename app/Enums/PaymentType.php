@@ -11,6 +11,7 @@ enum PaymentType: int
     case WITHDRAWAL = 5; // Rút tiền wallets
     case REFUND = 6; // Hoàn tiền
     case WECHAT = 7; // Thanh toán qua Wechat Pay
+    case ALIPAY = 8; // Thanh toán qua Alipay Pay
     public function label(): string
     {
         return match ($this) {
@@ -21,6 +22,7 @@ enum PaymentType: int
             self::WITHDRAWAL => __('admin.booking.payment_type.withdrawal'),
             self::REFUND => __('admin.booking.payment_type.refund'),
             self::WECHAT => __('admin.booking.payment_type.wechat'),
+            self::ALIPAY => __('admin.booking.payment_type.alipay'),
         };
     }
 

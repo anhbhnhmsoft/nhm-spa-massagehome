@@ -59,6 +59,7 @@ return [
         'zalopay' => env('ZALOPAY_ENABLE', false),
         'momo' => env('MOMOPAY_ENABLE', false),
         'wechatpay' => env('WECHATPAY_ENABLE', false),
+        'alipay' => env('ALIPAY_ENABLE', false),
     ],
     'application_mobile' => [
         'ios_version' => env('IOS_VERSION', '1.0.0'),

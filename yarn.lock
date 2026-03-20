@@ -2526,6 +2526,11 @@ keyv@^4.5.4:
   dependencies:
     json-buffer "3.0.1"
 
+laravel-echo@^2.3.1:
+  version "2.3.1"
+  resolved "https://registry.yarnpkg.com/laravel-echo/-/laravel-echo-2.3.1.tgz#88a7ef30a7c99bae62e8cfe6e583469cd14cc98e"
+  integrity sha512-o6oD1oR+XklU9TO7OPGeLh/G9SjcZm+YrpSdGkOaAJf5HpXwZKt+wGgnULvKl5I8xUuUY/AAvqR24+y8suwZTA==
+
 laravel-vite-plugin@^2.0:
   version "2.0.1"
   resolved "https://registry.npmjs.org/laravel-vite-plugin/-/laravel-vite-plugin-2.0.1.tgz"
@@ -3059,6 +3064,13 @@ punycode@^2.1.0:
   resolved "https://registry.npmjs.org/punycode/-/punycode-2.3.1.tgz"
   integrity sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==
 
+pusher-js@^8.4.3:
+  version "8.4.3"
+  resolved "https://registry.yarnpkg.com/pusher-js/-/pusher-js-8.4.3.tgz#2271cada42375b146840278976e1c50926991da6"
+  integrity sha512-MYnVYhKxq2Oeg3HmTQxnKDj1oAZjqJCkEcYj8hYbH1Rw5pT0g8KtgOYVUKDRnyrPtwRvA9QR4wunwJW5xIbq0Q==
+  dependencies:
+    tweetnacl "^1.0.3"
+
 qs@^6.14.0:
   version "6.14.0"
   resolved "https://registry.npmjs.org/qs/-/qs-6.14.0.tgz"
@@ -3587,6 +3599,11 @@ tsx@^4.21.0:
     get-tsconfig "^4.7.5"
   optionalDependencies:
     fsevents "~2.3.3"
+
+tweetnacl@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/tweetnacl/-/tweetnacl-1.0.3.tgz#ac0af71680458d8a6378d0d0d050ab1407d35596"
+  integrity sha512-6rt+RN7aOi1nGMyC4Xa5DdYiukl2UWCbcJft7YhxReBGQD7OAM8Pbxw6YMo4r2diNEA8FEmu32YOn9rhaiE5yw==
 
 type-check@^0.4.0, type-check@~0.4.0:
   version "0.4.0"

@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Core\BaseRepository;
+use App\Enums\TypeAuthenticate;
 use App\Enums\UserOtpType;
 use App\Models\UserOtp;
 use Illuminate\Database\Eloquent\Model;
@@ -20,14 +21,19 @@ class UserOtpRepository extends BaseRepository
 
     /**
      * Lấy OTP chưa được xác thực mới nhất cho số điện thoại và loại OTP
-     * @param string $phone
+     * @param string $identifier
      * @param UserOtpType $type
      * @return UserOtp|null
      */
-    public function getLastOtpNotVerified(string $phone, UserOtpType $type): ?UserOtp
+    public function getLastOtpNotVerified(string $identifier, UserOtpType $type, TypeAuthenticate $typeAuthenticate): ?UserOtp
     {
         return $this->query()
-            ->where('phone', $phone)
+            ->when($typeAuthenticate === TypeAuthenticate::PHONE, function ($query) use ($identifier) {
+                $query->where('phone', $identifier);
+            })
+            ->when($typeAuthenticate === TypeAuthenticate::EMAIL, function ($query) use ($identifier) {
+                $query->where('email', $identifier);
+            })
             ->where('type', $type)
             ->whereNull('verified_at')
             ->where('expired_at', '>', now())
@@ -38,14 +44,20 @@ class UserOtpRepository extends BaseRepository
 
     /**
      * Tính tổng số lần gửi OTP trong ngày hôm nay
-     * @param string $phone
+     * @param string $identifier
      * @param UserOtpType $type
+     * @param TypeAuthenticate $typeAuthenticate
      * @return int
      */
-    public function sumTotalSendOTPToday(string $phone, UserOtpType $type): int
+    public function sumTotalSendOTPToday(string $identifier, UserOtpType $type, TypeAuthenticate $typeAuthenticate): int
     {
         $totalSentToday = $this->query()
-            ->where('phone', $phone)
+            ->when($typeAuthenticate === TypeAuthenticate::PHONE, function ($query) use ($identifier) {
+                $query->where('phone', $identifier);
+            })
+            ->when($typeAuthenticate === TypeAuthenticate::EMAIL, function ($query) use ($identifier) {
+                $query->where('email', $identifier);
+            })
             ->where('type', $type)
             ->whereDate('created_at', now()->toDateString())
             ->sum('send_count');
@@ -56,15 +68,21 @@ class UserOtpRepository extends BaseRepository
     /**
      * Kiểm tra xem có OTP nào vừa được xác thực thành công không
      * OTP xác thực chỉ có hiệu lực trong ? phút để hoàn tất đăng ký
-     * @param string $phone - Số điện thoại
+     * @param string $identifier - Số điện thoại hoặc email
      * @param UserOtpType $type - Loại OTP
      * @param int $minutes - Thời gian hiệu lực OTP (mặc định là 30 phút)
+     * @param TypeAuthenticate $typeAuthenticate - Loại xác thực (số điện thoại hoặc email)
      * @return UserOtp|null
      */
-    public function getLatestVerifiedOtp(string $phone, UserOtpType $type, int $minutes): ?UserOtp
+    public function getLatestVerifiedOtp(string $identifier, UserOtpType $type, int $minutes, TypeAuthenticate $typeAuthenticate): ?UserOtp
     {
         return $this->query()
-            ->where('phone', $phone)
+            ->when($typeAuthenticate === TypeAuthenticate::PHONE, function ($query) use ($identifier) {
+                $query->where('phone', $identifier);
+            })
+            ->when($typeAuthenticate === TypeAuthenticate::EMAIL, function ($query) use ($identifier) {
+                $query->where('email', $identifier);
+            })
             ->where('type', $type)
             ->whereNotNull('verified_at')
             // OTP xác thực chỉ có hiệu lực trong $minutes phút để hoàn tất đăng ký
@@ -82,13 +100,19 @@ class UserOtpRepository extends BaseRepository
      * @return Model
      */
     public function createOrUpdateOtp(
-        string $phone,
+        string $identifier,
         UserOtpType $type,
         string $otp,
-        string $ip
+        string $ip,
+        TypeAuthenticate $typeAuthenticate
     ) {
         $otpModel = $this->query()
-            ->where('phone', $phone)
+            ->when($typeAuthenticate === TypeAuthenticate::PHONE, function ($query) use ($identifier) {
+                $query->where('phone', $identifier);
+            })
+            ->when($typeAuthenticate === TypeAuthenticate::EMAIL, function ($query) use ($identifier) {
+                $query->where('email', $identifier);
+            })
             ->where('type', $type)
             ->whereNull('verified_at')
             ->first();
@@ -105,8 +129,13 @@ class UserOtpRepository extends BaseRepository
 
             return $otpModel;
         }
+        // Tạo mới OTP
+        $column = match ($typeAuthenticate) {
+            TypeAuthenticate::PHONE => 'phone',
+            TypeAuthenticate::EMAIL => 'email',
+        };
         return $this->query()->create([
-            'phone'        => $phone,
+            $column        => $identifier,
             'type'         => $type,
             'otp_hash'     => Hash::make($otp),
             'expired_at'   => now()->addMinutes(5),
@@ -124,14 +153,24 @@ class UserOtpRepository extends BaseRepository
      * @param UserOtpType $type
      * @return void
      */
-    public function deleteOtpHadVerified(string $phone, UserOtpType $type)
+    public function deleteOtpHadVerified(string $identifier, UserOtpType $type, TypeAuthenticate $typeAuthenticate)
     {
-        $this->query()
-            ->where('phone', $phone)
+        $column = match ($typeAuthenticate) {
+            TypeAuthenticate::PHONE => 'phone',
+            TypeAuthenticate::EMAIL => 'email',
+        };
+        $otp = $this->query()
+            ->where($column, $identifier)
             ->whereNotNull('verified_at')
             ->where('type', $type)
-            ->delete();
+            ->first();
+        if ($otp) {
+            $otp->delete();
+        }else{
+            throw new \Exception('OTP không tồn tại hoặc đã được xác thực');
+        }
     }
+
 
 
     public function deleteExpiredOtp(int $minutes)

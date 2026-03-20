@@ -455,6 +455,7 @@ return
                 'by_points' => 'Thanh toán qua điểm',
                 'refund' => 'Hoàn tiền',
                 'wechat' => 'Thanh toán qua WeChat Pay',
+                'alipay' => 'Thanh toán qua Alipay Pay',
             ],
             'actions' => [
                 'view' => [
@@ -526,8 +527,17 @@ return
                 'sp_zalo' => 'Trang Zalo hỗ trợ',
                 'sp_facebook' => 'Trang Facebook hỗ trợ',
                 'sp_phone' => 'Số điện thoại hỗ trợ',
+                'mail_host' => 'Host mail',
+                'mail_port' => 'Port mail',
+                'mail_username' => 'Tên đăng nhập mail',
+                'mail_password' => 'Mật khẩu mail',
+                'mail_encryption' => 'Mã hóa mail',
+                'mail_from_name' => 'Tên gửi mail',
+                'mail_from_address' => 'Email gửi mail',
                 'sp_wechat' => 'Link Wechat hỗ trợ',
                 'sp_wechat_qr_image' => 'Ảnh/URL mã QR Wechat Pay',
+                'sp_alipay' => 'Link Alipay hỗ trợ',
+                'sp_alipay_qr_image' => 'Ảnh/URL mã QR Alipay Pay',
                 'zalo_merchant_id' => 'Mã merchant Zalo',
                 'zalo_merchant_id_helper' => 'Mã merchant Zalo hỗ trợ thanh toán qua Zalo Pay',
                 'zalo_merchant_key_1' => 'Mã merchant key 1',
@@ -586,6 +596,7 @@ return
                 'PAYMENT_REFUND_KTV_FOR_BOOKING_CANCEL' => 'Hoàn tiền cho KTV khi hủy booking',
                 'SUBTRACT_MONEY_DISCOUNT_SERVICE' => 'Hoàn tiền giảm giá',
                 'REFUND_MONEY_DISCOUNT_SERVICE' => 'Thu hồi tiền giảm giá',
+                'DEPOSIT_ALIPAY_PAY' => 'Nạp tiền qua Alipay Pay',
             ],
             'status' => [
                 'PENDING' => 'Chờ xử lý',

@@ -6,6 +6,7 @@ use App\Core\LogHelper;
 use App\Core\Service\ServiceReturn;
 use App\Enums\ConfigName;
 use App\Enums\NotificationAdminType;
+use App\Jobs\SendNotificationAdminJob;
 use App\Services\BookingService;
 use App\Services\ConfigService;
 use App\Services\NotificationService;
@@ -35,7 +36,7 @@ class BookingFacadeService
             }
             $overdueBookings->each(function ($booking) use ($overdueMinutes) {
                 // Gửi thông báo cho KTV
-                $this->notificationService->sendAdminNotification(
+                SendNotificationAdminJob::dispatch(
                     type: NotificationAdminType::OVERDUE_ONGOING_BOOKING,
                     data: [
                         'booking_id' => $booking->id,
@@ -73,7 +74,7 @@ class BookingFacadeService
             }
             $overdueBookings->each(function ($booking) use ($overdueMinutes) {
                 // Gửi thông báo cho KTV
-                $this->notificationService->sendAdminNotification(
+                SendNotificationAdminJob::dispatch(
                     type: NotificationAdminType::OVERDUE_CONFIRMED_BOOKING,
                     data: [
                         'booking_id' => $booking->id,

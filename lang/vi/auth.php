@@ -15,7 +15,9 @@ return [
     ],
     'error' => [
         'phone_verified' => 'Số điện thoại này đã được đăng ký.',
+        'account_already_used' => 'Số điện thoại hoặc email này đã được sử dụng.',
         'phone_not_verified' => 'Số điện thoại này chưa được xác thực.',
+        'user_not_verified' => 'Tài khoản này chưa được xác thực.',
         'blocked' => 'Bạn đã nhập sai quá nhiều lần. Vui lòng thử lại sau :minutes phút.',
         'already_sent' => 'Mã OTP đã được gửi. Vui lòng kiểm tra lại.',
         'invalid_otp' => 'Mã OTP không hợp lệ.',
@@ -58,4 +60,13 @@ return [
         'date_invalid' => 'Ngày không hợp lệ.',
         'date_before' => 'Ngày không được vượt quá ngày hiện tại.',
     ],
+    'mail' => [
+        'otp' => [
+            'subject' => 'Mã OTP xác thực',
+            'greeting' => 'Chào bạn,',
+            'otp_message' => 'Vui lòng sử dụng mã dưới đây để xác thực.',
+            'warning' => 'Nếu bạn không yêu cầu mã này, vui lòng bỏ qua email.',
+            'thanks' => 'Cảm ơn bạn!',
+        ],
+    ]
 ];

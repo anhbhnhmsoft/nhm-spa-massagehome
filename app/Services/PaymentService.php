@@ -15,6 +15,7 @@ use App\Enums\PaymentType;
 use App\Enums\NotificationType;
 use App\Enums\WalletTransactionStatus;
 use App\Enums\WalletTransactionType;
+use App\Jobs\SendNotificationAdminJob;
 use App\Jobs\SendNotificationJob;
 use App\Models\WalletTransaction;
 use App\Repositories\WalletRepository;
@@ -179,6 +180,7 @@ class PaymentService extends BaseService
                         'zalopay' => (bool)config('services.payment.zalopay'),
                         'momo' => (bool)config('services.payment.momo'),
                         'wechatpay' => (bool)config('services.payment.wechatpay'),
+                        'alipay' => (bool)config('services.payment.alipay'),
                     ]
                 ]
             );
@@ -360,7 +362,7 @@ class PaymentService extends BaseService
                     $amountCNY = $amount / $exchangeRate;
 
                     // Thông báo tới admin
-                    $this->notificationService->sendAdminNotification(
+                    SendNotificationAdminJob::dispatch(
                         type: NotificationAdminType::CONFIRM_WECHAT_PAYMENT,
                         data: [
                             'transaction_id' => $transaction->id,
@@ -374,6 +376,53 @@ class PaymentService extends BaseService
                         'payment_type' => $paymentType->value,
                         'data_payment' => [
                             'qr_image' => $wechatQrUrl,
+                            'amount' => $amount,
+                            'description' => $transaction->transaction_code,
+                            'amount_cny' => $amountCNY,
+                            'exchange_rate' => $exchangeRate,
+                        ]
+                    ]);
+                case PaymentType::ALIPAY:
+                    $alipayQrImage = $this->configService->getConfigValue(ConfigName::SP_ALIPAY_QR_IMAGE);
+                    if (empty($alipayQrImage)) {
+                        throw new ServiceException(
+                            message: __("error.config_wallet_error")
+                        );
+                    }
+                    $alipayQrUrl = Helper::getPublicUrl($alipayQrImage);
+
+                    $transaction = $this->walletTransactionRepository->create(
+                        data: [
+                            'wallet_id' => $wallet->id,
+                            'money_amount' => $amount,
+                            'point_amount' => $pointAmount,
+                            'type' => WalletTransactionType::DEPOSIT_ALIPAY_PAY->value,
+                            'exchange_rate_point' => $exchangeRate,
+                            'payment_type' => $paymentType,
+                            'transaction_id' => $orderCode,
+                            'transaction_code' => Helper::createDescPayment(PaymentType::ALIPAY),
+                            'status' => WalletTransactionStatus::PENDING->value,
+                            'expire_at' => $expireTime,
+                        ]
+                    );
+                    $exchangeRate = $this->configService->getConfigValue(ConfigName::EXCHANGE_RATE_VND_CNY);
+                    $amountCNY = $amount / $exchangeRate;
+
+                    // Thông báo tới admin
+                    SendNotificationAdminJob::dispatch(
+                        type: NotificationAdminType::CONFIRM_ALIPAY_PAYMENT,
+                        data: [
+                            'transaction_id' => $transaction->id,
+                        ]
+                    );
+
+                    DB::commit();
+
+                    return ServiceReturn::success([
+                        'transaction_id' => $transaction->id,
+                        'payment_type' => $paymentType->value,
+                        'data_payment' => [
+                            'qr_image' => $alipayQrUrl,
                             'amount' => $amount,
                             'description' => $transaction->transaction_code,
                             'amount_cny' => $amountCNY,

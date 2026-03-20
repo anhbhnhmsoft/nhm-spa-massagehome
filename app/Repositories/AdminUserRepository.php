@@ -12,6 +12,12 @@ class AdminUserRepository extends BaseRepository
         return AdminUser::class;
     }
 
+    public function queryAdminUser()
+    {
+        return $this->model->query()
+            ->where('is_active', true);
+    }
+
     /**
      * Tìm kiếm AdminUser theo username
      * @param string $username

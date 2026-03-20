@@ -22,8 +22,7 @@ use App\Enums\NotificationType;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserFileType;
 use App\Enums\UserRole;
-use App\Enums\WalletTransactionStatus;
-use App\Enums\WalletTransactionType;
+use App\Jobs\SendNotificationAdminJob;
 use App\Jobs\SendNotificationJob;
 use App\Jobs\WalletTransactionJob;
 use App\Repositories\BookingRepository;
@@ -134,11 +133,11 @@ class UserService extends BaseService
                 $ktv = $this->userRepository->queryKTV()
                     ->with([
                         'gallery',
-                        // Chỉ lấy 1 review
+                        // Chỉ lấy 3 review
                         'reviewsReceived' => function ($query) {
                             $query->where('hidden', false)
                                 ->latest('created_at')
-                                ->limit(1);
+                                ->limit(3);
                         },
                         'ktvBookings' => function ($query) {
                             $query->where('status', BookingStatus::ONGOING->value)
@@ -372,6 +371,9 @@ class UserService extends BaseService
                     'avatar_url' => $path,
                 ]);
 
+                SendNotificationAdminJob::dispatch(NotificationAdminType::USER_APPLY_KTV_PARTNER, [
+                    'user_id' => $user->id,
+                ]);
                 return ServiceReturn::success();
             },
             useTransaction: true,
@@ -386,7 +388,7 @@ class UserService extends BaseService
 
 
     /**
-     * Đăng ký làm KTV
+     * Đăng ký làm Agency
      * @param array $data - dựa theo ApplyAgencyRequest
      * @return ServiceReturn
      * @throws \Throwable
@@ -417,6 +419,9 @@ class UserService extends BaseService
                 // Upload files review application
                 $tempFiles = $this->uploadFilesReviewApplication($data['file_uploads'], $user->id, UserRole::AGENCY);
 
+                SendNotificationAdminJob::dispatch(NotificationAdminType::USER_APPLY_AGENCY_PARTNER, [
+                    'user_id' => $user->id,
+                ]);
                 return ServiceReturn::success();
             },
             useTransaction: true,
@@ -1121,7 +1126,7 @@ class UserService extends BaseService
 
             $dangerSupport = $this->dangerSupportRepository->create($payload);
 
-            $this->notificationService->sendAdminNotification(NotificationAdminType::EMERGENCY_SUPPORT, [
+            SendNotificationAdminJob::dispatch(NotificationAdminType::EMERGENCY_SUPPORT, [
                 'danger_support_id' => $dangerSupport->id,
                 'booking_id' => $nearestBooking?->id,
             ]);

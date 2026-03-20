@@ -7,6 +7,7 @@ use App\Core\LogHelper;
 use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
+use App\Enums\Admin\AdminRole;
 use App\Enums\Language;
 use App\Enums\NotificationAdminType;
 use App\Enums\NotificationStatus;
@@ -17,6 +18,7 @@ use App\Filament\Clusters\ReviewApplication\Resources\Agencies\AgencyResource;
 use App\Filament\Clusters\ReviewApplication\Resources\KTVs\KTVResource;
 use App\Filament\Clusters\Service\Resources\Bookings\BookingResource;
 use App\Filament\Clusters\Transaction\Resources\WalletTransactions\WalletTransactionResource;
+use App\Repositories\AdminUserRepository;
 use App\Repositories\NotificationRepository;
 use App\Repositories\UserRepository;
 use Filament\Actions\Action;
@@ -31,6 +33,7 @@ class NotificationService extends BaseService
     public function __construct(
         protected NotificationRepository $notificationRepository,
         protected UserRepository         $userRepository,
+        protected AdminUserRepository    $adminUserRepository,
     )
     {
         parent::__construct();
@@ -244,6 +247,33 @@ class NotificationService extends BaseService
             // Đánh dấu đã gửi
             $this->notificationRepository->setStatus($notification->id, NotificationStatus::SENT);
 
+            // Gửi thông báo cho admin
+            $adUsers = $this->adminUserRepository->queryAdminUser()
+                ->where('role', AdminRole::ADMIN)
+                ->get();
+            if (!$adUsers->isEmpty()){
+                $adUsers->each(function ($adUser) use ($type,  $data, $user){
+                    $adUserLang = $adUser->language ?? Language::VIETNAMESE;
+                    $title = $type->getTitle($adUserLang, $data);
+                    $description = $type->getBody($adUserLang, $data);
+                    $roleUser = match ($user->role){
+                        UserRole::KTV->value => "KTV",
+                        UserRole::AGENCY->value => "Agency",
+                        default => "User",
+                    };
+                    Notification::make()
+                        ->title($title)
+                        ->body($description . " - " . $roleUser . ":" . $user->id)
+                        ->actions([
+                            Action::make(__('notification.marked_as_read'))
+                                ->button()
+                                ->color('secondary')
+                                ->markAsRead()
+                        ])
+                        ->sendToDatabase($adUser, isEventDispatched: true);
+                });
+            }
+
             DB::commit();
             return ServiceReturn::success();
         } catch (\Throwable $e) {
@@ -266,151 +296,25 @@ class NotificationService extends BaseService
      */
     public function sendAdminNotification(NotificationAdminType $type, array $data = []): ServiceReturn
     {
-        try {
-            $admins = $this->userRepository->queryUser()
-                ->where('role', UserRole::ADMIN->value)
-                ->get();
-            $admins->each(function ($admin) use ($type, $data) {
-                switch ($type) {
-                    // Thông báo booking quá hạn
-                    case NotificationAdminType::OVERDUE_ONGOING_BOOKING:
-                        Notification::make()
-                            ->title(__('notification.overdue_ongoing_booking.title'))
-                            ->warning()
-                            ->body(__('notification.overdue_ongoing_booking.body', [
-                                'booking_id' => $data['booking_id'],
-                                'start_time' => $data['start_time'],
-                                'duration' => $data['duration'],
-                            ]))
-                            ->actions([
-                                Action::make(__('notification.detail'))
-                                    ->button()
-                                    ->color('primary')
-                                    ->url(BookingResource::getUrl('view', ['record' => $data['booking_id']]))
-                                    ->markAsRead(),
-                                Action::make(__('notification.marked_as_read'))
-                                    ->button()
-                                    ->markAsRead(),
-                            ])
-                            ->sendToDatabase($admin);
-                        break;
-                    // Thông báo booking quá hạn
-                    case NotificationAdminType::OVERDUE_CONFIRMED_BOOKING:
-                        Notification::make()
-                            ->title(__('notification.overdue_confirmed_booking.title'))
-                            ->warning()
-                            ->body(__('notification.overdue_confirmed_booking.body', [
-                                'booking_id' => $data['booking_id'],
-                                'booking_time' => $data['booking_time'],
-                                'duration' => $data['duration'],
-                            ]))
-                            ->actions([
-                                Action::make(__('notification.detail'))
-                                    ->button()
-                                    ->color('primary')
-                                    ->url(BookingResource::getUrl('view', ['record' => $data['booking_id']]))
-                                    ->markAsRead(),
-                                Action::make(__('notification.marked_as_read'))
-                                    ->button()
-                                    ->markAsRead(),
+        return $this->execute(
+            function () use ($type, $data) {
+                $targetRoles = $type->getTargetRoles();
 
-                            ])
-                            ->sendToDatabase($admin);
-                        break;
-                    // Thông báo đăng ký làm đối tác KTV
-                    case NotificationAdminType::USER_APPLY_KTV_PARTNER:
-                        Notification::make()
-                            ->title(__('notification.user_apply_ktv_partner.title'))
-                            ->info()
-                            ->body(__('notification.user_apply_ktv_partner.body', [
-                                'user_id' => $data['user_id'],
-                            ]))
-                            ->actions([
-                                Action::make(__('notification.detail'))
-                                    ->button()
-                                    ->color('primary')
-                                    ->url(KTVResource::getUrl('edit', ['record' => $data['user_id']]))
-                                    ->markAsRead(),
-                                Action::make(__('notification.marked_as_read'))
-                                    ->button()
-                                    ->color('secondary')
-                                    ->markAsRead(),
-
-                            ])
-                            ->sendToDatabase($admin);
-                        break;
-                    // Thông báo đăng ký làm đối tác đại lý
-                    case NotificationAdminType::USER_APPLY_AGENCY_PARTNER:
-                        Notification::make()
-                            ->title(__('notification.user_apply_agency_partner.title'))
-                            ->info()
-                            ->body(__('notification.user_apply_agency_partner.body', [
-                                'user_id' => $data['user_id'],
-                            ]))
-                            ->actions([
-                                Action::make(__('notification.detail'))
-                                    ->button()
-                                    ->color('primary')
-                                    ->url(AgencyResource::getUrl('edit', ['record' => $data['user_id']]))
-                                    ->markAsRead(),
-                                Action::make(__('notification.marked_as_read'))
-                                    ->button()
-                                    ->markAsRead(),
-
-                            ])
-                            ->sendToDatabase($admin);
-                        break;
-                    // Thông báo xác nhận thanh toán wechat
-                    case NotificationAdminType::CONFIRM_WECHAT_PAYMENT:
-                        Notification::make()
-                            ->title(__('notification.confirm_wechat_payment.title'))
-                            ->info()
-                            ->body(__('notification.confirm_wechat_payment.body', [
-                                'transaction_id' => $data['transaction_id'],
-                            ]))
-                            ->actions([
-                                Action::make(__('notification.detail'))
-                                    ->button()
-                                    ->color('primary')
-                                    ->url(WalletTransactionResource::getUrl('index', ['search' => $data['transaction_id']]))
-                                    ->markAsRead(),
-                                Action::make(__('notification.marked_as_read'))
-                                    ->button()
-                                    ->markAsRead(),
-                            ])
-                            ->sendToDatabase($admin);
-                        break;
-                    case NotificationAdminType::EMERGENCY_SUPPORT:
-                        Notification::make()
-                            ->title(__('notification.emergency_support.title'))
-                            ->danger()
-                            ->body(__('notification.emergency_support.body', [
-                                'booking_id' => $data['booking_id'] ?? "Unknow",
-                            ]))
-                            ->actions([
-                                Action::make(__('notification.detail'))
-                                    ->button()
-                                    ->color('primary')
-                                    ->url($data['booking_id'] ? BookingResource::getUrl('view', ['record' => $data['booking_id']]) : null)
-                                    ->markAsRead(),
-                                Action::make(__('notification.marked_as_read'))
-                                    ->button()
-                                    ->markAsRead(),
-                            ])
-                            ->sendToDatabase($admin);
-                        break;
+                $adUser = $this->adminUserRepository->queryAdminUser()
+                    ->whereIn('role', $targetRoles)
+                    ->get();
+                if ($adUser->isEmpty()){
+                    return ServiceReturn::success();
                 }
-            });
-            return ServiceReturn::success();
-        } catch (\Exception $exception) {
-            LogHelper::error(
-                message: "Lỗi NotificationService@sendAdminNotification",
-                ex: $exception
-            );
-            return ServiceReturn::error(
-                message: __("common_error.server_error")
-            );
-        }
+                $notification = $this->buildNotificationAdmin($type, $data);
+                if ($notification){
+                    $notification
+                        ->sendToDatabase($adUser, isEventDispatched: true);
+                }
+                return ServiceReturn::success();
+            }
+        );
+
     }
 
     /**
@@ -465,5 +369,90 @@ class NotificationService extends BaseService
                 message: __("common_error.server_error")
             );
         }
+    }
+
+
+
+
+
+    /**
+     *  ---- PRIVATE METHODS ----
+     */
+
+    private function buildNotificationAdmin(NotificationAdminType $type, array $data = [])
+    {
+        $detailAction = Action::make(__('notification.detail'))
+            ->button()
+            ->color('primary')
+            ->markAsRead();
+        $readAction = Action::make(__('notification.marked_as_read'))
+            ->button()
+            ->color('secondary')
+            ->markAsRead();
+        $notification = Notification::make();
+        return match ($type) {
+            // Thông báo booking quá hạn
+            NotificationAdminType::OVERDUE_ONGOING_BOOKING => $notification
+                ->title(__('notification.overdue_ongoing_booking.title'))
+                ->warning()
+                ->body(__('notification.overdue_ongoing_booking.body', $data))
+                ->actions([
+                    $detailAction->url(BookingResource::getUrl('view', ['record' => $data['booking_id']])),
+                    $readAction,
+                ]),
+
+            NotificationAdminType::OVERDUE_CONFIRMED_BOOKING => $notification
+                ->title(__('notification.overdue_confirmed_booking.title'))
+                ->warning()
+                ->body(__('notification.overdue_confirmed_booking.body', $data))
+                ->actions([
+                    $detailAction->url(BookingResource::getUrl('view', ['record' => $data['booking_id']])),
+                    $readAction,
+                ]),
+
+            NotificationAdminType::USER_APPLY_KTV_PARTNER => $notification
+                ->title(__('notification.user_apply_ktv_partner.title'))
+                ->info()
+                ->body(__('notification.user_apply_ktv_partner.body', $data))
+                ->actions([
+                    $detailAction->url(KTVResource::getUrl('edit', ['record' => $data['user_id']])),
+                    $readAction,
+                ]),
+
+            NotificationAdminType::USER_APPLY_AGENCY_PARTNER => $notification
+                ->title(__('notification.user_apply_agency_partner.title'))
+                ->info()
+                ->body(__('notification.user_apply_agency_partner.body', $data))
+                ->actions([
+                    $detailAction->url(AgencyResource::getUrl('edit', ['record' => $data['user_id']])),
+                    $readAction,
+                ]),
+
+            NotificationAdminType::CONFIRM_WECHAT_PAYMENT=> $notification // Gộp 2 cái giống nhau
+            ->title(__("notification.confirm_wechat_payment.title")) // Giả sử value của enum khớp với key
+            ->info()
+                ->body(__("notification.confirm_wechat_payment.body", $data))
+                ->actions([
+                    $detailAction->url(WalletTransactionResource::getUrl('index', ['search' => $data['transaction_id']])),
+                    $readAction,
+                ]),
+            NotificationAdminType::CONFIRM_ALIPAY_PAYMENT => $notification
+            ->title(__("notification.confirm_alipay_payment.title"))
+            ->info()
+                ->body(__("notification.confirm_alipay_payment.body", $data))
+                ->actions([
+                    $detailAction->url(WalletTransactionResource::getUrl('index', ['search' => $data['transaction_id']])),
+                    $readAction,
+                ]),
+            NotificationAdminType::EMERGENCY_SUPPORT => $notification
+                ->title(__('notification.emergency_support.title'))
+                ->danger()
+                ->body(__('notification.emergency_support.body', ['booking_id' => $data['booking_id'] ?? "Unknown"]))
+                ->actions([
+                    $detailAction->url(isset($data['booking_id']) ? BookingResource::getUrl('view', ['record' => $data['booking_id']]) : null),
+                    $readAction,
+                ]),
+            default => null,
+        };
     }
 }

@@ -150,6 +150,77 @@ class ConfigForm extends Component implements HasSchemas
                                         ->validationMessages([
                                             'string' => __('common.error.string'),
                                         ]),
+                                    TextInput::make((string)ConfigName::MAIL_HOST->value)
+                                        ->label(__('admin.setting.fields.mail_host'))
+                                        ->default('')
+                                        ->rules([
+                                            'string', 'required'
+                                        ])
+                                        ->validationMessages([
+                                            'string' => __('common.error.string'),
+                                            'required' => __('common.error.required'),
+                                        ]),
+                                    TextInput::make((string)ConfigName::MAIL_PORT->value)
+                                        ->label(__('admin.setting.fields.mail_port'))
+                                        ->default('')
+                                        ->rules([
+                                            'string', 'required'
+                                        ])
+                                        ->validationMessages([
+                                            'string' => __('common.error.string'),
+                                            'required' => __('common.error.required'),
+                                        ]),
+                                    TextInput::make((string)ConfigName::MAIL_ENCRYPTION->value)
+                                        ->label(__('admin.setting.fields.mail_encryption'))
+                                        ->default('')
+                                        ->rules([
+                                            'string', 'required'
+                                        ])
+                                        ->validationMessages([
+                                            'string' => __('common.error.string'),
+                                            'required' => __('common.error.required'),
+                                        ]),
+                                    TextInput::make((string)ConfigName::MAIL_USERNAME->value)
+                                        ->label(__('admin.setting.fields.mail_username'))
+                                        ->default('')
+                                        ->rules([
+                                            'string', 'required'
+                                        ])
+                                        ->validationMessages([
+                                            'string' => __('common.error.string'),
+                                            'required' => __('common.error.required'),
+                                        ]),
+                                    TextInput::make((string)ConfigName::MAIL_PASSWORD->value)
+                                        ->label(__('admin.setting.fields.mail_password'))
+                                        ->default('')
+                                        ->rules([
+                                            'string', 'required'
+                                        ])
+                                        ->validationMessages([
+                                            'string' => __('common.error.string'),
+                                            'required' => __('common.error.required'),
+                                        ]),
+                                    TextInput::make((string)ConfigName::MAIL_FROM_ADDRESS->value)
+                                        ->label(__('admin.setting.fields.mail_from_address'))
+                                        ->default('')
+                                        ->rules([
+                                            'string', 'required'
+                                        ])
+                                        ->validationMessages([
+                                            'string' => __('common.error.string'),
+                                            'required' => __('common.error.required'),
+                                        ]),
+                                    TextInput::make((string)ConfigName::MAIL_FROM_NAME->value)
+                                        ->label(__('admin.setting.fields.mail_from_name'))
+                                        ->default('')
+                                        ->rules([
+                                            'string', 'required'
+                                        ])
+                                        ->validationMessages([
+                                            'string' => __('common.error.string'),
+                                            'required' => __('common.error.required'),
+                                        ]),
+
 
                                     TextInput::make((string) ConfigName::ZALO_MERCHANT_ID->value)
                                         ->label(__('admin.setting.fields.zalo_merchant_id'))
@@ -227,9 +298,18 @@ class ConfigForm extends Component implements HasSchemas
                                             'image' => __('common.error.image'),
                                             'max' => __('common.error.max', ['max' => 2048]),
                                     ]),
-
-
-
+                                    FileUpload::make((string)ConfigName::SP_ALIPAY_QR_IMAGE->value)
+                                        ->label(__('admin.setting.fields.sp_alipay_qr_image'))
+                                        ->image()
+                                        ->directory(DirectFile::CONFIG->value)
+                                        ->disk('public')
+                                        ->visibility('public')
+                                        ->maxSize(2048)
+                                        ->helperText(__('admin.setting.fields.sp_alipay'))
+                                        ->validationMessages([
+                                            'image' => __('common.error.image'),
+                                            'max' => __('common.error.max', ['max' => 2048]),
+                                        ]),
 
                                 ]),
                             Section::make(__('admin.setting.label_config_discount_rate'))

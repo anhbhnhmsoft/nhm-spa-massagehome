@@ -15,6 +15,7 @@ enum ConfigName: string
     case SP_PHONE = 'SP_PHONE'; // Số điện thoại hỗ trợ
     case SP_WECHAT = 'SP_WECHAT'; // link Wechat hỗ trợ của admin
     case SP_WECHAT_QR_IMAGE = 'SP_WECHAT_QR_IMAGE'; // Ảnh/URL mã QR Wechat Pay
+    case SP_ALIPAY_QR_IMAGE = 'SP_ALIPAY_QR_IMAGE'; // Ảnh/URL mã QR Alipay Pay
     case DISCOUNT_RATE = 'DISCOUNT_RATE'; // Tỷ lệ chiết khấu dành cho kỹ thuật viên %
     case DISCOUNT_RATE_REFERRER_AGENCY = 'DISCOUNT_RATE_REFERRER_AGENCY'; // Tỷ lệ chiết khấu dành cho đại lý đối với 1 đơn hoàn thành của 1 KTV mà mình giới thiệu %
     case DISCOUNT_RATE_REFERRER_KTV = 'DISCOUNT_RATE_REFERRER_KTV'; // Tỷ lệ chiết khấu dành cho kỹ thuật viên đối với 1 đơn hoàn thành của 1 KTV mà mình giới thiệu %
@@ -38,6 +39,13 @@ enum ConfigName: string
     case ZALO_TEMPLATE_ID = 'ZALO_TEMPLATE_ID';
 
     /**
-     * --- End ---
+     * --- Config mail ---
      */
+    case MAIL_HOST = 'MAIL_HOST';
+    case MAIL_PORT = 'MAIL_PORT';
+    case MAIL_USERNAME = 'MAIL_USERNAME';
+    case MAIL_PASSWORD = 'MAIL_PASSWORD';
+    case MAIL_FROM_ADDRESS = 'MAIL_FROM_ADDRESS';
+    case MAIL_FROM_NAME = 'MAIL_FROM_NAME';
+    case MAIL_ENCRYPTION = 'MAIL_ENCRYPTION';
 }

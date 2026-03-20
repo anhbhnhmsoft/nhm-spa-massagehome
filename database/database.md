@@ -61,6 +61,8 @@
     - id (bigint, primary key, auto-increment)
     - phone (varchar, unique, nullable) -- số điện thoại
     - phone_verified_at (timestamp, nullable) -- thời gian xác thực số điện thoại
+    - email (varchar, unique, nullable) -- email
+    - email_verified_at (timestamp, nullable) -- thời gian xác thực email
     - password (varchar) -- mật khẩu đã được mã hóa
     - name (varchar) -- tên người dùng
     - role (smallint) -- vai trò người dùng (trong enum UserRole)
@@ -78,7 +80,8 @@
 
     # cấu trúc
     - id
-    - phone (varchar)            
+    - phone (varchar, nullable) -- số điện thoại
+    - email (varchar, nullable) -- email
     - otp_hash (varchar)
     - type (unsigned smallint) - Loại OTP (trong enum UserOtpType)
     - attempts (unsigned tinyint, default 0) -- số lần thử lại     
@@ -90,6 +93,7 @@
     - timestamps
 
     - index (phone, type) -- chỉ mục trên cột phone và type để tối ưu truy vấn
+    - index (email, type) -- chỉ mục trên cột email và type để tối ưu truy vấn
 
 
 # user_devices

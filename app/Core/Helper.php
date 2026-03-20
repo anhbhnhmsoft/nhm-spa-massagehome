@@ -41,6 +41,7 @@ final class Helper
             PaymentType::WITHDRAWAL => "WDL" . self::getTimestampAsId(),
             PaymentType::REFUND => "RFD" . self::getTimestampAsId(),
             PaymentType::WECHAT => "WCT" . self::getTimestampAsId(),
+            PaymentType::ALIPAY => "ALIPY" . self::getTimestampAsId(),
             default => "UNKNOWN" . self::getTimestampAsId(),
         };
     }
@@ -263,5 +264,25 @@ final class Helper
             ];
         })->toArray();
         return $allTranslations;
+    }
+
+    /**
+     * Kiểm tra số điện thoại có hợp lệ không
+     * @param string $value
+     * @return bool
+     */
+    public static function validPhone(string $value): bool
+    {
+        return preg_match('/^(?:\+84|84|0)[3|5|7|8|9][0-9]{8}$/', $value);
+    }
+
+    /**
+     * Kiểm tra email có hợp lệ không
+     * @param string $value
+     * @return bool
+     */
+    public static function validEmail(string $value): bool
+    {
+        return filter_var($value, FILTER_VALIDATE_EMAIL);
     }
 }

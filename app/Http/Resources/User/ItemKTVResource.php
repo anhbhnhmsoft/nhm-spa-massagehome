@@ -39,21 +39,22 @@ class ItemKTVResource extends ListKTVResource
             ];
         })->toArray();
 
-        // Review đầu tiên
-        $review = $this->reviewsReceived->first();
-
-        $firstReview = null;
-
-        if ($review) {
-            $isVirtual = $review->is_virtual && !empty($review->virtual_name) && !$review->hidden;
+        // Các lượt review gần đây
+        $recentReviews = $this->reviewsReceived->map(function ($review) {
             $reviewerData = null;
+
+            // Chú ý: Query của đã có where('hidden', false) nên không cần check lại !$review->hidden nữa
+            $isVirtual = $review->is_virtual && !empty($review->virtual_name);
+
             if ($isVirtual) {
+                // Xử lý review ảo
                 $reviewerData = [
-                    'id'   => "123456789",
+                    'id'   => "123456789", // Bạn có thể giữ nguyên ID ảo này hoặc hash một ID ngẫu nhiên
                     'name' => $review->virtual_name,
                     'avatar_url' => null,
                 ];
-            } elseif (!$review->hidden) {
+            } else {
+                // Xử lý review thật
                 $reviewer = $review->reviewer ?? null;
                 if ($reviewer) {
                     $reviewerData = [
@@ -66,16 +67,16 @@ class ItemKTVResource extends ListKTVResource
                 }
             }
 
-            // 3. Gom nhóm dữ liệu trả về
-            $firstReview = [
-                'review_by' => $reviewerData,
-                'comment'   => $review->comment ?? '',
-                'rating'    => $review->rating,
+            // Trả về cấu trúc của từng phần tử review
+            return [
+                'review_by'  => $reviewerData,
+                'comment'    => $review->comment ?? '',
+                'rating'     => $review->rating,
                 'created_at' => $review->review_at ?? $review->created_at,
             ];
-        }
+        });
 
-        $data['first_review'] = $firstReview;
+        $data['recent_reviews'] = $recentReviews;
 
         $data['service_categories'] = $this->categories->map(function ($category) {
             return [

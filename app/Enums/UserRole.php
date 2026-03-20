@@ -26,11 +26,6 @@ enum UserRole: int
      */
     case AGENCY = 3;
 
-    /**
-     * Admin: Quản lý toàn bộ hệ thống
-     */
-    case ADMIN = 4;
-
 
     public function label(): string
     {
@@ -38,7 +33,6 @@ enum UserRole: int
             self::CUSTOMER => __('admin.user_role.customer'),
             self::KTV => __('admin.user_role.ktv'),
             self::AGENCY => __('admin.user_role.agency'),
-            self::ADMIN => __('admin.user_role.admin'),
         };
     }
 

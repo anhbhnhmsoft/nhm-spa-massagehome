@@ -147,16 +147,7 @@ class KTVsTable
             ])
             ->filtersLayout(FiltersLayout::AboveContent)
             ->filtersFormColumns(5)
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make()
-                        ->label(__('admin.common.action.delete'))
-                        ->requiresConfirmation()
-                        ->modalHeading(__('admin.common.modal.delete_title'))
-                        ->modalDescription(__('admin.common.modal.delete_confirm'))
-                        ->modalSubmitActionLabel(__('admin.common.action.confirm_delete')),
-                ]),
-            ])
+
             ->emptyStateHeading(__('admin.ktv.empty_state.heading'))
             ->defaultSort('reviewApplication.status', 'asc');
     }

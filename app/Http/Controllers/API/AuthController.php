@@ -4,8 +4,10 @@ namespace App\Http\Controllers\API;
 
 use App\Enums\Gender;
 use App\Enums\Language;
+use App\Enums\TypeAuthenticate;
 use App\Http\Requests\API\Auth\RegisterRequest;
 use App\Http\Resources\Auth\UserResource;
+use App\Rules\EmailOrPhoneRule;
 use App\Rules\PhoneRule;
 use App\Core\Cache\Caching;
 use App\Rules\PasswordRule;
@@ -33,10 +35,16 @@ class AuthController extends BaseController
     public function authenticate(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'phone' => ['required', new PhoneRule()],
+            'username' => ['required', new EmailOrPhoneRule()],
+            'type_authenticate' => ['required', Rule::enum(TypeAuthenticate::class)],
+        ],[
+            'username.required' => __('validation.username.required'),
+            'type_authenticate.required' => __('validation.type_authenticate.required'),
+            'type_authenticate.enum' => __('validation.type_authenticate.invalid'),
         ]);
         $resService = $this->authService->authenticate(
-            phone: $data['phone'],
+            username: $data['username'],
+            typeAuthenticate: TypeAuthenticate::from($data['type_authenticate']),
         );
         if ($resService->isError()) {
             return $this->sendError(
@@ -46,7 +54,6 @@ class AuthController extends BaseController
         $dataService = $resService->getData();
         return $this->sendSuccess(
             data: $dataService,
-            message: __('auth.success.authenticate'),
         );
     }
 
@@ -59,16 +66,20 @@ class AuthController extends BaseController
     public function verifyOtpRegister(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'phone' => ['required', new PhoneRule()],
+            'username' => ['required', new EmailOrPhoneRule()],
+            'type_authenticate' => ['required', Rule::enum(TypeAuthenticate::class)],
             'otp' => ['required', 'numeric'],
         ], [
-            'phone.required' => __('validation.phone.required'),
+            'username.required' => __('validation.username.required'),
+            'type_authenticate.required' => __('validation.type_authenticate.required'),
+            'type_authenticate.enum' => __('validation.type_authenticate.invalid'),
             'otp.required' => __('auth.error.invalid_otp'),
             'otp.numeric' => __('auth.error.invalid_otp'),
         ]);
         // Kiểm tra OTP và lấy token
         $resService = $this->authService->verifyOtpRegister(
-            phone: $data['phone'],
+            username: $data['username'],
+            typeAuthenticate: TypeAuthenticate::from($data['type_authenticate']),
             otp: $data['otp'],
         );
         if ($resService->isError()) {
@@ -87,12 +98,18 @@ class AuthController extends BaseController
     public function resendOtpRegister(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'phone' => ['required', new PhoneRule()],
+            'username' => ['required', new EmailOrPhoneRule()],
+            'type_authenticate' => ['required', Rule::enum(TypeAuthenticate::class)],
+        ],[
+            'username.required' => __('validation.username.required'),
+            'type_authenticate.required' => __('validation.type_authenticate.required'),
+            'type_authenticate.enum' => __('validation.type_authenticate.invalid'),
         ]);
 
         // Gửi lại OTP đăng ký
         $resService = $this->authService->resendOtpRegister(
-            phone: $data['phone'],
+            username: $data['username'],
+            typeAuthenticate: TypeAuthenticate::from($data['type_authenticate']),
         );
         if ($resService->isError()) {
             return $this->sendError(
@@ -115,7 +132,8 @@ class AuthController extends BaseController
 
         // Đăng ký tài khoản
         $resService = $this->authService->register(
-            phone: $data['phone'],
+            username: $data['username'],
+            typeAuthenticate: TypeAuthenticate::from($data['type_authenticate']),
             password: $data['password'],
             name: $data['name'],
             gender: Gender::from($data['gender']),
@@ -144,12 +162,19 @@ class AuthController extends BaseController
     public function login(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'phone' => ['required', new PhoneRule()],
+            'username' => ['required', new EmailOrPhoneRule()],
+            'type_authenticate' => ['required', Rule::enum(TypeAuthenticate::class)],
             'password' => ['required', new PasswordRule()],
+        ], [
+            'username.required' => __('validation.username.required'),
+            'type_authenticate.required' => __('validation.type_authenticate.required'),
+            'type_authenticate.enum' => __('validation.type_authenticate.invalid'),
+            'password.required' => __('validation.password.required'),
         ]);
         // Đăng nhập tài khoản
         $resService = $this->authService->login(
-            phone: $data['phone'],
+            username: $data['username'],
+            typeAuthenticate: TypeAuthenticate::from($data['type_authenticate']),
             password: $data['password'],
         );
         if ($resService->isError()) {
@@ -175,11 +200,13 @@ class AuthController extends BaseController
     public function forgotPassword(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'phone' => ['required', new PhoneRule()],
+            'username' => ['required', new EmailOrPhoneRule()],
+            'type_authenticate' => ['required', Rule::enum(TypeAuthenticate::class)],
         ]);
         // Gửi lại OTP đăng ký
         $resService = $this->authService->forgotPassword(
-            phone: $data['phone'],
+            username: $data['username'],
+            typeAuthenticate: TypeAuthenticate::from($data['type_authenticate']),
         );
         if ($resService->isError()) {
             return $this->sendError(
@@ -200,16 +227,20 @@ class AuthController extends BaseController
     public function verifyOtpForgotPassword(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'phone' => ['required', new PhoneRule()],
+            'username' => ['required', new EmailOrPhoneRule()],
+            'type_authenticate' => ['required', Rule::enum(TypeAuthenticate::class)],
             'otp' => ['required', 'numeric'],
         ], [
-            'phone.required' => __('validation.phone.required'),
+            'username.required' => __('validation.username.required'),
+            'type_authenticate.required' => __('validation.type_authenticate.required'),
+            'type_authenticate.enum' => __('validation.type_authenticate.invalid'),
             'otp.required' => __('auth.error.invalid_otp'),
             'otp.numeric' => __('auth.error.invalid_otp'),
         ]);
         // Kiểm tra OTP và lấy token
         $resService = $this->authService->verifyOtpForgotPassword(
-            phone: $data['phone'],
+            username: $data['username'],
+            typeAuthenticate: TypeAuthenticate::from($data['type_authenticate']),
             otp: $data['otp'],
         );
         if ($resService->isError()) {
@@ -228,12 +259,14 @@ class AuthController extends BaseController
     public function resendOtpForgotPassword(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'phone' => ['required', new PhoneRule()],
+            'username' => ['required', new EmailOrPhoneRule()],
+            'type_authenticate' => ['required', Rule::enum(TypeAuthenticate::class)],
         ]);
 
         // Gửi lại OTP đăng ký
         $resService = $this->authService->resendOtpForgotPassword(
-            phone: $data['phone'],
+            username: $data['username'],
+            typeAuthenticate: TypeAuthenticate::from($data['type_authenticate']),
         );
         if ($resService->isError()) {
             return $this->sendError(
@@ -255,12 +288,14 @@ class AuthController extends BaseController
     public function resetPassword(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'phone' => ['required', new PhoneRule()],
+            'username' => ['required', new EmailOrPhoneRule()],
+            'type_authenticate' => ['required', Rule::enum(TypeAuthenticate::class)],
             'password' => ['required', new PasswordRule()],
         ]);
         // Đổi mật khẩu
         $resService = $this->authService->resetPassword(
-            phone: $data['phone'],
+            username: $data['username'],
+            typeAuthenticate: TypeAuthenticate::from($data['type_authenticate']),
             password: $data['password'],
         );
         if ($resService->isError()) {

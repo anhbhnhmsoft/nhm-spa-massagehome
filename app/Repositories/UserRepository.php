@@ -6,6 +6,7 @@ use App\Core\BaseRepository;
 use App\Core\Helper;
 use App\Enums\BookingStatus;
 use App\Enums\ReviewApplicationStatus;
+use App\Enums\TypeAuthenticate;
 use App\Enums\UserRole;
 use App\Models\Review;
 use App\Models\Service;
@@ -176,16 +177,23 @@ class UserRepository extends BaseRepository
             ->exists();
     }
 
+    public function isEmailVerified(string $email): bool
+    {
+        return $this->query()->where('email', $email)
+            ->whereNotNull('email_verified_at')
+            ->exists();
+    }
+
     /**
      * Tìm kiếm User theo SĐT đã xác thực
      * @param string $phone
      * @return User|null
      */
-    public function findByPhoneVerified(string $phone): ?User
+    public function findByUserVerified(string $username, TypeAuthenticate $typeAuthenticate): ?User
     {
         return $this->query()
-            ->where('phone', $phone)
-            ->whereNotNull('phone_verified_at')
+            ->where($typeAuthenticate->value, $username)
+            ->whereNotNull($typeAuthenticate->value . '_verified_at')
             ->first();
     }
 

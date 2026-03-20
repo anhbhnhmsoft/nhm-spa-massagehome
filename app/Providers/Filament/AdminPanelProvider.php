@@ -77,7 +77,7 @@ class AdminPanelProvider extends PanelProvider
             )
             ->databaseTransactions()
             ->databaseNotifications()
-            ->databaseNotificationsPolling('30s')
+            ->databaseNotificationsPolling(false)
             ->navigationItems([
                 NavigationItem::make(__('System Logs'))
                     ->visible(fn () => auth('web')->user()?->role === AdminRole::ADMIN)

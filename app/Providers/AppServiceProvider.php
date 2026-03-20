@@ -62,6 +62,7 @@ use App\Services\CouponService;
 use App\Services\Facades\BookingFacadeService;
 use App\Services\Facades\TransactionJobService;
 use App\Services\GeminiService;
+use App\Services\MailService;
 use App\Services\NotificationService;
 use App\Services\PaymentService;
 use App\Services\PayOsService;
@@ -175,6 +176,8 @@ class AppServiceProvider extends ServiceProvider
         // Register AuthService
         $this->app->singleton(ConfigService::class);
         $this->app->singleton(GeminiService::class);
+        $this->app->singleton(ZaloService::class);
+        $this->app->singleton(MailService::class);
         $this->app->singleton(PayOsService::class);
         $this->app->singleton(AuthService::class);
         $this->app->singleton(ServiceService::class);
@@ -193,7 +196,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(UserWithdrawInfoService::class);
         $this->app->singleton(UserFileService::class);
         $this->app->singleton(AgencyService::class);
-        $this->app->singleton(ZaloService::class);
         $this->app->singleton(ProfileService::class);
     }
 

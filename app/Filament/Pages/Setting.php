@@ -2,11 +2,12 @@
 
 namespace App\Filament\Pages;
 
-use App\Enums\Admin\AdminRole;
+use App\Enums\Admin\AdminGate;
 use BackedEnum;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\Facades\Gate;
 
 class Setting extends Page
 {
@@ -14,7 +15,7 @@ class Setting extends Page
 
     public static function canAccess(): bool
     {
-        return auth('web')->user()?->role === AdminRole::ADMIN;
+        return Gate::check(AdminGate::ALLOW_ADMIN);
     }
     public static function getNavigationLabel(): string
     {

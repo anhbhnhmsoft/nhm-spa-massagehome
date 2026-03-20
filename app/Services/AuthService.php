@@ -11,6 +11,7 @@ use App\Core\Service\ServiceReturn;
 use App\Enums\DirectFile;
 use App\Enums\Gender;
 use App\Enums\Language;
+use App\Enums\TypeAuthenticate;
 use App\Enums\UserOtpType;
 use App\Enums\UserRole;
 use App\Models\User;
@@ -21,6 +22,7 @@ use App\Repositories\UserProfileRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\WalletRepository;
 use Exception;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -41,8 +43,9 @@ class AuthService extends BaseService
         protected UserProfileRepository $userProfileRepository,
         protected WalletRepository      $walletRepository,
         protected UserDeviceRepository $userDeviceRepository,
-        protected ZaloService $zaloService,
         protected ConfigService $configService,
+        protected ZaloService $zaloService,
+        protected MailService $mailService,
         protected UserOtpRepository $userOtpRepository,
         protected AdminUserRepository $adminUserRepository,
     )
@@ -53,25 +56,31 @@ class AuthService extends BaseService
     /**
      * Xác thực đăng nhập bằng số điện thoại.
      * Nếu tồn tại tài khoản với số điện thoại này, thì sẽ cần yêu cầu thêm mật khẩu, còn không sẽ gửi OTP đăng ký.
-     * @param string $phone
+     * @param string $username
+     * @param TypeAuthenticate $typeAuthenticate
      * @return ServiceReturn
      */
-    public function authenticate(string $phone): ServiceReturn
+    public function authenticate(string $username, TypeAuthenticate $typeAuthenticate): ServiceReturn
     {
         return $this->execute(
-            callback: function () use ($phone) {
-                // Kiểm tra xem số điện thoại có tồn tại không
-                $user = $this->userRepository->isPhoneVerified($phone);
+            callback: function () use ($username, $typeAuthenticate) {
+                $user = match ($typeAuthenticate) {
+                    TypeAuthenticate::PHONE => $this->userRepository->isPhoneVerified($username),
+                    TypeAuthenticate::EMAIL => $this->userRepository->isEmailVerified($username),
+                    default => throw new ServiceException(__('validation.type_authenticate.invalid')),
+                };
                 if ($user) {
                     // nếu có user thì yêu cầu thêm mật khẩu
                     return [
                         'case' => 'need_login',
                     ];
-                } else {
+                }
+                else {
                     // nếu không có user thì kiểm tra xem có OTP đăng ký chưa
                     $otpRecord = $this->getLastOtpNotVerified(
-                        phone: $phone,
+                        username: $username,
                         type: UserOtpType::REGISTER,
+                        typeAuthenticate: $typeAuthenticate,
                     );
                     if ($otpRecord) {
                         // nếu có OTP đăng ký chưa thì yêu cầu nhập OTP
@@ -84,9 +93,10 @@ class AuthService extends BaseService
 
                     // Kiểm tra có OTP nào đã xác thực rồi mà chưa đăng ký ko
                     $otpRecord = $this->userOtpRepository->getLatestVerifiedOtp(
-                        phone: $phone,
+                        identifier: $username,
                         type: UserOtpType::REGISTER,
                         minutes: self::OTP_TTL_MINUTES,
+                        typeAuthenticate: $typeAuthenticate,
                     );
                     if ($otpRecord) {
                         // nếu có OTP đăng ký và xác thực rồi thì phải đăng ký mới được
@@ -97,8 +107,9 @@ class AuthService extends BaseService
 
                     // Tạo OTP đăng ký và lưu vào database
                     $otpRecord = $this->createOtp(
-                        phone: $phone,
+                        username: $username,
                         type: UserOtpType::REGISTER,
+                        typeAuthenticate: $typeAuthenticate,
                     );
 
                     // nếu không có user thì yêu cầu đăng ký
@@ -109,24 +120,25 @@ class AuthService extends BaseService
                     ];
                 }
             },
-            useTransaction: true
+            useTransaction: true,
         );
     }
 
     /**
      * Gửi OTP quên mật khẩu
-     * @param string $phone
+     * @param string $username
+     * @param TypeAuthenticate $typeAuthenticate
      * @return ServiceReturn
      * @throws \Throwable
      */
-    public function forgotPassword(string $phone): ServiceReturn
+    public function forgotPassword(string $username, TypeAuthenticate $typeAuthenticate): ServiceReturn
     {
         return $this->execute(
-            callback: function () use ($phone) {
+            callback: function () use ($username, $typeAuthenticate) {
                 // Kiểm tra xem số điện thoại đã được xác thực chưa
-                $user = $this->userRepository->findByPhoneVerified($phone);
+                $user = $this->userRepository->findByUserVerified($username, $typeAuthenticate);
                 if (!$user) {
-                    throw new ServiceException(message: __('auth.error.phone_not_verified'));
+                    throw new ServiceException(message: __('auth.error.user_not_verified'));
                 }
                 // Kiểm tra user có bị khóa không
                 if (!$user->is_active) {
@@ -134,8 +146,9 @@ class AuthService extends BaseService
                 }
                 // nếu có user thì kiểm tra xem có OTP gửi chưa và còn thời hạn không
                 $otpRecord = $this->getLastOtpNotVerified(
-                    phone: $phone,
+                    username: $username,
                     type: UserOtpType::FORGOT_PASSWORD,
+                    typeAuthenticate: $typeAuthenticate,
                 );
                 if ($otpRecord) {
                     // nếu có OTP gửi rồi và còn thời hạn không thì yêu cầu nhập lại OTP
@@ -147,9 +160,10 @@ class AuthService extends BaseService
                 }
                 // Kiểm tra xem có OTP đăng ký và xác thực rồi không
                 $otpRecord = $this->userOtpRepository->getLatestVerifiedOtp(
-                    phone: $phone,
+                    identifier: $username,
                     type: UserOtpType::FORGOT_PASSWORD,
                     minutes: self::OTP_TTL_MINUTES,
+                    typeAuthenticate: $typeAuthenticate,
                 );
                 if ($otpRecord) {
                     // nếu có OTP rồi thì cần nhập yêu cầu quên mật khẩu lại
@@ -159,8 +173,9 @@ class AuthService extends BaseService
                 }
                 // Tạo OTP đăng ký và lưu vào database
                 $otpRecord = $this->createOtp(
-                    phone: $phone,
+                    username: $username,
                     type: UserOtpType::FORGOT_PASSWORD,
+                    typeAuthenticate: $typeAuthenticate,
                 );
                 return [
                     'case' => 'success',
@@ -179,14 +194,15 @@ class AuthService extends BaseService
      * @return ServiceReturn
      * @throws \Throwable
      */
-    public function verifyOtpForgotPassword(string $phone, string $otp): ServiceReturn
+    public function verifyOtpForgotPassword(string $username, TypeAuthenticate $typeAuthenticate, string $otp): ServiceReturn
     {
         return $this->execute(
-            callback: function () use ($phone, $otp) {
+            callback: function () use ($username, $typeAuthenticate, $otp) {
                 // Xác thực OTP đăng ký tài khoản
                 $this->verifyOtp(
-                    phone: $phone,
+                    username: $username,
                     type: UserOtpType::FORGOT_PASSWORD,
+                    typeAuthenticate: $typeAuthenticate,
                     otpCode: $otp,
                 );
                 return ServiceReturn::success();
@@ -197,17 +213,18 @@ class AuthService extends BaseService
 
     /**
      * Xác thực OTP đăng ký tài khoản.
-     * @param string $phone
+     * @param string $username
      * @param string $otp
      * @return ServiceReturn
      */
-    public function verifyOtpRegister(string $phone, string $otp): ServiceReturn
+    public function verifyOtpRegister(string $username, TypeAuthenticate $typeAuthenticate, string $otp): ServiceReturn
     {
         return $this->execute(
-            callback: function () use ($phone, $otp) {
+            callback: function () use ($username, $typeAuthenticate, $otp) {
                 // Xác thực OTP đăng ký tài khoản
                 $this->verifyOtp(
-                    phone: $phone,
+                    username: $username,
+                    typeAuthenticate: $typeAuthenticate,
                     type: UserOtpType::REGISTER,
                     otpCode: $otp,
                 );
@@ -222,13 +239,14 @@ class AuthService extends BaseService
      * @param string $phone
      * @return ServiceReturn
      */
-    public function resendOtpRegister(string $phone): ServiceReturn
+    public function resendOtpRegister(string $username, TypeAuthenticate $typeAuthenticate): ServiceReturn
     {
         return $this->execute(
-            callback: function () use ($phone) {
+            callback: function () use ($username, $typeAuthenticate) {
                 $otpRecord = $this->createOtp(
-                    phone: $phone,
+                    username: $username,
                     type: UserOtpType::REGISTER,
+                    typeAuthenticate: $typeAuthenticate,
                 );
                 return [
                     'last_sent_at' => $otpRecord->last_sent_at,
@@ -241,16 +259,18 @@ class AuthService extends BaseService
 
     /**
      * Gửi lại OTP đăng ký tài khoản.
-     * @param string $phone
+     * @param string $username
+     * @param TypeAuthenticate $typeAuthenticate
      * @return ServiceReturn
      */
-    public function resendOtpForgotPassword(string $phone): ServiceReturn
+    public function resendOtpForgotPassword(string $username, TypeAuthenticate $typeAuthenticate): ServiceReturn
     {
         return $this->execute(
-            callback: function () use ($phone) {
+            callback: function () use ($username, $typeAuthenticate) {
                 $otpRecord = $this->createOtp(
-                    phone: $phone,
+                    username: $username,
                     type: UserOtpType::FORGOT_PASSWORD,
+                    typeAuthenticate: $typeAuthenticate,
                 );
                 return [
                     'last_sent_at' => $otpRecord->last_sent_at,
@@ -263,7 +283,8 @@ class AuthService extends BaseService
 
     /**
      * Đăng ký tài khoản mới.
-     * @param string $phone -- Số điện thoại dùng để đăng ký tài khoản.
+     * @param string $username -- Tên đăng nhập dùng để đăng ký tài khoản.
+     * @param TypeAuthenticate $typeAuthenticate -- Loại xác thực.
      * @param string $password -- Mật khẩu tài khoản.
      * @param string $name -- Tên người dùng.
      * @param ?Gender $gender -- Giới tính.
@@ -271,7 +292,8 @@ class AuthService extends BaseService
      * @return ServiceReturn
      */
     public function register(
-        string    $phone,
+        string    $username,
+        TypeAuthenticate $typeAuthenticate,
         string    $password,
         string    $name,
         ?Gender   $gender,
@@ -279,33 +301,42 @@ class AuthService extends BaseService
     ): ServiceReturn
     {
         return $this->execute(
-            callback: function () use ($phone, $password, $name, $gender, $language) {
+            callback: function () use ($username, $typeAuthenticate, $password, $name, $gender, $language) {
                 // Kiểm tra xem số điện thoại đã được xác thực chưa
                 $otpRecord = $this->userOtpRepository->getLatestVerifiedOtp(
-                    phone: $phone,
+                    identifier: $username,
                     type: UserOtpType::REGISTER,
                     minutes: self::OTP_TTL_MINUTES,
+                    typeAuthenticate: $typeAuthenticate,
                 );
                 if (!$otpRecord) {
                     throw new ServiceException(__('auth.error.otp_not_verified'));
                 }
-
                 // Kiểm tra xem số điện thoại đã được đăng ký chưa
-                $user = $this->userRepository->isPhoneVerified($phone);
+                $user = match ($typeAuthenticate) {
+                    TypeAuthenticate::PHONE => $this->userRepository->isPhoneVerified($username),
+                    TypeAuthenticate::EMAIL => $this->userRepository->isEmailVerified($username),
+                    default => throw new ServiceException(__('validation.type_authenticate.invalid')),
+                };
                 if ($user) {
-                    throw new ServiceException(message: __('auth.error.phone_verified'));
+                    throw new ServiceException(message: __('auth.error.account_already_used'));
                 }
 
                 // Xóa OTP đã xác thực (tránh trường hợp người dùng nhập lại)
-                $this->userOtpRepository->deleteOtpHadVerified($phone, UserOtpType::REGISTER);
+                $this->userOtpRepository->deleteOtpHadVerified($username, UserOtpType::REGISTER, $typeAuthenticate);
 
                 /**
                  * Tạo user mới
                  * @var User $user
                  */
+                $columnAuth = match ($typeAuthenticate) {
+                    TypeAuthenticate::PHONE => 'phone',
+                    TypeAuthenticate::EMAIL => 'email',
+                };
+
                 $user = $this->userRepository->create([
-                    'phone' => $phone,
-                    'phone_verified_at' => now(),
+                    $columnAuth => $username,
+                    $columnAuth . '_verified_at' => now(),
                     'password' => Hash::make($password),
                     'name' => $name,
                     'language' => $language?->value ?? Language::VIETNAMESE->value,
@@ -339,20 +370,22 @@ class AuthService extends BaseService
 
     /**
      * Đăng nhập tài khoản
-     * @param string $phone
+     * @param string $username
+     * @param TypeAuthenticate $typeAuthenticate
      * @param string $password
      * @return ServiceReturn
      */
     public function login(
-        string $phone,
+        string $username,
+        TypeAuthenticate $typeAuthenticate,
         string $password,
     ): ServiceReturn
     {
         return $this->execute(
-            callback: function () use ($phone, $password) {
-                $user = $this->userRepository->findByPhoneVerified($phone);
+            callback: function () use ($username, $typeAuthenticate, $password) {
+                $user = $this->userRepository->findByUserVerified($username, $typeAuthenticate);
                 if (!$user) {
-                    throw new ServiceException(message: __('auth.error.phone_not_verified'));
+                    throw new ServiceException(message: __('auth.error.user_not_verified'));
                 }
                 // Kiểm tra password
                 if (!Hash::check($password, $user->password)) {
@@ -382,32 +415,35 @@ class AuthService extends BaseService
 
     /**
      * Đổi mật khẩu
-     * @param string $phone
+     * @param string $username
+     * @param TypeAuthenticate $typeAuthenticate
      * @param string $password
      * @return ServiceReturn
      * @throws \Throwable
      */
     public function resetPassword(
-        string $phone,
+        string $username,
+        TypeAuthenticate $typeAuthenticate,
         string $password,
     ): ServiceReturn
     {
         return $this->execute(
-            callback: function () use ($phone, $password) {
+            callback: function () use ($username, $typeAuthenticate, $password) {
                 // Kiểm tra xem số điện thoại đã được xác thực chưa
                 $otpRecord = $this->userOtpRepository->getLatestVerifiedOtp(
-                    phone: $phone,
+                    identifier: $username,
                     type: UserOtpType::FORGOT_PASSWORD,
                     minutes: self::OTP_TTL_MINUTES,
+                    typeAuthenticate: $typeAuthenticate,
                 );
                 if (!$otpRecord) {
                     throw new ServiceException(__('auth.error.otp_not_verified'));
                 }
 
                 // Kiểm tra xem số điện thoại đã được đăng ký chưa
-                $user = $this->userRepository->findByPhoneVerified($phone);
+                $user = $this->userRepository->findByUserVerified($username, $typeAuthenticate);
                 if (!$user) {
-                    throw new ServiceException(message: __('auth.error.phone_not_verified'));
+                    throw new ServiceException(message: __('auth.error.user_not_verified'));
                 }
 
                 // Cập nhật mật khẩu mới
@@ -416,7 +452,7 @@ class AuthService extends BaseService
                 ]);
 
                 // Xóa OTP đã xác thực (tránh trường hợp người dùng nhập lại)
-                $this->userOtpRepository->deleteOtpHadVerified($phone, UserOtpType::FORGOT_PASSWORD);
+                $this->userOtpRepository->deleteOtpHadVerified($username, UserOtpType::FORGOT_PASSWORD, $typeAuthenticate);
 
                 // Xóa token cũ, các thiết bị khác sẽ bị đăng xuất
                 $this->logoutAllDevices($user);
@@ -858,14 +894,14 @@ class AuthService extends BaseService
     }
 
     /**
-     * Lấy OTP chưa được xác thực mới nhất cho số điện thoại và loại OTP
-     * @param string $phone
+     * Lấy OTP chưa được xác thực mới nhất cho email hoặc số điện thoại và loại OTP
+     * @param string $username
      * @param UserOtpType $type
      * @return \App\Models\UserOtp|null
      */
-    protected function getLastOtpNotVerified(string $phone, UserOtpType $type)
+    protected function getLastOtpNotVerified(string $username, UserOtpType $type, TypeAuthenticate $typeAuthenticate)
     {
-        $latestOtp = $this->userOtpRepository->getLastOtpNotVerified($phone, $type);
+        $latestOtp = $this->userOtpRepository->getLastOtpNotVerified($username, $type, $typeAuthenticate);
         if ($latestOtp &&
             $latestOtp->last_sent_at->addSeconds(self::RETRY_AFTER_SECONDS)->isFuture()
         ) {
@@ -876,22 +912,32 @@ class AuthService extends BaseService
 
     /**
      * Tạo OTP
-     * @param string $phone
+     * @param string $username
      * @param UserOtpType $type
-     * @return \Illuminate\Database\Eloquent\Model
+     * @param TypeAuthenticate $typeAuthenticate
+     * @return Model
      * @throws ServiceException
+     * @throws \Throwable
      */
-    protected function createOtp(string $phone, UserOtpType $type)
+    protected function createOtp(string $username, UserOtpType $type, TypeAuthenticate $typeAuthenticate)
     {
         // Kiểm tra giới hạn gửi trong ngày
-        $totalSentToday = $this->userOtpRepository->sumTotalSendOTPToday($phone, $type);
+        $totalSentToday = $this->userOtpRepository->sumTotalSendOTPToday(
+            identifier: $username,
+            type: $type,
+            typeAuthenticate: $typeAuthenticate,
+        );
 
         if ($totalSentToday >= self::MAX_SEND_PER_DAY) {
             throw new ServiceException(__("auth.error.otp_limit_reached"));
         }
 
         // Kiểm tra khoảng cách giữa 2 lần gửi
-        $latestOtp = $this->getLastOtpNotVerified($phone, $type);
+        $latestOtp = $this->getLastOtpNotVerified(
+            username: $username,
+            type: $type,
+            typeAuthenticate: $typeAuthenticate,
+        );
         if ($latestOtp) {
             $secondsLeft = now()->diffInSeconds($latestOtp->last_sent_at->addSeconds(self::RETRY_AFTER_SECONDS));
             throw new ServiceException(__("auth.error.otp_retry_too_fast", ['seconds' => $secondsLeft]));
@@ -902,32 +948,47 @@ class AuthService extends BaseService
             $otp = 123456;
         } else {
             $otp = rand(100000, 999999);
-            $result = $this->zaloService->pushOTPAuthorize($phone, $otp);
-            if ($result->isError()) {
-                throw new ServiceException($result->getMessage());
+            switch ($typeAuthenticate) {
+                case TypeAuthenticate::PHONE:
+                    $result = $this->zaloService->pushOTPAuthorize($username, $otp);
+                    if ($result->isError()) {
+                        throw new ServiceException($result->getMessage());
+                    }
+                    break;
+                case TypeAuthenticate::EMAIL:
+                    $result = $this->mailService->sendOTP($username, $otp);
+                    if ($result->isError()) {
+                        throw new ServiceException($result->getMessage());
+                    }
+                    break;
             }
+
         }
 
         // Cập nhật hoặc tạo mới record OTP
         return $this->userOtpRepository->createOrUpdateOtp(
-            phone: $phone,
+            identifier: $username,
             type: $type,
             otp: $otp,
-            ip: request()->ip()
+            ip: request()->ip(),
+            typeAuthenticate: $typeAuthenticate,
         );
     }
 
     /**
-     * @param string $phone
+     * @param string $username
      * @param UserOtpType $type
      * @param string $otpCode
      * @throws ServiceException
      */
-    protected function verifyOtp(string $phone, UserOtpType $type, string $otpCode)
+    protected function verifyOtp(string $username, UserOtpType $type, TypeAuthenticate $typeAuthenticate, string $otpCode)
     {
         // Tìm OTP hợp lệ chưa được xác thực mới nhất
-        $otpRecord = $this->userOtpRepository->getLastOtpNotVerified($phone, $type);
-
+        $otpRecord = $this->userOtpRepository->getLastOtpNotVerified(
+            identifier: $username,
+            type: $type,
+            typeAuthenticate: $typeAuthenticate,
+        );
         if (!$otpRecord || $otpRecord->isExpired()) {
             throw new ServiceException(__("auth.error.otp_invalid_or_expired"));
         }

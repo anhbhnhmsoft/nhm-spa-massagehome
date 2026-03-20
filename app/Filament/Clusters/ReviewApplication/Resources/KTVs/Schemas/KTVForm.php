@@ -68,15 +68,12 @@ class KTVForm
                                     ->label(__('admin.common.table.phone'))
                                     ->tel()
                                     ->maxLength(20)
-                                    ->required()
-                                    ->unique()
-                                    ->disabled()
-                                    ->validationMessages([
-                                        'max' => __('common.error.max_length', ['max' => 20]),
-                                        'max_digits' => __('common.error.max_digits', ['max' => 20]),
-                                        'required' => __('common.error.required'),
-                                        'unique' => __('common.error.unique'),
-                                    ]),
+                                    ->disabled(),
+                                TextInput::make('email')
+                                    ->label(__('admin.common.table.email'))
+                                    ->email()
+                                    ->maxLength(255)
+                                    ->disabled(),
                                 TextInput::make('password')
                                     ->label(__('admin.common.table.password'))
                                     ->password()

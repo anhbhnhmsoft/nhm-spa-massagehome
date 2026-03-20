@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Core\GenerateId\HasBigIntId;
 use App\Enums\Admin\AdminRole;
+use App\Enums\Language;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -29,6 +30,7 @@ class AdminUser extends Authenticatable implements FilamentUser
 
     protected $casts = [
         'id' => 'string',
+        'language' => Language::class,
         'password' => 'hashed',
         'is_active' => 'boolean',
         'role' => AdminRole::class, // Map với Enum của bạn

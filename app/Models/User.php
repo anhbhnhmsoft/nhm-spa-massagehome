@@ -5,8 +5,6 @@ namespace App\Models;
 use App\Core\GenerateId\HasBigIntId;
 use App\Enums\UserRole;
 use App\Enums\UserFileType;
-
-use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -22,6 +20,8 @@ class User extends Authenticatable
         'id',
         'phone',
         'phone_verified_at',
+        'email',
+        'email_verified_at',
         'password',
         'name',
         'role', // Cast enum UserRole

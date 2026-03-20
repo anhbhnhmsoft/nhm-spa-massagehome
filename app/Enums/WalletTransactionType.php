@@ -102,6 +102,11 @@ enum WalletTransactionType: int
      */
     case REFUND_MONEY_DISCOUNT_SERVICE = 19;
 
+    /**
+     * Nạp tiền qua Alipay Pay
+     */
+    case DEPOSIT_ALIPAY_PAY = 20;
+
     public function label(): string
     {
         return match ($this) {
@@ -123,7 +128,8 @@ enum WalletTransactionType: int
             self::REFUND_CUSTOMER_TRANSPORT => __('admin.transaction.type.REFUND_CUSTOMER_TRANSPORT'),
             self::PAYMENT_REFUND_KTV_FOR_BOOKING_CANCEL => __('admin.transaction.type.PAYMENT_REFUND_KTV_FOR_BOOKING_CANCEL'),
             self::SUBTRACT_MONEY_DISCOUNT_SERVICE => __('admin.transaction.type.SUBTRACT_MONEY_DISCOUNT_SERVICE'),
-            self::REFUND_MONEY_DISCOUNT_SERVICE => __('admin.transaction.type.REFUND_MONEY_DISCOUNT_SERVICE')
+            self::REFUND_MONEY_DISCOUNT_SERVICE => __('admin.transaction.type.REFUND_MONEY_DISCOUNT_SERVICE'),
+            self::DEPOSIT_ALIPAY_PAY => __('admin.transaction.type.DEPOSIT_ALIPAY_PAY'),
         };
     }
 
@@ -139,6 +145,7 @@ enum WalletTransactionType: int
             self::DEPOSIT_ZALO_PAY->value,
             self::DEPOSIT_MOMO_PAY->value,
             self::DEPOSIT_WECHAT_PAY->value,
+            self::DEPOSIT_ALIPAY_PAY->value,
         ];
     }
 
