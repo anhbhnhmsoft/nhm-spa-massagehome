@@ -152,16 +152,24 @@ class UserRepository extends BaseRepository
         }
         switch ($sortBy) {
             case 'rating':
-                $column = 'reviews_received_avg_rating';
+            case 'reviews_received_avg_rating':
+                $column = 'review_stats.reviews_received_avg_rating';
                 break;
             case 'review_count':
-                $column = 'reviews_received_count';
+            case 'reviews_received_count':
+                $column = 'review_stats.reviews_received_count';
                 break;
             default:
-                $column = 'created_at';
+                $column = 'users.created_at';
                 break;
         }
-        $query->orderBy($column, $direction);
+
+        if (in_array($column, ['review_stats.reviews_received_avg_rating', 'review_stats.reviews_received_count'])) {
+            $query->orderByRaw("$column $direction NULLS LAST");
+        } else {
+            $query->orderBy($column, $direction);
+        }
+        
         return $query;
     }
 
