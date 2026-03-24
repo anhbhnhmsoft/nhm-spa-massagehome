@@ -153,23 +153,21 @@ class UserRepository extends BaseRepository
         switch ($sortBy) {
             case 'rating':
             case 'reviews_received_avg_rating':
-                $column = 'review_stats.reviews_received_avg_rating';
+                $query->orderByRaw("review_stats.reviews_received_avg_rating $direction NULLS LAST");
+                // Thêm sắp xếp phụ: Nếu điểm bằng nhau, ưu tiên người có nhiều đánh giá hơn
+                $query->orderByRaw("review_stats.reviews_received_count DESC NULLS LAST");
                 break;
+                
             case 'review_count':
             case 'reviews_received_count':
-                $column = 'review_stats.reviews_received_count';
+                $query->orderByRaw("review_stats.reviews_received_count $direction NULLS LAST");
                 break;
+                
             default:
-                $column = 'users.created_at';
+                $query->orderBy('users.created_at', $direction);
                 break;
         }
 
-        if (in_array($column, ['review_stats.reviews_received_avg_rating', 'review_stats.reviews_received_count'])) {
-            $query->orderByRaw("$column $direction NULLS LAST");
-        } else {
-            $query->orderBy($column, $direction);
-        }
-        
         return $query;
     }
 
