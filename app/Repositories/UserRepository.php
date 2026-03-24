@@ -150,6 +150,19 @@ class UserRepository extends BaseRepository
         if (!in_array($direction, ['asc', 'desc'])) {
             $direction = 'desc';
         }
+        // Luôn ưu tiên KTV được đánh dấu ưu tiên hiển thị lên đầu.
+        $query->orderByRaw("
+            COALESCE(
+                (
+                    SELECT ura.is_priority
+                    FROM user_review_application ura
+                    WHERE ura.user_id = users.id
+                    LIMIT 1
+                ),
+                false
+            ) DESC
+        ");
+
         switch ($sortBy) {
             case 'rating':
             case 'reviews_received_avg_rating':
