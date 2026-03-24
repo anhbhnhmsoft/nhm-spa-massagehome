@@ -215,6 +215,7 @@ return
                 'start_time' => 'Giờ bắt đầu',
                 'end_time' => 'Giờ kết thúc',
                 'is_leader' => 'Trưởng nhóm',
+                'is_priority' => 'Ưu tiên hiển thị',
                 'nickname' => 'Biệt danh',
             ],
             "actions" => [
