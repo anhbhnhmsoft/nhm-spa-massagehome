@@ -30,21 +30,9 @@ return [
         'body' => 'Emergency support request for service ID :booking_id.',
     ],
     'type' => [
-        NotificationType::PAYMENT_COMPLETE->value => [
-            'title' => 'Payment Successful',
-            'body'  => 'Your payment transaction has been completed.',
-        ],
-        NotificationType::BOOKING_CONFIRMED->value => [
-            'title' => 'Booking Confirmed',
-            'body'  => 'Your appointment has been successfully confirmed.',
-        ],
         NotificationType::BOOKING_CANCELLED->value => [
             'title' => 'Booking Cancelled',
             'body'  => 'Your appointment has been cancelled.',
-        ],
-        NotificationType::BOOKING_REMINDER->value => [
-            'title' => 'Appointment Reminder',
-            'body'  => 'You have an upcoming appointment. Please check the time.',
         ],
         NotificationType::WALLET_DEPOSIT->value => [
             'title' => 'Wallet Deposit',
@@ -58,10 +46,6 @@ return [
             'title' => 'New Message',
             'body'  => 'You received a new message from the system.',
         ],
-        NotificationType::TECHNICIAN_WALLET_NOT_ENOUGH->value => [
-            'title' => 'Insufficient Balance',
-            'body'  => 'Your wallet does not have enough balance to accept this new appointment.',
-        ],
         NotificationType::STAFF_APPLY_SUCCESS->value => [
             'title' => 'Application Successful',
             'body'  => 'Your partner application has been accepted. You can start working.',
@@ -69,10 +53,6 @@ return [
         NotificationType::STAFF_APPLY_REJECTED->value => [
             'title' => 'Application Rejected',
             'body'  => 'Sorry, your partner application has been rejected.',
-        ],
-        NotificationType::BOOKING_REFUNDED->value => [
-            'title' => 'Refund Successful',
-            'body'  => 'The amount for the appointment has been refunded to your wallet.',
         ],
         NotificationType::BOOKING_COMPLETED->value => [
             'title' => 'Service Completed',
@@ -85,14 +65,6 @@ return [
         NotificationType::NEW_BOOKING_REQUEST->value => [
             'title' => 'New Request',
             'body'  => 'You have a new booking request that needs immediate processing.',
-        ],
-        NotificationType::BOOKING_AUTO_FINISHED->value => [
-            'title' => 'Auto Completed',
-            'body'  => 'The system has automatically ended the appointment due to time limits.',
-        ],
-        NotificationType::BOOKING_OVERTIME_WARNING->value => [
-            'title' => 'Overtime Warning',
-            'body'  => 'The appointment is exceeding the expected time. Please check.',
         ],
         NotificationType::BOOKING_START->value => [
             'title' => 'Service Started',
@@ -109,10 +81,6 @@ return [
         NotificationType::DEPOSIT_SUCCESS->value => [
             'title' => 'Deposit Successful',
             'body'  => 'You have successfully deposited :amount VND into your account.',
-        ],
-        NotificationType::DEPOSIT_FAILED->value => [
-            'title' => 'Deposit Failed',
-            'body'  => 'Deposit transaction of :amount VND has failed. Please try again or contact support.',
         ],
         NotificationType::NOTIFICATION_MARKETING->value => [
             'title' => ':title',
