@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Core\LogHelper;
 use App\Core\Service\ServiceException;
 use App\Enums\ConfigName;
 use App\Enums\GeminiAiModel;
@@ -53,14 +54,26 @@ class GeminiService
         ]);
 
         if ($response->failed()) {
+            LogHelper::error('Gemini translate error', null, [
+                'status' => $response->status(),
+                'body' => $response->body(), // Rất quan trọng để biết API chửi gì
+                'text' => $text,
+                'lang' => $lang->value,
+            ]);
             throw new ServiceException(__('common_error.server_error'));
         }
 
-        $result = data_get(
-            $response->json(),
-            'candidates.0.content.parts.0.text',
-            ''
-        );
+        $result = data_get($response->json(), 'candidates.0.content.parts.0.text');
+        if ($result === null) {
+            LogHelper::error('Gemini API Missing Text (Possible Safety Block)', null, [
+                'response' => $response->json(),
+                'status' => $response->status(),
+                'body' => $response->body(),
+                'text' => $text,
+                'lang' => $lang->value,
+            ]);
+            throw new ServiceException(__('common_error.server_error'));
+        }
 
         return trim(preg_replace('/^[\-\*\s"]+|["]+$/', '', $result));
     }
@@ -145,10 +158,22 @@ class GeminiService
      */
     protected function handleCallGemini(array $data)
     {
-        return Http::timeout(30)->withHeaders([
-            'x-goog-api-key' => $this->apiKey, // Dùng header theo doc mới
+        return Http::timeout(45) // Tăng timeout lên một chút
+        ->withHeaders([
+            'x-goog-api-key' => $this->apiKey,
             'Content-Type' => 'application/json',
-        ])->post($this->model->endpoint(), $data);
+        ])
+            // Tự động thử lại 3 lần, mỗi lần cách nhau 2 giây
+            // Chỉ thử lại khi gặp lỗi Connection hoặc HTTP status 429, 500, 502, 503, 504
+            ->retry(3, 2000, function ($exception, $request) {
+                if ($exception instanceof ConnectionException) {
+                    return true;
+                }
+
+                $response = $exception->response ?? null;
+                return $response && in_array($response->status(), [429, 500, 502, 503, 504]);
+            })
+            ->post($this->model->endpoint(), $data);
     }
 
 }
