@@ -27,6 +27,7 @@ class UserReviewApplication extends Model
         'application_date',
         'role',
         'is_leader',
+        'is_priority',
         'address',
         'latitude',
         'longitude',
@@ -42,6 +43,7 @@ class UserReviewApplication extends Model
         'effective_date' => 'date',
         'application_date' => 'date',
         'is_leader' => 'boolean',
+        'is_priority' => 'boolean',
     ];
 
     /**

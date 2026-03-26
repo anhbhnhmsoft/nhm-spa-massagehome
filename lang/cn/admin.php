@@ -266,6 +266,7 @@ return
                 'start_time' => '开始时间',
                 'end_time' => '结束时间',
                 'is_leader' => '组长',
+                'is_priority' => '优先显示',
                 'nickname' => '昵称',
             ],
             "actions" => [

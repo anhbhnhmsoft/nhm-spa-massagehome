@@ -267,6 +267,7 @@ return
                 'start_time' => 'Start Time',
                 'end_time' => 'End Time',
                 'is_leader' => 'Leader',
+                'is_priority' => 'Priority Display',
                 'nickname' => 'Nickname',
             ],
             "actions" => [

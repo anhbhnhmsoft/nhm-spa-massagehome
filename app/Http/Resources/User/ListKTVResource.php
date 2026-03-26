@@ -39,6 +39,7 @@ class ListKTVResource extends JsonResource
             'review_application' => [
                 'experience' => $reviewApplication->experience,
                 'bio' => $reviewApplication->bio,
+                'is_priority' => (bool) ($reviewApplication->is_priority ?? false),
             ],
             'location' => [
                 'address' => $primaryAddress?->address ?? null,

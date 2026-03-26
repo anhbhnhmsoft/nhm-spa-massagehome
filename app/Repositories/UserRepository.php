@@ -150,18 +150,37 @@ class UserRepository extends BaseRepository
         if (!in_array($direction, ['asc', 'desc'])) {
             $direction = 'desc';
         }
+        // Luôn ưu tiên KTV được đánh dấu ưu tiên hiển thị lên đầu.
+        $query->orderByRaw("
+            COALESCE(
+                (
+                    SELECT ura.is_priority
+                    FROM user_review_application ura
+                    WHERE ura.user_id = users.id
+                    LIMIT 1
+                ),
+                false
+            ) DESC
+        ");
+
         switch ($sortBy) {
             case 'rating':
-                $column = 'reviews_received_avg_rating';
+            case 'reviews_received_avg_rating':
+                $query->orderByRaw("review_stats.reviews_received_avg_rating $direction NULLS LAST");
+                // Thêm sắp xếp phụ: Nếu điểm bằng nhau, ưu tiên người có nhiều đánh giá hơn
+                $query->orderByRaw("review_stats.reviews_received_count DESC NULLS LAST");
                 break;
+                
             case 'review_count':
-                $column = 'reviews_received_count';
+            case 'reviews_received_count':
+                $query->orderByRaw("review_stats.reviews_received_count $direction NULLS LAST");
                 break;
+                
             default:
-                $column = 'created_at';
+                $query->orderBy('users.created_at', $direction);
                 break;
         }
-        $query->orderBy($column, $direction);
+
         return $query;
     }
 

@@ -156,6 +156,13 @@ class KTVForm
                             ->offIcon('heroicon-m-user')
                             ->onColor('success'),
 
+                        Toggle::make('is_priority')
+                            ->label(__('admin.ktv_apply.fields.is_priority'))
+                            ->onIcon('heroicon-m-arrow-up-circle')
+                            ->offIcon('heroicon-m-arrow-down-circle')
+                            ->onColor('warning')
+                            ->default(false),
+
                         TextInput::make('nickname')
                             ->label(__('admin.ktv_apply.fields.nickname'))
                             ->maxLength(255)
