@@ -5,8 +5,12 @@ namespace App\Filament\Clusters\Transaction\Resources\WalletTransactions\Tables;
 use App\Enums\ConfigName;
 use App\Enums\Jobs\WalletTransCase;
 use App\Enums\NotificationType;
+use App\Enums\UserRole;
 use App\Enums\WalletTransactionStatus;
 use App\Enums\WalletTransactionType;
+use App\Filament\Clusters\ReviewApplication\Resources\Agencies\AgencyResource;
+use App\Filament\Clusters\ReviewApplication\Resources\KTVs\KTVResource;
+use App\Filament\Clusters\User\Resources\Customers\CustomerResource;
 use App\Filament\Components\CommonFields;
 use App\Jobs\SendNotificationJob;
 use App\Jobs\WalletTransactionJob;
@@ -33,11 +37,39 @@ class WalletTransactionsTable
             })
             ->defaultSort('created_at', 'desc')
             ->columns([
-                CommonFields::IdColumn(),
+                CommonFields::IdColumn()
+                    ->searchable(),
 
                 TextColumn::make('wallet.user.name')
                     ->label(__('admin.transaction.fields.user'))
-                    ->description(fn($record) => $record->wallet->user->phone),
+                    ->searchable(query: function ($query, $search) {
+                        $query->whereHas('wallet.user', function ($q) use ($search) {
+                            $q->where('name', 'like', "%{$search}%")
+                                ->orWhere('phone', 'like', "%{$search}%")
+                                ->orWhere('email', 'like', "%{$search}%");
+                        });
+                    })
+                    ->color('primary') // Chuyển chữ sang màu xanh
+                    ->weight('bold')
+                    ->url(function ($record) {
+                        $user = $record->wallet->user;
+                        $role = $user->role;
+                        return match ($role) {
+                            UserRole::KTV->value => KTVResource::getUrl('view', ['record' => $user]),
+                            UserRole::CUSTOMER->value => CustomerResource::getUrl('edit', ['record' => $user]),
+                            UserRole::AGENCY->value => AgencyResource::getUrl('view', ['record' => $user]),
+                            default => null,
+                        };
+                    })
+                    ->formatStateUsing(function ($state, $record) {
+                        $user = $record->wallet->user;
+                        $contact = $user->phone ?? $user->email;
+                        return "$user->name - ($contact)";
+                    })
+                    ->description(function ($record) {
+                        $userRole = $record->wallet->user->role;
+                        return UserRole::from($userRole)->label() ?? "";
+                    }),
                 TextColumn::make('type')
                     ->label(__('admin.transaction.fields.type'))
                     ->formatStateUsing(fn($state) => WalletTransactionType::tryFrom($state)?->label())
