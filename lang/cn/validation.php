@@ -4,7 +4,9 @@ return [
     'required' => '此信息为必填项。',
     'phone' => [
         'required' => '无效的电话号码。',
+        'required_if' => '当您使用邮箱注册时，电话号码为必填项。',
         'invalid' => '无效的电话号码格式（越南电话号码仅支持 03、05、07、08、09 开头）。',
+        'exists' => '电话号码已存在。',
     ],
     'password' => [
         'required' => '无效的密码。',
@@ -43,6 +45,10 @@ return [
         'required' => '请选择服务套餐。',
         'numeric' => '无效的服务套餐。',
         'exists' => '服务套餐不存在。',
+    ],
+    'option_ids' => [
+        'required' => '请选择服务套餐。',
+        'invalid' => '无效的服务套餐。',
     ],
     'coupon_id' => [
         'exists' => '优惠券不存在。',

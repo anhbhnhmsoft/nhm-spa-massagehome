@@ -22,6 +22,14 @@ class RegisterRequest extends FormRequest
         return [
             'username' => ['required', 'string', 'max:255'],
             'type_authenticate' => ['required', Rule::in(TypeAuthenticate::cases())],
+            'phone' => [
+                // Bắt buộc nếu type_authenticate là EMAIL
+                'required_if:type_authenticate,' . TypeAuthenticate::EMAIL->value,
+                // Cho phép null nếu không bắt buộc (tránh lỗi khi chạy PhoneRule)
+                'nullable',
+                // Validate định dạng số điện thoại
+                new PhoneRule(),
+            ],
             'password' => ['required', new PasswordRule()],
             'name' => ['required', 'string', 'max:255'],
             'gender' => ['required', Rule::in(Gender::cases())],
@@ -33,6 +41,7 @@ class RegisterRequest extends FormRequest
     {
         return [
             'username.required' => __('validation.username.required'),
+            'phone.required_if' => __('validation.phone.required_if'),
             'type_authenticate.required' => __('validation.type_authenticate.required'),
             'type_authenticate.in' => __('validation.type_authenticate.in'),
             'password.required' => __('validation.password.required'),

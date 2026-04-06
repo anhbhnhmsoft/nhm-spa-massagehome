@@ -170,12 +170,12 @@ class UserRepository extends BaseRepository
                 // Thêm sắp xếp phụ: Nếu điểm bằng nhau, ưu tiên người có nhiều đánh giá hơn
                 $query->orderByRaw("review_stats.reviews_received_count DESC NULLS LAST");
                 break;
-                
+
             case 'review_count':
             case 'reviews_received_count':
                 $query->orderByRaw("review_stats.reviews_received_count $direction NULLS LAST");
                 break;
-                
+
             default:
                 $query->orderBy('users.created_at', $direction);
                 break;
@@ -196,6 +196,12 @@ class UserRepository extends BaseRepository
             ->exists();
     }
 
+
+    /**
+     * Kiểm tra email đã tồn tại và đã xác thực chưa
+     * @param string $email
+     * @return bool
+     */
     public function isEmailVerified(string $email): bool
     {
         return $this->query()->where('email', $email)

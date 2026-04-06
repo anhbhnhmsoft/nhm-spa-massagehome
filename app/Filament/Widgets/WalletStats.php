@@ -34,7 +34,7 @@ class WalletStats extends BaseWidget
         return [
             Grid::make()
                 ->columnSpanFull()
-                ->columns(4)
+                ->columns(5)
                 ->schema([
                     Stat::make(
                         label: __('admin.common.balance'),
@@ -43,6 +43,13 @@ class WalletStats extends BaseWidget
                         ->description(__('admin.currency'))
                         ->icon(Heroicon::Wallet)
                         ->color('info'),
+                    Stat::make(
+                        label: __('admin.common.frozen_balance'),
+                        value: Helper::formatPrice($dataWallet['wallet']->frozen_balance ?? 0)
+                    )
+                        ->description(__('admin.currency'))
+                        ->icon(Heroicon::LockClosed)
+                        ->color('warning'),
                     Stat::make(
                         label: __('admin.common.total_income'),
                         value: Helper::formatPrice($dataWallet['total_income'] ?? 0)

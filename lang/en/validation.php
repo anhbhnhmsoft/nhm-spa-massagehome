@@ -4,7 +4,9 @@ return [
     'required' => 'This information is required.',
     'phone' => [
         'required' => 'Invalid phone number.',
+        'required_if' => 'Phone number is required when you register with email.',
         'invalid' => 'Invalid phone number format (VietNam phone number only).',
+        'exists' => 'Phone number already exists.',
     ],
     'password' => [
         'required' => 'Invalid password.',
@@ -43,6 +45,10 @@ return [
         'required' => 'Please select service package.',
         'numeric' => 'Invalid service package.',
         'exists' => 'Service package does not exist.',
+    ],
+    'option_ids' => [
+        'required' => 'Please select service package.',
+        'invalid' => 'Invalid service package.',
     ],
     'coupon_id' => [
         'exists' => 'Coupon does not exist.',

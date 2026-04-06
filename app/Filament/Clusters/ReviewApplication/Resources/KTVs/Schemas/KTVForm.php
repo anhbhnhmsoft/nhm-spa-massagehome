@@ -224,7 +224,7 @@ class KTVForm
                             ->addable(false)
                             ->deletable(false)
                             ->reorderable(false)
-                            ->grid(1) // Hiển thị mỗi ngày một dòng cho dễ nhìn
+                            ->grid(1)
                             ->schema([
                                 Grid::make(4)
                                     ->schema([
@@ -240,14 +240,14 @@ class KTVForm
                                                 KTVConfigSchedules::SATURDAY->value => __('admin.ktv_apply.fields.saturday'),
                                                 KTVConfigSchedules::SUNDAY->value => __('admin.ktv_apply.fields.sunday'),
                                             ])
-                                            ->disabled()       // Người dùng không sửa được
-                                            ->dehydrated()     // Vẫn gửi dữ liệu về Backend để lưu vào JSON
+                                            ->disabled()
+                                            ->dehydrated()
                                             ->columnSpan(1),
 
                                         Toggle::make('active')
                                             ->label(__('admin.ktv_apply.fields.is_working'))
                                             ->inline(false)
-                                            ->reactive() // Để ẩn/hiện giờ ngay lập tức
+                                            ->live() // Đổi từ reactive() sang live() nếu bạn dùng Filament v3
                                             ->columnSpan(1),
 
                                         TimePicker::make('start_time')
@@ -255,8 +255,9 @@ class KTVForm
                                             ->format('H:i')
                                             ->displayFormat('H:i')
                                             ->seconds(false)
-                                            ->hidden(fn($get) => !$get('active'))
-                                            ->required(fn($get) => $get('active'))
+                                            ->hidden(fn ($get) => !$get('active'))
+                                            ->required(fn ($get) => $get('active'))
+                                            ->live() // Cần live() để re-render hint ở end_time
                                             ->columnSpan(1),
 
                                         TimePicker::make('end_time')
@@ -264,9 +265,22 @@ class KTVForm
                                             ->format('H:i')
                                             ->displayFormat('H:i')
                                             ->seconds(false)
-                                            ->hidden(fn($get) => !$get('active'))
-                                            ->required(fn($get) => $get('active'))
-                                            ->after('start_time')
+                                            ->hidden(fn ($get) => !$get('active'))
+                                            ->required(fn ($get) => $get('active'))
+                                            ->live() // Cần live() để kiểm tra logic xuyên đêm ngay khi Admin chọn
+                                            ->hint(function ($get) {
+                                                $start = $get('start_time');
+                                                $end = $get('end_time');
+
+                                                // Nếu giờ kết thúc nhỏ hơn giờ bắt đầu -> Ca xuyên đêm
+                                                if ($start && $end && $end < $start) {
+                                                    return __('admin.ktv_apply.fields.is_cross_day');
+                                                }
+
+                                                return null;
+                                            })
+                                            ->hintColor('warning') // Hiển thị màu cam cảnh báo
+                                            ->hintIcon('heroicon-m-moon') // Thêm icon mặt trăng cho ngầu (hoặc heroicon-m-clock)
                                             ->columnSpan(1),
                                     ]),
                             ])

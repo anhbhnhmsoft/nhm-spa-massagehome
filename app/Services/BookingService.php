@@ -168,7 +168,7 @@ class BookingService extends BaseService
                     'ktv_user_id' => $data['ktv_id'],
                     'category_id' => $data['category_id'],
                     'coupon_id' => $data['coupon_id'] ?? null,
-                    'duration' => $resultValidate['categoryData']['option']['duration'],
+                    'duration' => $resultValidate['categoryData']['total_duration'],
                     'booking_time' => $resultValidate['bookTimeData']['booking_time'],
                     'start_time' => null,
                     'end_time' => null,
@@ -640,11 +640,11 @@ class BookingService extends BaseService
      * Nếu phù hợp sẽ trả về data
      * @param array{
      *    category_id: int,
-     *    option_id: int,
      *    ktv_id: int,
      *    latitude: float,
      *    longitude: float,
-     *    coupon_id?: int|null
+     *    coupon_id: int | null,
+     *    option_ids: array
      *  } $data
      * @return array{
      *     categoryData: array{
@@ -685,13 +685,12 @@ class BookingService extends BaseService
         $categoryData = $this->bookingValidator->validateServiceBooking(
             categoryId: $data['category_id'],
             ktvId: $data['ktv_id'],
-            optionId: $data['option_id'],
+            optionIds: $data['option_ids'],
         );
-
         // Kiểm tra kỹ thuật viên có thể book dịch vụ lúc này không
         $bookTimeData = $this->bookingValidator->validateKtvAvailabilityToBooking(
             ktvId: $data['ktv_id'],
-            duration: $categoryData['option']['duration'],
+            duration: $categoryData['total_duration'],
             breakTime: $this->configService->getConfigValue(ConfigName::BREAK_TIME_GAP),
         );
 
@@ -725,7 +724,7 @@ class BookingService extends BaseService
         $pricePerKm = $this->configService->getConfigValue(ConfigName::PRICE_TRANSPORTATION);
         // Tính toán giá
         $priceData = CalculatePrice::calculateBookingPrice(
-            price: $categoryData['option']['price'],
+            price: $categoryData['total_price'],
             coupon: $coupon ?? null,
             pricePerKm: $pricePerKm,
             longitude: $data['longitude'],

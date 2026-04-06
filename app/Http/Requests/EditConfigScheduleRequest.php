@@ -37,7 +37,6 @@ class EditConfigScheduleRequest extends FormRequest
                 'exclude_if:working_schedule.*.active,false', // Thêm dòng này
                 'required',
                 'date_format:H:i',
-                'after:working_schedule.*.start_time'
             ],
         ];
     }

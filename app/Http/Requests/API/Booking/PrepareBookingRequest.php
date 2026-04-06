@@ -16,7 +16,9 @@ class PrepareBookingRequest extends FormRequest
     {
         return [
             'category_id' => ['required', 'numeric'],
-            'option_id' => ['required', 'numeric'],
+            'option_ids' => ['required', 'array', 'min:1'],
+            'option_ids.*' => ['required', 'numeric'],
+
             'ktv_id' => ['required', 'numeric'],
             'latitude' => ['required', new CoordinateRule('lat')],
             'longitude' => ['required', new CoordinateRule('lng')],
@@ -29,8 +31,14 @@ class PrepareBookingRequest extends FormRequest
         return [
             'category_id.required' => __('validation.category_id.required'),
             'category_id.numeric' => __('validation.category_id.invalid'),
-            'option_id.required' => __('validation.option_id.required'),
-            'option_id.numeric' => __('validation.option_id.numeric'),
+
+            'option_ids.required' => __('validation.option_ids.required'),
+            'option_ids.array' => __('validation.option_ids.invalid'),
+            'option_ids.min' => __('validation.option_ids.invalid'),
+            'option_ids.*.numeric' => __('validation.option_ids.invalid'),
+            'option_ids.*.required' => __('validation.option_ids.invalid'),
+
+
             'ktv_id.required' => __('validation.ktv_id.required'),
             'ktv_id.numeric' => __('validation.ktv_id.numeric'),
             'latitude.required' => __('validation.location.latitude_required'),

@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Core\BaseRepository;
 use App\Models\Category;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 
 class CategoryRepository extends BaseRepository
 {
@@ -60,23 +61,28 @@ class CategoryRepository extends BaseRepository
 
     /**
      * Lấy danh mục theo id và id của KTV có sẵn dịch vụ và giá dịch vụ
-     * @param  $id
-     * @param  $ktvId
-     * @param  $optionId
+     * @param  int $id
+     * @param  int $ktvId
+     * @param  array $optionIds
      * @return Category|null
      */
-    public function getCategoryByIdAndKTVIdAndOptionId($id, $ktvId, $optionId): ?Category
+    public function getCategoryByIdAndKTVIdAndOptionId(int $id, int $ktvId, array $optionIds): Category|null
     {
+        if (empty($optionIds)) {
+            return null;
+        }
+
         return $this->queryCategory()
             ->where('id', $id)
             ->whereHas('services', function ($query) use ($ktvId) {
                 $query->where('user_id', $ktvId);
             })
-            ->whereHas('prices', function ($query) use ($optionId) {
-                $query->where('id', $optionId);
-            })
-            ->with(['prices' => function ($query) use ($optionId)  {
-                $query->where('id', $optionId);
+            // Thêm tham số toán tử '=' và số lượng count($optionIds)
+            ->whereHas('prices', function ($query) use ($optionIds) {
+                $query->whereIn('id', $optionIds);
+            }, '=', count($optionIds))
+            ->with(['prices' => function ($query) use ($optionIds)  {
+                $query->whereIn('id', $optionIds);
             }])
             ->first();
     }
