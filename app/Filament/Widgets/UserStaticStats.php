@@ -3,11 +3,15 @@
 namespace App\Filament\Widgets;
 
 use App\Enums\Admin\AdminGate;
-use App\Enums\Admin\AdminRole;
 use App\Enums\DateRangeDashboard;
 use App\Enums\ReviewApplicationStatus;
+use App\Enums\WalletTransactionStatus;
+use App\Enums\WalletTransactionType;
 use App\Filament\Clusters\ReviewApplication\Resources\Agencies\AgencyResource;
 use App\Filament\Clusters\ReviewApplication\Resources\KTVs\KTVResource;
+use App\Filament\Clusters\Transaction\Resources\WalletTransactions\WalletTransactionResource;
+use App\Filament\Clusters\User\Resources\Customers\CustomerResource;
+use App\Filament\Clusters\User\Resources\Reviews\ReviewResource;
 use App\Services\DashboardService;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
@@ -104,12 +108,24 @@ class UserStaticStats extends BaseWidget
                         ->schema([
                             Stat::make(__('dashboard.user_static_stats.total_customer'), $data['total_customer'])
                                 ->icon(Heroicon::UserGroup)
+                                ->url(CustomerResource::getUrl('index'))
                                 ->color('primary'),
                             Stat::make(__('dashboard.user_static_stats.withdraw_requests'), $data['withdraw_requests'])
                                 ->icon(Heroicon::Banknotes)
+                                ->url(WalletTransactionResource::getUrl('index',[
+                                    'filters' => [
+                                        'type' => [
+                                            'value' => WalletTransactionType::WITHDRAWAL->value,
+                                        ],
+                                        'status' => [
+                                            'value' => WalletTransactionStatus::PENDING->value,
+                                        ],
+                                    ]
+                                ]))
                                 ->color('info'),
                             Stat::make(__('dashboard.user_static_stats.review'), $data['review_count'])
                                 ->icon(Heroicon::ChatBubbleOvalLeft)
+                                ->url(ReviewResource::getUrl('index'))
                                 ->color('warning'),
                         ]),
                 ])

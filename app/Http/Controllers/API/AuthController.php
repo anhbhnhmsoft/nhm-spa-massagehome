@@ -133,6 +133,7 @@ class AuthController extends BaseController
         // Đăng ký tài khoản
         $resService = $this->authService->register(
             username: $data['username'],
+            phone: $data['phone'],
             typeAuthenticate: TypeAuthenticate::from($data['type_authenticate']),
             password: $data['password'],
             name: $data['name'],

@@ -44,6 +44,7 @@ class KTVsTable
                         }
                         return null;
                     })
+                    ->searchable()
                     ->label(__('admin.common.table.name')),
                 TextColumn::make('phone')
                     ->searchable()

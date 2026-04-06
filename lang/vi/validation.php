@@ -4,7 +4,9 @@ return [
     'required' => 'Thông tin này là bắt buộc.',
     'phone' => [
         'required' => 'Bạn hãy nhập số điện thoại.',
+        'required_if' => 'Số điện thoại là bắt buộc khi bạn đăng ký bằng Email.',
         'invalid' => 'Số điện thoại không hợp lệ định dạng số Việt Nam.',
+        'exists' => 'Số điện thoại đã tồn tại.',
     ],
     'password' => [
         'required' => 'Mật khẩu không hợp lệ.',
@@ -44,6 +46,11 @@ return [
         'numeric' => 'Gói dịch vụ không hợp lệ.',
         'exists' => 'Gói dịch vụ không tồn tại.',
     ],
+    'option_ids' => [
+        'required' => 'Vui lòng chọn gói dịch vụ.',
+        'invalid' => 'Gói dịch vụ không hợp lệ.',
+    ],
+
     'coupon_id' => [
         'exists' => 'Mã giảm giá không tồn tại.',
     ],

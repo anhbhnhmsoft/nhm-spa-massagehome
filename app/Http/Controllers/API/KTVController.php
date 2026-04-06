@@ -320,7 +320,7 @@ class KTVController extends BaseController
 
     /**
      * Cập nhật thông tin cấu hình lịch làm việc của KTV
-     * @param Request $request
+     * @param EditConfigScheduleRequest $request
      * @return JsonResponse
      */
     public function editConfigSchedule(EditConfigScheduleRequest $request): JsonResponse

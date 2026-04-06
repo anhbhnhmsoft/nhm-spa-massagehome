@@ -284,6 +284,7 @@ class AuthService extends BaseService
     /**
      * Đăng ký tài khoản mới.
      * @param string $username -- Tên đăng nhập dùng để đăng ký tài khoản.
+     * @param ?string $phone -- Số điện thoại dùng để đăng ký tài khoản.
      * @param TypeAuthenticate $typeAuthenticate -- Loại xác thực.
      * @param string $password -- Mật khẩu tài khoản.
      * @param string $name -- Tên người dùng.
@@ -297,11 +298,12 @@ class AuthService extends BaseService
         string    $password,
         string    $name,
         ?Gender   $gender,
-        ?Language $language
+        ?Language $language,
+        ?string   $phone = null,
     ): ServiceReturn
     {
         return $this->execute(
-            callback: function () use ($username, $typeAuthenticate, $password, $name, $gender, $language) {
+            callback: function () use ($username, $typeAuthenticate, $password, $name, $gender, $language, $phone) {
                 // Kiểm tra xem số điện thoại đã được xác thực chưa
                 $otpRecord = $this->userOtpRepository->getLatestVerifiedOtp(
                     identifier: $username,
@@ -321,6 +323,16 @@ class AuthService extends BaseService
                 if ($user) {
                     throw new ServiceException(message: __('auth.error.account_already_used'));
                 }
+                // Kiểm tra số điện thoại khi đăng ký bằng email
+                if ($typeAuthenticate === TypeAuthenticate::EMAIL) {
+                    if (empty($phone)) {
+                        throw new ServiceException(__('validation.phone.required_if'));
+                    }
+                    // Kiểm tra số điện thoại có tồn tại hay không
+                    if ($this->userRepository->isPhoneVerified($phone)) {
+                        throw new ServiceException(__('validation.phone.exists'));
+                    }
+                }
 
                 // Xóa OTP đã xác thực (tránh trường hợp người dùng nhập lại)
                 $this->userOtpRepository->deleteOtpHadVerified($username, UserOtpType::REGISTER, $typeAuthenticate);
@@ -329,21 +341,31 @@ class AuthService extends BaseService
                  * Tạo user mới
                  * @var User $user
                  */
-                $columnAuth = match ($typeAuthenticate) {
-                    TypeAuthenticate::PHONE => 'phone',
-                    TypeAuthenticate::EMAIL => 'email',
-                };
-
-                $user = $this->userRepository->create([
-                    $columnAuth => $username,
-                    $columnAuth . '_verified_at' => now(),
-                    'password' => Hash::make($password),
-                    'name' => $name,
-                    'language' => $language?->value ?? Language::VIETNAMESE->value,
-                    // Ban đầu user là customer
-                    'role' => UserRole::CUSTOMER->value,
-                    'last_login_at' => now(),
-                ]);
+                if ($typeAuthenticate === TypeAuthenticate::PHONE) {
+                    $user = $this->userRepository->create([
+                        'phone' => $username,
+                        'phone_verified_at' => now(),
+                        'password' => Hash::make($password),
+                        'name' => $name,
+                        'language' => $language?->value ?? Language::VIETNAMESE->value,
+                        // Ban đầu user là customer
+                        'role' => UserRole::CUSTOMER->value,
+                        'last_login_at' => now(),
+                    ]);
+                }else{
+                    $user = $this->userRepository->create([
+                        'phone' => $phone, // đối với email thì sẽ có thêm SĐT nhưng ko cần xác thực (Nghiệp vụ mới)
+                        'phone_verified_at' => now(),
+                        'email' => $username,
+                        'email_verified_at' => now(),
+                        'password' => Hash::make($password),
+                        'name' => $name,
+                        'language' => $language?->value ?? Language::VIETNAMESE->value,
+                        // Ban đầu user là customer
+                        'role' => UserRole::CUSTOMER->value,
+                        'last_login_at' => now(),
+                    ]);
+                }
 
                 // Tạo user profile cho user
                 $this->userProfileRepository->create([
