@@ -21,7 +21,7 @@ class CustomerForm
     public static function configure(Schema $schema): Schema
     {
         return $schema
-            ->disabled(fn(): bool => ! Gate::allows(AdminGate::ALLOW_ADMIN))
+            ->disabled(fn(): bool => !Gate::allows(AdminGate::ALLOW_ADMIN))
             ->components([
                 // Thông tin cơ bản
                 Section::make(__('admin.common.table.basic_info'))
@@ -89,6 +89,8 @@ class CustomerForm
                                 Textarea::make('bio')
                                     ->label(__('admin.common.table.bio'))
                                     ->rows(3),
+                                TextInput::make('temp_address')
+                                    ->label(__('admin.common.table.address')),
                                 Select::make('gender')
                                     ->label(__('admin.common.table.gender'))
                                     ->options(Gender::toOptions())

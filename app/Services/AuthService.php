@@ -300,10 +300,11 @@ class AuthService extends BaseService
         ?Gender   $gender,
         ?Language $language,
         ?string   $phone = null,
+        ?string   $address = null,
     ): ServiceReturn
     {
         return $this->execute(
-            callback: function () use ($username, $typeAuthenticate, $password, $name, $gender, $language, $phone) {
+            callback: function () use ($username, $typeAuthenticate, $password, $name, $gender, $language, $phone, $address) {
                 // Kiểm tra xem số điện thoại đã được xác thực chưa
                 $otpRecord = $this->userOtpRepository->getLatestVerifiedOtp(
                     identifier: $username,
@@ -371,6 +372,7 @@ class AuthService extends BaseService
                 $this->userProfileRepository->create([
                     'user_id' => $user->id,
                     'gender' => $gender?->value ?? Gender::MALE->value,
+                    'temp_address' => $address,
                 ]);
 
                 // Tạo wallet cho user

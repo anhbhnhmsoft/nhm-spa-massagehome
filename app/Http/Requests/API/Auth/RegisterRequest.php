@@ -31,6 +31,7 @@ class RegisterRequest extends FormRequest
                 new PhoneRule(),
             ],
             'password' => ['required', new PasswordRule()],
+            'address' => ['nullable', 'string', 'max:255'],
             'name' => ['required', 'string', 'max:255'],
             'gender' => ['required', Rule::in(Gender::cases())],
             'language' => ['required', Rule::in(Language::cases())],
@@ -52,6 +53,8 @@ class RegisterRequest extends FormRequest
             'gender.in' => __('validation.gender.in'),
             'language.required' => __('validation.language.required'),
             'language.in' => __('validation.language.in'),
+            'address.string' => __('validation.address.string'),
+            'address.max' => __('validation.address.max', ['max' => 255]),
         ];
     }
 }
