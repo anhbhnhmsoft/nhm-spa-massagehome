@@ -139,6 +139,7 @@ class AuthController extends BaseController
             name: $data['name'],
             gender: Gender::from($data['gender']),
             language: Language::from($data['language']),
+            address: $data['address'],
         );
         if ($resService->isError()) {
             return $this->sendError(

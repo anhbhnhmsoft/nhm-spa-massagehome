@@ -24,6 +24,7 @@ class UserProfile extends Model
         'date_of_birth',
         'gender', // Cast Enum Gender
         'bio',
+        'temp_address',
     ];
     protected $casts = [
         'user_id' => 'string',

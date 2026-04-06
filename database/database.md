@@ -154,6 +154,7 @@
     - date_of_birth (date, nullable) -- ngày sinh
     - gender (smallint, nullable) -- giới tính (trong enum Gender)
     - bio (text, nullable) -- thông tin cá nhân
+    - temp_address (varchar, nullable) -- địa chỉ tạm thời
     - timestamps
 
 # user_files
