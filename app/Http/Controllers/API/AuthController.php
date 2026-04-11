@@ -133,13 +133,13 @@ class AuthController extends BaseController
         // Đăng ký tài khoản
         $resService = $this->authService->register(
             username: $data['username'],
-            phone: $data['phone'],
+            phone: $data['phone'] ?? null,
             typeAuthenticate: TypeAuthenticate::from($data['type_authenticate']),
             password: $data['password'],
             name: $data['name'],
             gender: Gender::from($data['gender']),
             language: Language::from($data['language']),
-            address: $data['address'],
+            address: $data['address'] ?? null,
         );
         if ($resService->isError()) {
             return $this->sendError(
