@@ -88,6 +88,7 @@
             align-items: center;
             justify-content: center;
             min-width: 180px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
         .btn-download {
@@ -108,7 +109,7 @@
         /* --- SECTION 1: HERO --- */
         .hero {
             background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
-            padding: 120px 0 80px;
+            padding: 60px 0 40px;
             overflow: hidden;
         }
 
@@ -122,13 +123,13 @@
         .hero-content h1 {
             font-size: 3rem;
             font-weight: 800;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             color: #2b7bc4;
         }
 
         .hero-content p {
             font-size: 1.1rem;
-            margin-bottom: 35px;
+            margin-bottom: 20px;
             color: #555;
         }
 
@@ -248,7 +249,7 @@
             background-color: var(--primary-color);
             color: var(--white);
             text-align: center;
-            padding: 100px 0;
+            padding: 60px 0;
         }
 
         .cta h2 {
@@ -353,7 +354,7 @@
                     <h1>Massage tại nhà & Spa chuyên nghiệp</h1>
                     <p>Đặt lịch mát-xa thư giãn, trị liệu chuyên sâu ngay trên ứng dụng. Đội ngũ kỹ thuật viên tay nghề
                         cao sẵn sàng phục vụ bạn mọi lúc, mọi nơi.</p>
-                    <div class="btn-group" style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap">
+                    <div class="btn-group hero-btns" style="display: flex; align-items: center; flex-wrap: wrap; gap: 15px;">
                         <a href="{{ $appstore ?? '#' }}" class="btn btn-white" title="Tải cho IOS (Iphone)"><img
                                 src="images/appstore.png"></a>
                         <a href="{{ $chplay ?? '#' }}" class="btn btn-white" title="Tải cho CHPlay"><img
