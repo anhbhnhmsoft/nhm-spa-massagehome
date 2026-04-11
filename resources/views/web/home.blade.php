@@ -331,7 +331,21 @@
 
         @media (max-width: 480px) {
             .btn {
-                width: 100%;
+                width: auto;
+                min-width: unset;
+                padding: 6px 10px;
+                font-size: 13px;
+                flex: 0 1 auto;
+            }
+
+            .btn-group .btn img {
+                max-width: 100px;
+            }
+
+            .mockup-container {
+                width: 220px;
+                height: 440px;
+                border: 8px solid #1a1a1a;
             }
 
             .btn-quick-access {
@@ -339,7 +353,12 @@
             }
 
             section {
-                padding: 60px 0;
+                padding: 40px 0;
+            }
+
+            .hero-btns {
+                gap: 8px !important;
+                justify-content: center !important;
             }
         }
     </style>
@@ -453,7 +472,7 @@
         <div class="container">
             <h2>Sẵn sàng thư giãn ngay hôm nay?</h2>
             <p>Tải ứng dụng Masa Home iđể nhận ngay voucher giảm giá 20% cho lần đặt lịch đầu tiên.</p>
-            <div class="btn-group" style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap">
+            <div class="btn-group hero-btns" style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap">
                 <a href="{{ $appstore ?? '#' }}" class="btn btn-white" title="Tải cho IOS (Iphone)"><img
                         src="images/appstore.png"></a>
                 <a href="{{ $chplay ?? '#' }}" class="btn btn-white" title="Tải cho CHPlay"><img
