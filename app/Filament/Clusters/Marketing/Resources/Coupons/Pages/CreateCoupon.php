@@ -20,7 +20,7 @@ class CreateCoupon extends CreateRecord
 
     public function mutateFormDataBeforeCreate(array $data): array
     {
-        $data['created_by'] = Auth::user()->id;
+        $data['created_by'] = '146837567502940553';
         return $data;
     }
 
