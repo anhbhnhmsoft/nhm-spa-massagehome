@@ -371,8 +371,7 @@
             <div class="hero-wrapper">
                 <div class="hero-content">
                     <h1>Massage tại nhà & Spa chuyên nghiệp</h1>
-                    <p>Đặt lịch mát-xa thư giãn, trị liệu chuyên sâu ngay trên ứng dụng. Đội ngũ kỹ thuật viên tay nghề
-                        cao sẵn sàng phục vụ bạn mọi lúc, mọi nơi.</p>
+                   
                     <div class="btn-group hero-btns" style="display: flex; align-items: center; flex-wrap: wrap; gap: 15px;">
                         <a href="{{ $appstore ?? '#' }}" class="btn btn-white" title="Tải cho IOS (Iphone)"><img
                                 src="images/appstore.png"></a>
@@ -384,6 +383,8 @@
                             Truy cập nhanh</a>
 
                     </div>
+                     <p>Đặt lịch mát-xa thư giãn, trị liệu chuyên sâu ngay trên ứng dụng. Đội ngũ kỹ thuật viên tay nghề
+                        cao sẵn sàng phục vụ bạn mọi lúc, mọi nơi.</p>
                 </div>
                 <div class="hero-image">
                     <div class="mockup-container">
