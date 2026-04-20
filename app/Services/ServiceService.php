@@ -101,7 +101,8 @@ class ServiceService extends BaseService
     }
 
     /**
-     * Lấy mã người dùng sở hữu và mã hợp lệ thời điểm booking
+     * Lấy danh sách mã giảm giá hợp lệ mà user hiện tại còn có thể dùng khi booking.
+     * Danh sách này bao gồm cả mã đã thu thập và mã chưa thu thập.
      * @param FilterDTO $dto
      * @return ServiceReturn
      */
@@ -109,6 +110,14 @@ class ServiceService extends BaseService
     {
         try {
             $query = $this->couponRepository->queryCoupon();
+            $userId = $dto->findFilter('user_id_is_not_used');
+            if (!empty($userId)) {
+                $query->withExists([
+                    'users as is_collected' => function ($query) use ($userId) {
+                        $query->where('user_id', $userId);
+                    },
+                ]);
+            }
             $query = $this->couponRepository->filterQuery($query, $dto->filters);
             $query = $this->couponRepository->sortQuery($query, $dto->sortBy, $dto->direction);
             $coupons = $query->get();

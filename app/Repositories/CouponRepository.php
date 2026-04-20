@@ -38,11 +38,13 @@ class CouponRepository extends BaseRepository
         // Sử dụng filter_var để chấp nhận cả 'true', '1', true, 1
         if (isset($filters['is_valid']) && filter_var($filters['is_valid'], FILTER_VALIDATE_BOOLEAN)) {
             $now = Carbon::now();
-            $currentTime = $now->copy()->format('H:i');
             // Lọc theo thời gian hiệu lực
             $query->where('start_at', '<=', $now)
                 ->where('end_at', '>=', $now)
-                ->whereColumn('used_count', '<', 'usage_limit');
+                ->where(function ($q) {
+                    $q->whereNull('usage_limit')
+                        ->orWhereColumn('used_count', '<', 'usage_limit');
+                });
         }
 
         // Lọc theo Người dùng (Logic: Lấy mã mà người dùng này chưa sử dụng)
