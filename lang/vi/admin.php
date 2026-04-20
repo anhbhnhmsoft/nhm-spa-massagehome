@@ -849,6 +849,10 @@ return
                 'active' => 'Kích hoạt',
                 'inactive' => 'Tắt',
             ],
+            'validation' => [
+                'start_before_end' => 'Ngày bắt đầu phải trước ngày kết thúc.',
+                'end_after_start' => 'Ngày kết thúc phải sau ngày bắt đầu.',
+            ],
         ],
         'page_static' => [
             'navigation_label' => 'Trang tĩnh',

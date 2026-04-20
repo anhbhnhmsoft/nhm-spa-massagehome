@@ -834,6 +834,10 @@ return
                 'active' => '激活',
                 'inactive' => '禁用',
             ],
+            'validation' => [
+                'start_before_end' => '开始日期必须早于结束日期。',
+                'end_after_start' => '结束日期必须晚于开始日期。',
+            ],
         ],
         'page_static' => [
             'navigation_label' => '静态页面',

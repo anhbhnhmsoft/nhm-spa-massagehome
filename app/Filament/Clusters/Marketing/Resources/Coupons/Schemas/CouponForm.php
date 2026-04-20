@@ -63,10 +63,20 @@ class CouponForm
                                     ]),
                                 DateTimePicker::make('start_at')
                                     ->label(__('admin.coupon.fields.start_date'))
-                                    ->required(),
+                                    ->required()
+                                    ->rule('before:end_at')
+                                    ->validationMessages([
+                                        'required' => __("common.error.required"),
+                                        'before' => __('admin.coupon.validation.start_before_end'),
+                                    ]),
                                 DateTimePicker::make('end_at')
                                     ->label(__('admin.coupon.fields.end_date'))
-                                    ->required(),
+                                    ->required()
+                                    ->rule('after:start_at')
+                                    ->validationMessages([
+                                        'required' => __("common.error.required"),
+                                        'after' => __('admin.coupon.validation.end_after_start'),
+                                    ]),
                                 TextInput::make('discount_value')
                                     ->label(__('admin.coupon.fields.discount_value'))
                                     ->required()

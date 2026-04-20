@@ -835,6 +835,10 @@ return
                 'active' => 'Active',
                 'inactive' => 'Inactive',
             ],
+            'validation' => [
+                'start_before_end' => 'The start date must be before the end date.',
+                'end_after_start' => 'The end date must be after the start date.',
+            ],
         ],
         'page_static' => [
             'navigation_label' => 'Static Page',
