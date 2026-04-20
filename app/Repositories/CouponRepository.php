@@ -58,6 +58,15 @@ class CouponRepository extends BaseRepository
                     ->where('is_used', true); // Chú ý: Ở đây ta filter những cái ĐÃ DÙNG để loại bỏ nó
             });
         }
+
+        // Lọc các mã mà user chưa thu thập
+        if (isset($filters['user_id_is_not_collected'])) {
+            $userId = $filters['user_id_is_not_collected'];
+            $query->whereDoesntHave('users', function ($q) use ($userId) {
+                $q->where('user_id', $userId);
+            });
+        }
+
         return $query;
     }
 

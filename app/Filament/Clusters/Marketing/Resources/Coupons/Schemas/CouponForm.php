@@ -75,14 +75,6 @@ class CouponForm
                                         'required' => __("common.error.required"),
                                         'numeric' => __("common.error.numeric"),
                                     ]),
-                                TextInput::make('max_discount')
-                                    ->label(__('admin.coupon.fields.max_discount'))
-                                    ->required()
-                                    ->numeric()
-                                    ->validationMessages([
-                                        'required' => __("common.error.required"),
-                                        'numeric' => __("common.error.numeric"),
-                                    ]),
                                 TextInput::make('usage_limit')
                                     ->label(__('admin.coupon.fields.usage_limit'))
                                     ->required()

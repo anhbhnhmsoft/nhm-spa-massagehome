@@ -58,12 +58,20 @@ class CommercialService extends BaseService
     {
         try {
             $language = App::getLocale();
+            $user = auth('sanctum')->user();
             $query = $this->couponRepository
                 ->queryCoupon()
                 ->where('display_ads', true)
                 ->whereNotNull('banners->' . $language);
 
-            $coupons = $this->couponRepository->filterQuery($query, ['is_valid' => true, 'user_id_is_not_used' => true])->get();
+            $filters = ['is_valid' => true];
+
+            // Nếu user đã đăng nhập thì ẩn luôn các mã đã thu thập để đảm bảo mỗi mã chỉ thu thập 1 lần.
+            if ($user) {
+                $filters['user_id_is_not_collected'] = $user->id;
+            }
+
+            $coupons = $this->couponRepository->filterQuery($query, $filters)->get();
             return ServiceReturn::success(
                 data: $coupons
             );
@@ -121,12 +129,6 @@ class CommercialService extends BaseService
                 }
                 if ($now->isAfter(Carbon::parse($coupon->end_at))) {
                     throw new ServiceException(__("error.coupon_expired"));
-                }
-                // Kiểm tra giới hạn thu thập (nếu có trong config)
-                $config = $coupon->config ?? [];
-                $collectLimit = $config['collect_limit'] ?? null;
-                if ($collectLimit !== null && $coupon->count_collect >= $collectLimit) {
-                    throw new ServiceException(__("error.coupon_collect_limit_reached"));
                 }
 
                 // Kiểm tra xem User đã có Coupon này chưa (với lock)

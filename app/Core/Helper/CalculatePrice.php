@@ -107,20 +107,16 @@ class CalculatePrice
         Coupon $coupon,
         $price,
     ): float {
-        // Tính giá trị giảm giá trước khi kiểm tra max_discount
         if ($coupon->is_percentage) {
             $discountAmount = ($price * $coupon->discount_value) / 100;
         } else {
             // Đảm bảo discount không vượt quá giá trị đơn hàng
             $discountAmount = min($price, $coupon->discount_value);
         }
+
         // Đảm bảo discount không âm
         $discountAmount = max(0, $discountAmount);
 
-        // Kiểm tra giá trị giảm tối đa không vượt quá giá trị tối đa của mã
-        if ($coupon->max_discount !== null && $discountAmount > $coupon->max_discount) {
-            $discountAmount = $coupon->max_discount;
-        }
         return $discountAmount;
     }
 

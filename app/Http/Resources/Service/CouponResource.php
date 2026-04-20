@@ -17,7 +17,6 @@ class CouponResource extends JsonResource
             'description' => $this->description,
             'is_percentage' => $this->is_percentage,
             'discount_value' => $this->discount_value,
-            'max_discount' => $this->max_discount,
             'start_at' => $this->start_at,
             'end_at' => $this->end_at,
             'usage_limit' => $this->usage_limit,
