@@ -44,6 +44,7 @@ class BookingItemResource extends JsonResource
                 'id' => $user->id,
                 'name' => $user->name,
                 'avatar_url' => $userProfile->avatar_url ? Helper::getPublicUrl($userProfile->avatar_url) : null,
+                'phone' => $user->phone ?? null,
             ],
             'address' => $this->address,
             'lat' => (string)$this->latitude,

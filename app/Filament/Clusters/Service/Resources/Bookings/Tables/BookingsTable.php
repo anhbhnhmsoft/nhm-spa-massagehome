@@ -2,23 +2,12 @@
 
 namespace App\Filament\Clusters\Service\Resources\Bookings\Tables;
 
-use App\Core\Service\ServiceReturn;
 use App\Enums\BookingStatus;
-use App\Enums\PaymentType;
-use App\Enums\UserRole;
-use App\Services\BookingService;
-use Filament\Actions\Action;
-use Filament\Actions\ActionGroup;
-use Filament\Actions\ViewAction;
+use App\Filament\Clusters\ReviewApplication\Resources\KTVs\KTVResource;
+use App\Filament\Clusters\User\Resources\Customers\CustomerResource;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
-use Filament\Notifications\Notification;
-use Filament\Schemas\Components\Grid;
-use Filament\Schemas\Components\Section;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
-use Filament\Tables\Enums\RecordActionsPosition;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -35,9 +24,21 @@ class BookingsTable
                     ->searchable(),
                 TextColumn::make('ktvUser.name')
                     ->label(__('admin.booking.fields.ktv_user'))
+                    ->url(fn ($record): string =>
+                        $record->ktv_user_id
+                            ? KTVResource::getUrl('view', ['record' => $record->ktv_user_id])
+                            : '#'
+                        )
+                    ->openUrlInNewTab()
                     ->searchable(),
                 TextColumn::make('user.name')
                     ->label(__('admin.booking.fields.user'))
+                    ->url(fn ($record): string =>
+                    $record->user_id
+                        ? CustomerResource::getUrl('edit', ['record' => $record->user_id])
+                        : '#'
+                    )
+                    ->openUrlInNewTab()
                     ->searchable(),
                 TextColumn::make('service.name')
                     ->label(__('admin.booking.fields.service'))

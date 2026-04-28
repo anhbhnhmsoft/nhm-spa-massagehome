@@ -26,6 +26,7 @@ use App\Jobs\WalletTransactionBookingJob;
 use App\Repositories\ServiceOptionRepository;
 use App\Repositories\ServiceRepository;
 use App\Repositories\UserAddressRepository;
+use App\Repositories\UserKtvScheduleRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\UserReviewApplicationRepository;
 use App\Repositories\WalletRepository;
@@ -58,6 +59,7 @@ class BookingService extends BaseService
         protected CouponValidator                 $couponValidator,
         protected WalletValidator                 $walletValidator,
         protected ServiceRepository               $serviceRepository,
+        protected UserKtvScheduleRepository       $userKtvScheduleRepository,
     )
     {
         parent::__construct();
@@ -393,6 +395,13 @@ class BookingService extends BaseService
             $booking->start_time = now();
             $booking->save();
 
+            // Tắt lịch làm việc của KTV
+            $this->userKtvScheduleRepository->query()
+                ->where('ktv_id', $booking->ktv_user_id)
+                ->update([
+                    'is_working' => false,
+                ]);
+
             DB::commit();
 
             return ServiceReturn::success(
@@ -468,6 +477,13 @@ class BookingService extends BaseService
                 $booking->status = BookingStatus::COMPLETED->value;
                 $booking->end_time = $now;
                 $booking->save();
+
+                // Kích hoạt lại lịch làm việc của KTV
+                $this->userKtvScheduleRepository->query()
+                    ->where('ktv_id', $booking->ktv_user_id)
+                    ->update([
+                        'is_working' => true,
+                    ]);
 
                 // Thanh toán cho KTV và tính phí hoa hồng cho các user khác
                 WalletTransactionBookingJob::dispatch(
