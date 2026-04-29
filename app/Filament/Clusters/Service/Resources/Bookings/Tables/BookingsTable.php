@@ -26,7 +26,7 @@ class BookingsTable
                     ->label(__('admin.booking.fields.ktv_user'))
                     ->url(fn ($record): string =>
                         $record->ktv_user_id
-                            ? KTVResource::getUrl('view', ['record' => $record->ktv_user_id])
+                            ? KTVResource::getUrl('edit', ['record' => $record->ktv_user_id])
                             : '#'
                         )
                     ->openUrlInNewTab()
