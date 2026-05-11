@@ -532,7 +532,7 @@ class BookingService extends BaseService
             if (!$lat || !$lng) {
                 return collect();
             }
-            $radiusInMeters = 20000; // Bán kính 20km
+            $radiusInMeters = 40000; // Bán kính 40km
 
             return $this->userRepository->query()
                 // Join với bảng user_address để lấy địa chỉ chính
@@ -572,7 +572,7 @@ class BookingService extends BaseService
                 ", [$lng, $lat])
                 // Ưu tiên hiển thị người ở gần nhất lên đầu
                 ->orderBy('distance_in_meters', 'asc')
-                ->limit(20)
+                ->limit(40)
                 ->get();
         });
     }
