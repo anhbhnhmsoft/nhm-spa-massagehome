@@ -579,6 +579,12 @@ return
             'empty_state' => [
                 'heading' => 'Chưa có giao dịch nào',
             ],
+            'pending' => [
+                'label' => 'Giao dịch chờ duyệt',
+                'empty_state' => [
+                    'heading' => 'Chưa có giao dịch chờ duyệt',
+                ],
+            ],
             'type' => [
                 'DEPOSIT_QR_CODE' => 'Nạp tiền (QR)',
                 'DEPOSIT_ZALO_PAY' => 'Nạp tiền (ZaloPay)',
@@ -613,6 +619,7 @@ return
                 'cancel' => 'Hủy bỏ',
                 'cancel_confirmation_message' => 'Bạn có chắc chắn muốn hủy bỏ giao dịch này?',
                 'transfer' => 'Chuyển tiền ',
+                'transfer_confirmation_message' => 'Bạn có chắc chắn muốn chuyển tiền giao dịch này?',
                 'fee_transfer' => '(thuộc giao dịch ID: :transaction_id)',
                 'approve_confirmation_message' => 'Bạn có chắc chắn muốn duyệt giao dịch này?',
             ],

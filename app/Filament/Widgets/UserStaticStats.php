@@ -5,7 +5,6 @@ namespace App\Filament\Widgets;
 use App\Enums\Admin\AdminGate;
 use App\Enums\DateRangeDashboard;
 use App\Enums\ReviewApplicationStatus;
-use App\Enums\WalletTransactionStatus;
 use App\Enums\WalletTransactionType;
 use App\Filament\Clusters\ReviewApplication\Resources\Agencies\AgencyResource;
 use App\Filament\Clusters\ReviewApplication\Resources\KTVs\KTVResource;
@@ -112,13 +111,10 @@ class UserStaticStats extends BaseWidget
                                 ->color('primary'),
                             Stat::make(__('dashboard.user_static_stats.withdraw_requests'), $data['withdraw_requests'])
                                 ->icon(Heroicon::Banknotes)
-                                ->url(WalletTransactionResource::getUrl('index',[
+                                ->url(WalletTransactionResource::getUrl('pending',[
                                     'filters' => [
                                         'type' => [
                                             'value' => WalletTransactionType::WITHDRAWAL->value,
-                                        ],
-                                        'status' => [
-                                            'value' => WalletTransactionStatus::PENDING->value,
                                         ],
                                     ]
                                 ]))

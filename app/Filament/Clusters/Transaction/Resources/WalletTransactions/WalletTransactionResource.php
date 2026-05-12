@@ -2,7 +2,10 @@
 
 namespace App\Filament\Clusters\Transaction\Resources\WalletTransactions;
 
+use App\Enums\WalletTransactionStatus;
+use App\Enums\WalletTransactionType;
 use App\Filament\Clusters\Transaction\Resources\WalletTransactions\Pages\ListWalletTransactions;
+use App\Filament\Clusters\Transaction\Resources\WalletTransactions\Pages\ListPendingWalletTransactions;
 use App\Filament\Clusters\Transaction\Resources\WalletTransactions\Schemas\WalletTransactionForm;
 use App\Filament\Clusters\Transaction\Resources\WalletTransactions\Tables\WalletTransactionsTable;
 use App\Filament\Clusters\Transaction\TransactionCluster;
@@ -12,8 +15,6 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class WalletTransactionResource extends Resource
 {
@@ -54,6 +55,24 @@ class WalletTransactionResource extends Resource
         return __('admin.wallet_transaction.label');
     }
 
+    public static function getNavigationBadge(): ?string
+    {
+        $count = WalletTransaction::query()
+            ->where('status', WalletTransactionStatus::PENDING->value)
+            ->whereIn('type', [
+                ...WalletTransactionType::incomeStatus(),
+                WalletTransactionType::WITHDRAWAL->value,
+            ])
+            ->count();
+
+        return $count ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'warning';
+    }
+
     public static function getModelLabel(): string
     {
         return __('admin.wallet_transaction.label');
@@ -63,6 +82,7 @@ class WalletTransactionResource extends Resource
     {
         return [
             'index' => ListWalletTransactions::route('/'),
+            'pending' => ListPendingWalletTransactions::route('/pending'),
         ];
     }
 

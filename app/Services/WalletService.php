@@ -35,6 +35,7 @@ class WalletService extends BaseService
         protected WalletTransactionRepository $walletTransactionRepository,
         protected BookingRepository $bookingRepository,
         protected ConfigService $configService,
+        protected WalletTransactionStatusService $walletTransactionStatusService,
     ) {
         parent::__construct();
     }
@@ -132,49 +133,18 @@ class WalletService extends BaseService
         WalletTransaction $transactionWithdraw,
         WalletTransaction $transactionWithdrawFee,
         Wallet $wallet,
-    )
+    ): ServiceReturn
     {
-        // Cập nhật transaction thành công
-        $transactionWithdraw->update([
-            'status' => WalletTransactionStatus::COMPLETED->value,
-        ]);
-
-        // Cập nhật transaction phí rút thành công
-        $transactionWithdrawFee->update([
-            'status' => WalletTransactionStatus::COMPLETED->value,
-        ]);
-
-        // Trừ số tiền phí rút từ số dư đóng băng
-        $wallet->decrement('frozen_balance', $transactionWithdraw->point_amount);
-        // Trừ luôn phí rút tiền từ số dư đóng băng
-        $wallet->decrement('frozen_balance', $transactionWithdrawFee->point_amount);
+        return $this->walletTransactionStatusService->approveTransaction($transactionWithdraw);
     }
 
     public function cancelWithdraw(
         WalletTransaction $transactionWithdraw,
         WalletTransaction $transactionWithdrawFee,
         Wallet $wallet,
-    )
+    ): ServiceReturn
     {
-        // Cập nhật transaction thành công
-        $transactionWithdraw->update([
-            'status' => WalletTransactionStatus::CANCELLED->value,
-        ]);
-
-        // Cập nhật transaction phí rút thành công
-        $transactionWithdrawFee->update([
-            'status' => WalletTransactionStatus::CANCELLED->value,
-        ]);
-
-        // Trừ số tiền phí rút từ số dư đóng băng
-        $wallet->decrement('frozen_balance', $transactionWithdraw->point_amount);
-        // Trừ luôn phí rút tiền từ số dư đóng băng
-        $wallet->decrement('frozen_balance', $transactionWithdrawFee->point_amount);
-
-        // Cộng lại số tiền phí rút vào số dư
-        $wallet->increment('balance', $transactionWithdraw->point_amount);
-        // Cộng lại luôn phí rút tiền vào số dư
-        $wallet->increment('balance', $transactionWithdrawFee->point_amount);
+        return $this->walletTransactionStatusService->cancelTransaction($transactionWithdraw);
     }
 
 

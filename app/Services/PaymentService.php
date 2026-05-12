@@ -33,6 +33,7 @@ class PaymentService extends BaseService
         protected PayOsService                $payOsService,
         protected ZaloService                 $zaloService,
         protected NotificationService        $notificationService,
+        protected WalletTransactionStatusService $walletTransactionStatusService,
     )
     {
         parent::__construct();
@@ -619,38 +620,9 @@ class PaymentService extends BaseService
      * @param WalletTransaction $record
      * @throws \Exception
      */
-    public function handleAdminConfirmTransaction(WalletTransaction $record)
+    public function handleAdminConfirmTransaction(WalletTransaction $record): ServiceReturn
     {
-        DB::beginTransaction();
-        try {
-            $record->update(['status' => WalletTransactionStatus::COMPLETED]);
-            // Kiểm tra xem transaction có phải là nạp tiền hay không
-            if (in_array($record->type, WalletTransactionType::incomeStatus())) {
-                $record->wallet->increment('balance', (float)$record->point_amount);
-                // Thông báo tới người dùng khi nạp tiền thành công
-                SendNotificationJob::dispatch(
-                    userId: $record->wallet->user_id,
-                    type: NotificationType::DEPOSIT_SUCCESS,
-                    data: [
-                        'transaction_id' => $record->id,
-                        'amount' => $record->point_amount,
-                        'deposit_time' => $record->created_at->format('Y-m-d H:i:s'),
-                    ]
-                );
-            }
-            DB::commit();
-            return ServiceReturn::success();
-
-        } catch (\Exception $exception) {
-            DB::rollBack();
-            LogHelper::error(
-                message: "Lỗi WalletService@handleAdminConfirmTransaction",
-                ex: $exception
-            );
-            return ServiceReturn::error(
-                message: __("common_error.server_error")
-            );
-        }
+        return $this->walletTransactionStatusService->approveTransaction($record);
     }
 
 

@@ -566,6 +566,12 @@ return
             'empty_state' => [
                 'heading' => 'No transactions found',
             ],
+            'pending' => [
+                'label' => 'Pending Transactions',
+                'empty_state' => [
+                    'heading' => 'No pending transactions',
+                ],
+            ],
             'type' => [
                 'DEPOSIT_QR_CODE' => 'Deposit (QR)',
                 'DEPOSIT_ZALO_PAY' => 'Deposit (ZaloPay)',
@@ -598,6 +604,7 @@ return
                 'approve' => 'Approve',
                 'cancel' => 'Cancel',
                 'transfer' => 'Transfer Money ',
+                'transfer_confirmation_message' => 'Are you sure you want to transfer this transaction?',
                 'fee_transfer' => '(Transaction ID: :transaction_id)',
                 'approve_confirmation_message' => 'Are you sure you want to approve this transaction?',
                 'cancel_confirmation_message' => 'Are you sure you want to cancel this transaction?',

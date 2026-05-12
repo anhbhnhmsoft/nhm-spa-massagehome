@@ -565,6 +565,12 @@ return
             'empty_state' => [
                 'heading' => '未找到交易',
             ],
+            'pending' => [
+                'label' => '待处理交易',
+                'empty_state' => [
+                    'heading' => '暂无待处理交易',
+                ],
+            ],
             'type' => [
                 'DEPOSIT_QR_CODE' => '充值 (QR)',
                 'DEPOSIT_ZALO_PAY' => '充值 (ZaloPay)',
@@ -597,6 +603,7 @@ return
                 'approve' => '批准',
                 'cancel' => '取消',
                 'transfer' => '转账',
+                'transfer_confirmation_message' => '您确定要转账此交易吗？',
                 'fee_transfer' => '(交易 ID: :transaction_id)',
                 'approve_confirmation_message' => '您确定要批准此交易吗？',
                 'cancel_confirmation_message' => '您确定要取消此交易吗？',
