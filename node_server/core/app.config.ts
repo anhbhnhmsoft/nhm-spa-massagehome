@@ -1,9 +1,21 @@
 import dotenv from 'dotenv';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 import path from 'path';
 
-const envPath = path.resolve(process.cwd(), '.env');
+const currentDir = path.dirname(fileURLToPath(import.meta.url));
+const envCandidates = [
+    path.resolve(currentDir, '.env'),
+    path.resolve(currentDir, '..', '.env'),
+    path.resolve(currentDir, '..', '..', '.env'),
+];
 
-dotenv.config({ path: envPath });
+for (const envPath of envCandidates) {
+    if (fs.existsSync(envPath)) {
+        dotenv.config({ path: envPath, override: true });
+        break;
+    }
+}
 
 const prefix = process.env.REDIS_PREFIX || 'massagehome-redis-';
 export const config = {
@@ -17,6 +29,10 @@ export const config = {
             notification: `${prefix}${process.env.REDIS_CHANNEL_NOTIFICATION || 'expo_notifications'}`,
             chat: `${prefix}${process.env.REDIS_CHANNEL_CHAT || 'chat_messages'}`,
             chat_auth: `${prefix}${process.env.REDIS_CHANNEL_CHAT_AUTH || 'chat_auth'}`,
+            support: `${prefix}${process.env.REDIS_CHANNEL_SUPPORT || 'support_messages'}`,
+        },
+        secrets: {
+            adminSocket: process.env.ADMIN_SOCKET_SECRET || process.env.APP_KEY || '',
         }
     },
     app: {

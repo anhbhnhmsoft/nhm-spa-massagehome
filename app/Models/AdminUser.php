@@ -7,6 +7,7 @@ use App\Enums\Admin\AdminRole;
 use App\Enums\Language;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -33,6 +34,7 @@ class AdminUser extends Authenticatable implements FilamentUser
         'language' => Language::class,
         'password' => 'hashed',
         'is_active' => 'boolean',
+        'last_seen_at' => 'datetime',
         'role' => AdminRole::class, // Map với Enum của bạn
     ];
 
@@ -50,5 +52,10 @@ class AdminUser extends Authenticatable implements FilamentUser
     public function hasAnyRole(array $roles): bool
     {
         return in_array($this->role, $roles);
+    }
+
+    public function assignedSupportTickets(): HasMany
+    {
+        return $this->hasMany(SupportTicket::class, 'assigned_staff_id');
     }
 }

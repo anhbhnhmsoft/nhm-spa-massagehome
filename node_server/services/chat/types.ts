@@ -1,12 +1,24 @@
 export enum _ChatConstant {
     CHAT_MESSAGE_NEW = 'message:new',
-    CHAT_CONVERSATION_UPDATE = "conversation:update"
+    CHAT_CONVERSATION_UPDATE = "conversation:update",
+    SUPPORT_TICKET_CREATED = 'support:ticket:created',
+    SUPPORT_TICKET_CLAIMED = 'support:ticket:claimed',
+    SUPPORT_TICKET_CLOSED = 'support:ticket:closed',
+    SUPPORT_MESSAGE_NEW = 'support:message:new',
 }
 
+export type SessionKind = 'user' | 'admin';
 
 export type UserSession = {
     id: string;
     name: string;
+    kind: SessionKind;
+};
+
+export type AdminSession = {
+    id: string;
+    name: string;
+    kind: SessionKind;
 };
 
 export type PayloadNewMessage = {

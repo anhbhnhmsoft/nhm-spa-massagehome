@@ -4,6 +4,8 @@ return
         "nav" => [
             "review_application" => "Application Management",
             "category" => "Category Management",
+            "support" => "Support Management",
+            "human_resource" => "Human Resources",
             'agency' => 'Partner Management',
             "service" => 'Service Management',
             'user' => 'Customer Management',
@@ -25,6 +27,7 @@ return
             'year' => 'year',
             'date' => 'Date',
             'count' => 'Count',
+            'select_placeholder' => 'Select a value',
             'affiliate_qr' => 'Affiliate QR',
             'count_collect' => 'Limit Collect',
             'wallet' => 'Wallet',
@@ -47,6 +50,7 @@ return
                 'date_of_birth' => 'Date of Birth',
                 'gender' => 'Gender',
                 'status' => 'Status',
+                'language' => 'Language',
                 'status_review' => 'Review Status',
                 'last_login' => 'Last Login',
                 'basic_info' => 'Basic Info',
@@ -141,6 +145,29 @@ return
                 'duration' => 'Duration',
                 'price' => 'Price',
                 'add_price' => 'Add Price',
+            ],
+            'support_category' => [
+                'label' => 'Support category',
+                'section' => [
+                    'general' => 'General settings',
+                    'content' => 'Multilingual content',
+                ],
+                'helper' => [
+                    'position' => 'Lower numbers are shown first.',
+                ],
+                'table' => [
+                    'id' => 'ID',
+                    'name' => 'Category name',
+                    'description' => 'Description',
+                    'position' => 'Position',
+                    'status' => 'Status',
+                    'created_at' => 'Created at',
+                    'updated_at' => 'Updated at',
+                ],
+                'empty_state' => [
+                    'heading' => 'No support categories yet',
+                    'description' => 'Create the first support category so mobile can use it when creating tickets.',
+                ],
             ],
             'unit' => [
                 'user' => 'Users',
@@ -993,5 +1020,39 @@ return
         ],
         'admin_user' => [
             'label' => 'Staff',
+        ],
+        'staff' => [
+            'label' => 'Staff',
+            'navigation_label' => 'Human Resources',
+            'section' => [
+                'account' => 'Account information',
+            ],
+            'empty_state' => [
+                'heading' => 'No staff yet',
+                'description' => 'Create the first staff account to manage operations.',
+            ],
+        ],
+        'support_ticket' => [
+            'label' => 'Support ticket',
+            'navigation_label' => 'Support tickets',
+            'section' => [
+                'info' => 'Ticket info',
+                'manage' => 'Assign and handle',
+            ],
+            'fields' => [
+                'customer' => 'Customer',
+                'customer_phone' => 'Phone number',
+                'category' => 'Support category',
+                'assigned_staff' => 'Assigned staff',
+                'status' => 'Status',
+                'room_id' => 'Chat room ID',
+                'latest_booking' => 'Latest booking',
+                'last_message_at' => 'Last message',
+                'latest_message' => 'Latest message',
+            ],
+            'empty_state' => [
+                'heading' => 'No support tickets yet',
+                'description' => 'Tickets from mobile will appear here for staff to handle.',
+            ],
         ],
     ];

@@ -7,6 +7,7 @@ use App\Enums\UserRole;
 use App\Enums\UserFileType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Storage;
@@ -204,6 +205,11 @@ class User extends Authenticatable
     public function bookings()
     {
         return $this->hasMany(ServiceBooking::class, 'user_id');
+    }
+
+    public function supportTickets(): HasMany
+    {
+        return $this->hasMany(SupportTicket::class, 'customer_id');
     }
 
     /**

@@ -67,7 +67,10 @@ class MailService extends BaseService
                     ->send(new OtpEmail($otp, $lang));
             },
             catchCallback: function ($e) {
-                dd($e);
+                $this->logError('Failed to send OTP email', [
+                    'email' => $email,
+                    'error' => $e->getMessage(),
+                ]);
             }
         );
     }

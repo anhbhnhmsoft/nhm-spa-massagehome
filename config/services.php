@@ -42,6 +42,8 @@ return [
         'channel_notification' => env('REDIS_CHANNEL_NOTIFICATION', 'expo_notifications'),
         'channel_chat' => env('REDIS_CHANNEL_CHAT', 'chat_messages'),
         'channel_chat_auth' => env('REDIS_CHANNEL_CHAT_AUTH', 'chat_auth'),
+        'channel_support' => env('REDIS_CHANNEL_SUPPORT', 'support_messages'),
+        'admin_socket_secret' => env('ADMIN_SOCKET_SECRET', env('APP_KEY')),
     ],
     'zalo' => [
         'app_id' => env('ZALO_APP_ID'),

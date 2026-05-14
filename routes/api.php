@@ -11,6 +11,7 @@ use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\API\PaymentController;
 use App\Http\Controllers\API\ProfileController;
 use App\Http\Controllers\API\ServiceController;
+use App\Http\Controllers\API\SupportController;
 use App\Http\Controllers\API\ChatController;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\AffiliateController;
@@ -285,6 +286,16 @@ Route::middleware(['set-api-locale', 'update-last-active'])->group(function () {
         // Lấy thông tin cấu hình ứng dụng
         Route::get('config-application', [ConfigController::class, 'configApplication']);
 
+    });
+
+    Route::prefix('support')->middleware(['auth:sanctum'])->group(function () {
+        Route::get('categories', [SupportController::class, 'categories']);
+        Route::get('tickets', [SupportController::class, 'tickets']);
+        Route::post('tickets', [SupportController::class, 'createTicket']);
+        Route::get('tickets/{id}', [SupportController::class, 'detail'])->where('id', '[0-9]+');
+        Route::get('messages/{id}', [SupportController::class, 'messages'])->where('id', '[0-9]+');
+        Route::post('messages', [SupportController::class, 'sendMessage']);
+        Route::post('seen', [SupportController::class, 'seen']);
     });
 
     // Chỉ dành cho KTV

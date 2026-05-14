@@ -5,6 +5,8 @@ return
         "nav" => [
             "review_application" => "Quản lý hồ sơ",
             "category" => "Quản lý danh mục",
+            "support" => "Quản lý hỗ trợ",
+            "human_resource" => "Quản lý nhân sự",
             'agency' => 'Quản lý đối tác',
             "service" => 'Quản lý dịch vụ',
             'user' => 'Quản lý khách hàng',
@@ -54,6 +56,7 @@ return
                 'account_info' => 'Thông tin tài khoản',
                 'role' => 'Vai trò',
                 'password' => 'Mật khẩu',
+                'language' => 'Ngôn ngữ',
                 'bio' => 'Giới thiệu',
                 'is_online' => 'Trạng thái online',
                 'description' => 'Miêu tả',
@@ -67,6 +70,7 @@ return
                 'performed_count' => 'Số lần thực hiện',
                 'status_review' => 'Trạng thái hồ sơ',
                 'password_desc' => 'Mật khẩu phải có ít nhất 8 kí tự, bao gồm chữ hoa, chữ thường, số và kí tự đặc biệt, 1 khi thay đổi mật khẩu mới, Người dùng sẽ không được sử dụng mật khẩu cũ.',
+                'select_placeholder' => 'Chọn giá trị',
             ],
             'action' => [
                 'view' => 'Xem',
@@ -143,6 +147,29 @@ return
                 'duration' => 'Thời lượng',
                 'price' => 'Giá tiền',
                 'add_price' => 'Thêm mức giá',
+            ],
+            'support_category' => [
+                'label' => 'Danh mục hỗ trợ',
+                'section' => [
+                    'general' => 'Thiết lập chung',
+                    'content' => 'Nội dung đa ngôn ngữ',
+                ],
+                'helper' => [
+                    'position' => 'Số nhỏ sẽ hiển thị ở trên cùng.',
+                ],
+                'table' => [
+                    'id' => 'ID',
+                    'name' => 'Tên danh mục',
+                    'description' => 'Mô tả',
+                    'position' => 'Vị trí',
+                    'status' => 'Trạng thái',
+                    'created_at' => 'Ngày tạo',
+                    'updated_at' => 'Ngày cập nhật',
+                ],
+                'empty_state' => [
+                    'heading' => 'Chưa có danh mục hỗ trợ',
+                    'description' => 'Hãy tạo danh mục hỗ trợ đầu tiên để mobile có thể chọn khi tạo ticket.',
+                ],
             ],
             'from' => 'Từ',
             'to' => 'Đến',
@@ -1005,5 +1032,39 @@ return
         ],
         'admin_user' => [
             'label' => 'Nhân sự',
+        ],
+        'staff' => [
+            'label' => 'Nhân sự',
+            'navigation_label' => 'Quản lý nhân sự',
+            'section' => [
+                'account' => 'Thông tin tài khoản',
+            ],
+            'empty_state' => [
+                'heading' => 'Chưa có nhân sự',
+                'description' => 'Tạo tài khoản nhân sự đầu tiên để quản lý vận hành.',
+            ],
+        ],
+        'support_ticket' => [
+            'label' => 'Ticket hỗ trợ',
+            'navigation_label' => 'Ticket hỗ trợ',
+            'section' => [
+                'info' => 'Thông tin ticket',
+                'manage' => 'Phân công và xử lý',
+            ],
+            'fields' => [
+                'customer' => 'Khách hàng',
+                'customer_phone' => 'Số điện thoại',
+                'category' => 'Danh mục hỗ trợ',
+                'assigned_staff' => 'Nhân sự phụ trách',
+                'status' => 'Trạng thái',
+                'room_id' => 'Mã phòng chat',
+                'latest_booking' => 'Đơn gần nhất',
+                'last_message_at' => 'Tin nhắn cuối',
+                'latest_message' => 'Tin nhắn cuối cùng',
+            ],
+            'empty_state' => [
+                'heading' => 'Chưa có ticket hỗ trợ',
+                'description' => 'Ticket từ mobile sẽ hiển thị ở đây để nhân sự xử lý.',
+            ],
         ],
     ];

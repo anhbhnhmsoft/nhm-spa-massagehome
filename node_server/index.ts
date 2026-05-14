@@ -3,8 +3,8 @@ import { createServer } from 'http';
 import cors from 'cors';
 import { Server } from 'socket.io';
 import { config } from '#/core/app.config';
-import { NotificationService } from '#/services/notification.service.js';
-import { ChatService } from '#/services/chat/chat.service.js';
+import { NotificationService } from '#/services/notification.service';
+import { ChatService } from '#/services/chat/chat.service';
 import { redisPub, redisSub } from '#/core/app.redis';
 
 

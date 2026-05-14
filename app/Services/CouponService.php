@@ -108,6 +108,12 @@ class CouponService extends BaseService
                 if (!$coupon) {
                     throw new ServiceException(__("booking.coupon.not_found"));
                 }
+
+                // Kiểm tra quyền sở hữu nếu là mã riêng (private coupon)
+                if ($coupon->user_id !== null && (string)$coupon->user_id !== (string)$userId) {
+                    throw new ServiceException(__("booking.coupon.not_yours"));
+                }
+                
                 LogHelper::debug('CouponService@useCoupon: ' . json_encode($coupon));
                 // Kiểm tra usage_limit TRƯỚC KHI thực hiện bất kỳ thao tác nào
                 if ($coupon->usage_limit !== null && $coupon->used_count >= $coupon->usage_limit) {

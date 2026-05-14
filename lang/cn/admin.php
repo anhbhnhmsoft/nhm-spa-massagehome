@@ -4,6 +4,8 @@ return
         "nav" => [
             "review_application" => "审核管理",
             "category" => "分类管理",
+            "support" => "支持管理",
+            "human_resource" => "人力资源",
             'agency' => '合作伙伴管理',
             "service" => '服务管理',
             'user' => '客户管理',
@@ -25,6 +27,7 @@ return
             'year' => '年',
             'date' => '日期',
             'count' => '数量',
+            'select_placeholder' => '请选择一个值',
             'affiliate_qr' => '推广二维码',
             'wallet' => '钱包',
             'balance' => '余额',
@@ -46,6 +49,7 @@ return
                 'date_of_birth' => '出生日期',
                 'gender' => '性别',
                 'status' => '状态',
+                'language' => '语言',
                 'status_review' => '审核状态',
                 'last_login' => '最后登录',
                 'basic_info' => '基本信息',
@@ -140,6 +144,29 @@ return
                 'duration' => '持续时间',
                 'price' => '价格',
                 'add_price' => '添加价格',
+            ],
+            'support_category' => [
+                'label' => '支持分类',
+                'section' => [
+                    'general' => '基础设置',
+                    'content' => '多语言内容',
+                ],
+                'helper' => [
+                    'position' => '数字越小越靠前。',
+                ],
+                'table' => [
+                    'id' => 'ID',
+                    'name' => '分类名称',
+                    'description' => '描述',
+                    'position' => '位置',
+                    'status' => '状态',
+                    'created_at' => '创建时间',
+                    'updated_at' => '更新时间',
+                ],
+                'empty_state' => [
+                    'heading' => '暂无支持分类',
+                    'description' => '请先创建第一个支持分类，移动端创建 ticket 时才可选择。',
+                ],
             ],
             'unit' => [
                 'user' => '用户',
@@ -992,5 +1019,39 @@ return
         ],
         'admin_user' => [
             'label' => '员工',
+        ],
+        'staff' => [
+            'label' => '员工',
+            'navigation_label' => '人力资源',
+            'section' => [
+                'account' => '账户信息',
+            ],
+            'empty_state' => [
+                'heading' => '暂无员工',
+                'description' => '先创建第一个员工账户以管理运营。',
+            ],
+        ],
+        'support_ticket' => [
+            'label' => '支持工单',
+            'navigation_label' => '支持工单',
+            'section' => [
+                'info' => '工单信息',
+                'manage' => '分配与处理',
+            ],
+            'fields' => [
+                'customer' => '客户',
+                'customer_phone' => '电话号码',
+                'category' => '支持分类',
+                'assigned_staff' => '负责员工',
+                'status' => '状态',
+                'room_id' => '聊天房间ID',
+                'latest_booking' => '最近订单',
+                'last_message_at' => '最后消息',
+                'latest_message' => '最新消息',
+            ],
+            'empty_state' => [
+                'heading' => '暂无支持工单',
+                'description' => '来自移动端的工单会显示在这里供员工处理。',
+            ],
         ],
     ];

@@ -28,6 +28,6 @@ yarn-error.log
 /.zed
 /dist
 *.apk
-
-
+pnpm-lock.yaml
+pnpm-workspace.yaml
 .codex

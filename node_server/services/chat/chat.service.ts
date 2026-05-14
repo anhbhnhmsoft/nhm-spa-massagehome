@@ -1,246 +1,281 @@
+import crypto from 'crypto';
+import type { Server, Socket } from 'socket.io';
+
 import { config } from '#/core/app.config';
-import { redisPub, redisSub } from '#/core/app.redis.js';
+import { redisPub, redisSub } from '#/core/app.redis';
+import { safeQuery } from '#/core/app.database';
 import {
     _ChatConstant,
     PayloadNewMessage,
+    SessionKind,
     UserSession,
-} from '#/services/chat/types.js';
-import type { Server, Socket } from 'socket.io';
-import crypto from 'crypto';
-import { safeQuery } from '#/core/app.database';
+} from '#/services/chat/types';
+
+type SocketSession = UserSession;
 
 export class ChatService {
     constructor(private io: Server) {}
 
     public init() {
-        // Middleware xác thực token
         this.middleware();
-
-        // Xử lý khi client kết nối
         this.io.on('connection', (socket) => this.handleConnection(socket));
 
-        // Xử lý khi client ngắt kết nối
-        this.io.on('disconnect', (socket) => this.handleDisconnect(socket));
-
-        // Listen Redis pub/sub from Laravel
         redisSub.subscribe(config.redis.channels.chat, (err) => {
             if (err) console.error('Redis Chat Subscribe Error:', err);
-            else
-                console.log(
-                    `Subscribed Redis channel: ${config.redis.channels.chat}`,
-                );
+            else console.log(`Subscribed Redis channel: ${config.redis.channels.chat}`);
+        });
+        redisSub.subscribe(config.redis.channels.support, (err) => {
+            if (err) console.error('Redis Support Subscribe Error:', err);
+            else console.log(`Subscribed Redis channel: ${config.redis.channels.support}`);
         });
 
         redisSub.on('message', (channel, message) => {
-            if (channel !== config.redis.channels.chat) return;
-            this.handleLaravelMessage(message);
+            if (channel === config.redis.channels.chat) {
+                void this.handleChatLaravelMessage(message);
+            }
+            if (channel === config.redis.channels.support) {
+                void this.handleSupportLaravelMessage(message);
+            }
         });
     }
 
-    /**
-     * Xử lý message từ Redis pub/sub từ Laravel
-     */
-    protected async handleLaravelMessage(rawMessage: string) {
+    protected async handleChatLaravelMessage(rawMessage: string) {
         try {
             const parsed = JSON.parse(rawMessage);
             const type = parsed?.type;
-            // Xử lý message:new
             if (type === _ChatConstant.CHAT_MESSAGE_NEW && parsed?.payload) {
-                const payload: PayloadNewMessage = parsed?.payload;
-                if (payload.room_id) {
-                    // Format tên phòng phải KHỚP với lúc join
-                    const roomName = this.getConversationRoom(payload.room_id);
-                    // Emit tới phòng
+                const payload: PayloadNewMessage = parsed.payload;
+                if (!payload.room_id) return;
+
+                const roomName = this.getConversationRoom(payload.room_id);
+                this.io.to(roomName).emit(_ChatConstant.CHAT_MESSAGE_NEW, payload);
+
+                if (payload.receiver_id) {
                     this.io
-                        .to(roomName)
-                        .emit(_ChatConstant.CHAT_MESSAGE_NEW, payload);
-                    // Emit riêng cho người nhận để cập nhật conversation
-                    if (payload.receiver_id){
-                        const receiverPrivateRoom = this.getPrivateUserRoom(payload.receiver_id);
-                        this.io.to(receiverPrivateRoom).emit(_ChatConstant.CHAT_CONVERSATION_UPDATE, payload);
-                    }
+                        .to(this.getPrivateUserRoom(payload.receiver_id))
+                        .emit(_ChatConstant.CHAT_CONVERSATION_UPDATE, payload);
                 }
             }
-        }
-        catch (error) {
-            console.error('ChatService@handleLaravelMessage error', error);
+        } catch (error) {
+            console.error('ChatService@handleChatLaravelMessage error', error);
         }
     }
 
-    /**
-     * Xử lý khi client kết nối (QUAN TRỌNG: Đã thêm Callback)
-     */
+    protected async handleSupportLaravelMessage(rawMessage: string) {
+        try {
+            const parsed = JSON.parse(rawMessage);
+            const type = parsed?.type;
+            const payload = parsed?.payload;
+            const ticket = payload?.ticket;
+            if (!type || !ticket) return;
+
+            const roomName = this.getConversationRoom(ticket.room_id ?? `support-ticket:${ticket.id}`);
+
+            // Lấy danh sách socket đang ở trong conversation room
+            const socketsInRoom = await this.io.in(roomName).fetchSockets();
+            const socketIdsInRoom = new Set(socketsInRoom.map((s) => s.id));
+
+            // Broadcast vào conversation room — mọi thành viên đang join đều nhận
+            this.io.to(roomName).emit(type, payload);
+
+            // Chỉ emit private khi customer KHÔNG đang ở trong room (tránh duplicate)
+            if (ticket.customer?.id) {
+                const customerPrivateRoom = this.getPrivateUserRoom(ticket.customer.id);
+                const customerSockets = await this.io.in(customerPrivateRoom).fetchSockets();
+                const customerInRoom = customerSockets.some((s) => socketIdsInRoom.has(s.id));
+                if (!customerInRoom) {
+                    this.io.to(customerPrivateRoom).emit(type, payload);
+                }
+            }
+
+            // Staff: luôn emit tới private room (sale portal không join conversation room)
+            if (ticket.assigned_staff?.id) {
+                this.io
+                    .to(this.getPrivateAdminRoom(ticket.assigned_staff.id))
+                    .emit(type, payload);
+            }
+        } catch (error) {
+            console.error('ChatService@handleSupportLaravelMessage error', error);
+        }
+    }
+
     protected handleConnection(socket: Socket) {
-        const user = socket.data.user as UserSession;
-        const userPrivateRoom = this.getPrivateUserRoom(user.id);
+        const session = socket.data.session as SocketSession;
+        if (!session?.id) {
+            socket.disconnect(true);
+            return;
+        }
 
-        // Tự động join phòng cá nhân (để nhận noti riêng)
-        socket.join(userPrivateRoom);
+        socket.join(this.getPrivateRoom(session));
+        this.updateUserOnlineStatus(session.id, true, session.kind);
 
-        // --- JOIN ROOM CÓ CALLBACK ---
-        this.updateUserOnlineStatus(user?.id || '', true);
+        socket.on('disconnect', () => this.handleDisconnect(socket));
 
         socket.on(
             'join',
             (
                 { roomId },
-                callback: (data: {
-                    status: 'ok' | 'error';
-                    message?: string;
-                }) => void,
+                callback?: (data: { status: 'ok' | 'error'; message?: string }) => void,
             ) => {
+                const ack = typeof callback === 'function' ? callback : () => {};
                 try {
                     if (!roomId) {
-                        console.error('Join room missing roomId:', roomId);
-                        callback({
-                            status: 'error',
-                            message: 'Missing roomId',
-                        });
+                        ack({ status: 'error', message: 'Missing roomId' });
                         return;
                     }
 
-                    const roomName = this.getConversationRoom(roomId);
-                    socket.join(roomName);
-
-                    // Báo lại cho Client biết là đã vào thành công
-                    console.log('Join room success:', roomId);
-                    callback({ status: 'ok' });
+                    socket.join(this.getConversationRoom(roomId));
+                    ack({ status: 'ok' });
                 } catch (error) {
                     console.error('Join Error:', error);
-                    callback({
-                        status: 'error',
-                        message: 'Internal Server Error',
-                    });
+                    ack({ status: 'error', message: 'Internal Server Error' });
                 }
             },
         );
 
-        // --- LEAVE ROOM CÓ CALLBACK ---
         socket.on(
             'leave',
             (
                 { roomId },
-                callback: (data: {
-                    status: 'ok' | 'error';
-                    message?: string;
-                }) => void,
+                callback?: (data: { status: 'ok' | 'error'; message?: string }) => void,
             ) => {
+                const ack = typeof callback === 'function' ? callback : () => {};
                 try {
                     if (!roomId) {
-                        console.log('Leave room missing roomId:', roomId);
-                        callback({
-                            status: 'error',
-                            message: 'Missing roomId',
-                        });
+                        ack({ status: 'error', message: 'Missing roomId' });
                         return;
                     }
-                    const roomName = this.getConversationRoom(roomId);
-                    socket.leave(roomName);
-                    console.log('Leave room success:', roomId);
-                    if (typeof callback === 'function') {
-                        callback({ status: 'ok' });
-                    }
+
+                    socket.leave(this.getConversationRoom(roomId));
+                    ack({ status: 'ok' });
                 } catch (error) {
                     console.error('Leave Error:', error);
-                    // Ignore error on leave
-                    callback({
-                        status: 'error',
-                        message: 'Internal Server Error',
-                    });
+                    ack({ status: 'error', message: 'Internal Server Error' });
                 }
             },
         );
     }
 
-    /**
-     * Xử lý khi client ngắt kết nối
-     */
     protected handleDisconnect(socket: Socket) {
-        const user = socket.data.user as UserSession;
+        const session = socket.data.session as SocketSession;
+        if (!session?.id) return;
 
-        const userPrivateRoom = this.getPrivateUserRoom(user.id);
-        // Rời phòng cá nhân khi ngắt kết nối
-        socket.leave(userPrivateRoom);
+        socket.leave(this.getPrivateRoom(session));
+        this.updateUserOnlineStatus(session.id, false, session.kind);
     }
 
-    /**
-     * Tạo tên phòng chat từ roomId
-     */
     protected getConversationRoom(roomId: string): string {
         return `conversation:${roomId}`;
     }
 
-    /**
-     * Lấy tên phòng cá nhân từ userId
-     */
     protected getPrivateUserRoom(userId: string): string {
         return `user:${userId}`;
     }
 
-    /**
-     * Xác thực token khi client kết nối
-     * @param token
-     * @protected
-     */
-    protected async validateTokenFormat(token: string): Promise<{
-        user: UserSession;
-        token: string;
-    }> {
-        if (!token || typeof token !== 'string' || !token.includes('|')) {
-            console.error('🔒 Auth Error: Token missing or invalid format');
-            throw new Error('Authentication error: Invalid token format');
-        }
-        // 1. Kiểm tra định dạng cơ bản
-        if (!token || !token.includes('|')) {
-            throw new Error('Authentication error: Invalid token format');
-        }
-
-        const [tokenId, plainToken] = token.split('|');
-
-        // Hash Token
-        const hashedToken = crypto
-            .createHash('sha256')
-            .update(plainToken)
-            .digest('hex');
-
-        // Truy vấn Database
-        const query = `
-            SELECT u.id, u.name
-            FROM users u
-            JOIN personal_access_tokens t ON u.id = t.tokenable_id
-            WHERE t.id = $1
-              AND t.token = $2
-              AND t.tokenable_type = 'App\\Models\\User'
-              AND (t.expires_at IS NULL OR t.expires_at > NOW())
-            LIMIT 1
-        `;
-
-        const result = await safeQuery(query, [tokenId, hashedToken]);
-
-        if (!result || result.rows.length === 0) {
-            console.warn(`🚫 Auth Denied: Token ID ${tokenId} not found or expired`);
-            throw new Error('Authentication error: Session expired or invalid');
-        }
-
-        // Trả về thông tin
-        return {
-            user: result.rows[0] as UserSession,
-            token: token,
-        };
+    protected getPrivateAdminRoom(adminId: string): string {
+        return `admin:${adminId}`;
     }
 
-    /**
-     * Xác thực token khi client kết nối
-     */
+    protected getPrivateRoom(session: SocketSession): string {
+        return session.kind === 'admin'
+            ? this.getPrivateAdminRoom(session.id)
+            : this.getPrivateUserRoom(session.id);
+    }
+
+    protected async validateTokenFormat(token: string): Promise<{
+        session: SocketSession;
+        token: string;
+    }> {
+        if (!token || typeof token !== 'string') {
+            throw new Error('Authentication error: Invalid token format');
+        }
+
+        if (token.includes('|')) {
+            const [tokenId, plainToken] = token.split('|');
+            const hashedToken = crypto.createHash('sha256').update(plainToken).digest('hex');
+
+            const query = `
+                SELECT u.id, u.name
+                FROM users u
+                JOIN personal_access_tokens t ON u.id = t.tokenable_id
+                WHERE t.id = $1
+                  AND t.token = $2
+                  AND t.tokenable_type = 'App\\Models\\User'
+                  AND (t.expires_at IS NULL OR t.expires_at > NOW())
+                LIMIT 1
+            `;
+
+            const result = await safeQuery(query, [tokenId, hashedToken]);
+            if (!result || result.rows.length === 0) {
+                throw new Error('Authentication error: Session expired or invalid');
+            }
+
+            return {
+                session: {
+                    ...result.rows[0],
+                    kind: 'user' as SessionKind,
+                } as SocketSession,
+                token,
+            };
+        }
+
+        if (token.startsWith('admin.')) {
+            const parts = token.split('.');
+            if (parts.length !== 5) {
+                throw new Error('Authentication error: Invalid admin token format');
+            }
+
+            const [, adminId, expiresAt, nonce, signature] = parts;
+            const expiresAtNumber = Number(expiresAt);
+            if (!adminId || !expiresAtNumber || Number.isNaN(expiresAtNumber)) {
+                throw new Error('Authentication error: Invalid admin token payload');
+            }
+
+            if (expiresAtNumber * 1000 < Date.now()) {
+                throw new Error('Authentication error: Session expired or invalid');
+            }
+
+            const payload = `admin.${adminId}.${expiresAt}.${nonce}`;
+            const expectedSignature = crypto
+                .createHmac('sha256', config.redis.secrets.adminSocket)
+                .update(payload)
+                .digest('hex');
+
+            if (expectedSignature !== signature) {
+                throw new Error('Authentication error: Invalid admin token signature');
+            }
+
+            const query = `
+                SELECT id, name
+                FROM admin_users
+                WHERE id = $1
+                  AND is_active = true
+                LIMIT 1
+            `;
+            const result = await safeQuery(query, [adminId]);
+            if (!result || result.rows.length === 0) {
+                throw new Error('Authentication error: Admin not found');
+            }
+
+            return {
+                session: {
+                    ...result.rows[0],
+                    kind: 'admin' as SessionKind,
+                } as SocketSession,
+                token,
+            };
+        }
+
+        throw new Error('Authentication error: Invalid token format');
+    }
+
     protected middleware() {
         this.io.use(async (socket, next) => {
             try {
                 const token = socket.handshake.auth.token;
-                // Key mà Node đang định tìm
-                const { user } = await this.validateTokenFormat(token);
-                // Lưu user vào socket data
-                socket.data.user = user;
-
+                const { session } = await this.validateTokenFormat(token);
+                socket.data.session = session;
+                socket.data.user = session;
                 socket.data.token = token;
                 next();
             } catch (error) {
@@ -250,23 +285,24 @@ export class ChatService {
         });
     }
 
-    /**
-     * Cập nhật trạng thái online/offline của user
-     */
-    protected async updateUserOnlineStatus(userId: string, isOnline: boolean) {
-        const statusKey = `${config.redis.prefix}user_online_status:${userId}`;
+    protected async updateUserOnlineStatus(
+        userId: string,
+        isOnline: boolean,
+        kind: SessionKind = 'user',
+    ) {
+        const statusKey =
+            kind === 'admin'
+                ? `${config.redis.prefix}admin_online_status:${userId}`
+                : `${config.redis.prefix}user_online_status:${userId}`;
 
         if (isOnline) {
-            // Set key online với TTL (ví dụ 60s) tương đương heartbeat
             await redisPub.setex(statusKey, 60, 'online');
         } else {
-            // Khi disconnect chủ động thì xóa luôn key
             await redisPub.del(statusKey);
         }
 
-        // 3. Phát sự kiện Realtime cho toàn hệ thống socket (hoặc chỉ những người liên quan)
-        this.io.emit('user_presence_change', {
-            userId: userId,
+        this.io.emit(kind === 'admin' ? 'admin_presence_change' : 'user_presence_change', {
+            userId,
             status: isOnline ? 'online' : 'offline',
         });
     }

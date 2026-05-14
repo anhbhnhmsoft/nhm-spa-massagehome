@@ -47,6 +47,7 @@ class CustomersTable
                         ->label(__('admin.common.action.detail'))
                         ->url(fn($record): string => CustomerResource::getUrl('edit', ['record' => $record]))
                         ->icon('heroicon-o-identification'),
+                    CommonActions::giftCouponAction(),
                     CommonActions::qrAffiliateAction(),
                     CommonActions::deleteAction(),
                 ]),

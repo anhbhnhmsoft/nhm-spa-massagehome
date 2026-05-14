@@ -1,5 +1,5 @@
 import Redis from 'ioredis';
-import {config} from './app.config.js'
+import {config} from './app.config'
 // Client để Publish (Gửi đi)
 export const redisPub = new Redis({
     host: config.redis.host,

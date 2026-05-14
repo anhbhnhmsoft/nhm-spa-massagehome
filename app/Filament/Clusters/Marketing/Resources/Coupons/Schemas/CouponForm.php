@@ -30,9 +30,9 @@ class CouponForm
                                 TextInput::make('code')
                                     ->label(__('admin.coupon.fields.code'))
                                     ->required()
-                                    ->unique()
+                                    ->unique(ignoreRecord: true)
                                     ->maxLength(255)
-                                    ->default(fn() => Str::random(8))
+                                    ->default(fn() => Str::upper(Str::random(8)))
                                     ->validationMessages([
                                         'required' => __("common.error.required"),
                                         'unique' => __("common.error.unique"),
@@ -57,6 +57,7 @@ class CouponForm
                                     ->label(__('admin.coupon.fields.is_percentage'))
                                     ->placeholder(__('common.placeholder.type'))
                                     ->required()
+                                    ->live()
                                     ->options([
                                         true => __('admin.coupon.is_percentage.percent'),
                                         false => __('admin.coupon.is_percentage.fixed'),
@@ -64,7 +65,7 @@ class CouponForm
                                 DateTimePicker::make('start_at')
                                     ->label(__('admin.coupon.fields.start_date'))
                                     ->required()
-                                    ->rule('before:end_at')
+                                    ->before('end_at')
                                     ->validationMessages([
                                         'required' => __("common.error.required"),
                                         'before' => __('admin.coupon.validation.start_before_end'),
@@ -72,7 +73,7 @@ class CouponForm
                                 DateTimePicker::make('end_at')
                                     ->label(__('admin.coupon.fields.end_date'))
                                     ->required()
-                                    ->rule('after:start_at')
+                                    ->after('start_at')
                                     ->validationMessages([
                                         'required' => __("common.error.required"),
                                         'after' => __('admin.coupon.validation.end_after_start'),
@@ -81,14 +82,21 @@ class CouponForm
                                     ->label(__('admin.coupon.fields.discount_value'))
                                     ->required()
                                     ->numeric()
+                                    ->maxValue(fn (callable $get) => $get('is_percentage') ? 100 : null)
                                     ->validationMessages([
                                         'required' => __("common.error.required"),
                                         'numeric' => __("common.error.numeric"),
                                     ]),
+                                TextInput::make('max_discount')
+                                    ->label(__('admin.coupon.fields.max_discount'))
+                                    ->numeric()
+                                    ->visible(fn (callable $get) => $get('is_percentage'))
+                                    ->helperText('Số tiền giảm tối đa khi sử dụng loại phần trăm'),
                                 TextInput::make('usage_limit')
                                     ->label(__('admin.coupon.fields.usage_limit'))
                                     ->required()
                                     ->numeric()
+                                    ->minValue(1)
                                     ->live()
                                     ->validationMessages([
                                         'required' => __("common.error.required"),

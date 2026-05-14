@@ -32,6 +32,7 @@ class DatabaseSeeder extends Seeder
         $this->seedCategory();
         $this->seedConfig();
         $this->seedConfigAffiliate();
+        $this->call(SupportCategorySeeder::class);
     }
 
     /**

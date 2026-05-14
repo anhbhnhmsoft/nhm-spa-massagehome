@@ -516,6 +516,8 @@ class AuthService extends BaseService
 
                // Xác thực user
                Auth::guard('web')->login($user, $remember);
+               $user->last_seen_at = now();
+               $user->save();
 
                return ServiceReturn::success(data: [
                    'user' => $user,

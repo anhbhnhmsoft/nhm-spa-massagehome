@@ -13,17 +13,21 @@ use App\Models\Coupon;
 use App\Models\Page;
 use App\Models\Service;
 use App\Models\StaticContract;
+use App\Models\SupportCategory;
 use App\Models\UserFile;
 use App\Models\UserProfile;
+use App\Models\User;
 use App\Observers\BannerObserver;
 use App\Observers\CategoryObserver;
 use App\Observers\ConfigObserver;
 use App\Observers\CouponObserver;
 use App\Observers\PageObserver;
 use App\Observers\ServiceObserver;
+use App\Observers\SupportCategoryObserver;
 use App\Observers\StaticContractObserver;
 use App\Observers\UserFileObserver;
 use App\Observers\UserProfileObserver;
+use App\Observers\UserObserver;
 use App\Repositories\AdminUserRepository;
 use App\Repositories\AffiliateConfigRepository;
 use App\Repositories\BookingRepository;
@@ -40,6 +44,9 @@ use App\Repositories\NotificationRepository;
 use App\Repositories\ProvinceRepository;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
+use App\Repositories\SupportCategoryRepository;
+use App\Repositories\SupportMessageRepository;
+use App\Repositories\SupportTicketRepository;
 use App\Repositories\StaticContractRepository;
 use App\Repositories\UserDeviceRepository;
 use App\Repositories\UserFileRepository;
@@ -70,6 +77,7 @@ use App\Services\ProfileService;
 use App\Services\ProvinceService;
 use App\Services\ReviewService;
 use App\Services\ServiceService;
+use App\Services\SupportService;
 use App\Services\UserFileService;
 use App\Services\UserService;
 use App\Services\UserWithdrawInfoService;
@@ -154,6 +162,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(ZaloTokenRepository::class);
         $this->app->singleton(DangerSupportRepository::class);
         $this->app->singleton(UserOtpRepository::class);
+        $this->app->singleton(SupportCategoryRepository::class);
+        $this->app->singleton(SupportTicketRepository::class);
+        $this->app->singleton(SupportMessageRepository::class);
     }
 
     /**
@@ -197,6 +208,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(UserFileService::class);
         $this->app->singleton(AgencyService::class);
         $this->app->singleton(ProfileService::class);
+        $this->app->singleton(SupportService::class);
     }
 
 
@@ -223,6 +235,8 @@ class AppServiceProvider extends ServiceProvider
         UserFile::observe(UserFileObserver::class);
         UserProfile::observe(UserProfileObserver::class);
         StaticContract::observe(StaticContractObserver::class);
+        SupportCategory::observe(SupportCategoryObserver::class);
+        User::observe(UserObserver::class);
         Config::observe(ConfigObserver::class);
     }
 

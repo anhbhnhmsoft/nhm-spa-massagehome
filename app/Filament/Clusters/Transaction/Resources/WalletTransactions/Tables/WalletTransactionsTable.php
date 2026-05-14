@@ -9,6 +9,11 @@ use App\Filament\Clusters\ReviewApplication\Resources\Agencies\AgencyResource;
 use App\Filament\Clusters\ReviewApplication\Resources\KTVs\KTVResource;
 use App\Filament\Clusters\User\Resources\Customers\CustomerResource;
 use App\Filament\Components\CommonFields;
+use App\Models\WalletTransaction;
+use App\Services\WalletTransactionStatusService;
+use Filament\Notifications\Notification;
+use Filament\Tables\Actions\Action;
+use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
@@ -84,6 +89,67 @@ class WalletTransactionsTable
                     ->label(__('admin.transaction.fields.created_at'))
                     ->dateTime("d-M-Y H:i")
                     ->sortable(),
+            ])
+            ->actions([
+                ActionGroup::make([
+                    Action::make('approve')
+                        ->label(__('admin.transaction.actions.approve'))
+                        ->icon('heroicon-o-check')
+                        ->color('success')
+                        ->visible(fn(WalletTransaction $record): bool =>
+                            $record->status == WalletTransactionStatus::PENDING->value &&
+                            in_array((int)$record->type, [
+                                WalletTransactionType::DEPOSIT_WECHAT_PAY->value,
+                                WalletTransactionType::DEPOSIT_ALIPAY_PAY->value,
+                            ], true)
+                        )
+                        ->action(function (WalletTransaction $record, WalletTransactionStatusService $service): void {
+                            $result = $service->approveTransaction($record);
+                            if ($result->isSuccess()) {
+                                Notification::make()
+                                    ->title(__('common.success.success'))
+                                    ->success()
+                                    ->send();
+                            } else {
+                                Notification::make()
+                                    ->title(__('common.error.title'))
+                                    ->body($result->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        })
+                        ->requiresConfirmation()
+                        ->modalDescription(__('admin.transaction.actions.approve_confirmation_message')),
+
+                    Action::make('cancel')
+                        ->label(__('admin.transaction.actions.cancel'))
+                        ->icon('heroicon-o-x-mark')
+                        ->color('danger')
+                        ->visible(fn(WalletTransaction $record): bool =>
+                            $record->status == WalletTransactionStatus::PENDING->value &&
+                            in_array((int)$record->type, [
+                                WalletTransactionType::DEPOSIT_WECHAT_PAY->value,
+                                WalletTransactionType::DEPOSIT_ALIPAY_PAY->value,
+                            ], true)
+                        )
+                        ->action(function (WalletTransaction $record, WalletTransactionStatusService $service): void {
+                            $result = $service->cancelTransaction($record);
+                            if ($result->isSuccess()) {
+                                Notification::make()
+                                    ->title(__('common.success.success'))
+                                    ->success()
+                                    ->send();
+                            } else {
+                                Notification::make()
+                                    ->title(__('common.error.title'))
+                                    ->body($result->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        })
+                        ->requiresConfirmation()
+                        ->modalDescription(__('admin.transaction.actions.cancel_confirmation_message')),
+                ])->buttonGroup(),
             ])
             ->filtersLayout(FiltersLayout::AboveContent)
             ->filtersFormColumns(5)

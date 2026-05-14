@@ -28,6 +28,12 @@ use Filament\Support\Enums\Width;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\HtmlString;
 
+use App\Models\Coupon;
+use App\Models\CouponUser;
+use App\Repositories\CouponRepository;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
+
 class CommonActions
 {
     public static function backAction($resource): Action
@@ -297,6 +303,89 @@ class CommonActions
                                     ");
                     })
             ]);
+    }
+
+    /**
+     * Tặng mã giảm giá cho người dùng
+     * @return Action
+     */
+    public static function giftCouponAction(): Action
+    {
+        return Action::make('gift_coupon')
+            ->label('Tặng mã giảm giá')
+            ->icon('heroicon-o-gift')
+            ->color('warning')
+            ->modalHeading('Tặng mã giảm giá riêng cho khách hàng')
+            ->modalWidth('lg')
+            ->schema([
+                Select::make('template_coupon_id')
+                    ->label('Chọn mẫu mã giảm giá')
+                    ->options(fn() => Coupon::where('user_id', null)->where('is_active', true)->pluck('code', 'id'))
+                    ->required()
+                    ->live()
+                    ->afterStateUpdated(function ($state, Set $set) {
+                        if ($state) {
+                            $template = Coupon::find($state);
+                            if ($template) {
+                                $set('discount_value', $template->discount_value);
+                                $set('is_percentage', $template->is_percentage);
+                                $set('max_discount', $template->max_discount);
+                            }
+                        }
+                    }),
+                Grid::make(2)
+                    ->schema([
+                        TextInput::make('discount_value')
+                            ->label('Giá trị giảm')
+                            ->numeric()
+                            ->required(),
+                        Select::make('is_percentage')
+                            ->label('Loại')
+                            ->options([
+                                true => 'Phần trăm (%)',
+                                false => 'Cố định (VND)',
+                            ])
+                            ->required(),
+                    ]),
+                TextInput::make('max_discount')
+                    ->label('Giảm tối đa')
+                    ->numeric()
+                    ->helperText('Chỉ áp dụng nếu chọn loại %'),
+                TextInput::make('days_valid')
+                    ->label('Số ngày có hiệu lực')
+                    ->numeric()
+                    ->default(7)
+                    ->required()
+                    ->suffix('ngày'),
+            ])
+            ->action(function (User $record, array $data): void {
+                $template = Coupon::find($data['template_coupon_id']);
+                if (!$template) return;
+
+                // Tạo một bản sao coupon dành riêng cho user này
+                $newCoupon = $template->replicate();
+                $newCoupon->code = 'GIFT-' . $record->id . '-' . Str::upper(Str::random(5));
+                $newCoupon->user_id = $record->id;
+                $newCoupon->discount_value = $data['discount_value'];
+                $newCoupon->is_percentage = $data['is_percentage'];
+                $newCoupon->max_discount = $data['max_discount'] ?? 0;
+                $newCoupon->start_at = now();
+                $newCoupon->end_at = now()->addDays($data['days_valid']);
+                $newCoupon->used_count = 0;
+                $newCoupon->usage_limit = 1; // Thường mã tặng chỉ dùng 1 lần
+                $newCoupon->save();
+
+                // Tự động cho vào ví cho user
+                $record->collectionCoupons()->syncWithoutDetaching([
+                    $newCoupon->id => ['is_used' => false]
+                ]);
+
+                Notification::make()
+                    ->success()
+                    ->title('Thành công')
+                    ->body("Đã tặng mã {$newCoupon->code} cho khách hàng.")
+                    ->send();
+            });
     }
 
 }

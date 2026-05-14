@@ -42,6 +42,7 @@ return [
         'create_another' => 'Thêm mới và tiếp tục',
         'cancel' => 'Hủy',
         'save' => 'Lưu',
+        'edit' => 'Sửa',
         'delete' => 'Xóa',
         'view' => 'Xem',
         'close' => 'Đóng',

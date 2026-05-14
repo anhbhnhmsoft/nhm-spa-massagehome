@@ -61,6 +61,11 @@ enum CacheKey: string
     case CACHE_KEY_CONFIG_AFFILIATE = 'CACHE_KEY_CONFIG_AFFILIATE';
 
     /**
+     * Lưu danh sách danh mục hỗ trợ.
+     */
+    case CACHE_KEY_SUPPORT_CATEGORY = 'CACHE_KEY_SUPPORT_CATEGORY';
+
+    /**
      * Lưu tổng biểu đồ thu nhập trong khoảng thời gian.
      */
     case CACHE_KEY_TOTAL_INCOME = 'CACHE_KEY_TOTAL_INCOME';
