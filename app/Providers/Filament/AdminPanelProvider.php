@@ -80,14 +80,14 @@ class AdminPanelProvider extends PanelProvider
             ->databaseNotificationsPolling(false)
             ->navigationItems([
                 NavigationItem::make(__('System Logs'))
-                    ->visible(fn () => auth('web')->user()?->role === AdminRole::ADMIN)
-                    ->url(url('system-log-viewer'), shouldOpenInNewTab: true)
+                    ->visible(fn() => auth()->user()?->role === AdminRole::ADMIN)
+                    ->url('/admin/log-viewer', shouldOpenInNewTab: true)
                     ->icon('heroicon-o-document-magnifying-glass'),
             ])
             ->maxContentWidth(Width::Full)
             ->renderHook(
                 'panels::body.end',
-                fn (): string => Blade::render(<<<'BLADE'
+                fn(): string => Blade::render(<<<'BLADE'
     <script>
         document.addEventListener('livewire:initialized', () => {
             console.log('🔊 Sound Script Loaded - Ready to catch Database Events');
