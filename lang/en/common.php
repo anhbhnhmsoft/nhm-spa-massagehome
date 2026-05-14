@@ -63,5 +63,8 @@ return [
     ],
     'search_prompt' => 'Search',
     'no_results_found' => 'No results found',
-    'loading' => 'Loading'
+    'loading' => 'Loading',
+    'fields' => [
+        'customer_phone' => 'Customer phone',
+    ],
 ];

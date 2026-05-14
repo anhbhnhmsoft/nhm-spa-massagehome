@@ -66,4 +66,7 @@ return [
     'search_prompt' => 'Tìm kiếm',
     'no_results_found' => 'Không tìm thấy kết quả',
     'loading' => 'Đang tải',
+    'fields' => [
+        'customer_phone' => 'Số điện thoại khách hàng'
+    ],
 ];

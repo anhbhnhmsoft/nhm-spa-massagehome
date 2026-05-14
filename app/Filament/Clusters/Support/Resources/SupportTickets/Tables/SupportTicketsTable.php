@@ -21,6 +21,9 @@ class SupportTicketsTable
                 TextColumn::make('id')
                     ->label(__('admin.common.table.id'))
                     ->searchable(),
+                TextColumn::make('customer.phone')
+                    ->label(__('common.fields.customer_phone'))
+                    ->searchable(),
                 TextColumn::make('customer.name')
                     ->label(__('admin.support_ticket.fields.customer'))
                     ->searchable()

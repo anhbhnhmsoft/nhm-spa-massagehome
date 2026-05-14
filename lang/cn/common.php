@@ -64,4 +64,7 @@ return [
     'search_prompt' => '搜索',
     'no_results_found' => '未找到结果',
     'loading' => '加载中',
+    'fields' => [
+        'customer_phone' => '客户电话',
+    ],
 ];
