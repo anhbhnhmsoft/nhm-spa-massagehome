@@ -45,7 +45,8 @@ return [
         'view' => 'View',
         'close' => 'Close',
         'confirm' => 'Confirm',
-        'submit' => 'Submit'
+        'submit' => 'Submit',
+        'mark_as_resolved' => 'Mark as resolved',
     ],
     'breadcrumb' => [
         'list' => 'List',

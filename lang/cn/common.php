@@ -46,6 +46,7 @@ return [
         'close' => '关闭',
         'confirm' => '确认',
         'submit' => '提交',
+        'mark_as_resolved' => '标记为已解决',
     ],
     'breadcrumb' => [
         'list' => '列表',

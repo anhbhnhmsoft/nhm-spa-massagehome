@@ -5,8 +5,8 @@ namespace App\Filament\Clusters\Support\Resources\SupportTickets\Tables;
 use App\Enums\Admin\AdminRole;
 use App\Enums\SupportTicketStatus;
 use App\Models\AdminUser;
-use Filament\Tables\Actions\Action;
-use Filament\Tables\Actions\EditAction;
+use Filament\Actions\Action;
+use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -68,7 +68,7 @@ class SupportTicketsTable
             ])
             ->recordActions([
                 Action::make('markAsResolved')
-                    ->label(__('Đóng room'))
+                    ->label(__('common.action.mark_as_resolved'))
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->requiresConfirmation()
@@ -76,7 +76,8 @@ class SupportTicketsTable
                         $record->update(['status' => SupportTicketStatus::CLOSED]);
                     })
                     ->visible(fn ($record) => $record->statusEnum() !== SupportTicketStatus::CLOSED),
-                \Filament\Tables\Actions\EditAction::make(),
+                EditAction::make()
+                    ->label(__('common.action.edit')),
             ])
             ->bulkActions([])
             ->emptyStateHeading(__('admin.support_ticket.empty_state.heading'))

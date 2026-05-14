@@ -48,6 +48,7 @@ return [
         'close' => 'Đóng',
         'confirm' => 'Xác nhận',
         'submit' => 'Gửi',
+        'mark_as_resolved' => 'Đánh dấu đã giải quyết',
     ],
     'breadcrumb' => [
         'list' => 'Danh sách',
