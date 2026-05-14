@@ -81,8 +81,8 @@ class AdminPanelProvider extends PanelProvider
             ->navigationItems([
                 NavigationItem::make(__('System Logs'))
                     ->visible(fn() => auth()->user()?->role === AdminRole::ADMIN)
-                    ->url('/admin/log-viewer', shouldOpenInNewTab: true)
-                    ->icon('heroicon-o-document-magnifying-glass'),
+                    ->visible(fn () => auth('web')->user()?->role === AdminRole::ADMIN)
+                    ->url(url('system-log-viewer'), shouldOpenInNewTab: true),
             ])
             ->maxContentWidth(Width::Full)
             ->renderHook(
