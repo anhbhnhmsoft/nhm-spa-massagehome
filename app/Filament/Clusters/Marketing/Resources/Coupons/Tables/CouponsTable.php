@@ -78,6 +78,7 @@ class CouponsTable
                         ->label(__('admin.common.action.delete'))
                         ->tooltip(__('admin.common.tooltip.delete'))
                         ->icon('heroicon-o-trash')
+                        ->disabled(fn($record) => $record->code === 'WELCOME')
                         ->requiresConfirmation()
                         ->modalHeading(__('admin.common.modal.delete_title'))
                         ->modalDescription(__('admin.common.modal.delete_confirm'))

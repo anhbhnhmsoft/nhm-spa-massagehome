@@ -16,6 +16,7 @@ class EditCoupon extends EditRecord
         return [
             CommonActions::backAction(static::getResource()),
             DeleteAction::make()
+                ->disabled(fn($record) => $record->code === 'WELCOME')
                 ->label(__('common.action.delete')),
         ];
     }
