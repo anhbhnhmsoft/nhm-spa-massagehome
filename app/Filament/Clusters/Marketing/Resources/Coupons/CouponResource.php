@@ -53,6 +53,12 @@ class CouponResource extends Resource
         return __('admin.coupon.label');
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->whereNull('user_id');
+    }
+
     public static function getRelations(): array
     {
         return [
