@@ -22,17 +22,6 @@ class CouponRepository extends BaseRepository
             ->query()
             ->where('is_active', true);
 
-        // Nếu có userId, cho phép lấy mã chung HOẶC mã riêng của user đó.
-        // Nếu không có userId, chỉ lấy mã chung (user_id = null).
-        if ($userId) {
-            $query->where(function ($q) use ($userId) {
-                $q->whereNull('user_id')
-                    ->orWhere('user_id', $userId);
-            });
-        } else {
-            $query->whereNull('user_id');
-        }
-
         return $query;
     }
 
