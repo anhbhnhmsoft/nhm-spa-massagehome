@@ -19,7 +19,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => array_map('trim', explode(',', env('ALLOWED_ORIGINS', 'https://sale.massagehome.com.vn,http://localhost:5173,http://localhost:5174,http://localhost:3000'))),
+    'allowed_origins' => array_map('trim', explode(',', env('ALLOWED_ORIGINS', 'https://massagehome.com.vn,https://sale.massagehome.com.vn,http://localhost:5173,http://localhost:5174,http://localhost:3000'))),
 
     'allowed_origins_patterns' => [],
 
