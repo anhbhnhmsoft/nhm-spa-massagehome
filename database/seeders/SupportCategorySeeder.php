@@ -66,6 +66,19 @@ class SupportCategorySeeder extends Seeder
                         Language::CHINESE->value => '记录使用服务过程中的反馈或投诉。',
                     ],
                 ],
+                [
+                    'position' => 5,
+                    'name' => [
+                        Language::VIETNAMESE->value => 'Tư vấn & Hỗ trợ',
+                        Language::ENGLISH->value => 'Other support',
+                        Language::CHINESE->value => '其他支持',
+                    ],
+                    'description' => [
+                        Language::VIETNAMESE->value => 'Các vấn đề hỗ trợ khác không thuộc các danh mục trên.',
+                        Language::ENGLISH->value => 'Other support issues not covered by the above categories.',
+                        Language::CHINESE->value => '上述类别未涵盖的其他支持问题。',
+                    ],
+                ]
             ];
 
             foreach ($items as $item) {

@@ -142,9 +142,12 @@ class SupportService extends BaseService
                 ->first();
 
             if (!$ticket) {
-                // Lấy một category mặc định (Tư vấn bán hàng - ID 164979998839073013 theo dữ liệu tinker)
-                // Hoặc lấy category đầu tiên nếu không tìm thấy
-                $category = $this->supportCategoryRepository->query()->where('is_active', true)->first();
+                // Lấy một category mặc định theo dữ liệu tinker)
+                $category = $this->supportCategoryRepository->query()->where('position', 5)->first();
+                if (!$category) {
+                    // Hoặc lấy category đầu tiên nếu không tìm thấy
+                    $category = $this->supportCategoryRepository->query()->where('is_active', true)->first();
+                }
                 if (!$category) {
                     throw new ServiceException('Hệ thống chưa cấu hình danh mục hỗ trợ.');
                 }
@@ -158,6 +161,16 @@ class SupportService extends BaseService
                 $ticket->room_id = $this->makeRoomId($ticket->id);
                 $ticket->save();
             }
+
+            $this->notificationService->sendMobileNotification(
+                userId: $ticket->customer_id,
+                type: \App\Enums\NotificationType::SUPPORT_CHAT_MESSAGE,
+                data: [
+                    'staff_name' => Auth::user()->name,
+                    'message_content' => \Illuminate\Support\Str::limit('Nhân viên hệ thống liên hệ hỗ  trợ', 100),
+                    'support_ticket_id' => (string) $ticket->id,
+                ]
+            );
 
             return ServiceReturn::success(data: $ticket);
         });
@@ -295,17 +308,6 @@ class SupportService extends BaseService
             ]);
 
             // Gửi thông báo cho khách hàng nếu người gửi là nhân viên
-            if ($user instanceof AdminUser) {
-                $this->notificationService->sendMobileNotification(
-                    userId: $ticket->customer_id,
-                    type: \App\Enums\NotificationType::SUPPORT_CHAT_MESSAGE,
-                    data: [
-                        'staff_name' => $user->name,
-                        'message_content' => \Illuminate\Support\Str::limit($content, 100),
-                        'support_ticket_id' => (string) $ticket->id,
-                    ]
-                );
-            }
 
             return ServiceReturn::success(data: $message);
         }, useTransaction: true);
