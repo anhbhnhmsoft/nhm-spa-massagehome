@@ -110,7 +110,7 @@ class ServiceService extends BaseService
     {
         try {
             $userId = $dto->findFilter('user_id_is_not_used');
-            $query = $this->couponRepository->queryCoupon($userId)a;
+            $query = $this->couponRepository->queryCoupon($userId);
             if (!empty($userId)) {
                 $query->withExists([
                     'users as is_collected' => function ($query) use ($userId) {
