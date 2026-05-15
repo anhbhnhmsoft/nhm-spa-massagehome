@@ -30,6 +30,7 @@ class UserObserver
             $newCoupon->end_at = now()->addDays(7);
             $newCoupon->used_count = 0;
             $newCoupon->usage_limit = 1;
+            $newCoupon->display_ads = false;
             $newCoupon->save();
 
             // Tự động cho vào ví
