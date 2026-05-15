@@ -246,7 +246,7 @@ class PaymentService extends BaseService
                             'transaction_id' => $orderCode,
                             'transaction_code' => Helper::createDescPayment(PaymentType::QR_BANKING),
                             'status' => WalletTransactionStatus::PENDING->value, // Trạng thái giao dịch chờ xử lý
-                            'expire_at' => $expireTime, // Thời gian hết hạn
+                            'expired_at' => $expireTime, // Thời gian hết hạn
                         ]
                     );
                     // Tạo payos để xử lý thanh toán QR Banking
@@ -302,7 +302,7 @@ class PaymentService extends BaseService
                         'transaction_id' => $orderCode,
                         'transaction_code' => Helper::createDescPayment(PaymentType::ZALO_PAY),
                         'status' => WalletTransactionStatus::PENDING->value,
-                        'expire_at' => $expireTime,
+                        'expired_at' => $expireTime,
                     ]);
 
                     $zalopayResult = $this->zaloService->createOrder(
@@ -356,7 +356,7 @@ class PaymentService extends BaseService
                             'transaction_id' => $orderCode,
                             'transaction_code' => Helper::createDescPayment(PaymentType::WECHAT),
                             'status' => WalletTransactionStatus::PENDING->value,
-                            'expire_at' => $expireTime,
+                            'expired_at' => $expireTime,
                         ]
                     );
                     $exchangeRate = $this->configService->getConfigValue(ConfigName::EXCHANGE_RATE_VND_CNY);
@@ -403,7 +403,7 @@ class PaymentService extends BaseService
                             'transaction_id' => $orderCode,
                             'transaction_code' => Helper::createDescPayment(PaymentType::ALIPAY),
                             'status' => WalletTransactionStatus::PENDING->value,
-                            'expire_at' => $expireTime,
+                            'expired_at' => $expireTime,
                         ]
                     );
                     $exchangeRate = $this->configService->getConfigValue(ConfigName::EXCHANGE_RATE_VND_CNY);
