@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\API\AffiliateController;
+use App\Http\Controllers\Web\SalePortalCustomerController;
 use App\Http\Controllers\Web\SalePortalSupportController;
 use App\Http\Controllers\Web\HomeController;
 use App\Http\Controllers\Web\PageController;
@@ -29,7 +30,10 @@ Route::prefix('sale-api')
         Route::get('me', [SalePortalSupportController::class, 'me'])->middleware('auth:web');
         Route::get('socket-token', [SalePortalSupportController::class, 'socketToken'])->middleware('auth:web');
         Route::post('heartbeat', [SalePortalSupportController::class, 'heartbeat'])->middleware('auth:web');
+
+        Route::get('customers', [SalePortalCustomerController::class, 'index'])->middleware('auth:web');
         Route::get('tickets', [SalePortalSupportController::class, 'inbox'])->middleware('auth:web');
+        Route::post('tickets/initiate', [SalePortalSupportController::class, 'initiateChat'])->middleware('auth:web');
         Route::get('tickets/{id}', [SalePortalSupportController::class, 'detail'])->middleware('auth:web')->where('id', '[0-9]+');
         Route::get('messages/{id}', [SalePortalSupportController::class, 'messages'])->middleware('auth:web')->where('id', '[0-9]+');
         Route::post('tickets/{id}/claim', [SalePortalSupportController::class, 'claim'])->middleware('auth:web')->where('id', '[0-9]+');

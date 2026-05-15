@@ -79,17 +79,15 @@ class ServiceController extends BaseController
     public function myListCoupon(ListRequest $request): JsonResponse
     {
         $dto = $request->getFilterOptions();
-        // Lọc chỉ lấy mã giảm giá chưa được sử dụng
-        $dto->addFilter('is_used', false);
-        // Lấy toàn bộ mã giảm giá của người dùng
+        // Lấy toàn bộ mã giảm giá thuộc quyền sở hữu của người dùng (tặng riêng + đã thu thập)
         $dto->addFilter('user_id', $request->user()->id);
 
-        $result = $this->serviceService->couponUserPaginate($dto);
+        $result = $this->serviceService->myCouponPaginate($dto);
 
         $data = $result->getData();
 
         return $this->sendSuccess(
-            data: CouponUserResource::collection($data)->response()->getData()
+            data: CouponResource::collection($data)->response()->getData()
         );
     }
 

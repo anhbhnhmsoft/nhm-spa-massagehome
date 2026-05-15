@@ -156,6 +156,17 @@ class CouponForm
                             ])
                             ->columns(2)
                             ->columnSpanFull(),
+
+                        Section::make(__('admin.coupon.sections.advanced_config'))
+                            ->schema([
+                                TextInput::make('config.valid_hours')
+                                    ->label(__('admin.coupon.fields.valid_hours'))
+                                    ->helperText(__('admin.coupon.fields.valid_hours_helper'))
+                                    ->numeric()
+                                    ->default(48)
+                                    ->visible(fn (callable $get) => $get('code') === 'WELCOME'),
+                            ])
+                            ->visible(fn (callable $get) => $get('code') === 'WELCOME'),
                     ])
                     ->columns(2)
                     ->columnSpanFull(),

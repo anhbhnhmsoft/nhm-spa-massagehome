@@ -95,6 +95,10 @@ return [
             'title' => 'Dịch vụ được chuyển giao',
             'body'  => 'Dịch vụ ID :booking_id đã được chuyển giao cho bạn.',
         ],
+        NotificationType::SUPPORT_CHAT_MESSAGE->value => [
+            'title' => 'Nhân viên hỗ trợ phản hồi',
+            'body'  => ':staff_name: :message_content',
+        ],
     ],
 ];
 

@@ -90,5 +90,9 @@ return [
             'title' => 'Service Reassigned',
             'body'  => 'Service ID :booking_id has been reassigned to you.',
         ],
+        NotificationType::SUPPORT_CHAT_MESSAGE->value => [
+            'title' => 'Support Staff Replied',
+            'body'  => ':staff_name: :message_content',
+        ],
     ],
 ];

@@ -3,11 +3,9 @@
 namespace App\Repositories;
 
 use App\Core\BaseRepository;
-use App\Core\Service\ServiceException;
 use App\Models\Coupon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 
 class CouponRepository extends BaseRepository
 {
@@ -21,9 +19,17 @@ class CouponRepository extends BaseRepository
         $query = $this->model
             ->query()
             ->where('is_active', true);
-        if ($userId !== null) { 
-            $query->where('user_id',$userId);
+
+        if ($userId !== null) {
+            $query->where(function ($q) use ($userId) {
+                $q->whereNull('user_id')
+                    ->orWhere('user_id', $userId);
+            });
+        } else {
+            // Nếu không có userId, thường là lấy mã công khai
+            $query->whereNull('user_id');
         }
+
         return $query;
     }
 
@@ -54,23 +60,44 @@ class CouponRepository extends BaseRepository
         // Lọc theo Người dùng (Logic: Lấy mã mà người dùng này chưa sử dụng)
         if (isset($filters['user_id_is_not_used'])) {
             $userId = $filters['user_id_is_not_used'];
-            // Logic: Lấy coupon mà KHÔNG CÓ (quan hệ với user này VÀ trạng thái là đã dùng)
-            // Tức là:
-            // 1. Coupon chưa thu thập -> Thỏa mãn (Vì không có quan hệ)
-            // 2. Coupon đã thu thập nhưng chưa dùng -> Thỏa mãn (Vì quan hệ có is_used = false)
-            // 3. Coupon đã thu thập và đã dùng -> Bị loại (Vì khớp điều kiện bên trong)
-            $query->whereDoesntHave('users', function ($q) use ($userId) {
-                $q->where('user_id', $userId)
-                    ->where('is_used', true); // Chú ý: Ở đây ta filter những cái ĐÃ DÙNG để loại bỏ nó
+            $query->where(function ($q) use ($userId) {
+                // 1. Nếu là mã tặng riêng (user_id IS NOT NULL) -> Kiểm tra chính nó chưa dùng hết limit
+                $q->where(function ($sq) use ($userId) {
+                    $sq->where('user_id', $userId)
+                        ->where(function ($sq2) {
+                            $sq2->whereNull('usage_limit')
+                                ->orWhereColumn('used_count', '<', 'usage_limit');
+                        });
+                })
+                // 2. Nếu là mã chung -> Kiểm tra bảng coupon_users xem user này đã dùng chưa
+                ->orWhere(function ($sq) use ($userId) {
+                    $sq->whereNull('user_id')
+                        ->whereDoesntHave('users', function ($sq2) use ($userId) {
+                            $sq2->where('user_id', $userId)
+                                ->where('is_used', true);
+                        });
+                });
             });
         }
 
-        // Lọc các mã mà user chưa thu thập
+        // Lọc các mã mà user đã sở hữu (bao gồm đã thu thập hoặc được tặng riêng)
+        if (isset($filters['is_owned'])) {
+            $userId = $filters['is_owned'];
+            $query->where(function ($q) use ($userId) {
+                $q->where('user_id', $userId)
+                    ->orWhereHas('users', function ($sq) use ($userId) {
+                        $sq->where('user_id', $userId);
+                    });
+            });
+        }
+
+        // Lọc các mã mà user chưa thu thập (chỉ áp dụng cho mã chung)
         if (isset($filters['user_id_is_not_collected'])) {
             $userId = $filters['user_id_is_not_collected'];
-            $query->whereDoesntHave('users', function ($q) use ($userId) {
-                $q->where('user_id', $userId);
-            });
+            $query->whereNull('user_id') // Chỉ xét mã chung
+                ->whereDoesntHave('users', function ($q) use ($userId) {
+                    $q->where('user_id', $userId);
+                });
         }
 
         return $query;

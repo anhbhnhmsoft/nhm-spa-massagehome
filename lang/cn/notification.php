@@ -25,6 +25,10 @@ return [
         'title' => '确认微信支付',
         'body' => '确认交易 ID :transaction_id 的微信支付。',
     ],
+    'confirm_alipay_payment' => [
+        'title' => '确认支付宝支付',
+        'body' => '确认交易 ID :transaction_id 的支付宝支付。',
+    ],
     'emergency_support' => [
         'title' => '紧急支持请求',
         'body' => '针对服务 ID :booking_id 的紧急支持请求。',
@@ -89,6 +93,10 @@ return [
         NotificationType::BOOKING_REASSIGNED->value =>  [
             'title' => '服务被重新分配',
             'body'  => '服务 ID :booking_id 已被重新分配给您。',
+        ],
+        NotificationType::SUPPORT_CHAT_MESSAGE->value => [
+            'title' => '客服人员回复',
+            'body'  => ':staff_name: :message_content',
         ],
     ],
 ];

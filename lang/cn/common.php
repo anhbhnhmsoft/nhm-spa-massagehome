@@ -2,6 +2,7 @@
 
 return [
     'success' => [
+        'success' => '操作成功',
         'data_list' => '成功获取数据列表',
         'data_created' => '数据已创建',
         'data_updated' => '数据已更新',
@@ -38,6 +39,7 @@ return [
     'empty_state_description' => '暂无数据',
     'action' => [
         'create' => '创建',
+        'edit' => '编辑',
         'cancel' => '取消',
         'create_another' => '创建并继续',
         'save' => '保存',

@@ -618,6 +618,7 @@ return
                 'PAYMENT_REFUND_KTV_FOR_BOOKING_CANCEL' => '取消订单退款',
                 'SUBTRACT_MONEY_DISCOUNT_SERVICE' => '服务折扣退款',
                 'REFUND_MONEY_DISCOUNT_SERVICE' => '服务折扣退款',
+                'DEPOSIT_ALIPAY_PAY' => '支付宝支付充值',
             ],
             'status' => [
                 'PENDING' => '处理中',
@@ -627,13 +628,13 @@ return
                 'CANCELLED' => '已取消',
             ],
             'actions' => [
-                'approve' => '批准',
-                'cancel' => '取消',
+                'approve' => '审核通过',
+                'cancel' => '取消/驳回',
                 'transfer' => '转账',
                 'transfer_confirmation_message' => '您确定要转账此交易吗？',
                 'fee_transfer' => '(交易 ID: :transaction_id)',
-                'approve_confirmation_message' => '您确定要批准此交易吗？',
-                'cancel_confirmation_message' => '您确定要取消此交易吗？',
+                'approve_confirmation_message' => '您确定要通过此交易的审核吗？',
+                'cancel_confirmation_message' => '您确定要取消或驳回此交易吗？',
             ],
             'errors' => [
                 'withdraw_info_not_found' => '未找到提现信息',
@@ -715,8 +716,8 @@ return
                 'FAILED' => '失败',
             ],
             'actions' => [
-                'approve' => '批准',
-                'cancel' => '取消',
+                'approve' => '审核通过',
+                'cancel' => '取消/驳回',
             ],
         ],
         'dashboard' => [
@@ -821,6 +822,9 @@ return
         'coupon' => [
             'label' => '优惠券',
             'navigation_label' => '优惠券管理',
+            'sections' => [
+                'advanced_config' => '高级配置',
+            ],
             'fields' => [
                 'code' => '代码',
                 'discount' => '折扣',
@@ -837,6 +841,8 @@ return
                 'used_count' => '已使用次数',
                 'is_active' => '状态',
                 'display_ads' => '显示广告',
+                'valid_hours' => '有效期小时数 (Welcome 码)',
+                'valid_hours_helper' => '从用户注册成功开始计算。默认 48 小时。',
                 'count_collect' => '收集次数',
                 'banners' => [
                     'label' => '横幅',

@@ -836,6 +836,9 @@ return
         'coupon' => [
             'label' => 'Mã giảm giá',
             'navigation_label' => 'Quản lý mã giảm giá',
+            'sections' => [
+                'advanced_config' => 'Cấu hình nâng cao',
+            ],
             'fields' => [
                 'code' => 'Mã',
                 'discount' => 'Giảm giá',
@@ -853,6 +856,8 @@ return
                 'used_count' => 'Số lần đã áp dụng',
                 'is_active' => 'Trạng thái',
                 'display_ads' => 'Hiển thị quảng cáo',
+                'valid_hours' => 'Số tiếng có hiệu lực (cho mã Welcome)',
+                'valid_hours_helper' => 'Thời gian tính từ lúc user đăng ký thành công. Mặc định 48 tiếng.',
                 'banners' => [
                     'label' => 'Banner',
                     'vi' => 'Banner tiếng Việt',

@@ -21,11 +21,7 @@ use App\Repositories\SupportCategoryRepository;
 use App\Repositories\SupportMessageRepository;
 use App\Repositories\SupportTicketRepository;
 use App\Repositories\UserRepository;
-use Illuminate\Contracts\Cache\Repository as CacheRepository;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis as RedisFacade;
 use Illuminate\Support\Str;
 
@@ -38,6 +34,7 @@ class SupportService extends BaseService
         protected AdminUserRepository $adminUserRepository,
         protected UserRepository $userRepository,
         protected BookingRepository $bookingRepository,
+        protected NotificationService $notificationService,
     ) {
         parent::__construct();
     }
@@ -127,6 +124,43 @@ class SupportService extends BaseService
                 'ticket' => $ticket,
             ]);
         }, useTransaction: true);
+    }
+
+    public function initiateChatFromStaff(int $staffId, int $customerId): ServiceReturn
+    {
+        return $this->execute(function () use ($staffId, $customerId) {
+            $customer = $this->userRepository->find($customerId);
+            if (!$customer) {
+                throw new ServiceException(__('common_error.data_not_found'));
+            }
+
+            // Tìm một ticket đang mở (chưa đóng) giữa nhân viên này và khách hàng này
+            $ticket = $this->supportTicketRepository->query()
+                ->where('customer_id', $customerId)
+                ->where('assigned_staff_id', $staffId)
+                ->where('status', '!=', SupportTicketStatus::CLOSED->dbValue())
+                ->first();
+
+            if (!$ticket) {
+                // Lấy một category mặc định (Tư vấn bán hàng - ID 164979998839073013 theo dữ liệu tinker)
+                // Hoặc lấy category đầu tiên nếu không tìm thấy
+                $category = $this->supportCategoryRepository->query()->where('is_active', true)->first();
+                if (!$category) {
+                    throw new ServiceException('Hệ thống chưa cấu hình danh mục hỗ trợ.');
+                }
+
+                $ticket = $this->supportTicketRepository->create([
+                    'customer_id' => $customerId,
+                    'category_id' => $category->id,
+                    'assigned_staff_id' => $staffId,
+                    'status' => SupportTicketStatus::ASSIGNED,
+                ]);
+                $ticket->room_id = $this->makeRoomId($ticket->id);
+                $ticket->save();
+            }
+
+            return ServiceReturn::success(data: $ticket);
+        });
     }
 
     public function listCustomerTickets(int $customerId, int $page = 1, int $perPage = 15): ServiceReturn
@@ -259,6 +293,19 @@ class SupportService extends BaseService
                 'ticket' => $this->serializeTicket($ticket),
                 'message' => $this->serializeMessage($message),
             ]);
+
+            // Gửi thông báo cho khách hàng nếu người gửi là nhân viên
+            if ($user instanceof AdminUser) {
+                $this->notificationService->sendMobileNotification(
+                    userId: $ticket->customer_id,
+                    type: \App\Enums\NotificationType::SUPPORT_CHAT_MESSAGE,
+                    data: [
+                        'staff_name' => $user->name,
+                        'message_content' => \Illuminate\Support\Str::limit($content, 100),
+                        'support_ticket_id' => (string) $ticket->id,
+                    ]
+                );
+            }
 
             return ServiceReturn::success(data: $message);
         }, useTransaction: true);

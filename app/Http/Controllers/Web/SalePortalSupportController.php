@@ -215,6 +215,28 @@ class SalePortalSupportController
         ]);
     }
 
+    public function initiateChat(Request $request): JsonResponse
+    {
+        $user = Auth::guard('web')->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => __('common_error.unauthorized')], 401);
+        }
+
+        $data = $request->validate([
+            'customer_id' => ['required', 'numeric', 'exists:users,id'],
+        ]);
+
+        $result = $this->supportService->initiateChatFromStaff((int) $user->id, (int) $data['customer_id']);
+        if ($result->isError()) {
+            return response()->json(['success' => false, 'message' => $result->getMessage()], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => new SupportTicketResource($result->getData()),
+        ]);
+    }
+
     public function close(int $id): JsonResponse
     {
         $user = Auth::guard('web')->user();

@@ -26,8 +26,11 @@ class UserObserver
             $newCoupon->code = 'WELCOME-' . $user->id . '-' . Str::upper(Str::random(4));
             $newCoupon->user_id = $user->id;
             $newCoupon->start_at = now();
-            // Hạn dùng 7 ngày kể từ lúc đăng ký
-            $newCoupon->end_at = now()->addDays(7);
+            
+            // Cấu hình số tiếng có hiệu lực (Mặc định 48 tiếng)
+            $validHours = $template->config['valid_hours'] ?? 48;
+            $newCoupon->end_at = now()->addHours((int)$validHours);
+            
             $newCoupon->used_count = 0;
             $newCoupon->usage_limit = 1;
             $newCoupon->display_ads = false;

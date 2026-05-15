@@ -822,6 +822,9 @@ return
         'coupon' => [
             'label' => 'Coupon',
             'navigation_label' => 'Coupon Management',
+            'sections' => [
+                'advanced_config' => 'Advanced Configuration',
+            ],
             'fields' => [
                 'code' => 'Code',
                 'discount' => 'Discount',
@@ -839,6 +842,8 @@ return
                 'is_active' => 'Status',
                 'count_collect' => 'Limit Collect',
                 'display_ads' => 'Display Ads',
+                'valid_hours' => 'Validity hours (for Welcome code)',
+                'valid_hours_helper' => 'Time calculated from user registration success. Default 48 hours.',
                 'banners' => [
                     'label' => 'Banner',
                     'vi' => 'Vietnamese Banner',

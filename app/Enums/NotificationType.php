@@ -22,6 +22,7 @@ enum NotificationType: int
     case DEPOSIT_SUCCESS = 20; // Thông báo nạp tiền thành công
     case NOTIFICATION_MARKETING = 22; // Thông báo marketing
     case BOOKING_REASSIGNED = 23; // Thông báo điều phối booking sang KTV khác
+    case SUPPORT_CHAT_MESSAGE = 24; // Thông báo tin nhắn từ nhân viên hỗ trợ
 
     public function getTitle(Language $lang, array $data = []): string
     {

@@ -133,7 +133,52 @@ class ServiceService extends BaseService
     }
 
     /**
-     * Lấy danh sách mã coupon đã được sử dụng
+     * Lấy danh sách mã giảm giá của người dùng (bao gồm mã đã thu thập và mã tặng riêng)
+     * @param FilterDTO $dto
+     * @return ServiceReturn
+     */
+    public function myCouponPaginate(FilterDTO $dto): ServiceReturn
+    {
+        try {
+            $userId = $dto->findFilter('user_id');
+            // Query từ bảng coupons thay vì coupon_users để lấy cả mã tặng riêng
+            $query = $this->couponRepository->queryCoupon($userId);
+            
+            // Lọc các mã user đã "Sở hữu"
+            $dto->addFilter('is_owned', $userId);
+            
+            // Gắn thêm thông tin is_used từ bảng pivot (đối với mã chung)
+            // Hoặc tính toán is_used dựa trên used_count (đối với mã riêng)
+            $query->with(['users' => function($q) use ($userId) {
+                $q->where('user_id', $userId);
+            }]);
+
+            $query = $this->couponRepository->filterQuery($query, $dto->filters);
+            $query = $this->couponRepository->sortQuery($query, $dto->sortBy, $dto->direction);
+            
+            $paginate = $query->paginate(
+                perPage: $dto->perPage,
+                page: $dto->page
+            );
+            
+            return ServiceReturn::success(
+                data: $paginate
+            );
+        } catch (\Exception $exception) {
+            LogHelper::error("Lỗi ServiceService@myCouponPaginate", $exception);
+            return ServiceReturn::success(
+                data: new LengthAwarePaginator(
+                    items: [],
+                    total: 0,
+                    perPage: $dto->perPage,
+                    currentPage: $dto->page
+                )
+            );
+        }
+    }
+
+    /**
+     * Lấy danh sách mã coupon đã được sử dụng (Legacy - giữ lại nếu cần)
      * @param FilterDTO $dto
      * @return ServiceReturn
      */
