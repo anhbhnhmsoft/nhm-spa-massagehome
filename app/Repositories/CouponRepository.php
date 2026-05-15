@@ -29,6 +29,7 @@ class CouponRepository extends BaseRepository
             // Nếu không có userId, thường là lấy mã công khai
             $query->whereNull('user_id');
         }
+        $query->where('code', '!=', 'WELCOME');
 
         return $query;
     }

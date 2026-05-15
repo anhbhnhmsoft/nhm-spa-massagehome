@@ -66,6 +66,7 @@ class CouponForm
                                     ->label(__('admin.coupon.fields.start_date'))
                                     ->required()
                                     ->before('end_at')
+                                    ->visible(fn (callable $get) => $get('code') !== 'WELCOME')
                                     ->validationMessages([
                                         'required' => __("common.error.required"),
                                         'before' => __('admin.coupon.validation.start_before_end'),
@@ -74,6 +75,7 @@ class CouponForm
                                     ->label(__('admin.coupon.fields.end_date'))
                                     ->required()
                                     ->after('start_at')
+                                    ->visible(fn (callable $get) => $get('code') !== 'WELCOME')
                                     ->validationMessages([
                                         'required' => __("common.error.required"),
                                         'after' => __('admin.coupon.validation.end_after_start'),
@@ -115,6 +117,7 @@ class CouponForm
                                     ->disabled(),
                                 Toggle::make('is_active')
                                     ->label(__('admin.coupon.fields.is_active'))
+                                    ->disabled(fn (callable $get) => $get('code') === 'WELCOME')
                                     ->default(true)
                                     ->required(),
                                 Toggle::make('display_ads')
