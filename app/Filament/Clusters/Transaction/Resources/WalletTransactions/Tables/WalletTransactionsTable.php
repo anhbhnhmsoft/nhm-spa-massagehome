@@ -248,7 +248,7 @@ class WalletTransactionsTable
                 ->emptyStateHeading(__('admin.transaction.empty_state.heading'));
         }
 
-        return $table;
+        return $table->poll('1s');
     }
 
     public static function actionableTypes(): array
