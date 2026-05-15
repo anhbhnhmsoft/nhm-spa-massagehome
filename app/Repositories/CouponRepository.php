@@ -21,7 +21,9 @@ class CouponRepository extends BaseRepository
         $query = $this->model
             ->query()
             ->where('is_active', true);
-
+        if ($userId !== null) { 
+            $query->where('user_id',$userId);
+        }
         return $query;
     }
 
