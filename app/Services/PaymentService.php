@@ -229,7 +229,7 @@ class PaymentService extends BaseService
             $orderCode = (int)(microtime(true) * 1000);
 
             // Thời gian hết hạn 30 phút
-            $expireTime = now()->addMinutes(30);
+            $expireTime = now()->addMinutes(10);
             switch ($paymentType) {
                 case PaymentType::QR_BANKING:
                     // Tính toán số lượng point cần cộng dồn
