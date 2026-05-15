@@ -108,6 +108,7 @@ class CouponsTable
                         ->modalDescription(__('admin.common.modal.delete_confirm'))
                         ->modalSubmitActionLabel(__('admin.common.action.confirm_delete')),
                 ]),
-            ]);
+            ])
+            ->pool('1s');
     }
 }
