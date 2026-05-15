@@ -109,7 +109,9 @@ class WalletTransactionsTable
                                 self::notifyActionResult($service->approveTransaction($record));
                             })
                             ->requiresConfirmation()
-                            ->modalDescription(__('admin.transaction.actions.approve_confirmation_message')),
+                            ->modalDescription(__('admin.transaction.actions.approve_confirmation_message'))
+                            ->modalSubmitActionLabel(__('admin.transaction.actions.approve'))
+                            ->modalCancelActionLabel(__('admin.transaction.actions.cancel')),
 
                         Action::make('transfer')
                             ->label(__('admin.transaction.actions.transfer'))
@@ -134,7 +136,9 @@ class WalletTransactionsTable
                             ->schema(fn (WalletTransaction $record, ConfigService $service, UserWithdrawInfoService $withdrawInfoService): array => self::transferSchema($record, $service, $withdrawInfoService))
                             ->requiresConfirmation()
                             ->modalDescription(__('admin.transaction.actions.transfer_confirmation_message'))
-                            ->modalFooterActions(fn ($action): array => self::confirmationFooterActions($action, 'success')),
+                            ->modalFooterActions(fn ($action): array => self::confirmationFooterActions($action, 'success'))
+                            ->modalSubmitActionLabel(__('admin.transaction.actions.approve')) 
+                            ->modalCancelActionLabel(__('admin.transaction.actions.cancel')),
 
                         Action::make('cancel')
                             ->label(__('admin.transaction.actions.cancel'))
@@ -146,7 +150,9 @@ class WalletTransactionsTable
                             })
                             ->requiresConfirmation()
                             ->modalDescription(__('admin.transaction.actions.cancel_confirmation_message'))
-                            ->modalFooterActions(fn ($action): array => self::confirmationFooterActions($action, 'danger')),
+                            ->modalFooterActions(fn ($action): array => self::confirmationFooterActions($action, 'danger'))
+                            ->modalSubmitActionLabel(__('admin.transaction.actions.approve')) // Nút "Xác nhận"
+                            ->modalCancelActionLabel(__('admin.transaction.actions.cancel')),
                     ])->buttonGroup(),
                 ])
                 ->filtersLayout(FiltersLayout::AboveContent)
@@ -177,7 +183,36 @@ class WalletTransactionsTable
                                 self::notifyActionResult($service->approveTransaction($record));
                             })
                             ->requiresConfirmation()
-                            ->modalDescription(__('admin.transaction.actions.approve_confirmation_message')),
+                            ->modalDescription(__('admin.transaction.actions.approve_confirmation_message'))
+                            ->modalSubmitActionLabel(__('admin.transaction.actions.approve')) // Nút "Xác nhận"
+                            ->modalCancelActionLabel(__('admin.transaction.actions.cancel')),
+
+                        Action::make('transfer')
+                            ->label(__('admin.transaction.actions.transfer'))
+                            ->icon('heroicon-o-arrow-right-on-rectangle')
+                            ->color('info')
+                            ->visible(fn(WalletTransaction $record): bool => self::isPendingWithdrawal($record))
+                            ->action(function (
+                                WalletTransaction $record,
+                                WalletTransactionStatusService $service,
+                                ConfigService $configService,
+                                UserWithdrawInfoService $withdrawInfoService,
+                            ): void {
+                                $transferInfo = self::resolveTransferInfo($record, $configService, $withdrawInfoService);
+                                if ($transferInfo->isError()) {
+                                    self::notifyActionResult($transferInfo);
+                                    return;
+                                }
+
+                                self::notifyActionResult($service->approveTransaction($record));
+                            })
+                            ->modal()
+                            ->schema(fn (WalletTransaction $record, ConfigService $service, UserWithdrawInfoService $withdrawInfoService): array => self::transferSchema($record, $service, $withdrawInfoService))
+                            ->requiresConfirmation()
+                            ->modalDescription(__('admin.transaction.actions.transfer_confirmation_message'))
+                            ->modalFooterActions(fn ($action): array => self::confirmationFooterActions($action, 'success'))
+                            ->modalSubmitActionLabel(__('admin.transaction.actions.approve'))
+                            ->modalCancelActionLabel(__('admin.transaction.actions.cancel')),
 
                         Action::make('cancel')
                             ->label(__('admin.transaction.actions.cancel'))
@@ -194,7 +229,9 @@ class WalletTransactionsTable
                                 self::notifyActionResult($service->cancelTransaction($record));
                             })
                             ->requiresConfirmation()
-                            ->modalDescription(__('admin.transaction.actions.cancel_confirmation_message')),
+                            ->modalDescription(__('admin.transaction.actions.cancel_confirmation_message'))
+                            ->modalSubmitActionLabel(__('admin.transaction.actions.approve'))
+                            ->modalCancelActionLabel(__('admin.transaction.actions.cancel')),
                     ])->buttonGroup(),
                 ])
                 ->filtersLayout(FiltersLayout::AboveContent)
@@ -230,22 +267,45 @@ class WalletTransactionsTable
         );
     }
 
+    private static function resolveTypeValue(WalletTransaction $record): ?int
+    {
+        $raw = $record->type;
+        if (is_numeric($raw)) {
+            return (int) $raw;
+        }
+
+        $name = (string) $raw;
+        foreach (WalletTransactionType::cases() as $case) {
+            if ($case->name === strtoupper($name) || $case->name === $name) {
+                return $case->value;
+            }
+        }
+
+        return null;
+    }
+
     private static function isPendingActionable(WalletTransaction $record): bool
     {
+        $type = self::resolveTypeValue($record);
         return $record->status == WalletTransactionStatus::PENDING->value
-            && in_array((int) $record->type, self::actionableTypes(), true);
+            && $type !== null
+            && in_array($type, self::actionableTypes(), true);
     }
 
     private static function isPendingIncome(WalletTransaction $record): bool
     {
+        $type = self::resolveTypeValue($record);
         return $record->status == WalletTransactionStatus::PENDING->value
-            && in_array((int) $record->type, WalletTransactionType::incomeStatus(), true);
+            && $type !== null
+            && in_array($type, WalletTransactionType::incomeStatus(), true);
     }
 
     private static function isPendingWithdrawal(WalletTransaction $record): bool
     {
+        $type = self::resolveTypeValue($record);
         return $record->status == WalletTransactionStatus::PENDING->value
-            && (int) $record->type === WalletTransactionType::WITHDRAWAL->value;
+            && $type !== null
+            && $type === WalletTransactionType::WITHDRAWAL->value;
     }
 
     private static function transferSchema(
@@ -308,12 +368,27 @@ class WalletTransactionsTable
 
     private static function confirmationFooterActions($action, string $submitColor): array
     {
+        $submitLabel = __('common.action.submit');
+
+        try {
+            $name = method_exists($action, 'getName') ? $action->getName() : null;
+            if ($name === 'approve') {
+                $submitLabel = __('admin.transaction.actions.approve');
+            } elseif ($name === 'transfer') {
+                $submitLabel = __('admin.transaction.actions.transfer');
+            } elseif ($name === 'cancel') {
+                $submitLabel = __('admin.transaction.actions.cancel');
+            }
+        } catch (\Throwable) {
+            // ignore and fallback to generic submit
+        }
+
         return [
             $action->getModalCancelAction()
                 ->label(__('common.action.close'))
                 ->color('gray'),
             $action->getModalSubmitAction()
-                ->label(__('common.action.submit'))
+                ->label($submitLabel)
                 ->color($submitColor),
         ];
     }

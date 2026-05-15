@@ -45,9 +45,9 @@ return [
         'edit' => 'Sửa',
         'delete' => 'Xóa',
         'view' => 'Xem',
-        'close' => 'Đóng',
+        'close' => 'Huỷ thao tác',
         'confirm' => 'Xác nhận',
-        'submit' => 'Gửi',
+        'submit' => 'Xác nhận',
         'mark_as_resolved' => 'Đánh dấu đã giải quyết',
     ],
     'breadcrumb' => [

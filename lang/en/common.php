@@ -43,9 +43,9 @@ return [
         'save' => 'Save',
         'delete' => 'Delete',
         'view' => 'View',
-        'close' => 'Close',
+        'close' => 'Cancel action',
         'confirm' => 'Confirm',
-        'submit' => 'Submit',
+        'submit' => 'Confirm',
         'mark_as_resolved' => 'Mark as resolved',
     ],
     'breadcrumb' => [

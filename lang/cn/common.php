@@ -45,9 +45,9 @@ return [
         'save' => '保存',
         'delete' => '删除',
         'view' => '查看',
-        'close' => '关闭',
+        'close' => '取消操作',
         'confirm' => '确认',
-        'submit' => '提交',
+        'submit' => '确认',
         'mark_as_resolved' => '标记为已解决',
     ],
     'breadcrumb' => [
