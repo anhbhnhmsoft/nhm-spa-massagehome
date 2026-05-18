@@ -6,6 +6,7 @@ use App\Core\BaseRepository;
 use App\Models\Coupon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class CouponRepository extends BaseRepository
 {
@@ -116,7 +117,8 @@ class CouponRepository extends BaseRepository
 
     public function getCouponByIdOrFail(int $couponId, bool $lockForUpdate = false): ?Coupon
     {
-        $query = $this->queryCoupon()
+        $user = Auth::user();
+        $query = $this->queryCoupon($user->id)
             ->where('id', $couponId);
         if ($lockForUpdate) {
             $query->lockForUpdate();
