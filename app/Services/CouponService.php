@@ -83,6 +83,63 @@ class CouponService extends BaseService
     }
 
     /**
+     * Tặng mã giảm giá riêng cho một khách hàng (dùng từ admin panel)
+     *
+     * @param string $recipientUserId   ID khách hàng nhận mã
+     * @param float  $discountValue     Giá trị giảm
+     * @param bool   $isPercentage      true = %, false = cố định
+     * @param float  $maxDiscount       Giảm tối đa (chỉ dùng khi is_percentage = true)
+     * @param int    $daysValid         Số ngày có hiệu lực kể từ hôm nay
+     * @return ServiceReturn            Trả về code của coupon vừa tạo trong data khi thành công
+     */
+    public function giftCoupon(
+        string $recipientUserId,
+        string $label,
+        float  $discountValue,
+        bool   $isPercentage,
+        float  $maxDiscount,
+        int    $daysValid,
+    ): ServiceReturn {
+        try {
+            $code = 'GIFT-' . strtoupper(\Illuminate\Support\Str::random(8));
+
+            // label là translatable — lưu cùng giá trị cho cả 3 ngôn ngữ
+            $labelTranslatable = ['vi' => $label, 'en' => $label, 'cn' => $label];
+
+            $newCoupon = new \App\Models\Coupon([
+                'code'           => $code,
+                'label'          => $labelTranslatable,
+                'created_by'     => (string) '146837567502940553',
+                'user_id'        => $recipientUserId,
+                'discount_value' => $discountValue,
+                'is_percentage'  => $isPercentage,
+                'max_discount'   => $maxDiscount,
+                'start_at'       => now(),
+                'end_at'         => now()->addDays($daysValid),
+                'used_count'     => 0,
+                'usage_limit'    => 1,
+                'is_active'      => true,
+                'display_ads'    => false,
+                'count_collect'  => 0,
+            ]);
+            $newCoupon->save();
+
+            // Đưa mã vào ví của khách hàng
+            $recipient = $this->userRepository->find($recipientUserId);
+            if ($recipient) {
+                $recipient->collectionCoupons()->syncWithoutDetaching([
+                    $newCoupon->id => ['is_used' => false],
+                ]);
+            }
+
+            return ServiceReturn::success(data: ['code' => $newCoupon->code]);
+        } catch (\Exception $e) {
+            LogHelper::error('CouponService@giftCoupon: ' . $e->getMessage());
+            return ServiceReturn::error(message: __('common_error.server_error'));
+        }
+    }
+
+    /**
      * Kiểm tra, sử dụng, tăng used_count cho Coupon
      * @param string $couponId
      * @param string $userId

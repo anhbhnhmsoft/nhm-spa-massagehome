@@ -28,11 +28,7 @@ use Filament\Support\Enums\Width;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\HtmlString;
 
-use App\Models\Coupon;
-use App\Models\CouponUser;
-use App\Repositories\CouponRepository;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Str;
+use App\Services\CouponService;
 
 class CommonActions
 {
@@ -312,79 +308,69 @@ class CommonActions
     public static function giftCouponAction(): Action
     {
         return Action::make('gift_coupon')
-            ->label('Tặng mã giảm giá')
+            ->label(__('admin.coupon.gift.action_label'))
             ->icon('heroicon-o-gift')
             ->color('warning')
-            ->modalHeading('Tặng mã giảm giá riêng cho khách hàng')
+            ->modalHeading(__('admin.coupon.gift.modal_heading'))
             ->modalWidth('lg')
             ->schema([
-                Select::make('template_coupon_id')
-                    ->label('Chọn mẫu mã giảm giá')
-                    ->options(fn() => Coupon::where('user_id', null)->where('is_active', true)->pluck('code', 'id'))
+                TextInput::make('label')
+                    ->label(__('admin.coupon.fields.label'))
                     ->required()
-                    ->live()
-                    ->afterStateUpdated(function ($state, Set $set) {
-                        if ($state) {
-                            $template = Coupon::find($state);
-                            if ($template) {
-                                $set('discount_value', $template->discount_value);
-                                $set('is_percentage', $template->is_percentage);
-                                $set('max_discount', $template->max_discount);
-                            }
-                        }
-                    }),
+                    ->validationMessages(['required' => __('common.error.required')]),
                 Grid::make(2)
                     ->schema([
                         TextInput::make('discount_value')
-                            ->label('Giá trị giảm')
+                            ->label(__('admin.coupon.gift.fields.discount_value'))
                             ->numeric()
-                            ->required(),
+                            ->required()
+                            ->validationMessages(['required' => __('common.error.required')]),
                         Select::make('is_percentage')
-                            ->label('Loại')
+                            ->label(__('admin.coupon.gift.fields.is_percentage'))
                             ->options([
-                                true => 'Phần trăm (%)',
-                                false => 'Cố định (VND)',
+                                1 => __('admin.coupon.gift.fields.is_percentage_percent'),
+                                0 => __('admin.coupon.gift.fields.is_percentage_fixed'),
                             ])
-                            ->required(),
+                            ->default(0)
+                            ->required()
+                            ->validationMessages(['required' => __('common.error.required')]),
                     ]),
                 TextInput::make('max_discount')
-                    ->label('Giảm tối đa')
+                    ->label(__('admin.coupon.gift.fields.max_discount'))
                     ->numeric()
-                    ->helperText('Chỉ áp dụng nếu chọn loại %'),
+                    ->default(0)
+                    ->helperText(__('admin.coupon.gift.fields.max_discount_helper')),
                 TextInput::make('days_valid')
-                    ->label('Số ngày có hiệu lực')
+                    ->label(__('admin.coupon.gift.fields.days_valid'))
                     ->numeric()
                     ->default(7)
                     ->required()
-                    ->suffix('ngày'),
+                    ->validationMessages(['required' => __('common.error.required')])
+                    ->suffix(__('admin.coupon.gift.fields.days_valid_suffix')),
             ])
-            ->action(function (User $record, array $data): void {
-                $template = Coupon::find($data['template_coupon_id']);
-                if (!$template) return;
+            ->action(function (User $record, array $data, CouponService $couponService): void {
+                $result = $couponService->giftCoupon(
+                    recipientUserId: (string) $record->id,
+                    label:           (string) $data['label'],
+                    discountValue:   (float)  $data['discount_value'],
+                    isPercentage:    (bool)   $data['is_percentage'],
+                    maxDiscount:     (float)  ($data['max_discount'] ?? 0),
+                    daysValid:       (int)    $data['days_valid'],
+                );
 
-                // Tạo một bản sao coupon dành riêng cho user này
-                $newCoupon = $template->replicate();
-                $newCoupon->code = 'GIFT-' . $record->id . '-' . Str::upper(Str::random(5));
-                $newCoupon->user_id = $record->id;
-                $newCoupon->discount_value = $data['discount_value'];
-                $newCoupon->is_percentage = $data['is_percentage'];
-                $newCoupon->max_discount = $data['max_discount'] ?? 0;
-                $newCoupon->start_at = now();
-                $newCoupon->end_at = now()->addDays($data['days_valid']);
-                $newCoupon->used_count = 0;
-                $newCoupon->usage_limit = 1; // Thường mã tặng chỉ dùng 1 lần
-                $newCoupon->save();
-
-                // Tự động cho vào ví cho user
-                $record->collectionCoupons()->syncWithoutDetaching([
-                    $newCoupon->id => ['is_used' => false]
-                ]);
-
-                Notification::make()
-                    ->success()
-                    ->title('Thành công')
-                    ->body("Đã tặng mã {$newCoupon->code} cho khách hàng.")
-                    ->send();
+                if ($result->isSuccess()) {
+                    Notification::make()
+                        ->success()
+                        ->title(__('admin.coupon.gift.success_title'))
+                        ->body(__('admin.coupon.gift.success_body', ['code' => $result->getData()['code']]))
+                        ->send();
+                } else {
+                    Notification::make()
+                        ->danger()
+                        ->title(__('admin.coupon.gift.error_title'))
+                        ->body($result->getMessage())
+                        ->send();
+                }
             });
     }
 

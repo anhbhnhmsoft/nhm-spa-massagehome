@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Support;
 
 use App\Enums\SupportMessageSenderType;
+use App\Models\AdminUser;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -39,6 +40,7 @@ class SupportTicketResource extends JsonResource
                 'service_name' => $this->latestBooking->service?->name,
             ] : null,
             'last_message_at' => $this->last_message_at?->toISOString(),
+            'unread_count' => $this->unreadCountFor($request),
             'latest_message' => $this->latestMessage ? [
                 'id' => (string) $this->latestMessage->id,
                 'support_ticket_id' => (string) $this->latestMessage->support_ticket_id,
@@ -61,5 +63,18 @@ class SupportTicketResource extends JsonResource
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];
+    }
+
+    private function unreadCountFor(Request $request): int
+    {
+        $user = $request->user();
+        $senderType = $user instanceof AdminUser
+            ? SupportMessageSenderType::CUSTOMER
+            : SupportMessageSenderType::STAFF;
+
+        return $this->messages()
+            ->where('sender_type', $senderType->dbValue())
+            ->whereNull('seen_at')
+            ->count();
     }
 }

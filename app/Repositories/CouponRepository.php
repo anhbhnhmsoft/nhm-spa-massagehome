@@ -115,11 +115,16 @@ class CouponRepository extends BaseRepository
         return $query;
     }
 
-    public function getCouponByIdOrFail(int $couponId, bool $lockForUpdate = false): ?Coupon
+    public function getCouponByIdOrFail(int $couponId, bool $lockForUpdate = false, int $user_id): ?Coupon
     {
-        $user = Auth::user();
-        $query = $this->queryCoupon($user->id)
+        if($user_id) {
+          $query = $this->queryCoupon($user_id)
             ->where('id', $couponId);
+        }else{
+            $query = $this->queryCoupon()
+            ->where('id', $couponId);
+        }
+        
         if ($lockForUpdate) {
             $query->lockForUpdate();
         }

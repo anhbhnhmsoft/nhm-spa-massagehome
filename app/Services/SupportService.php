@@ -307,7 +307,17 @@ class SupportService extends BaseService
                 'message' => $this->serializeMessage($message),
             ]);
 
-            // Gửi thông báo cho khách hàng nếu người gửi là nhân viên
+            if ($senderType === SupportMessageSenderType::STAFF) {
+                $this->notificationService->sendMobileNotification(
+                    userId: $ticket->customer_id,
+                    type: \App\Enums\NotificationType::SUPPORT_CHAT_MESSAGE,
+                    data: [
+                        'staff_name' => $user instanceof AdminUser ? $user->name : '',
+                        'message_content' => Str::limit($content, 100),
+                        'support_ticket_id' => (string) $ticket->id,
+                    ],
+                );
+            }
 
             return ServiceReturn::success(data: $message);
         }, useTransaction: true);

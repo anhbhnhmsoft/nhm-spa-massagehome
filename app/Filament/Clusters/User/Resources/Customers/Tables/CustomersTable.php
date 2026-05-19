@@ -6,8 +6,6 @@ use App\Filament\Clusters\User\Resources\Customers\CustomerResource;
 use App\Filament\Components\CommonActions;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Infolists\Components\TextEntry;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;

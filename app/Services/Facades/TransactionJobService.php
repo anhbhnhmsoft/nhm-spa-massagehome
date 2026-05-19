@@ -43,6 +43,7 @@ class TransactionJobService extends BaseService
         protected WalletRepository            $walletRepository,
         protected WalletTransactionRepository $walletTransactionRepository,
         protected CouponRepository            $couponRepository,
+        protected CouponUsedRepository        $couponUsedRepository,
         protected UserRepository              $userRepository,
         protected BookingValidator            $bookingValidator,
         protected CouponValidator             $couponValidator,
@@ -97,6 +98,7 @@ class TransactionJobService extends BaseService
                     $coupon = $this->couponRepository->getCouponByIdOrFail(
                         couponId: $booking->coupon_id,
                         lockForUpdate: true,
+                        user_id: $customer->id
                     );
 
                     if (!$coupon) {
@@ -585,6 +587,31 @@ class TransactionJobService extends BaseService
                     $ktvWallet->save();
                 }
 
+                // Hoàn lại mã giảm giá nếu booking có dùng coupon
+                if (!empty($booking->coupon_id)) {
+                    $coupon = $this->couponRepository->query()
+                        ->lockForUpdate()
+                        ->find($booking->coupon_id);
+
+                    if ($coupon) {
+                        // Giảm used_count về lại (không để âm)
+                        $coupon->used_count = max(0, $coupon->used_count - 1);
+                        $coupon->save();
+
+                        // Reset is_used = false trong ví của khách hàng
+                        $booking->user->collectionCoupons()
+                            ->updateExistingPivot($coupon->id, ['is_used' => false]);
+
+                        // Xóa lịch sử sử dụng coupon cho booking này
+                        $this->couponUsedRepository->query()
+                            ->where('coupon_id', $coupon->id)
+                            ->where('booking_id', $booking->id)
+                            ->delete();
+                        // Xóa lịch sử giao dịch giảm giá
+                        $this->walletTransactionRepository->query()->where('foreign_key',$bookingId)->where('type',WalletTransactionType::SUBTRACT_MONEY_DISCOUNT_SERVICE->value)->delete();
+                    }
+                }
+
                 // Gửi thông báo cho khách hàng
                 SendNotificationJob::dispatch(
                     userId: $booking->user_id,
@@ -609,9 +636,7 @@ class TransactionJobService extends BaseService
         );
     }
 
-    /**
-     * Xử lý Trả tiền thưởng cho người giới thiệu khi mời KTV thành công
-     * @param  $referrerId - Id người giới thiệu
+     /* @param  $referrerId - Id người giới thiệu
      * @param  $userId - Id nguời dc giới thiệu
      * @return ServiceReturn
      * @throws Throwable

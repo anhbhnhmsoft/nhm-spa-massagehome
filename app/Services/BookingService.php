@@ -714,6 +714,8 @@ class BookingService extends BaseService
             // Kiểm tra Coupon tồn tại
             $coupon = $this->couponRepository->getCouponByIdOrFail(
                 couponId: $data['coupon_id'],
+                lockForUpdate: false,
+                user_id: $userId
             );
             if (!$coupon) {
                 throw new ServiceException(
