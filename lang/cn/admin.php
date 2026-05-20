@@ -1058,6 +1058,12 @@ return
         'support_ticket' => [
             'label' => '支持工单',
             'navigation_label' => '支持工单',
+            'status' => [
+                'pending' => '待处理',
+                'assigned' => '已分配',
+                'in_progress' => '处理中',
+                'closed' => '已关闭',
+            ],
             'section' => [
                 'info' => '工单信息',
                 'manage' => '分配与处理',

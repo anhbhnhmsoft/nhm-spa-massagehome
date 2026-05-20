@@ -37,10 +37,26 @@ enum SupportTicketStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::PENDING => 'Pending',
-            self::ASSIGNED => 'Assigned',
-            self::IN_PROGRESS => 'In progress',
-            self::CLOSED => 'Closed',
+            self::PENDING => __('admin.support_ticket.status.pending'),
+            self::ASSIGNED => __('admin.support_ticket.status.assigned'),
+            self::IN_PROGRESS => __('admin.support_ticket.status.in_progress'),
+            self::CLOSED => __('admin.support_ticket.status.closed'),
         };
+    }
+
+    public static function options(): array
+    {
+        $options = [];
+
+        foreach (self::cases() as $case) {
+            $options[$case->dbValue()] = $case->label();
+        }
+
+        return $options;
+    }
+
+    public static function toOptions(): array
+    {
+        return self::options();
     }
 }

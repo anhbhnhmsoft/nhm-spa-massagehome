@@ -1059,6 +1059,12 @@ return
         'support_ticket' => [
             'label' => 'Support ticket',
             'navigation_label' => 'Support tickets',
+            'status' => [
+                'pending' => 'Pending',
+                'assigned' => 'Assigned',
+                'in_progress' => 'In progress',
+                'closed' => 'Closed',
+            ],
             'section' => [
                 'info' => 'Ticket info',
                 'manage' => 'Assign and handle',

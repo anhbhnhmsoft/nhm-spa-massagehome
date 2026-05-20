@@ -494,6 +494,7 @@ class SupportService extends BaseService
             'id' => (string) $ticket->id,
             'room_id' => $ticket->room_id,
             'status' => $ticket->statusEnum()->value,
+            'status_label' => $ticket->statusEnum()->label(),
             'customer' => [
                 'id' => (string) $ticket->customer_id,
                 'name' => $ticket->customer?->name,

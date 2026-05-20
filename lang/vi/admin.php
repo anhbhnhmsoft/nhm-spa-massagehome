@@ -1071,6 +1071,12 @@ return
         'support_ticket' => [
             'label' => 'Ticket hỗ trợ',
             'navigation_label' => 'Ticket hỗ trợ',
+            'status' => [
+                'pending' => 'Chờ xử lý',
+                'assigned' => 'Đã phân công',
+                'in_progress' => 'Đang xử lý',
+                'closed' => 'Đã đóng',
+            ],
             'section' => [
                 'info' => 'Thông tin ticket',
                 'manage' => 'Phân công và xử lý',

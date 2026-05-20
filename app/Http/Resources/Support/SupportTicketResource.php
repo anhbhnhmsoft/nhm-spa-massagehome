@@ -17,6 +17,9 @@ class SupportTicketResource extends JsonResource
             'status' => method_exists($this->resource, 'statusEnum')
                 ? $this->resource->statusEnum()->value
                 : $this->status,
+            'status_label' => method_exists($this->resource, 'statusEnum')
+                ? $this->resource->statusEnum()->label()
+                : (string) $this->status,
             'customer' => [
                 'id' => (string) $this->customer_id,
                 'name' => $this->customer?->name,
