@@ -134,6 +134,8 @@ class SupportService extends BaseService
                 throw new ServiceException(__('common_error.data_not_found'));
             }
 
+            $shouldNotifyCustomer = false;
+
             // Tìm một ticket đang mở (chưa đóng) giữa nhân viên này và khách hàng này
             $ticket = $this->supportTicketRepository->query()
                 ->where('customer_id', $customerId)
@@ -160,17 +162,20 @@ class SupportService extends BaseService
                 ]);
                 $ticket->room_id = $this->makeRoomId($ticket->id);
                 $ticket->save();
+                $shouldNotifyCustomer = true;
             }
 
-            $this->notificationService->sendMobileNotification(
-                userId: $ticket->customer_id,
-                type: \App\Enums\NotificationType::SUPPORT_CHAT_MESSAGE,
-                data: [
-                    'staff_name' => Auth::user()->name,
-                    'message_content' => \Illuminate\Support\Str::limit('Nhân viên hệ thống liên hệ hỗ  trợ', 100),
-                    'support_ticket_id' => (string) $ticket->id,
-                ]
-            );
+            if ($shouldNotifyCustomer) {
+                $this->notificationService->sendMobileNotification(
+                    userId: $ticket->customer_id,
+                    type: \App\Enums\NotificationType::SUPPORT_CHAT_MESSAGE,
+                    data: [
+                        'staff_name' => Auth::user()->name,
+                        'message_content' => Str::limit('Nhân viên hệ thống liên hệ hỗ trợ', 100),
+                        'support_ticket_id' => (string) $ticket->id,
+                    ]
+                );
+            }
 
             return ServiceReturn::success(data: $ticket);
         });
@@ -306,18 +311,6 @@ class SupportService extends BaseService
                 'ticket' => $this->serializeTicket($ticket),
                 'message' => $this->serializeMessage($message),
             ]);
-
-            if ($senderType === SupportMessageSenderType::STAFF) {
-                $this->notificationService->sendMobileNotification(
-                    userId: $ticket->customer_id,
-                    type: \App\Enums\NotificationType::SUPPORT_CHAT_MESSAGE,
-                    data: [
-                        'staff_name' => $user instanceof AdminUser ? $user->name : '',
-                        'message_content' => Str::limit($content, 100),
-                        'support_ticket_id' => (string) $ticket->id,
-                    ],
-                );
-            }
 
             return ServiceReturn::success(data: $message);
         }, useTransaction: true);
