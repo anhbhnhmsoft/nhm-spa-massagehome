@@ -28,7 +28,7 @@ class BookingInfoList
                         TextEntry::make('status')
                             ->label(__('admin.booking.fields.status'))
                             ->badge()
-                            ->color(fn ($state): string => BookingStatus::getColor($state))
+                            ->color(fn($state): string => BookingStatus::getColor($state))
                             ->formatStateUsing(fn($state) => BookingStatus::getLabel($state)),
 
                         TextEntry::make('user.name')
@@ -49,23 +49,25 @@ class BookingInfoList
 
                         TextEntry::make('price')
                             ->label(__('admin.booking.fields.price'))
-                            ->formatStateUsing(fn ($state) => number_format($state, 0, '.', ','))
+                            ->state(fn($record) => max((float) $record->price - (float) ($record->price_discount ?? 0), 0))
+                            ->formatStateUsing(fn($state) => number_format($state, 0, '.', ','))
                             ->suffix(' ' . __('admin.currency'))
                             ->icon('heroicon-m-currency-dollar'),
                         TextEntry::make('price_transportation')
                             ->label(__('admin.booking.fields.price_transportation'))
-                            ->formatStateUsing(fn ($state) => number_format($state, 0, '.', ','))
+                            ->formatStateUsing(fn($state) => number_format($state, 0, '.', ','))
                             ->suffix(' ' . __('admin.currency'))
                             ->icon('heroicon-m-currency-dollar'),
-
-                        TextEntry::make('coupon.name')
+                        TextEntry::make('coupon.label')
                             ->icon('heroicon-m-tag')
-                            ->hidden(fn ($record) => !$record->coupon_id)
+                            ->hidden(fn($record) => !$record->coupon_id)
                             ->label(__('admin.booking.fields.coupon')),
+
                         TextEntry::make('price_before_discount')
-                            ->hidden(fn ($record) => !$record->coupon_id)
+                            ->hidden(fn($record) => !$record->coupon_id)
                             ->label(__('admin.booking.fields.price_before_discount'))
-                            ->formatStateUsing(fn ($state) => number_format($state, 0, '.', ','))
+                            ->state(fn($record) => (float) $record->price)
+                            ->formatStateUsing(fn($state) => number_format($state, 0, '.', ','))
                             ->suffix(' ' . __('admin.currency'))
                             ->icon('heroicon-m-currency-dollar'),
                     ]),
@@ -127,7 +129,7 @@ class BookingInfoList
                             ->placeholder(__('admin.common.empty')),
 
                         TextEntry::make('reason_cancel')
-                            ->visible(fn ($record) => in_array($record->status, [BookingStatus::CANCELED->value, BookingStatus::WAITING_CANCEL->value]))
+                            ->visible(fn($record) => in_array($record->status, [BookingStatus::CANCELED->value, BookingStatus::WAITING_CANCEL->value]))
                             ->label(__('admin.booking.fields.reason_cancel'))
                             ->columnSpanFull()
                             ->color('danger')
@@ -136,7 +138,7 @@ class BookingInfoList
                             ->placeholder(__('admin.common.empty')),
 
                         TextEntry::make('cancel_by')
-                            ->visible(fn ($record) => in_array($record->status, [BookingStatus::CANCELED->value, BookingStatus::WAITING_CANCEL->value]))
+                            ->visible(fn($record) => in_array($record->status, [BookingStatus::CANCELED->value, BookingStatus::WAITING_CANCEL->value]))
                             ->label(__('admin.booking.fields.cancel_by'))
                             ->formatStateUsing(fn($state) => UserRole::getLabel($state))
                             ->badge()
@@ -144,15 +146,15 @@ class BookingInfoList
                     ]),
 
 
-//                // Dịch vụ thay thế (cho reassign)
-//                Section::make(__('admin.booking.actions.reassign.heading'))
-//                    ->hidden(fn($record) => $record->status !== BookingStatus::WAITING_CANCEL->value)
-//                    ->schema([
-//                        ViewEntry::make('similar_services')
-//                            ->view('filament.clusters.service.bookings.similar_services_table_wrapper')
-//                            ->hiddenLabel(),
-//                    ])
-//                    ->columnSpanFull(),
+                //                // Dịch vụ thay thế (cho reassign)
+                //                Section::make(__('admin.booking.actions.reassign.heading'))
+                //                    ->hidden(fn($record) => $record->status !== BookingStatus::WAITING_CANCEL->value)
+                //                    ->schema([
+                //                        ViewEntry::make('similar_services')
+                //                            ->view('filament.clusters.service.bookings.similar_services_table_wrapper')
+                //                            ->hiddenLabel(),
+                //                    ])
+                //                    ->columnSpanFull(),
             ]);
     }
 }
