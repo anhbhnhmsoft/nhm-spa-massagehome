@@ -83,8 +83,9 @@ class ApplyTechnicalRequest extends FormRequest
     {
         return [
             function (Validator $validator) {
-                // Nếu các validation cấu trúc cơ bản đã lỗi thì không cần chạy đếm số lượng nữa
-                if ($validator->errors()->has('file_uploads') || $validator->errors()->has('file_uploads.*')) {
+                // Chỉ skip nếu lỗi cấu trúc mảng tổng thể (required/array)
+                // Không skip khi lỗi từng phần tử con, vẫn cần validate count
+                if ($validator->errors()->has('file_uploads')) {
                     return;
                 }
 
@@ -110,23 +111,40 @@ class ApplyTechnicalRequest extends FormRequest
         // Kiểm tra logic số lượng cho từng loại cụ thể
         // 1. CCCD mặt trước
         if (($typeCounts[UserFileType::IDENTITY_CARD_FRONT->value] ?? 0) !== 1) {
-            $validator->errors()->add('file_uploads', __('validation.file_apply_partner_uploads.count.cccd_front', ['count' => 1]));
+            $validator->errors()->add(
+                'file_uploads.' . UserFileType::IDENTITY_CARD_FRONT->value,
+                __('validation.file_apply_partner_uploads.count.cccd_front', ['count' => 1])
+            );
         }
 
         // 2. CCCD mặt sau
         if (($typeCounts[UserFileType::IDENTITY_CARD_BACK->value] ?? 0) !== 1) {
-            $validator->errors()->add('file_uploads', __('validation.file_apply_partner_uploads.count.cccd_back', ['count' => 1]));
+            $validator->errors()->add(
+                'file_uploads.' . UserFileType::IDENTITY_CARD_BACK->value,
+                __('validation.file_apply_partner_uploads.count.cccd_back', ['count' => 1])
+            );
         }
 
         // 3. Ảnh mặt với CCCD
         if (($typeCounts[UserFileType::FACE_WITH_IDENTITY_CARD->value] ?? 0) !== 1) {
-            $validator->errors()->add('file_uploads', __('validation.file_apply_partner_uploads.count.face_with_id', ['count' => 1]));
+            $validator->errors()->add(
+                'file_uploads.' . UserFileType::FACE_WITH_IDENTITY_CARD->value,
+                __('validation.file_apply_partner_uploads.count.face_with_id', ['count' => 1])
+            );
         }
 
-        // 4. Ảnh hiển thị của KTV với KH
+        // 4. Ảnh hiển thị của KTV với KH (min 3, max 5)
         $ktvImageCount = $typeCounts[UserFileType::KTV_IMAGE_DISPLAY->value] ?? 0;
-        if ($ktvImageCount < 3 || $ktvImageCount > 5) {
-            $validator->errors()->add('file_uploads', __('validation.file_apply_partner_uploads.count.ktv_image_display', ['min' => 3, 'max' => 5]));
+        if ($ktvImageCount < 3) {
+            $validator->errors()->add(
+                'file_uploads.' . UserFileType::KTV_IMAGE_DISPLAY->value,
+                __('validation.file_apply_partner_uploads.count.ktv_image_display', ['min' => 3, 'max' => 5])
+            );
+        } elseif ($ktvImageCount > 5) {
+            $validator->errors()->add(
+                'file_uploads.' . UserFileType::KTV_IMAGE_DISPLAY->value,
+                __('validation.file_apply_partner_uploads.count.ktv_image_display', ['min' => 3, 'max' => 5])
+            );
         }
     }
 }
