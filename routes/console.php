@@ -26,8 +26,8 @@ Schedule::command('app:update-all-ktv-leader-status')
 // Chạy dọn dẹp OTP mỗi giờ một lần
 Schedule::command('app:delete-expired-otp-record')->hourly();
 
-// kiểm tra giao dịch nạp tiền quá hạn - chạy mỗi 10 phút
+// kiểm tra giao dịch nạp tiền quá hạn - chạy mỗi tiếng 1 lần 
 Schedule::command('app:check-expired-deposit-command')
-    ->everyTenMinutes()
+    ->hourly()
     ->withoutOverlapping()
     ->onOneServer();

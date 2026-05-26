@@ -2,7 +2,6 @@
 
 namespace App\Filament\Clusters\ReviewApplication\Resources\KTVs\Tables;
 
-use App\Enums\Admin\AdminGate;
 use App\Enums\Gender;
 use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserRole;
@@ -11,16 +10,12 @@ use App\Filament\Components\CommonActions;
 use App\Filament\Components\CommonFields;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Filament\Tables\Enums\FiltersLayout;
-use Illuminate\Support\Facades\Gate;
 
 
 class KTVsTable
@@ -46,6 +41,9 @@ class KTVsTable
                     })
                     ->searchable()
                     ->label(__('admin.common.table.name')),
+                TextColumn::make('reviewApplication.nickname')
+                    ->searchable()
+                    ->label(__('admin.ktv_apply.fields.nickname')),
                 TextColumn::make('phone')
                     ->searchable()
                     ->label(__('admin.common.table.phone')),

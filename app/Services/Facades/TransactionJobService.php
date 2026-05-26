@@ -20,6 +20,7 @@ use App\Models\User;
 use App\Repositories\BookingRepository;
 use App\Repositories\CouponRepository;
 use App\Repositories\CouponUsedRepository;
+use App\Repositories\UserKtvScheduleRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\WalletRepository;
 use App\Repositories\WalletTransactionRepository;
@@ -44,6 +45,7 @@ class TransactionJobService extends BaseService
         protected WalletTransactionRepository $walletTransactionRepository,
         protected CouponRepository            $couponRepository,
         protected CouponUsedRepository        $couponUsedRepository,
+        protected UserKtvScheduleRepository   $userKtvScheduleRepository,
         protected UserRepository              $userRepository,
         protected BookingValidator            $bookingValidator,
         protected CouponValidator             $couponValidator,
@@ -448,6 +450,14 @@ class TransactionJobService extends BaseService
                 // chuyển trạng thái đơn hàng sang đã hủy
                 $booking->status = BookingStatus::CANCELED->value;
                 $booking->save();
+
+                // Restore trạng thái làm việc của KTV để tránh kẹt offline
+                // trong các case dữ liệu lệch hoặc admin/manual xử lý hủy sau khi đã start.
+                $this->userKtvScheduleRepository->query()
+                    ->where('ktv_id', $booking->ktv_user_id)
+                    ->update([
+                        'is_working' => true,
+                    ]);
 
                 // Lấy ví khách hàng
                 $clientWallet = $this->walletRepository->getWalletByUserId($booking->user_id);

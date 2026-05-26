@@ -612,6 +612,16 @@ class BookingService extends BaseService
             $booking->cancel_by = null;
             $booking->save();
 
+            // Restore trạng thái làm việc cho KTV cũ để tránh kẹt offline
+            // trong các case admin/manual điều phối lại booking sau khi dữ liệu bị lệch.
+            if ($oldKtvId && (string) $oldKtvId !== (string) $newKtvId) {
+                $this->userKtvScheduleRepository->query()
+                    ->where('ktv_id', $oldKtvId)
+                    ->update([
+                        'is_working' => true,
+                    ]);
+            }
+
             // Gửi notification cho khách hàng
             SendNotificationJob::dispatch(
                 userId: $booking->user_id,

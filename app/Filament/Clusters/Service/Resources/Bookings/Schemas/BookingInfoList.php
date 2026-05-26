@@ -4,6 +4,8 @@ namespace App\Filament\Clusters\Service\Resources\Bookings\Schemas;
 
 use App\Enums\BookingStatus;
 use App\Enums\UserRole;
+use App\Filament\Clusters\ReviewApplication\Resources\KTVs\KTVResource;
+use App\Filament\Clusters\User\Resources\Customers\CustomerResource;
 use Filament\Actions\Action;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
@@ -35,11 +37,21 @@ class BookingInfoList
                             ->label(__('admin.booking.fields.user'))
                             ->color('primary')
                             ->weight('bold')
-                            ->icon('heroicon-m-user'),
+                            ->icon('heroicon-m-user')
+                            ->url(fn ($record): ?string => $record->user_id
+                                ? CustomerResource::getUrl('edit', ['record' => $record->user_id])
+                                : null
+                            )
+                            ->openUrlInNewTab(),
 
-                        TextEntry::make('ktvUser.name')
+                        TextEntry::make('ktvUser.reviewApplication.nickname')
                             ->label(__('admin.booking.fields.ktv_user'))
                             ->weight('bold')
+                            ->url(fn ($record): ?string => $record->ktv_user_id
+                                ? KTVResource::getUrl('view', ['record' => $record->ktv_user_id])
+                                : null
+                            )
+                            ->openUrlInNewTab()
                             ->icon('heroicon-m-identification'),
 
                         TextEntry::make('service.name')

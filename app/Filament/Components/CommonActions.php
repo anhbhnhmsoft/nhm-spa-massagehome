@@ -348,6 +348,8 @@ class CommonActions
                     ->validationMessages(['required' => __('common.error.required')])
                     ->suffix(__('admin.coupon.gift.fields.days_valid_suffix')),
             ])
+            ->modalSubmitActionLabel(__('admin.common.action.save'))
+            ->modalCancelActionLabel(__('admin.common.action.cancel'))
             ->action(function (User $record, array $data, CouponService $couponService): void {
                 $result = $couponService->giftCoupon(
                     recipientUserId: (string) $record->id,
