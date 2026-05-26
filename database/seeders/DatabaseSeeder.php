@@ -191,6 +191,14 @@ class DatabaseSeeder extends Seeder
                 ]
             );
             Config::query()->createOrFirst(
+                ['config_key' => ConfigName::AUTO_FINISH_ONGOING_BOOKING_MINUTES->value],
+                [
+                    'config_value' => '60',
+                    'config_type' => ConfigType::NUMBER->value,
+                    'description' => 'Số phút quá hạn thêm để hệ thống tự hoàn thành booking ongoing',
+                ]
+            );
+            Config::query()->createOrFirst(
                 ['config_key' => ConfigName::DISCOUNT_RATE->value],
                 [
                     'config_value' => '20',

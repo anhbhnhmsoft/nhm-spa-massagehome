@@ -94,4 +94,58 @@ class BookingFacadeService
             return ServiceReturn::error($exception->getMessage());
         }
     }
+
+    /**
+     * Tự hoàn thành các booking ongoing đã quá hạn ở ngưỡng riêng của hệ thống.
+     * @return ServiceReturn
+     */
+    public function autoFinishOverdueOnGoingBookings(): ServiceReturn
+    {
+        try {
+            $autoFinishMinutes = (int) ($this->configService->getConfigValue(ConfigName::AUTO_FINISH_ONGOING_BOOKING_MINUTES) ?? 60);
+            $overdueBookings = $this->bookingService
+                ->getBookingRepository()
+                ->getAutoFinishOverdueOnGoingBookings($autoFinishMinutes);
+
+            if ($overdueBookings->isEmpty()) {
+                return ServiceReturn::success(
+                    data: [
+                        'processed' => 0,
+                        'failed' => 0,
+                    ]
+                );
+            }
+
+            $processed = 0;
+            $failed = 0;
+
+            $overdueBookings->each(function ($booking) use (&$processed, &$failed) {
+                $result = $this->bookingService->finishBookingBySystem((int) $booking->id);
+                if ($result->isError()) {
+                    $failed++;
+                    LogHelper::error(
+                        message: "Auto finish ongoing booking failed: {$booking->id}. {$result->getMessage()}",
+                    );
+                    return;
+                }
+
+                $processed++;
+            });
+
+            LogHelper::debug("Auto finish ongoing bookings completed. Processed: {$processed}, Failed: {$failed}");
+
+            return ServiceReturn::success(
+                data: [
+                    'processed' => $processed,
+                    'failed' => $failed,
+                ]
+            );
+        } catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi BookingFacadeService@autoFinishOverdueOnGoingBookings",
+                ex: $exception
+            );
+            return ServiceReturn::error($exception->getMessage());
+        }
+    }
 }

@@ -438,77 +438,87 @@ class BookingService extends BaseService
     public function finishBooking(int $bookingId): ServiceReturn
     {
         return $this->execute(
-            callback: function () use ($bookingId) {
-                $userCurrent = Auth::user();
-                $booking = $this->bookingRepository->query()
-                    ->lockForUpdate()
-                    ->where('id', $bookingId)
-                    ->whereIn('status', [
-                        BookingStatus::ONGOING->value,
-                        BookingStatus::COMPLETED->value,
-                    ])
-                    ->first();
-                if (!$booking) {
-                    throw new ServiceException(message: __("booking.not_found"));
-                }
-                if ($userCurrent->role == UserRole::KTV->value && $userCurrent->id != $booking->ktv_user_id) {
-                    throw new ServiceException(
-                        message: __("common_error.unauthorized")
-                    );
-                }
-                if ($booking->status === BookingStatus::COMPLETED->value) {
-                    return [
-                        'booking_id' => $booking->id,
-                        'end_time' => $booking->end_time,
-                        'already_finished' => true,
-                    ];
-                }
-
-                $now = now();
-                $startTime = Carbon::make($booking->start_time);
-                // Chỉ cho phép finish khi đã đến thời gian dự kiến hoặc đã qua
-                // Cho phép finish 10 phút trước khi đến thời gian dự kiến
-                if ($now->lessThan($startTime->copy()->addMinutes($booking->duration)->subMinutes(10))) {
-                    throw new ServiceException(
-                        message: __("booking.not_permission_at_this_time")
-                    );
-                }
-
-                $booking->status = BookingStatus::COMPLETED->value;
-                $booking->end_time = $now;
-                $booking->save();
-
-                // Kích hoạt lại lịch làm việc của KTV
-                $this->userKtvScheduleRepository->query()
-                    ->where('ktv_id', $booking->ktv_user_id)
-                    ->update([
-                        'is_working' => true,
-                    ]);
-
-                // Thanh toán cho KTV và tính phí hoa hồng cho các user khác
-                WalletTransactionBookingJob::dispatch(
-                    bookingId: $booking->id,
-                    case: WalletTransCase::FINISH_BOOKING,
-                );
-
-                // gửi thông báo cho khách hàng biết rằng lịch đã hoàn thành
-                SendNotificationJob::dispatch(
-                    userId: $booking->user_id,
-                    type: NotificationType::BOOKING_COMPLETED,
-                    data: [
-                        'booking_id' => $booking->id,
-                    ]
-                );
-                return ServiceReturn::success(
-                    data: [
-                        'booking_id' => $booking->id,
-                        'end_time' => $now,
-                        'already_finished' => false,
-                    ],
-                );
-            },
+            callback: fn () => $this->finishBookingInternal($bookingId),
             useTransaction: true
         );
+    }
+
+    public function finishBookingBySystem(int $bookingId): ServiceReturn
+    {
+        return $this->execute(
+            callback: fn () => $this->finishBookingInternal($bookingId, true),
+            useTransaction: true
+        );
+    }
+
+    protected function finishBookingInternal(int $bookingId, bool $systemInitiated = false): array
+    {
+        $userCurrent = Auth::user();
+        $booking = $this->bookingRepository->query()
+            ->lockForUpdate()
+            ->where('id', $bookingId)
+            ->whereIn('status', [
+                BookingStatus::ONGOING->value,
+                BookingStatus::COMPLETED->value,
+            ])
+            ->first();
+        if (!$booking) {
+            throw new ServiceException(message: __("booking.not_found"));
+        }
+        if (!$systemInitiated && $userCurrent?->role == UserRole::KTV->value && $userCurrent->id != $booking->ktv_user_id) {
+            throw new ServiceException(
+                message: __("common_error.unauthorized")
+            );
+        }
+        if ($booking->status === BookingStatus::COMPLETED->value) {
+            return [
+                'booking_id' => $booking->id,
+                'end_time' => $booking->end_time,
+                'already_finished' => true,
+            ];
+        }
+
+        $now = now();
+        $startTime = Carbon::make($booking->start_time);
+        // Chỉ cho phép finish khi đã đến thời gian dự kiến hoặc đã qua
+        // Cho phép finish 10 phút trước khi đến thời gian dự kiến
+        if (!$systemInitiated && $now->lessThan($startTime->copy()->addMinutes($booking->duration)->subMinutes(10))) {
+            throw new ServiceException(
+                message: __("booking.not_permission_at_this_time")
+            );
+        }
+
+        $booking->status = BookingStatus::COMPLETED->value;
+        $booking->end_time = $now;
+        $booking->save();
+
+        // Kích hoạt lại lịch làm việc của KTV
+        $this->userKtvScheduleRepository->query()
+            ->where('ktv_id', $booking->ktv_user_id)
+            ->update([
+                'is_working' => true,
+            ]);
+
+        // Thanh toán cho KTV và tính phí hoa hồng cho các user khác
+        WalletTransactionBookingJob::dispatch(
+            bookingId: $booking->id,
+            case: WalletTransCase::FINISH_BOOKING,
+        );
+
+        // gửi thông báo cho khách hàng biết rằng lịch đã hoàn thành
+        SendNotificationJob::dispatch(
+            userId: $booking->user_id,
+            type: NotificationType::BOOKING_COMPLETED,
+            data: [
+                'booking_id' => $booking->id,
+            ]
+        );
+
+        return [
+            'booking_id' => $booking->id,
+            'end_time' => $now,
+            'already_finished' => false,
+        ];
     }
 
 

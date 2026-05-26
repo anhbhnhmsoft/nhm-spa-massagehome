@@ -23,6 +23,8 @@ class CheckBookingCommand extends Command
     {
         // Kiểm tra các booking quá hạn
         $this->bookingFacadeService->checkOverdueOnGoingBookings();
+        // Tự hoàn thành các booking ongoing quá hạn ở ngưỡng riêng
+        $this->bookingFacadeService->autoFinishOverdueOnGoingBookings();
         // Kiểm tra các booking quá hạn đã xác nhận
         $this->bookingFacadeService->checkOverdueConfirmedBookings();
 
