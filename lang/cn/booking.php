@@ -77,6 +77,9 @@ return [
         'reason' => '取消原因必须是字符串。',
         'reason_required' => '取消原因不能为空',
     ],
+    'error' => [
+        'user_not_enough_money' => '您的钱包余额不足以支付此服务（当前余额：:balance，服务价格：:price，优惠金额：:coupon_discount，交通费用：:price_move）',
+    ],
     'cannot_cancel_ongoing_or_completed' => '无法取消正在进行或已完成的预订',
     'status_not_ongoing' => '预订非进行中状态',
     'pay_commission_fee_success' => '佣金计算成功',

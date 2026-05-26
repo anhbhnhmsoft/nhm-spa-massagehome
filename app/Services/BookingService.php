@@ -774,7 +774,7 @@ class BookingService extends BaseService
             wallet: $walletCustomer,
             price: $priceData['price'],
             priceDistance: $priceData['price_distance'],
-            couponDiscount: $priceData['coupon_discount'] ?? 0,
+            couponDiscount: $priceData['discount_coupon'] ?? 0,
         );
 
 

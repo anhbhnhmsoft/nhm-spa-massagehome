@@ -77,6 +77,9 @@ return [
         'reason' => 'Cancellation reason must be a string.',
         'reason_required' => 'Cancellation reason cannot be empty',
     ],
+    'error' => [
+        'user_not_enough_money' => 'Your wallet balance is insufficient to pay for this service (Current balance: :balance, Service price: :price, Coupon discount: :coupon_discount, Transportation fee: :price_move)',
+    ],
     'cannot_cancel_ongoing_or_completed' => 'Cannot cancel ongoing or completed booking',
     'status_not_ongoing' => 'Booking is not in ongoing status',
     'pay_commission_fee_success' => 'Commission calculation successful',
