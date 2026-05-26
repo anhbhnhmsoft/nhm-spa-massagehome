@@ -542,6 +542,8 @@ return
                 'target_role' => 'Vai trò áp dụng',
                 'is_active' => 'Kích hoạt',
                 'break_time_gap' => 'Khoảng cách giữa các ca',
+                'auto_finish_ongoing_booking_minutes' => 'Tự hoàn thành đơn ongoing sau',
+                'auto_finish_ongoing_booking_minutes_helper' => 'Số phút quá hạn thêm sau thời lượng dịch vụ để hệ thống tự hoàn thành đơn đang thực hiện',
                 'discount_rate' => 'Tỷ lệ chiết khấu dành cho KTV %',
                 'discount_rate_helper' => 'Công thức: P(ktv) = P(giaodich) - (P(giaodich) * (R(chietkhau) / 100))',
                 'discount_rate_referrer_agency' => 'Tỷ lệ chiết khấu dành cho đại lý %',

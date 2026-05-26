@@ -537,6 +537,8 @@ return
                 'target_role' => '适用角色',
                 'is_active' => '激活',
                 'break_time_gap' => '班次间隔',
+                'auto_finish_ongoing_booking_minutes' => '自动完成进行中订单的超时时间',
+                'auto_finish_ongoing_booking_minutes_helper' => '服务时长结束后额外超出的分钟数，达到后系统将自动完成进行中的订单',
                 'discount_rate' => '折扣率',
                 'discount_rate_helper' => '公式: P(ktv) = P(交易) - (P(交易) * (R(折扣) / 100))',
                 'discount_rate_referrer_agency' => '代理商折扣率',

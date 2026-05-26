@@ -538,6 +538,8 @@ return
                 'target_role' => 'Applicable Role',
                 'is_active' => 'Active',
                 'break_time_gap' => 'Gap Between Shifts',
+                'auto_finish_ongoing_booking_minutes' => 'Auto-finish ongoing booking after',
+                'auto_finish_ongoing_booking_minutes_helper' => 'Additional overdue minutes after service duration before the system auto-finishes an ongoing booking',
                 'discount_rate' => 'Discount Rate',
                 'discount_rate_helper' => 'Formula: P(ktv) = P(transaction) - (P(transaction) * (R(discount) / 100))',
                 'discount_rate_referrer_agency' => 'Discount Rate for Referral Agencies',
