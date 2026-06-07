@@ -94,6 +94,9 @@ return [
     'opened_for_application' => 'Đơn đã được mở cho KTV ứng đơn',
     'application_success' => 'Ứng đơn thành công',
     'application_not_found' => 'Không tìm thấy ứng đơn phù hợp',
+    'ktv' => [
+        'not_available_for_selected_booking' => 'Kỹ thuật viên này vừa nhận một lịch khác trùng thời gian. Vui lòng chọn kỹ thuật viên khác.',
+    ],
     'reassigned_to_other_ktv' => 'Đơn đã được chuyển cho kĩ thuật viên khác',
     'reassign_success' => 'Chuyển đơn thành công',
 ];

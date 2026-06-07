@@ -16,6 +16,7 @@ use App\Enums\UserRole;
 use App\Enums\WalletTransactionStatus;
 use App\Enums\WalletTransactionType;
 use App\Jobs\ExpireKtvConfirmationJob;
+use App\Jobs\RemindKtvBookingConfirmationJob;
 use App\Jobs\SendNotificationJob;
 use App\Models\BookingApplication;
 use App\Models\ServiceBooking;
@@ -34,6 +35,7 @@ use Illuminate\Support\Facades\DB;
 class BookingApplicationService extends BaseService
 {
     private const CONFIRM_MINUTES = 3;
+    private const CONFIRM_REMINDER_ATTEMPTS = 3;
     private const APPLICATION_RADIUS_METERS = 30000;
 
     public function __construct(
@@ -59,18 +61,43 @@ class BookingApplicationService extends BaseService
 
         ExpireKtvConfirmationJob::dispatch($booking->id)->delay($deadline)->afterCommit();
 
-        SendNotificationJob::dispatch(
-            userId: $booking->ktv_user_id,
-            type: NotificationType::NEW_BOOKING_REQUEST,
-            data: [
-                'booking_id' => $booking->id,
-                'customer_name' => $booking->user->name ?? '',
-                'booking_time' => $booking->booking_time?->format('Y-m-d H:i:s'),
-                'confirm_deadline_at' => $deadline->format('Y-m-d H:i:s'),
-            ]
-        )->afterCommit();
+        $this->dispatchKtvConfirmationNotification($booking, NotificationType::NEW_BOOKING_REQUEST, 0);
+
+        foreach (range(1, self::CONFIRM_REMINDER_ATTEMPTS) as $attemptNumber) {
+            $delayAt = now()->addMinutes($attemptNumber);
+
+            if ($delayAt->greaterThanOrEqualTo($deadline)) {
+                break;
+            }
+
+            RemindKtvBookingConfirmationJob::dispatch($booking->id, $attemptNumber)
+                ->delay($delayAt)
+                ->afterCommit();
+        }
 
         return ServiceReturn::success(data: $booking);
+    }
+
+    public function sendKtvConfirmationReminder(string $bookingId, int $attemptNumber): ServiceReturn
+    {
+        return $this->execute(function () use ($bookingId, $attemptNumber) {
+            $booking = $this->bookingRepository->query()
+                ->where('id', $bookingId)
+                ->where('status', BookingStatus::WAITING_KTV_CONFIRM->value)
+                ->first();
+
+            if (!$booking || !$booking->ktv_confirm_deadline_at || now()->greaterThanOrEqualTo($booking->ktv_confirm_deadline_at)) {
+                return ServiceReturn::success();
+            }
+
+            $this->dispatchKtvConfirmationNotification(
+                booking: $booking,
+                type: NotificationType::NEW_BOOKING_REQUEST,
+                reminderAttempt: $attemptNumber,
+            );
+
+            return ServiceReturn::success();
+        });
     }
 
     public function confirmBookingByKtv(string $bookingId): ServiceReturn
@@ -100,11 +127,22 @@ class BookingApplicationService extends BaseService
                 throw new ServiceException(__('booking.ktv_confirm_expired'));
             }
 
+            $this->userRepository->query()->lockForUpdate()->find($user->id);
+
+            $this->ensureKtvDoesNotHaveConflictingBooking(
+                ktvId: (int) $user->id,
+                bookingTime: Carbon::make($booking->booking_time),
+                duration: (int) $booking->duration,
+                exceptBookingId: (int) $booking->id,
+            );
+
             $booking->status = BookingStatus::CONFIRMED->value;
             $booking->ktv_confirm_deadline_at = null;
             $booking->application_opened_at = null;
             $booking->application_open_reason = null;
             $booking->save();
+
+            $this->removeConflictingApplicationsForKtv($booking, (int) $user->id);
 
             return ServiceReturn::success(data: $booking, message: __('booking.confirmed_successfully'));
         }, useTransaction: true);
@@ -339,6 +377,15 @@ class BookingApplicationService extends BaseService
                 throw new ServiceException(__('booking.application_not_found'));
             }
 
+            $this->userRepository->query()->lockForUpdate()->find($application->ktv_id);
+
+            $this->ensureKtvDoesNotHaveConflictingBooking(
+                ktvId: (int) $application->ktv_id,
+                bookingTime: Carbon::make($booking->booking_time),
+                duration: (int) $booking->duration,
+                exceptBookingId: (int) $booking->id,
+            );
+
             $previewData = $this->buildApplicationSelectionPreview($booking, $application);
             $this->applyTransportationDeltaForCustomer($booking, (float) $previewData['price_transportation']);
 
@@ -562,6 +609,54 @@ class BookingApplicationService extends BaseService
                 'removed_reason' => 'selected_other_booking_same_time',
                 'updated_at' => now(),
             ]);
+    }
+
+    protected function ensureKtvDoesNotHaveConflictingBooking(
+        int $ktvId,
+        Carbon $bookingTime,
+        int $duration,
+        int $exceptBookingId,
+    ): void {
+        $bookingEnd = $bookingTime->copy()->addMinutes($duration);
+
+        $conflictingBookingExists = $this->bookingRepository->query()
+            ->lockForUpdate()
+            ->where('ktv_user_id', $ktvId)
+            ->where('id', '!=', $exceptBookingId)
+            ->whereIn('status', [
+                BookingStatus::WAITING_KTV_CONFIRM->value,
+                BookingStatus::CONFIRMED->value,
+                BookingStatus::ONGOING->value,
+            ])
+            ->where(function ($query) use ($bookingTime, $bookingEnd) {
+                $query->whereRaw(
+                    "booking_time < ? AND booking_time + (duration * interval '1 minute') > ?",
+                    [$bookingEnd, $bookingTime]
+                );
+            })
+            ->exists();
+
+        if ($conflictingBookingExists) {
+            throw new ServiceException(__('booking.ktv.not_available_for_selected_booking'));
+        }
+    }
+
+    protected function dispatchKtvConfirmationNotification(
+        ServiceBooking $booking,
+        NotificationType $type,
+        int $reminderAttempt = 0,
+    ): void {
+        SendNotificationJob::dispatch(
+            userId: $booking->ktv_user_id,
+            type: $type,
+            data: [
+                'booking_id' => $booking->id,
+                'customer_name' => $booking->user->name ?? '',
+                'booking_time' => $booking->booking_time?->format('Y-m-d H:i:s'),
+                'confirm_deadline_at' => $booking->ktv_confirm_deadline_at?->format('Y-m-d H:i:s'),
+                'reminder_attempt' => $reminderAttempt,
+            ]
+        )->afterCommit();
     }
 
     protected function distanceSql(string $lngColumn, string $latColumn, float $targetLng, float $targetLat): string
