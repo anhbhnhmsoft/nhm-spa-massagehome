@@ -221,6 +221,11 @@ class User extends Authenticatable
         return $this->hasMany(ServiceBooking::class, 'ktv_user_id');
     }
 
+    public function bookingApplications()
+    {
+        return $this->hasMany(BookingApplication::class, 'ktv_id');
+    }
+
     public function reviewWrited()
     {
         return $this->hasMany(Review::class, 'review_by');

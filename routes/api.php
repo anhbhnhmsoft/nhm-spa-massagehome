@@ -170,8 +170,23 @@ Route::middleware(['set-api-locale', 'update-last-active'])->group(function () {
             Route::post('booking-service', [BookingController::class, 'booking'])
                 ->middleware(['check-role:customer']); // Chỉ cho phép Customer đặt lịch
 
+            Route::get('{bookingId}/applications', [BookingController::class, 'listApplications'])
+                ->where('bookingId', '[0-9]+')
+                ->middleware(['check-role:customer']);
+
+            Route::get('{bookingId}/applications/{applicationId}/preview', [BookingController::class, 'previewApplicationSelection'])
+                ->where('bookingId', '[0-9]+')
+                ->where('applicationId', '[0-9]+')
+                ->middleware(['check-role:customer']);
+
+            Route::post('{bookingId}/applications/{applicationId}/select', [BookingController::class, 'selectApplication'])
+                ->where('bookingId', '[0-9]+')
+                ->where('applicationId', '[0-9]+')
+                ->middleware(['check-role:customer']);
+
             // kiểm tra trạng thái booking
-            Route::get('{bookingId}', [BookingController::class, 'checkBooking']);
+            Route::get('{bookingId}', [BookingController::class, 'checkBooking'])
+                ->where('bookingId', '[0-9]+');
 
             // Lấy thông tin chi tiết lịch đặt
             Route::get('detail/{id}', [BookingController::class, 'detailBooking'])
@@ -304,6 +319,11 @@ Route::middleware(['set-api-locale', 'update-last-active'])->group(function () {
         Route::get('dashboard', [KTVController::class, 'dashboard']);
         // Lấy danh sách booking của KTV
         Route::get('list-booking', [KTVController::class, 'listBooking']);
+        Route::get('application-bookings', [KTVController::class, 'listApplicationBookings']);
+        Route::get('application-bookings/{bookingId}', [KTVController::class, 'detailApplicationBooking'])
+            ->where('bookingId', '[0-9]+');
+        Route::post('application-bookings/{bookingId}/apply', [KTVController::class, 'applyApplicationBooking'])
+            ->where('bookingId', '[0-9]+');
         // Lấy tất cả categories
         Route::get('all-categories', [KTVController::class, 'allCategories']);
         // Kết thúc dịch vụ
@@ -312,6 +332,8 @@ Route::middleware(['set-api-locale', 'update-last-active'])->group(function () {
         Route::post('set-service/{id}', [KTVController::class, 'setService'])->where('id', '[0-9]+');
         // Bắt đầu dịch vụ
         Route::post('start-booking', [BookingController::class, 'startBooking']);
+        Route::post('confirm-booking', [BookingController::class, 'confirmKtvBooking']);
+        Route::post('cancel-booking', [BookingController::class, 'cancelBooking']);
         // tổng hợp thu nhập
         Route::get('total-income', [KTVController::class, 'totalIncome']);
         // lấy profile ktv ( hình ảnh )

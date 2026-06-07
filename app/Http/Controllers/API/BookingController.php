@@ -8,7 +8,11 @@ use App\Enums\BookingStatus;
 use App\Http\Requests\API\Booking\BookingRequest;
 use App\Http\Requests\API\Booking\PrepareBookingRequest;
 use App\Http\Resources\Booking\BookingItemResource;
+use App\Http\Resources\Booking\BookingApplicationResource;
+use App\Enums\UserRole;
+use App\Services\BookingApplicationService;
 use App\Services\BookingService;
+use App\Support\MobileVersionFlow;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -16,6 +20,7 @@ class BookingController extends BaseController
 {
     public function __construct(
         protected BookingService $bookingService,
+        protected BookingApplicationService $bookingApplicationService,
     ) {}
 
 
@@ -88,6 +93,48 @@ class BookingController extends BaseController
         return $this->sendSuccess(
             data: $result->getData()
         );
+    }
+
+    public function listApplications(ListRequest $request, int $bookingId): JsonResponse
+    {
+        $dto = $request->getFilterOptions();
+        $result = $this->bookingApplicationService->listBookingApplicationsForCustomer((string) $bookingId, $dto);
+        if ($result->isError()) {
+            return $this->sendError(message: $result->getMessage());
+        }
+
+        return $this->sendSuccess(
+            data: BookingApplicationResource::collection($result->getData())->response()->getData()
+        );
+    }
+
+    public function selectApplication(int $bookingId, int $applicationId): JsonResponse
+    {
+        $result = $this->bookingApplicationService->selectApplicationByCustomer(
+            bookingId: (string) $bookingId,
+            applicationId: (string) $applicationId,
+        );
+        if ($result->isError()) {
+            return $this->sendError(message: $result->getMessage());
+        }
+
+        return $this->sendSuccess(
+            data: new BookingItemResource($result->getData()),
+            message: $result->getMessage()
+        );
+    }
+
+    public function previewApplicationSelection(int $bookingId, int $applicationId): JsonResponse
+    {
+        $result = $this->bookingApplicationService->previewApplicationSelectionByCustomer(
+            bookingId: (string) $bookingId,
+            applicationId: (string) $applicationId,
+        );
+        if ($result->isError()) {
+            return $this->sendError(message: $result->getMessage());
+        }
+
+        return $this->sendSuccess(data: $result->getData());
     }
 
     /**
@@ -171,6 +218,29 @@ class BookingController extends BaseController
         );
     }
 
+    public function confirmKtvBooking(Request $request): JsonResponse
+    {
+        $data = $request->validate(
+            [
+                'booking_id' => 'required|numeric',
+            ],
+            [
+                'booking_id.required' => __('booking.validate.required'),
+                'booking_id.numeric' => __('booking.validate.invalid'),
+            ]
+        );
+
+        $result = $this->bookingApplicationService->confirmBookingByKtv((string) $data['booking_id']);
+        if ($result->isError()) {
+            return $this->sendError(message: $result->getMessage());
+        }
+
+        return $this->sendSuccess(
+            data: new BookingItemResource($result->getData()),
+            message: $result->getMessage()
+        );
+    }
+
     /**
      * Hủy booking (hủy lịch đặt - admin duyệt sau)
      * @param Request $request
@@ -179,40 +249,58 @@ class BookingController extends BaseController
     public function cancelBooking(Request $request): JsonResponse
     {
         try {
+            $data = $request->validate(
+                [
+                    'booking_id' => 'required|numeric',
+                    'reason' => 'required|string',
+                ],
+                [
+                    'booking_id.required' => __('booking.validate.required'),
+                    'booking_id.numeric' => __('booking.validate.invalid'),
+                    'reason.string' => __('booking.validate.reason'),
+                    'reason.required' => __('booking.validate.reason_required'),
+                ]
+            );
 
-        $data = $request->validate(
-            [
-                'booking_id' => 'required|numeric',
-                'reason' => 'required|string',
-            ],
-            [
-                'booking_id.required' => __('booking.validate.required'),
-                'booking_id.numeric' => __('booking.validate.invalid'),
-                'reason.string' => __('booking.validate.reason'),
-                'reason.required' => __('booking.validate.reason_required'),
-            ]
-        );
-        $result = $this->bookingService->cancelBooking(
-            bookingId: $data['booking_id'],
-            reason: $data['reason'] ?? null,
-        );
-        if ($result->isError()) {
-            return $this->sendError(
+            $shouldUseBookingApplicationCancelFlow = $request->user()->role === UserRole::KTV->value
+                && MobileVersionFlow::shouldUseBookingApplicationCancelFlow(
+                    platform: $request->attributes->get('app_platform'),
+                    version: $request->attributes->get('app_version'),
+                );
+
+            if ($shouldUseBookingApplicationCancelFlow) {
+                $result = $this->bookingApplicationService->releaseBookingByKtv(
+                    bookingId: (string) $data['booking_id'],
+                    reason: $data['reason'] ?? null,
+                );
+            } else {
+                $result = $this->bookingService->cancelBooking(
+                    bookingId: $data['booking_id'],
+                    reason: $data['reason'] ?? null,
+                );
+            }
+
+            if ($result->isError()) {
+                return $this->sendError(
+                    message: $result->getMessage()
+                );
+            }
+
+            $status = $shouldUseBookingApplicationCancelFlow
+                ? BookingStatus::OPEN_FOR_APPLICATION
+                : BookingStatus::WAITING_CANCEL;
+
+            return $this->sendSuccess(
+                data: [
+                    'booking_id' => (int) $data['booking_id'],
+                    'status' => $status->value,
+                    'status_label' => $status->label(),
+                    'canceled_at' => now()->format('Y-m-d H:i:s'),
+                    'reason' => $data['reason'] ?? null,
+                ],
                 message: $result->getMessage()
             );
-        }
-        return $this->sendSuccess(
-            data: [
-                'booking_id' => (int)$data['booking_id'],
-                'status' => BookingStatus::WAITING_CANCEL->value,
-                'status_label' => BookingStatus::WAITING_CANCEL->label(),
-                'canceled_at' => now()->format('Y-m-d H:i:s'),
-                'reason' => $data['reason'] ?? null,
-            ],
-            message: $result->getMessage()
-        );
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             return $this->sendError(
                 message: $e->getMessage()
             );

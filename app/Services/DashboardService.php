@@ -106,8 +106,6 @@ class DashboardService extends BaseService
             $ongoingBooking   = $stats->ongoing ?? 0;
             // Số đơn hàng đã hoàn thành
             $completedBooking = $stats->completed ?? 0;
-            // Số đơn hàng đang chờ hủy
-            $waitingCancelBooking = $stats->waiting_cancel ?? 0;
             // Số đơn hàng đã hủy và hoàn tiền
             $canceledBooking  = $stats->canceled ?? 0;
             // Số đơn hàng bị lỗi
@@ -119,7 +117,6 @@ class DashboardService extends BaseService
                 'confirmed_booking' => $confirmedBooking,
                 'ongoing_booking' => $ongoingBooking,
                 'completed_booking' => $completedBooking,
-                'waiting_cancel_booking' => $waitingCancelBooking,
                 'canceled_booking' => $canceledBooking,
                 'payment_failed_booking' => $paymentFailedBooking,
             ]);
@@ -275,7 +272,11 @@ class DashboardService extends BaseService
                 ->whereBetween('booking_time', [$todayStart, $todayEnd]) // Tận dụng Index tốt hơn whereDate
                 ->toBase()
                 ->selectRaw("COUNT(CASE WHEN status = ? THEN 1 END) as completed", [BookingStatus::COMPLETED->value])
-                ->selectRaw("COUNT(CASE WHEN status IN (?, ?) THEN 1 END) as pending", [BookingStatus::PENDING->value, BookingStatus::CONFIRMED->value])
+                ->selectRaw("COUNT(CASE WHEN status IN (?, ?, ?) THEN 1 END) as pending", [
+                    BookingStatus::PENDING->value,
+                    BookingStatus::WAITING_KTV_CONFIRM->value,
+                    BookingStatus::CONFIRMED->value,
+                ])
                 ->first();
 
             //  Lấy booking sắp tới (hoặc mới nhất)

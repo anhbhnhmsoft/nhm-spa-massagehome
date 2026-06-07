@@ -23,6 +23,11 @@ enum NotificationType: int
     case NOTIFICATION_MARKETING = 22; // Thông báo marketing
     case BOOKING_REASSIGNED = 23; // Thông báo điều phối booking sang KTV khác
     case SUPPORT_CHAT_MESSAGE = 24; // Thông báo tin nhắn từ nhân viên hỗ trợ
+    case APPLICATION_BOOKING_AVAILABLE = 25; // Có đơn mới cho KTV ứng đơn
+    case BOOKING_APPLICATION_RECEIVED = 26; // Khách có KTV ứng đơn
+    case BOOKING_KTV_CONFIRM_TIMEOUT = 27; // KTV không xác nhận đơn trong thời hạn
+    case BOOKING_KTV_RELEASED = 28; // KTV hủy/trả đơn
+    case BOOKING_APPLICATION_SELECTED = 29; // KTV được khách chọn
 
     public function getTitle(Language $lang, array $data = []): string
     {

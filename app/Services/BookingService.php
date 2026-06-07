@@ -14,8 +14,6 @@ use App\Enums\NotificationType;
 use App\Enums\UserRole;
 use App\Jobs\SendNotificationJob;
 use App\Models\Category;
-use App\Models\UserAddress;
-use App\Models\Wallet;
 use App\Repositories\BookingRepository;
 use App\Repositories\CategoryRepository;
 use App\Repositories\CouponRepository;
@@ -246,12 +244,13 @@ class BookingService extends BaseService
                 );
             }
 
-            // Cập nhật trạng thái booking thành WAITING_CANCEL để admin có thể xử lý hủy
+            // Customer cancel giữ luồng cũ: chờ admin/transaction flow xử lý hủy.
             $booking->status = BookingStatus::WAITING_CANCEL->value;
             $booking->reason_cancel = $reason;
             $booking->cancel_by = $userCurrent->role;
             $booking->save();
             return ServiceReturn::success(
+                data: $booking,
                 message: __("booking.waiting_cancel")
             );
         });
@@ -274,6 +273,8 @@ class BookingService extends BaseService
             }
             $status = match ($booking->status) {
                 BookingStatus::PENDING->value => 'waiting',
+                BookingStatus::WAITING_KTV_CONFIRM->value => 'waiting_ktv_confirm',
+                BookingStatus::OPEN_FOR_APPLICATION->value => 'open_for_application',
                 BookingStatus::CONFIRMED->value => 'confirmed',
                 BookingStatus::CANCELED->value, BookingStatus::PAYMENT_FAILED->value => 'failed',
                 default => throw new ServiceException(
@@ -287,7 +288,18 @@ class BookingService extends BaseService
                     'service_name' => $booking->service->name,
                     'date' => Carbon::make($booking->booking_time)->format('d/m/Y H:i'),
                     'location' => $booking->address,
-                    'technician' => $booking->ktvUser->name,
+                    'technician' => in_array($booking->status, [
+                        BookingStatus::WAITING_KTV_CONFIRM->value,
+                        BookingStatus::CONFIRMED->value,
+                        BookingStatus::ONGOING->value,
+                        BookingStatus::COMPLETED->value,
+                    ], true) ? $booking->ktvUser->name : null,
+                    'is_ktv_selected' => in_array($booking->status, [
+                        BookingStatus::WAITING_KTV_CONFIRM->value,
+                        BookingStatus::CONFIRMED->value,
+                        BookingStatus::ONGOING->value,
+                        BookingStatus::COMPLETED->value,
+                    ], true),
                     'price' => $booking->price,
                     'price_discount' => $booking->price_discount,
                     'price_transportation' => $booking->price_transportation,
@@ -297,6 +309,9 @@ class BookingService extends BaseService
                         priceTransportation: $booking->price_transportation,
                     ),
                     'reason_cancel' => $booking->reason_cancel ?? '',
+                    'ktv_confirm_deadline_at' => $booking->ktv_confirm_deadline_at?->format('Y-m-d H:i:s'),
+                    'application_opened_at' => $booking->application_opened_at?->format('Y-m-d H:i:s'),
+                    'application_open_reason' => $booking->application_open_reason,
                 ]
             ];
         });

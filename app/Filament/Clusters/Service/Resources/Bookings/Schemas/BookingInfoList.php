@@ -141,7 +141,7 @@ class BookingInfoList
                             ->placeholder(__('admin.common.empty')),
 
                         TextEntry::make('reason_cancel')
-                            ->visible(fn($record) => in_array($record->status, [BookingStatus::CANCELED->value, BookingStatus::WAITING_CANCEL->value]))
+                            ->visible(fn($record) => $record->status === BookingStatus::CANCELED->value)
                             ->label(__('admin.booking.fields.reason_cancel'))
                             ->columnSpanFull()
                             ->color('danger')
@@ -150,7 +150,7 @@ class BookingInfoList
                             ->placeholder(__('admin.common.empty')),
 
                         TextEntry::make('cancel_by')
-                            ->visible(fn($record) => in_array($record->status, [BookingStatus::CANCELED->value, BookingStatus::WAITING_CANCEL->value]))
+                            ->visible(fn($record) => $record->status === BookingStatus::CANCELED->value)
                             ->label(__('admin.booking.fields.cancel_by'))
                             ->formatStateUsing(fn($state) => UserRole::getLabel($state))
                             ->badge()

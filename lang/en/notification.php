@@ -94,5 +94,25 @@ return [
             'title' => 'Support Staff Replied',
             'body'  => ':staff_name: :message_content',
         ],
+        NotificationType::APPLICATION_BOOKING_AVAILABLE->value => [
+            'title' => 'New Booking Available',
+            'body'  => 'A suitable booking is available in your area. You can view and apply now.',
+        ],
+        NotificationType::BOOKING_APPLICATION_RECEIVED->value => [
+            'title' => 'Technician Applied',
+            'body'  => ':ktv_name has applied for your booking.',
+        ],
+        NotificationType::BOOKING_KTV_CONFIRM_TIMEOUT->value => [
+            'title' => 'Technician Cannot Confirm',
+            'body'  => 'The technician you selected is currently unable to perform this booking. We will transfer it to another technician. Please wait up to 5 minutes, or cancel the booking if you want to choose another technician.',
+        ],
+        NotificationType::BOOKING_KTV_RELEASED->value => [
+            'title' => 'Technician Cancelled',
+            'body'  => 'The technician you selected is currently unable to perform this booking. We will transfer it to another technician. Please wait up to 5 minutes, or cancel the booking if you want to choose another technician.',
+        ],
+        NotificationType::BOOKING_APPLICATION_SELECTED->value => [
+            'title' => 'You Were Selected',
+            'body'  => 'The customer selected you for booking :booking_id.',
+        ],
     ],
 ];

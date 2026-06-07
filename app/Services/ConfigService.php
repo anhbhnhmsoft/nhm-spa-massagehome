@@ -14,7 +14,7 @@ use App\Enums\ConfigType;
 use App\Enums\UserRole;
 use App\Repositories\AffiliateConfigRepository;
 use App\Repositories\ConfigRepository;
-use Exception;
+use App\Support\AppVersion;
 use Illuminate\Support\Facades\DB;
 
 class ConfigService extends BaseService
@@ -110,7 +110,7 @@ class ConfigService extends BaseService
                     ['config_key' => $key],
                     [
                         'config_value' => $value ?? '',
-                        'config_type' => is_numeric($value) ? ConfigType::NUMBER : ConfigType::STRING,
+                        'config_type' => is_numeric($value) ? ConfigType::NUMBER->value : ConfigType::STRING->value,
                     ]
                 );
 
@@ -337,14 +337,80 @@ class ConfigService extends BaseService
     {
         return $this->execute(
             callback: function () {
+                $platform = request()->attributes->get('app_platform');
+                $currentVersion = request()->attributes->get('app_version');
+                $iosLatestVersion = $this->getConfigValueWithFallback(
+                    ConfigName::IOS_LATEST_VERSION,
+                    config('services.application_mobile.ios_version')
+                );
+                $androidLatestVersion = $this->getConfigValueWithFallback(
+                    ConfigName::ANDROID_LATEST_VERSION,
+                    config('services.application_mobile.android_version')
+                );
+                $iosMinSupportedVersion = $this->getConfigValueWithFallback(
+                    ConfigName::IOS_MIN_SUPPORTED_VERSION,
+                    $iosLatestVersion
+                );
+                $androidMinSupportedVersion = $this->getConfigValueWithFallback(
+                    ConfigName::ANDROID_MIN_SUPPORTED_VERSION,
+                    $androidLatestVersion
+                );
+                $appstoreUrl = $this->getConfigValueWithFallback(
+                    ConfigName::APPSTORE_URL,
+                    config('services.store.appstore')
+                );
+                $chplayUrl = $this->getConfigValueWithFallback(
+                    ConfigName::CHPLAY_URL,
+                    config('services.store.chplay')
+                );
+                $maintenance = $this->toBoolean($this->getConfigValueWithFallback(
+                    ConfigName::MOBILE_MAINTENANCE,
+                    config('services.application_mobile.maintenance') ? '1' : '0'
+                ));
+                $latestVersion = $platform === 'android' ? $androidLatestVersion : ($platform === 'ios' ? $iosLatestVersion : null);
+                $minSupportedVersion = $platform === 'android' ? $androidMinSupportedVersion : ($platform === 'ios' ? $iosMinSupportedVersion : null);
+                $storeUrl = $platform === 'android' ? $chplayUrl : ($platform === 'ios' ? $appstoreUrl : null);
+                $required = $currentVersion !== null
+                    && $minSupportedVersion !== null
+                    && AppVersion::isLessThan($currentVersion, $minSupportedVersion);
+                $recommended = ! $required
+                    && $currentVersion !== null
+                    && $latestVersion !== null
+                    && AppVersion::isLessThan($currentVersion, $latestVersion);
+
                 return [
-                    'maintenance' => config('services.application_mobile.maintenance'),
-                    'ios_version' => config('services.application_mobile.ios_version'),
-                    'android_version' => config('services.application_mobile.android_version'),
-                    'appstore_url' => config('services.store.appstore'),
-                    'chplay_url' => config('services.store.chplay'),
+                    'maintenance' => $maintenance,
+                    'ios_version' => $iosLatestVersion,
+                    'android_version' => $androidLatestVersion,
+                    'appstore_url' => $appstoreUrl,
+                    'chplay_url' => $chplayUrl,
+                    'update' => [
+                        'platform' => $platform,
+                        'current_version' => $currentVersion,
+                        'min_supported_version' => $minSupportedVersion,
+                        'latest_version' => $latestVersion,
+                        'required' => $required,
+                        'recommended' => $recommended,
+                        'store_url' => $storeUrl,
+                    ],
                 ];
             }
         );
+    }
+
+    private function getConfigValueWithFallback(ConfigName $configName, mixed $fallback): mixed
+    {
+        try {
+            $value = $this->getConfigValue($configName);
+
+            return $value !== null && $value !== '' ? $value : $fallback;
+        } catch (\Throwable) {
+            return $fallback;
+        }
+    }
+
+    private function toBoolean(mixed $value): bool
+    {
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN);
     }
 }

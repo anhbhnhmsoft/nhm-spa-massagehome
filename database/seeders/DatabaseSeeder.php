@@ -364,6 +364,62 @@ class DatabaseSeeder extends Seeder
                     'description' => 'API Key của Gemini AI',
                 ]
             );
+            Config::query()->createOrFirst(
+                ['config_key' => ConfigName::IOS_MIN_SUPPORTED_VERSION->value],
+                [
+                    'config_value' => config('services.application_mobile.ios_version', '1.0.0'),
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'Phiên bản iOS thấp nhất còn được hỗ trợ.',
+                ]
+            );
+            Config::query()->createOrFirst(
+                ['config_key' => ConfigName::IOS_LATEST_VERSION->value],
+                [
+                    'config_value' => config('services.application_mobile.ios_version', '1.0.0'),
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'Phiên bản iOS mới nhất trên App Store.',
+                ]
+            );
+            Config::query()->createOrFirst(
+                ['config_key' => ConfigName::ANDROID_MIN_SUPPORTED_VERSION->value],
+                [
+                    'config_value' => config('services.application_mobile.android_version', '1.0.0'),
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'Phiên bản Android thấp nhất còn được hỗ trợ.',
+                ]
+            );
+            Config::query()->createOrFirst(
+                ['config_key' => ConfigName::ANDROID_LATEST_VERSION->value],
+                [
+                    'config_value' => config('services.application_mobile.android_version', '1.0.0'),
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'Phiên bản Android mới nhất trên Google Play.',
+                ]
+            );
+            Config::query()->createOrFirst(
+                ['config_key' => ConfigName::APPSTORE_URL->value],
+                [
+                    'config_value' => config('services.store.appstore', ''),
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'Link ứng dụng trên App Store.',
+                ]
+            );
+            Config::query()->createOrFirst(
+                ['config_key' => ConfigName::CHPLAY_URL->value],
+                [
+                    'config_value' => config('services.store.chplay', ''),
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'Link ứng dụng trên Google Play.',
+                ]
+            );
+            Config::query()->createOrFirst(
+                ['config_key' => ConfigName::MOBILE_MAINTENANCE->value],
+                [
+                    'config_value' => config('services.application_mobile.maintenance') ? '1' : '0',
+                    'config_type' => ConfigType::NUMBER->value,
+                    'description' => 'Bật/tắt chế độ bảo trì ứng dụng mobile.',
+                ]
+            );
 
         } catch (\Exception $e) {
             DB::rollBack();

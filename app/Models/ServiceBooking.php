@@ -12,6 +12,7 @@ class ServiceBooking extends Model
     protected $fillable = [
         'user_id',
         'ktv_user_id',
+        'original_ktv_user_id',
         'category_id',
         'coupon_id',
         'duration',
@@ -33,12 +34,16 @@ class ServiceBooking extends Model
         'reason_cancel',
         'overtime_warning_sent',
         'cancel_by',
+        'ktv_confirm_deadline_at',
+        'application_opened_at',
+        'application_open_reason',
     ];
 
     protected $casts = [
         'id' => 'string',
         'user_id' => 'string',
         'ktv_user_id' => 'string',
+        'original_ktv_user_id' => 'string',
         'category_id' => 'string',
         'coupon_id' => 'string',
         'duration' => 'integer',
@@ -53,6 +58,8 @@ class ServiceBooking extends Model
         'longitude' => 'decimal:8',
         'overtime_warning_sent' => 'boolean',
         'cancel_by' => 'integer',
+        'ktv_confirm_deadline_at' => 'datetime',
+        'application_opened_at' => 'datetime',
     ];
 
     // Lấy thông tin khách hàng đặt
@@ -65,6 +72,11 @@ class ServiceBooking extends Model
     public function ktvUser()
     {
         return $this->belongsTo(User::class, 'ktv_user_id');
+    }
+
+    public function originalKtvUser()
+    {
+        return $this->belongsTo(User::class, 'original_ktv_user_id');
     }
 
     // Lấy thông tin dịch vụ được đặt
@@ -88,6 +100,11 @@ class ServiceBooking extends Model
     public function reviews()
     {
         return $this->hasMany(Review::class, 'service_booking_id');
+    }
+
+    public function applications()
+    {
+        return $this->hasMany(BookingApplication::class, 'booking_id');
     }
 
 

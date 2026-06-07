@@ -90,6 +90,11 @@ return [
     'only_start_today_bookings' => '只能开始今天的服务',
     'payment_failed' => '支付失败',
     'waiting_cancel' => '等待取消',
+    'ktv_confirm_expired' => '订单确认时间已过期',
+    'confirmed_successfully' => '订单确认成功',
+    'opened_for_application' => '订单已开放给技师申请',
+    'application_success' => '申请接单成功',
+    'application_not_found' => '未找到合适的接单申请',
     'reassigned_to_other_ktv' => '已重新分配给其他技师',
     'reassign_success' => '重新分配成功',
 ];

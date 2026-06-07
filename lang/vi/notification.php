@@ -99,6 +99,25 @@ return [
             'title' => 'Nhân viên hỗ trợ phản hồi',
             'body'  => ':staff_name: :message_content',
         ],
+        NotificationType::APPLICATION_BOOKING_AVAILABLE->value => [
+            'title' => 'Có đơn hàng mới',
+            'body'  => 'Có một đơn hàng mới phù hợp trong khu vực của bạn. Bạn có thể xem và ứng đơn ngay.',
+        ],
+        NotificationType::BOOKING_APPLICATION_RECEIVED->value => [
+            'title' => 'Có KTV ứng đơn',
+            'body'  => ':ktv_name vừa ứng đơn hàng của bạn.',
+        ],
+        NotificationType::BOOKING_KTV_CONFIRM_TIMEOUT->value => [
+            'title' => 'KTV chưa thể xác nhận đơn',
+            'body'  => 'KTV bạn chọn hiện không thể thực hiện đơn hàng chúng tôi sẽ chuyển sang KTV khác vui lòng đợi thông tin từ chúng tôi trong vòng 5 phút bạn cũng có thể hủy đơn hàng để chọn KTV khác nếu muốn',
+        ],
+        NotificationType::BOOKING_KTV_RELEASED->value => [
+            'title' => 'KTV đã hủy đơn',
+            'body'  => 'KTV bạn chọn hiện không thể thực hiện đơn hàng chúng tôi sẽ chuyển sang KTV khác vui lòng đợi thông tin từ chúng tôi trong vòng 5 phút bạn cũng có thể hủy đơn hàng để chọn KTV khác nếu muốn',
+        ],
+        NotificationType::BOOKING_APPLICATION_SELECTED->value => [
+            'title' => 'Bạn đã được chọn',
+            'body'  => 'Khách hàng đã chọn bạn thực hiện đơn hàng :booking_id.',
+        ],
     ],
 ];
-

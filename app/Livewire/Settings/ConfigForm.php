@@ -412,6 +412,91 @@ class ConfigForm extends Component implements HasSchemas
                                             'min' => __('common.error.min', ['min' => 0]),
                                         ]),
                                 ]),
+                            Section::make(__('admin.setting.label_mobile_app'))
+                                ->columns(2)
+                                ->schema([
+                                    TextInput::make((string)ConfigName::IOS_MIN_SUPPORTED_VERSION->value)
+                                        ->label(__('admin.setting.fields.ios_min_supported_version'))
+                                        ->required()
+                                        ->rules([
+                                            'required',
+                                            'regex:/^\d+(\.\d+){0,2}$/',
+                                        ])
+                                        ->validationMessages([
+                                            'required' => __('common.error.required'),
+                                            'regex' => __('admin.setting.validation.version'),
+                                        ]),
+                                    TextInput::make((string)ConfigName::IOS_LATEST_VERSION->value)
+                                        ->label(__('admin.setting.fields.ios_latest_version'))
+                                        ->required()
+                                        ->rules([
+                                            'required',
+                                            'regex:/^\d+(\.\d+){0,2}$/',
+                                        ])
+                                        ->validationMessages([
+                                            'required' => __('common.error.required'),
+                                            'regex' => __('admin.setting.validation.version'),
+                                        ]),
+                                    TextInput::make((string)ConfigName::ANDROID_MIN_SUPPORTED_VERSION->value)
+                                        ->label(__('admin.setting.fields.android_min_supported_version'))
+                                        ->required()
+                                        ->rules([
+                                            'required',
+                                            'regex:/^\d+(\.\d+){0,2}$/',
+                                        ])
+                                        ->validationMessages([
+                                            'required' => __('common.error.required'),
+                                            'regex' => __('admin.setting.validation.version'),
+                                        ]),
+                                    TextInput::make((string)ConfigName::ANDROID_LATEST_VERSION->value)
+                                        ->label(__('admin.setting.fields.android_latest_version'))
+                                        ->required()
+                                        ->rules([
+                                            'required',
+                                            'regex:/^\d+(\.\d+){0,2}$/',
+                                        ])
+                                        ->validationMessages([
+                                            'required' => __('common.error.required'),
+                                            'regex' => __('admin.setting.validation.version'),
+                                        ]),
+                                    TextInput::make((string)ConfigName::APPSTORE_URL->value)
+                                        ->label(__('admin.setting.fields.appstore_url'))
+                                        ->default('')
+                                        ->rules([
+                                            'nullable',
+                                            'string',
+                                            'url',
+                                        ])
+                                        ->validationMessages([
+                                            'string' => __('common.error.string'),
+                                            'url' => __('admin.setting.validation.url'),
+                                        ]),
+                                    TextInput::make((string)ConfigName::CHPLAY_URL->value)
+                                        ->label(__('admin.setting.fields.chplay_url'))
+                                        ->default('')
+                                        ->rules([
+                                            'nullable',
+                                            'string',
+                                            'url',
+                                        ])
+                                        ->validationMessages([
+                                            'string' => __('common.error.string'),
+                                            'url' => __('admin.setting.validation.url'),
+                                        ]),
+                                    TextInput::make((string)ConfigName::MOBILE_MAINTENANCE->value)
+                                        ->label(__('admin.setting.fields.mobile_maintenance'))
+                                        ->numeric()
+                                        ->required()
+                                        ->helperText(__('admin.setting.fields.mobile_maintenance_helper'))
+                                        ->rules([
+                                            'required',
+                                            'in:0,1',
+                                        ])
+                                        ->validationMessages([
+                                            'required' => __('common.error.required'),
+                                            'in' => __('admin.setting.validation.mobile_maintenance'),
+                                        ]),
+                                ]),
                             Section::make(__('admin.setting.label_fee'))
                                 ->columns(2)
                                 ->schema([

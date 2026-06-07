@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\CheckRole;
+use App\Http\Middleware\DetectAppVersion;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\SetWebLocale;
@@ -34,6 +35,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->api(append: [
+            DetectAppVersion::class,
             SetLocale::class,
         ]);
     })

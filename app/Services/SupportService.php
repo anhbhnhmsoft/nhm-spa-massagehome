@@ -312,6 +312,25 @@ class SupportService extends BaseService
                 'message' => $this->serializeMessage($message),
             ]);
 
+            if ($user instanceof AdminUser) {
+                $isCustomerOnline = Caching::hasCache(
+                    key: CacheKey::CACHE_USER_HEARTBEAT,
+                    uniqueKey: (string) $ticket->customer_id
+                );
+
+                if (!$isCustomerOnline) {
+                    $this->notificationService->sendMobileNotification(
+                        userId: $ticket->customer_id,
+                        type: \App\Enums\NotificationType::SUPPORT_CHAT_MESSAGE,
+                        data: [
+                            'staff_name' => $user->name,
+                            'message_content' => Str::limit($content, 100),
+                            'support_ticket_id' => (string) $ticket->id,
+                        ]
+                    );
+                }
+            }
+
             return ServiceReturn::success(data: $message);
         }, useTransaction: true);
     }

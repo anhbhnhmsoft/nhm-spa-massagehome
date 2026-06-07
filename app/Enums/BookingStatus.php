@@ -11,6 +11,8 @@ enum BookingStatus: int
     case WAITING_CANCEL = 7; // Chờ hủy
     case CANCELED = 5; // Đã hủy
     case PAYMENT_FAILED = 6; // Thanh toán thất bại
+    case WAITING_KTV_CONFIRM = 8; // Chờ KTV xác nhận
+    case OPEN_FOR_APPLICATION = 9; // Mở cho KTV ứng đơn
 
     public function label(): string
     {
@@ -22,6 +24,8 @@ enum BookingStatus: int
             self::WAITING_CANCEL => __('admin.booking.status.waiting_cancel'),
             self::CANCELED => __('admin.booking.status.canceled'),
             self::PAYMENT_FAILED => __('admin.booking.status.payment_failed'),
+            self::WAITING_KTV_CONFIRM => __('admin.booking.status.waiting_ktv_confirm'),
+            self::OPEN_FOR_APPLICATION => __('admin.booking.status.open_for_application'),
         };
     }
 
@@ -50,7 +54,9 @@ enum BookingStatus: int
         return match ($value) {
             self::CONFIRMED->value => 'info',
             self::COMPLETED->value => 'success',
-            self::WAITING_CANCEL->value => 'warning',
+            self::WAITING_CANCEL->value,
+            self::WAITING_KTV_CONFIRM->value,
+            self::OPEN_FOR_APPLICATION->value => 'warning',
             self::CANCELED->value => 'danger',
             default => 'gray',
         };
@@ -62,6 +68,8 @@ enum BookingStatus: int
         return [
             self::PENDING->value,
             self::CONFIRMED->value,
+            self::WAITING_KTV_CONFIRM->value,
+            self::OPEN_FOR_APPLICATION->value,
         ];
     }
 }

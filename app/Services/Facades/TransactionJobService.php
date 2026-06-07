@@ -25,6 +25,7 @@ use App\Repositories\UserRepository;
 use App\Repositories\WalletRepository;
 use App\Repositories\WalletTransactionRepository;
 use App\Services\BookingService;
+use App\Services\BookingApplicationService;
 use App\Services\CouponService;
 use App\Services\UserWithdrawInfoService;
 use App\Services\Validator\BookingValidator;
@@ -52,6 +53,7 @@ class TransactionJobService extends BaseService
         protected WalletValidator             $walletValidator,
 
         protected BookingService              $bookingService,
+        protected BookingApplicationService   $bookingApplicationService,
         protected WalletService               $walletService,
         protected ConfigService               $configService,
         protected CouponService               $couponService,
@@ -207,11 +209,6 @@ class TransactionJobService extends BaseService
                 $walletCustomer->save();
 
 
-                // Cập nhật trạng thái booking thành COMPLETED
-                $booking->status = BookingStatus::CONFIRMED->value;
-                $booking->save();
-
-
                 // Bắn notif cho người dùng khi đặt lịch thành công
                 SendNotificationJob::dispatch(
                     userId: $booking->user_id,
@@ -224,16 +221,7 @@ class TransactionJobService extends BaseService
                     ]
                 );
 
-                // Bắn notif cho KTV khi có lịch hẹn mới
-                SendNotificationJob::dispatch(
-                    userId: $booking->ktv_user_id, // KTV
-                    type: NotificationType::NEW_BOOKING_REQUEST,
-                    data: [
-                        'booking_id' => $booking->id,
-                        'customer_name' => $booking->user->name,
-                        'booking_time' => $booking->booking_time->format('Y-m-d H:i:s'),
-                    ]
-                );
+                $this->bookingApplicationService->markWaitingKtvConfirm($booking);
             },
             useTransaction: true
         );
@@ -441,62 +429,113 @@ class TransactionJobService extends BaseService
             callback: function () use ($bookingId, $data) {
                 $booking = $this->bookingService->getBookingRepository()->query()
                     ->where('id', $bookingId)
-                    ->where('status', BookingStatus::WAITING_CANCEL->value)
+                    ->whereIn('status', [
+                        BookingStatus::WAITING_CANCEL->value,
+                        BookingStatus::CANCELED->value,
+                    ])
                     ->first();
                 if (!$booking) {
                     throw new ServiceException(__("error.not_found_booking"));
                 }
 
-                // chuyển trạng thái đơn hàng sang đã hủy
-                $booking->status = BookingStatus::CANCELED->value;
-                $booking->save();
+                return $this->processAutomaticCancelRefund($booking, $data);
+            },
+            useTransaction: true,
+        );
+    }
 
-                // Restore trạng thái làm việc của KTV để tránh kẹt offline
-                // trong các case dữ liệu lệch hoặc admin/manual xử lý hủy sau khi đã start.
-                $this->userKtvScheduleRepository->query()
-                    ->where('ktv_id', $booking->ktv_user_id)
-                    ->update([
-                        'is_working' => true,
-                    ]);
-
-                // Lấy ví khách hàng
-                $clientWallet = $this->walletRepository->getWalletByUserId($booking->user_id);
-                if (!$clientWallet) {
-                    throw new ServiceException(
-                        message: __("booking.payment.wallet_customer_not_found")
-                    );
-                }
-                // Lấy transaction gốc để tham khảo (chỉ đọc, không sửa)
-                $transactionOfCustomer = $this->walletTransactionRepository->query()
-                    ->where("foreign_key", $booking->id)
-                    ->where('type', WalletTransactionType::PAYMENT->value)
+    public function handleAutoCancelBooking(
+        string $bookingId,
+        array $data = []
+    ): ServiceReturn
+    {
+        return $this->execute(
+            callback: function () use ($bookingId, $data) {
+                $booking = $this->bookingService->getBookingRepository()->query()
+                    ->where('id', $bookingId)
                     ->first();
-                // Lấy transaction phí di chuyển để tham khảo (chỉ đọc, không sửa)
-                $transactionTransportOfCustomer = $this->walletTransactionRepository->query()
-                    ->where("foreign_key", $booking->id)
-                    ->where('type', WalletTransactionType::PAYMENT_FEE_TRANSPORT->value)
-                    ->first();
-
-                if (!$transactionOfCustomer || !$transactionTransportOfCustomer) {
-                    throw new ServiceException(
-                        message: __("error.transaction_not_found")
-                    );
+                if (!$booking) {
+                    throw new ServiceException(__("error.not_found_booking"));
                 }
 
+                if ($booking->status !== BookingStatus::CANCELED->value) {
+                    $booking->status = BookingStatus::CANCELED->value;
+                    $booking->save();
+                }
+
+                return $this->processAutomaticCancelRefund($booking, $data);
+            },
+            useTransaction: true,
+        );
+    }
+
+    protected function processAutomaticCancelRefund($booking, array $data): bool
+    {
+        // chuyển trạng thái đơn hàng sang đã hủy
+        if ($booking->status !== BookingStatus::CANCELED->value) {
+            $booking->status = BookingStatus::CANCELED->value;
+            $booking->save();
+        }
+
+        // Restore trạng thái làm việc của KTV để tránh kẹt offline
+        $this->userKtvScheduleRepository->query()
+            ->where('ktv_id', $booking->ktv_user_id)
+            ->update([
+                'is_working' => true,
+            ]);
+
+        // Lấy ví khách hàng
+        $clientWallet = $this->walletRepository->getWalletByUserId($booking->user_id);
+        if (!$clientWallet) {
+            throw new ServiceException(
+                message: __("booking.payment.wallet_customer_not_found")
+            );
+        }
+        // Lấy transaction gốc để tham khảo (chỉ đọc, không sửa)
+        $transactionOfCustomer = $this->walletTransactionRepository->query()
+            ->where("foreign_key", $booking->id)
+            ->where('type', WalletTransactionType::PAYMENT->value)
+            ->first();
+        // Lấy transaction phí di chuyển để tham khảo (chỉ đọc, không sửa)
+        $transactionTransportOfCustomer = $this->walletTransactionRepository->query()
+            ->where("foreign_key", $booking->id)
+            ->where('type', WalletTransactionType::PAYMENT_FEE_TRANSPORT->value)
+            ->first();
+
+        if (!$transactionOfCustomer || !$transactionTransportOfCustomer) {
+            throw new ServiceException(
+                message: __("error.transaction_not_found")
+            );
+        }
 
 
-                // Lấy tỷ giá đổi tiền
-                $exchangeRatePoint = $transactionOfCustomer->exchange_rate_point;
-                $exchangeRatePointTransport = $transactionTransportOfCustomer->exchange_rate_point;
 
-                // Số tiền hoàn tiền cho khách hàng
-                if ($data['amount_pay_back_to_client'] && $data['amount_pay_back_to_client'] > 0) {
+        // Tránh hoàn tiền trùng nếu retry job hoặc gọi lặp.
+        $alreadyRefunded = $this->walletTransactionRepository->query()
+            ->where('foreign_key', $booking->id)
+            ->whereIn('type', [
+                WalletTransactionType::REFUND->value,
+                WalletTransactionType::REFUND_CUSTOMER_TRANSPORT->value,
+                WalletTransactionType::REFUND_MONEY_DISCOUNT_SERVICE->value,
+            ])
+            ->exists();
+        if ($alreadyRefunded) {
+            return true;
+        }
+
+        // Lấy tỷ giá đổi tiền
+        $exchangeRatePoint = $transactionOfCustomer->exchange_rate_point;
+        $exchangeRatePointTransport = $transactionTransportOfCustomer->exchange_rate_point;
+
+        // Số tiền hoàn tiền cho khách hàng
+        $amountPayBackToClient = (int) ($data['amount_pay_back_to_client'] ?? 0);
+        if ($amountPayBackToClient > 0) {
                     // tạo transaction hoàn số tiền dịch vụ cho khách hàng
                     $this->walletTransactionRepository->create([
                         'wallet_id' => $clientWallet->id,
                         'type' => WalletTransactionType::REFUND->value,
-                        'point_amount' => $data['amount_pay_back_to_client'] * $exchangeRatePoint,
-                        'money_amount' => $data['amount_pay_back_to_client'],
+                        'point_amount' => $amountPayBackToClient * $exchangeRatePoint,
+                        'money_amount' => $amountPayBackToClient,
                         'exchange_rate_point' => $exchangeRatePoint,
                         'status' => WalletTransactionStatus::COMPLETED->value,
                         'transaction_code' => Helper::createDescPayment(PaymentType::REFUND),
@@ -504,8 +543,8 @@ class TransactionJobService extends BaseService
                         'description' => "Hoàn tiền booking #{$booking->id} - lý do: {$booking->reason_cancel}",
                         'expired_at' => now(),
                     ]);
-                    $clientWallet->balance += $data['amount_pay_back_to_client'];
-                } else {
+                    $clientWallet->balance += $amountPayBackToClient;
+        } else {
                     // tạo transaction hoàn số tiền dịch vụ cho khách hàng và phí di chuyển
                     $this->walletTransactionRepository->create([
                         'wallet_id' => $clientWallet->id,
@@ -565,14 +604,14 @@ class TransactionJobService extends BaseService
                         ]);
                         $clientWallet->balance -= $transactionDiscountOfCustomer->point_amount;
                     }
-                }
-                $clientWallet->save();
+        }
+        $clientWallet->save();
 
-                // Số tiền trả cho kỹ thuật viên
-                $amountPayToKtv = max($data['amount_pay_to_ktv'], 0);
+        // Số tiền trả cho kỹ thuật viên
+        $amountPayToKtv = max((int) ($data['amount_pay_to_ktv'] ?? 0), 0);
 
-                // Nếu Số tiền trả cho kỹ thuật viên lớn hơn 0
-                if ($amountPayToKtv > 0) {
+        // Nếu Số tiền trả cho kỹ thuật viên lớn hơn 0
+        if ($amountPayToKtv > 0) {
                     // Lấy ví kỹ thuật viên
                     $ktvWallet = $this->walletRepository->getWalletByUserId($booking->ktv_user_id);
                     if (!$ktvWallet) {
@@ -595,55 +634,57 @@ class TransactionJobService extends BaseService
                     ]);
                     $ktvWallet->balance += $amountPayToKtv;
                     $ktvWallet->save();
-                }
+        }
 
-                // Hoàn lại mã giảm giá nếu booking có dùng coupon
-                if (!empty($booking->coupon_id)) {
-                    $coupon = $this->couponRepository->query()
-                        ->lockForUpdate()
-                        ->find($booking->coupon_id);
+        // Hoàn lại mã giảm giá nếu booking có dùng coupon
+        if (!empty($booking->coupon_id)) {
+            $coupon = $this->couponRepository->query()
+                ->lockForUpdate()
+                ->find($booking->coupon_id);
 
-                    if ($coupon) {
-                        // Giảm used_count về lại (không để âm)
-                        $coupon->used_count = max(0, $coupon->used_count - 1);
-                        $coupon->save();
+            if ($coupon) {
+                // Giảm used_count về lại (không để âm)
+                $coupon->used_count = max(0, $coupon->used_count - 1);
+                $coupon->save();
 
-                        // Reset is_used = false trong ví của khách hàng
-                        $booking->user->collectionCoupons()
-                            ->updateExistingPivot($coupon->id, ['is_used' => false]);
+                // Reset is_used = false trong ví của khách hàng
+                $booking->user->collectionCoupons()
+                    ->updateExistingPivot($coupon->id, ['is_used' => false]);
 
-                        // Xóa lịch sử sử dụng coupon cho booking này
-                        $this->couponUsedRepository->query()
-                            ->where('coupon_id', $coupon->id)
-                            ->where('booking_id', $booking->id)
-                            ->delete();
-                        // Xóa lịch sử giao dịch giảm giá
-                        $this->walletTransactionRepository->query()->where('foreign_key',$bookingId)->where('type',WalletTransactionType::SUBTRACT_MONEY_DISCOUNT_SERVICE->value)->delete();
-                    }
-                }
+                // Xóa lịch sử sử dụng coupon cho booking này
+                $this->couponUsedRepository->query()
+                    ->where('coupon_id', $coupon->id)
+                    ->where('booking_id', $booking->id)
+                    ->delete();
+                // Xóa lịch sử giao dịch giảm giá
+                $this->walletTransactionRepository->query()
+                    ->where('foreign_key', $booking->id)
+                    ->where('type', WalletTransactionType::SUBTRACT_MONEY_DISCOUNT_SERVICE->value)
+                    ->delete();
+            }
+        }
 
-                // Gửi thông báo cho khách hàng
-                SendNotificationJob::dispatch(
-                    userId: $booking->user_id,
-                    type: NotificationType::BOOKING_CANCELLED,
-                    data: [
-                        'booking_id' => $booking->id,
-                        'reason' => $booking->reason_cancel,
-                    ]
-                );
-
-                // Gửi thông báo cho KTV
-                SendNotificationJob::dispatch(
-                    userId: $booking->ktv_user_id,
-                    type: NotificationType::BOOKING_CANCELLED,
-                    data: [
-                        'booking_id' => $booking->id,
-                        'reason' => $booking->reason_cancel,
-                    ]
-                );
-            },
-            useTransaction: true,
+        // Gửi thông báo cho khách hàng
+        SendNotificationJob::dispatch(
+            userId: $booking->user_id,
+            type: NotificationType::BOOKING_CANCELLED,
+            data: [
+                'booking_id' => $booking->id,
+                'reason' => $booking->reason_cancel,
+            ]
         );
+
+        // Gửi thông báo cho KTV
+        SendNotificationJob::dispatch(
+            userId: $booking->ktv_user_id,
+            type: NotificationType::BOOKING_CANCELLED,
+            data: [
+                'booking_id' => $booking->id,
+                'reason' => $booking->reason_cancel,
+            ]
+        );
+
+        return true;
     }
 
      /* @param  $referrerId - Id người giới thiệu

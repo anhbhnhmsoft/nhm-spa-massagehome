@@ -20,6 +20,7 @@ use App\Http\Resources\User\ProfileKTVResource;
 use App\Http\Resources\User\UserFileResource;
 use App\Http\Resources\User\UserKTVScheduleItemResource;
 use App\Services\BookingService;
+use App\Services\BookingApplicationService;
 use App\Services\DashboardService;
 use App\Services\ServiceService;
 use App\Services\UserFileService;
@@ -35,6 +36,7 @@ class KTVController extends BaseController
     public function __construct(
         protected UserService     $userService,
         protected BookingService  $bookingService,
+        protected BookingApplicationService $bookingApplicationService,
         protected ServiceService  $serviceService,
         protected UserFileService $userFileService,
         protected DashboardService $dashboardService,
@@ -90,6 +92,14 @@ class KTVController extends BaseController
     {
         $dto = $request->getFilterOptions();
         $dto->addFilter('ktv_user_id', $request->user()->id);
+        $address = $request->user()->primaryAddress;
+        if ($address && $address->latitude && $address->longitude) {
+            $dto->addFilter('include_available_open_for_application', [
+                'lat' => (float) $address->latitude,
+                'lng' => (float) $address->longitude,
+                'radius' => 30000,
+            ]);
+        }
         $dto->setSortBy('created_at');
         $dto->setDirection('desc');
         $result = $this->bookingService->bookingPaginate($dto);
@@ -101,6 +111,44 @@ class KTVController extends BaseController
         $data = $result->getData();
         return $this->sendSuccess(
             data: BookingItemResource::collection($data)->response()->getData(),
+        );
+    }
+
+    public function listApplicationBookings(ListRequest $request): JsonResponse
+    {
+        $dto = $request->getFilterOptions();
+        $result = $this->bookingApplicationService->availableBookingsForKtv($dto);
+        if ($result->isError()) {
+            return $this->sendError(message: $result->getMessage());
+        }
+
+        return $this->sendSuccess(
+            data: BookingItemResource::collection($result->getData())->response()->getData()
+        );
+    }
+
+    public function detailApplicationBooking(int $bookingId): JsonResponse
+    {
+        $result = $this->bookingApplicationService->detailAvailableBookingForKtv((string) $bookingId);
+        if ($result->isError()) {
+            return $this->sendError(message: $result->getMessage());
+        }
+
+        return $this->sendSuccess(
+            data: new BookingItemResource($result->getData())
+        );
+    }
+
+    public function applyApplicationBooking(int $bookingId): JsonResponse
+    {
+        $result = $this->bookingApplicationService->applyBooking((string) $bookingId);
+        if ($result->isError()) {
+            return $this->sendError(message: $result->getMessage());
+        }
+
+        return $this->sendSuccess(
+            data: $result->getData(),
+            message: $result->getMessage()
         );
     }
 

@@ -39,8 +39,10 @@ class BookingRepository extends BaseRepository
 
     public function filterQuery(Builder $query, array $filters): Builder
     {
+        $statusFilter = isset($filters['status']) ? (int) $filters['status'] : null;
+
         // Lọc theo trạng thái
-        if (isset($filters['status']) && !empty((int)$filters['status'])) {
+        if ($statusFilter && $statusFilter !== 0) {
             $query->where('status', $filters['status']);
         }
 
@@ -55,7 +57,44 @@ class BookingRepository extends BaseRepository
         }
 
         if (isset($filters['ktv_user_id'])) {
-            $query->where('ktv_user_id', $filters['ktv_user_id']);
+            $shouldIncludeOpenApplications = isset($filters['include_available_open_for_application'])
+                && is_array($filters['include_available_open_for_application'])
+                && in_array($statusFilter, [null, 0, BookingStatus::OPEN_FOR_APPLICATION->value], true);
+
+            if ($shouldIncludeOpenApplications) {
+                $availableFilter = $filters['include_available_open_for_application'];
+                $ktvId = (int) $filters['ktv_user_id'];
+                $lat = isset($availableFilter['lat']) ? (float) $availableFilter['lat'] : null;
+                $lng = isset($availableFilter['lng']) ? (float) $availableFilter['lng'] : null;
+                $radius = isset($availableFilter['radius']) ? (int) $availableFilter['radius'] : 30000;
+
+                $query->where(function (Builder $subQuery) use ($ktvId, $lat, $lng, $radius) {
+                    $subQuery->where('ktv_user_id', $ktvId);
+
+                    if ($lat === null || $lng === null) {
+                        return;
+                    }
+
+                    $distanceFormula = $this->distanceSql('service_bookings.longitude', 'service_bookings.latitude', $lng, $lat);
+
+                    $subQuery->orWhere(function (Builder $openQuery) use ($ktvId, $radius, $distanceFormula) {
+                        $openQuery->where('service_bookings.status', BookingStatus::OPEN_FOR_APPLICATION->value)
+                            ->whereNotNull('service_bookings.application_opened_at')
+                            ->whereHas('service', function ($serviceQuery) use ($ktvId) {
+                                $serviceQuery->whereHas('users', function ($userQuery) use ($ktvId) {
+                                    $userQuery->where('users.id', $ktvId);
+                                });
+                            })
+                            ->whereRaw("$distanceFormula <= ?", [$radius]);
+                    });
+                });
+            } else {
+                $query->where('ktv_user_id', $filters['ktv_user_id']);
+            }
+        }
+
+        if (isset($filters['exclude_statuses']) && is_array($filters['exclude_statuses']) && !empty($filters['exclude_statuses'])) {
+            $query->whereNotIn('status', $filters['exclude_statuses']);
         }
 
         return $query;
@@ -71,6 +110,17 @@ class BookingRepository extends BaseRepository
         return $query;
     }
 
+    protected function distanceSql(string $lngColumn, string $latColumn, float $targetLng, float $targetLat): string
+    {
+        return sprintf(
+            "ST_DistanceSphere(ST_MakePoint(%s::float, %s::float), ST_MakePoint(%F, %F))",
+            $lngColumn,
+            $latColumn,
+            $targetLng,
+            $targetLat
+        );
+    }
+
     /**
      * Lấy thông tin đặt lịch đang diễn ra trong ngày của user khách hàng
      * @param int $userId
@@ -80,9 +130,11 @@ class BookingRepository extends BaseRepository
         return $this->query()
             ->where('user_id', $userId)
             ->whereIn('status', [
-                BookingStatus::PENDING,
-                BookingStatus::CONFIRMED,
-                BookingStatus::ONGOING,
+                BookingStatus::PENDING->value,
+                BookingStatus::WAITING_KTV_CONFIRM->value,
+                BookingStatus::OPEN_FOR_APPLICATION->value,
+                BookingStatus::CONFIRMED->value,
+                BookingStatus::ONGOING->value,
             ])
             ->where(function ($query) {
                 $today = now()->toDateString(); // Lấy 'YYYY-MM-DD'
@@ -116,9 +168,10 @@ class BookingRepository extends BaseRepository
     {
         $targetStatuses = [
             BookingStatus::PENDING->value,
+            BookingStatus::WAITING_KTV_CONFIRM->value,
+            BookingStatus::OPEN_FOR_APPLICATION->value,
             BookingStatus::CONFIRMED->value,
             BookingStatus::ONGOING->value,
-            BookingStatus::WAITING_CANCEL->value,
         ];
         $bookingRawCounts = $this->query()
             ->where('user_id', $userId)
@@ -152,7 +205,9 @@ class BookingRepository extends BaseRepository
             COUNT(CASE WHEN status = ? THEN 1 END) as completed,
             COUNT(CASE WHEN status = ? THEN 1 END) as waiting_cancel,
             COUNT(CASE WHEN status = ? THEN 1 END) as canceled,
-            COUNT(CASE WHEN status = ? THEN 1 END) as payment_failed
+            COUNT(CASE WHEN status = ? THEN 1 END) as payment_failed,
+            COUNT(CASE WHEN status = ? THEN 1 END) as waiting_ktv_confirm,
+            COUNT(CASE WHEN status = ? THEN 1 END) as open_for_application
         ", [
                 BookingStatus::PENDING->value,
                 BookingStatus::CONFIRMED->value,
@@ -160,7 +215,9 @@ class BookingRepository extends BaseRepository
                 BookingStatus::COMPLETED->value,
                 BookingStatus::WAITING_CANCEL->value,
                 BookingStatus::CANCELED->value,
-                BookingStatus::PAYMENT_FAILED->value
+                BookingStatus::PAYMENT_FAILED->value,
+                BookingStatus::WAITING_KTV_CONFIRM->value,
+                BookingStatus::OPEN_FOR_APPLICATION->value
             ])
             ->first();
     }

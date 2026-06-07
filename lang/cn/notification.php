@@ -98,5 +98,25 @@ return [
             'title' => '客服人员回复',
             'body'  => ':staff_name: :message_content',
         ],
+        NotificationType::APPLICATION_BOOKING_AVAILABLE->value => [
+            'title' => '有新订单',
+            'body'  => '您所在区域有一个适合的新订单。您可以立即查看并申请接单。',
+        ],
+        NotificationType::BOOKING_APPLICATION_RECEIVED->value => [
+            'title' => '有技师申请接单',
+            'body'  => ':ktv_name 已申请您的订单。',
+        ],
+        NotificationType::BOOKING_KTV_CONFIRM_TIMEOUT->value => [
+            'title' => '技师未能确认订单',
+            'body'  => '您选择的技师目前无法执行该订单，我们会将订单转给其他技师。请在5分钟内等待我们的通知，如您希望选择其他技师，也可以取消订单。',
+        ],
+        NotificationType::BOOKING_KTV_RELEASED->value => [
+            'title' => '技师已取消订单',
+            'body'  => '您选择的技师目前无法执行该订单，我们会将订单转给其他技师。请在5分钟内等待我们的通知，如您希望选择其他技师，也可以取消订单。',
+        ],
+        NotificationType::BOOKING_APPLICATION_SELECTED->value => [
+            'title' => '您已被客户选择',
+            'body'  => '客户已选择您执行订单 :booking_id。',
+        ],
     ],
 ];

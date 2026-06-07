@@ -61,10 +61,6 @@ class GeneralBookingStats extends BaseWidget
                         ->url(BookingResource::getUrl('index', ['filters[status][value]' => BookingStatus::COMPLETED->value]))
                         ->description(__('dashboard.general_booking_stat.completed_booking_desc'))
                         ->color('success'),
-                    Stat::make(__('dashboard.general_booking_stat.waiting_cancel_booking'), $data['waiting_cancel_booking'])
-                        ->url(BookingResource::getUrl('index', ['filters[status][value]' => BookingStatus::WAITING_CANCEL->value]))
-                        ->description(__('dashboard.general_booking_stat.waiting_cancel_booking_desc'))
-                        ->color('danger'),
                     Stat::make(__('dashboard.general_booking_stat.canceled_booking'), $data['canceled_booking'])
                         ->url(BookingResource::getUrl('index', ['filters[status][value]' => BookingStatus::CANCELED->value]))
                         ->description(__('dashboard.general_booking_stat.canceled_booking_desc'))
