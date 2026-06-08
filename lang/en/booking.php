@@ -10,6 +10,7 @@ return [
     'ktv' => [
         'not_found' => 'Technician not found',
         'not_working' => 'Technician is not working at the moment, please choose another technician!',
+        'not_available_for_selected_booking' => 'This technician has just taken another booking in the same time slot. Please choose another technician.',
     ],
     'book_time' => [
         'break_time_gap_not_found' => 'Error getting break time gap, please contact administrator!',
@@ -95,9 +96,6 @@ return [
     'opened_for_application' => 'Booking has been opened for KTV applications',
     'application_success' => 'Application submitted successfully',
     'application_not_found' => 'Application not found',
-    'ktv' => [
-        'not_available_for_selected_booking' => 'This technician has just taken another booking in the same time slot. Please choose another technician.',
-    ],
     'reassigned_to_other_ktv' => 'Reassigned to other technician',
     'reassign_success' => 'Reassign success',
     'reassigned_to_other_ktv' => 'Reassigned to other technician',

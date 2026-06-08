@@ -10,6 +10,7 @@ return [
     'ktv' => [
         'not_found' => '未找到技师',
         'not_working' => '技师当前未在工作，请选择其他技师！',
+        'not_available_for_selected_booking' => '该技师刚刚接下了同一时间段的另一笔订单，请选择其他技师。',
     ],
     'book_time' => [
         'break_time_gap_not_found' => '获取休息时间间隔时出错，请联系管理员！',
@@ -95,9 +96,6 @@ return [
     'opened_for_application' => '订单已开放给技师申请',
     'application_success' => '申请接单成功',
     'application_not_found' => '未找到合适的接单申请',
-    'ktv' => [
-        'not_available_for_selected_booking' => '该技师刚刚接下了同一时间段的另一笔订单，请选择其他技师。',
-    ],
     'reassigned_to_other_ktv' => '已重新分配给其他技师',
     'reassign_success' => '重新分配成功',
 ];

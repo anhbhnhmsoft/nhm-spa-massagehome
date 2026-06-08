@@ -10,6 +10,7 @@ return [
     'ktv' => [
         'not_found' => 'Không tìm thấy kỹ thuật viên',
         'not_working' => 'Kỹ thuật viên hiện tại không làm việc, vui lòng chọn kỹ thuật viên khác để đặt lịch!',
+        'not_available_for_selected_booking' => 'Kỹ thuật viên này vừa nhận một lịch khác trùng thời gian. Vui lòng chọn kỹ thuật viên khác.',
     ],
     'book_time' => [
         'break_time_gap_not_found' => 'Có lỗi xảy ra khi lấy khoảng thời gian nghỉ, vui lòng liên hệ quản trị viên, cảm ơn!',
@@ -94,9 +95,6 @@ return [
     'opened_for_application' => 'Đơn đã được mở cho KTV ứng đơn',
     'application_success' => 'Ứng đơn thành công',
     'application_not_found' => 'Không tìm thấy ứng đơn phù hợp',
-    'ktv' => [
-        'not_available_for_selected_booking' => 'Kỹ thuật viên này vừa nhận một lịch khác trùng thời gian. Vui lòng chọn kỹ thuật viên khác.',
-    ],
     'reassigned_to_other_ktv' => 'Đơn đã được chuyển cho kĩ thuật viên khác',
     'reassign_success' => 'Chuyển đơn thành công',
 ];
