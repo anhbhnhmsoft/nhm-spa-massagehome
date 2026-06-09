@@ -69,17 +69,20 @@ class TransactionJobService extends BaseService
     /**
      * Xác nhận đặt lịch cho khách hàng
      * @param int $bookingId
+     * @param array $data
      * @return ServiceReturn
      * @throws Throwable
      */
     public function handleConfirmBooking(
         int $bookingId,
+        array $data = [],
     ): ServiceReturn
     {
         return $this->execute(
-            callback: function () use ($bookingId) {
+            callback: function () use ($bookingId, $data) {
                 // Lấy tỉ lệ đổi tiền từ config
                 $exchangeRate = (float)$this->configService->getConfigValue(ConfigName::CURRENCY_EXCHANGE_RATE);
+                $useOpenApplicationFlow = (bool) ($data['use_open_application_flow'] ?? false);
 
                 // Tìm booking
                 $booking = $this->bookingRepository
@@ -221,7 +224,28 @@ class TransactionJobService extends BaseService
                     ]
                 );
 
-                $this->bookingApplicationService->openBookingForAssignment($booking);
+                if ($useOpenApplicationFlow) {
+                    $this->bookingApplicationService->openBookingForAssignment($booking);
+                } else {
+                    $booking->status = BookingStatus::CONFIRMED->value;
+                    $booking->original_ktv_user_id = $booking->original_ktv_user_id ?: $booking->ktv_user_id;
+                    $booking->ktv_confirm_deadline_at = null;
+                    $booking->application_opened_at = null;
+                    $booking->application_open_reason = null;
+                    $booking->reason_cancel = null;
+                    $booking->cancel_by = null;
+                    $booking->save();
+
+                    SendNotificationJob::dispatch(
+                        userId: $booking->ktv_user_id,
+                        type: NotificationType::NEW_BOOKING_REQUEST,
+                        data: [
+                            'booking_id' => $booking->id,
+                            'customer_name' => $booking->user->name ?? '',
+                            'booking_time' => $booking->booking_time->format('Y-m-d H:i:s'),
+                        ]
+                    );
+                }
             },
             useTransaction: true
         );

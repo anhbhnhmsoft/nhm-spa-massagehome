@@ -40,7 +40,7 @@ class WalletTransactionBookingJob implements ShouldQueue
         switch ($this->case) {
             case WalletTransCase::CONFIRM_BOOKING:
                 try {
-                    $result = $service->handleConfirmBooking($this->bookingId);
+                    $result = $service->handleConfirmBooking($this->bookingId, $this->data);
                     if ($result->isError()) {
                         $service->handleFailedConfirmBooking(
                             bookingId: $this->bookingId,

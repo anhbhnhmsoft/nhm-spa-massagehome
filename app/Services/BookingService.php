@@ -34,6 +34,7 @@ use App\Repositories\WalletTransactionRepository;
 use App\Services\Validator\BookingValidator;
 use App\Services\Validator\CouponValidator;
 use App\Services\Validator\WalletValidator;
+use App\Support\MobileVersionFlow;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -162,6 +163,12 @@ class BookingService extends BaseService
         return $this->execute(
             callback: function () use ($data) {
                 $userId = Auth::id();
+                $platform = request()->attributes->get('app_platform');
+                $version = request()->attributes->get('app_version');
+                $useOpenApplicationFlow = MobileVersionFlow::shouldUseBookingApplicationCreateFlow(
+                    platform: $platform,
+                    version: $version,
+                );
 
                 $resultValidate = $this->validateBooking($data, $userId);
 
@@ -200,6 +207,9 @@ class BookingService extends BaseService
                 WalletTransactionBookingJob::dispatch(
                     bookingId: $booking->id,
                     case: WalletTransCase::CONFIRM_BOOKING,
+                    data: [
+                        'use_open_application_flow' => $useOpenApplicationFlow,
+                    ],
                 );
                 return [
                     'booking_id' => $booking->id,
