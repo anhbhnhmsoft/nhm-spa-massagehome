@@ -367,6 +367,10 @@ class ConfigService extends BaseService
                     ConfigName::MOBILE_MAINTENANCE,
                     config('services.application_mobile.maintenance') ? '1' : '0'
                 ));
+                $goongMaptilesKey = (string) $this->getConfigValueWithFallback(
+                    ConfigName::GOONG_MAPTILES_KEY,
+                    ''
+                );
                 $latestVersion = $platform === 'android' ? $androidLatestVersion : ($platform === 'ios' ? $iosLatestVersion : null);
                 $minSupportedVersion = $platform === 'android' ? $androidMinSupportedVersion : ($platform === 'ios' ? $iosMinSupportedVersion : null);
                 $storeUrl = $platform === 'android' ? $chplayUrl : ($platform === 'ios' ? $appstoreUrl : null);
@@ -384,6 +388,15 @@ class ConfigService extends BaseService
                     'android_version' => $androidLatestVersion,
                     'appstore_url' => $appstoreUrl,
                     'chplay_url' => $chplayUrl,
+                    'map' => [
+                        'provider' => 'goong',
+                        'style_url' => $this->goongStyleUrl($goongMaptilesKey, 'goong_map_web'),
+                        'style_urls' => [
+                            'default' => $this->goongStyleUrl($goongMaptilesKey, 'goong_map_web'),
+                            'highlight' => $this->goongStyleUrl($goongMaptilesKey, 'goong_map_highlight'),
+                            'satellite' => $this->goongStyleUrl($goongMaptilesKey, 'goong_satellite'),
+                        ],
+                    ],
                     'update' => [
                         'platform' => $platform,
                         'current_version' => $currentVersion,
@@ -412,5 +425,14 @@ class ConfigService extends BaseService
     private function toBoolean(mixed $value): bool
     {
         return filter_var($value, FILTER_VALIDATE_BOOLEAN);
+    }
+
+    private function goongStyleUrl(string $maptilesKey, string $style): ?string
+    {
+        if ($maptilesKey === '') {
+            return null;
+        }
+
+        return "https://tiles.goong.io/assets/{$style}.json?api_key={$maptilesKey}";
     }
 }

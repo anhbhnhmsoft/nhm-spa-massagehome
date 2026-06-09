@@ -31,12 +31,43 @@ class BookingApplicationResource extends JsonResource
                 'avatar_url' => $profile?->avatar_url ? Helper::getPublicUrl($profile->avatar_url) : null,
                 'experience' => $reviewApplication?->experience,
                 'bio' => $reviewApplication?->bio,
+                'rating' => round((float) ($this->reviews_received_avg_rating ?? 0), 1),
+                'review_count' => (int) ($this->reviews_received_count ?? 0),
                 'location' => [
                     'address' => $primaryAddress?->address,
                     'latitude' => $primaryAddress?->latitude,
                     'longitude' => $primaryAddress?->longitude,
                 ],
+                'distance' => $this->distanceInMeters(),
             ],
         ];
+    }
+
+    private function distanceInMeters(): ?float
+    {
+        $booking = $this->booking;
+        $address = $this->ktv?->primaryAddress;
+
+        if (
+            !$booking?->latitude
+            || !$booking?->longitude
+            || !$address?->latitude
+            || !$address?->longitude
+        ) {
+            return null;
+        }
+
+        $earthRadius = 6371000;
+        $bookingLat = deg2rad((float) $booking->latitude);
+        $bookingLng = deg2rad((float) $booking->longitude);
+        $ktvLat = deg2rad((float) $address->latitude);
+        $ktvLng = deg2rad((float) $address->longitude);
+        $deltaLat = $ktvLat - $bookingLat;
+        $deltaLng = $ktvLng - $bookingLng;
+
+        $a = sin($deltaLat / 2) ** 2
+            + cos($bookingLat) * cos($ktvLat) * sin($deltaLng / 2) ** 2;
+
+        return round($earthRadius * 2 * atan2(sqrt($a), sqrt(1 - $a)), 2);
     }
 }

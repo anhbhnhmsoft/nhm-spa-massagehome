@@ -88,6 +88,17 @@ class ConfigForm extends Component implements HasSchemas
                                             'required' => __('common.error.required'),
                                             'string' => __('common.error.string'),
                                         ]),
+                                    TextInput::make((string)ConfigName::GOONG_MAPTILES_KEY->value)
+                                        ->label(__('admin.setting.fields.goong_maptiles_key'))
+                                        ->helperText(__('admin.setting.fields.goong_maptiles_key_helper'))
+                                        ->default('')
+                                        ->rules([
+                                            'nullable',
+                                            'string',
+                                        ])
+                                        ->validationMessages([
+                                            'string' => __('common.error.string'),
+                                        ]),
                                     TextInput::make((string)ConfigName::GEMINI_API_KEY->value)
                                         ->label(__('admin.setting.fields.gemini_api_key'))
                                         ->required()
@@ -530,6 +541,22 @@ class ConfigForm extends Component implements HasSchemas
                                             'required' => __('common.error.required'),
                                             'numeric' => __('common.error.numeric'),
                                             'min' => __('common.error.min', ['min' => 0]),
+                                        ]),
+                                    TextInput::make((string)ConfigName::BOOKING_APPLICATION_TIMEOUT_MINUTES->value)
+                                        ->label(__('admin.setting.fields.booking_application_timeout_minutes'))
+                                        ->helperText(__('admin.setting.fields.booking_application_timeout_minutes_helper'))
+                                        ->numeric()
+                                        ->required()
+                                        ->suffix(__('common.unit.minute'))
+                                        ->rules([
+                                            'required',
+                                            'numeric',
+                                            'min:1',
+                                        ])
+                                        ->validationMessages([
+                                            'required' => __('common.error.required'),
+                                            'numeric' => __('common.error.numeric'),
+                                            'min' => __('common.error.min', ['min' => 1]),
                                         ]),
                                     TextInput::make((string)ConfigName::EXCHANGE_RATE_VND_CNY->value)
                                         ->label(__('admin.setting.fields.exchange_rate_vnd_cny'))

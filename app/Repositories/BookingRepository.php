@@ -80,12 +80,19 @@ class BookingRepository extends BaseRepository
                     $subQuery->orWhere(function (Builder $openQuery) use ($ktvId, $radius, $distanceFormula) {
                         $openQuery->where('service_bookings.status', BookingStatus::OPEN_FOR_APPLICATION->value)
                             ->whereNotNull('service_bookings.application_opened_at')
+                            ->where(function (Builder $deadlineQuery) {
+                                $deadlineQuery->whereNull('service_bookings.ktv_confirm_deadline_at')
+                                    ->orWhere('service_bookings.ktv_confirm_deadline_at', '>', now());
+                            })
                             ->whereHas('service', function ($serviceQuery) use ($ktvId) {
                                 $serviceQuery->whereHas('users', function ($userQuery) use ($ktvId) {
                                     $userQuery->where('users.id', $ktvId);
                                 });
                             })
-                            ->whereRaw("$distanceFormula <= ?", [$radius]);
+                            ->where(function (Builder $availabilityQuery) use ($ktvId, $radius, $distanceFormula) {
+                                $availabilityQuery->where('service_bookings.original_ktv_user_id', $ktvId)
+                                    ->orWhereRaw("$distanceFormula <= ?", [$radius]);
+                            });
                     });
                 });
             } else {

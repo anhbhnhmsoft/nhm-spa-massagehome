@@ -9,8 +9,10 @@ enum ConfigName: string
     case PAYOS_CHECKSUM_KEY = 'PAYOS_CHECKSUM_KEY';
     case CURRENCY_EXCHANGE_RATE = 'CURRENCY_EXCHANGE_RATE'; // Tỷ giá đổi tiền VNĐ -> Point
     case GOONG_API_KEY = 'GOONG_API_KEY';
+    case GOONG_MAPTILES_KEY = 'GOONG_MAPTILES_KEY'; // Key Goong Maptiles dùng render bản đồ mobile/web
     case BREAK_TIME_GAP = 'BREAK_TIME_GAP'; // Khoảng cách giữa 2 lần phục vụ của kỹ thuật viên tính bằng phút
     case AUTO_FINISH_ONGOING_BOOKING_MINUTES = 'AUTO_FINISH_ONGOING_BOOKING_MINUTES'; // Số phút quá hạn thêm để hệ thống tự hoàn thành booking ongoing
+    case BOOKING_APPLICATION_TIMEOUT_MINUTES = 'BOOKING_APPLICATION_TIMEOUT_MINUTES'; // Số phút chờ KTV xác nhận/khách chọn ứng viên trước khi tự hủy
     case SP_ZALO = 'SP_ZALO'; // trang Zalo hỗ trợ của admin
     case SP_FACEBOOK = 'SP_FACEBOOK'; // Trang Facebook hỗ trợ của admin
     case SP_PHONE = 'SP_PHONE'; // Số điện thoại hỗ trợ

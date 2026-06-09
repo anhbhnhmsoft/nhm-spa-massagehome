@@ -221,7 +221,7 @@ class TransactionJobService extends BaseService
                     ]
                 );
 
-                $this->bookingApplicationService->markWaitingKtvConfirm($booking);
+                $this->bookingApplicationService->openBookingForAssignment($booking);
             },
             useTransaction: true
         );
@@ -248,6 +248,9 @@ class TransactionJobService extends BaseService
                         message: __("error.booking_not_found")
                     );
                 };
+                if ($booking->status == BookingStatus::CANCELED->value) {
+                    return ServiceReturn::success();
+                }
                 // Kiểm tra nếu lịch đặt hẹn này đã bị hủy bởi hệ thống trước đó
                 if ($booking->status == BookingStatus::PAYMENT_FAILED->value) {
                     throw new ServiceException(

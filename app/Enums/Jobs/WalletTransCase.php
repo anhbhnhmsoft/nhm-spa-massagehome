@@ -10,6 +10,8 @@ enum WalletTransCase
 
     case CONFIRM_CANCEL_BOOKING; // Phục vụ việc hủy check booking
 
+    case AUTO_CANCEL_BOOKING; // Phục vụ việc hệ thống tự hủy và hoàn tiền booking
+
     case REWARD_FOR_KTV_REFERRAL; // Phục vụ việc trả tiền giới thiệu cho KTV
 
     case CREATE_WITHDRAW_REQUEST; // Phục vụ việc tạo thông tin rút tiền

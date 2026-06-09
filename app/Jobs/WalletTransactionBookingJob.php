@@ -62,6 +62,12 @@ class WalletTransactionBookingJob implements ShouldQueue
                     $this->data
                 );
                 break;
+            case WalletTransCase::AUTO_CANCEL_BOOKING:
+                $service->handleAutoCancelBooking(
+                    $this->bookingId,
+                    $this->data
+                );
+                break;
         }
     }
 }

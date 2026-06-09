@@ -94,6 +94,8 @@ return [
     'confirmed_successfully' => 'Xác nhận đơn thành công',
     'opened_for_application' => 'Đơn đã được mở cho KTV ứng đơn',
     'application_success' => 'Ứng đơn thành công',
+    'application_expired' => 'Thời gian chọn kỹ thuật viên đã hết hạn',
+    'assignment_auto_cancel_reason' => 'Hệ thống tự hủy vì chưa có kỹ thuật viên được xác nhận trong thời gian quy định',
     'application_not_found' => 'Không tìm thấy ứng đơn phù hợp',
     'reassigned_to_other_ktv' => 'Đơn đã được chuyển cho kĩ thuật viên khác',
     'reassign_success' => 'Chuyển đơn thành công',

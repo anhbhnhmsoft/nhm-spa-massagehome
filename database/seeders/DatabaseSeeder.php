@@ -183,6 +183,14 @@ class DatabaseSeeder extends Seeder
                 ]
             );
             Config::query()->createOrFirst(
+                ['config_key' => ConfigName::GOONG_MAPTILES_KEY->value],
+                [
+                    'config_value' => '',
+                    'config_type' => ConfigType::STRING->value,
+                    'description' => 'Mã Maptiles key Goong dùng để render bản đồ trên mobile.',
+                ]
+            );
+            Config::query()->createOrFirst(
                 ['config_key' => ConfigName::BREAK_TIME_GAP->value],
                 [
                     'config_value' => '60',
@@ -196,6 +204,14 @@ class DatabaseSeeder extends Seeder
                     'config_value' => '60',
                     'config_type' => ConfigType::NUMBER->value,
                     'description' => 'Số phút quá hạn thêm để hệ thống tự hoàn thành booking ongoing',
+                ]
+            );
+            Config::query()->createOrFirst(
+                ['config_key' => ConfigName::BOOKING_APPLICATION_TIMEOUT_MINUTES->value],
+                [
+                    'config_value' => '15',
+                    'config_type' => ConfigType::NUMBER->value,
+                    'description' => 'Số phút chờ KTV xác nhận hoặc khách chọn KTV ứng đơn trước khi tự hủy và hoàn tiền.',
                 ]
             );
             Config::query()->createOrFirst(

@@ -4,6 +4,7 @@ namespace App\Http\Resources\Booking;
 
 use App\Core\Helper;
 use App\Core\Helper\CalculatePrice;
+use App\Enums\UserRole;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -33,6 +34,7 @@ class BookingItemResource extends JsonResource
             \App\Enums\BookingStatus::CONFIRMED->value => 'confirmed',
             \App\Enums\BookingStatus::ONGOING->value => 'ongoing',
             \App\Enums\BookingStatus::COMPLETED->value => 'completed',
+            \App\Enums\BookingStatus::WAITING_CANCEL->value,
             \App\Enums\BookingStatus::CANCELED->value => 'canceled',
             \App\Enums\BookingStatus::PAYMENT_FAILED->value => 'failed',
             default => 'waiting',
@@ -85,6 +87,8 @@ class BookingItemResource extends JsonResource
             'application_opened_at' => $this->application_opened_at,
             'application_open_reason' => $this->application_open_reason,
             'has_applied' => (bool) ($this->has_applied ?? false),
+            'is_original_ktv' => $request->user()?->role === UserRole::KTV->value
+                && (string) ($this->original_ktv_user_id ?: $this->ktv_user_id) === (string) $request->user()?->id,
             'application_status' => $this->applications?->first()?->status ?? null,
             'distance' => isset($this->distance_in_meters) ? (float) $this->distance_in_meters : null,
             'price' => $price,

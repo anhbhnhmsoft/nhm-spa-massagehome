@@ -95,6 +95,8 @@ return [
     'confirmed_successfully' => '订单确认成功',
     'opened_for_application' => '订单已开放给技师申请',
     'application_success' => '申请接单成功',
+    'application_expired' => '选择技师时间已过期',
+    'assignment_auto_cancel_reason' => '系统因规定时间内未确认技师而自动取消',
     'application_not_found' => '未找到合适的接单申请',
     'reassigned_to_other_ktv' => '已重新分配给其他技师',
     'reassign_success' => '重新分配成功',

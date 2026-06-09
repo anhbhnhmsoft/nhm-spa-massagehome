@@ -8,6 +8,7 @@ use App\Core\LogHelper;
 use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
+use App\Enums\BookingApplicationStatus;
 use App\Enums\BookingStatus;
 use App\Enums\Jobs\WalletTransCase;
 use App\Enums\NotificationType;
@@ -21,6 +22,7 @@ use App\Repositories\ReviewRepository;
 use App\Enums\ConfigName;
 use App\Enums\PaymentType;
 use App\Jobs\WalletTransactionBookingJob;
+use App\Repositories\BookingApplicationRepository;
 use App\Repositories\ServiceOptionRepository;
 use App\Repositories\ServiceRepository;
 use App\Repositories\UserAddressRepository;
@@ -58,6 +60,7 @@ class BookingService extends BaseService
         protected WalletValidator                 $walletValidator,
         protected ServiceRepository               $serviceRepository,
         protected UserKtvScheduleRepository       $userKtvScheduleRepository,
+        protected BookingApplicationRepository    $bookingApplicationRepository,
     )
     {
         parent::__construct();
@@ -216,6 +219,7 @@ class BookingService extends BaseService
     {
         return $this->execute(function () use ($bookingId, $reason) {
             $userCurrent = Auth::user();
+            $appliedKtvIds = collect();
 
             // Tìm booking cần hủy và khóa hàng để tránh xung đột
             $booking = $this->bookingRepository->query()
@@ -244,16 +248,59 @@ class BookingService extends BaseService
                 );
             }
 
-            // Customer cancel giữ luồng cũ: chờ admin/transaction flow xử lý hủy.
-            $booking->status = BookingStatus::WAITING_CANCEL->value;
+            $previousStatus = (int) $booking->status;
+
+            $booking->status = BookingStatus::CANCELED->value;
             $booking->reason_cancel = $reason;
             $booking->cancel_by = $userCurrent->role;
+            $booking->ktv_confirm_deadline_at = null;
+            $booking->application_opened_at = null;
+            $booking->application_open_reason = null;
             $booking->save();
+
+            if ($previousStatus === BookingStatus::OPEN_FOR_APPLICATION->value) {
+                $appliedKtvIds = $this->bookingApplicationRepository->query()
+                    ->where('booking_id', $booking->id)
+                    ->where('status', BookingApplicationStatus::APPLIED->value)
+                    ->pluck('ktv_id');
+
+                $this->bookingApplicationRepository->query()
+                    ->where('booking_id', $booking->id)
+                    ->where('status', BookingApplicationStatus::APPLIED->value)
+                    ->update([
+                        'status' => BookingApplicationStatus::REMOVED->value,
+                        'removed_reason' => 'booking_cancelled',
+                        'updated_at' => now(),
+                    ]);
+            }
+
+            if ($previousStatus !== BookingStatus::PENDING->value) {
+                WalletTransactionBookingJob::dispatch(
+                    bookingId: (int) $booking->id,
+                    case: WalletTransCase::AUTO_CANCEL_BOOKING,
+                )->afterCommit();
+            }
+
+            foreach ($appliedKtvIds as $ktvId) {
+                if ((string) $ktvId === (string) $booking->ktv_user_id) {
+                    continue;
+                }
+
+                SendNotificationJob::dispatch(
+                    userId: $ktvId,
+                    type: NotificationType::BOOKING_CANCELLED,
+                    data: [
+                        'booking_id' => $booking->id,
+                        'reason' => $booking->reason_cancel,
+                    ]
+                )->afterCommit();
+            }
+
             return ServiceReturn::success(
                 data: $booking,
-                message: __("booking.waiting_cancel")
+                message: __("booking.cancelled")
             );
-        });
+        }, useTransaction: true);
     }
 
 
@@ -276,11 +323,17 @@ class BookingService extends BaseService
                 BookingStatus::WAITING_KTV_CONFIRM->value => 'waiting_ktv_confirm',
                 BookingStatus::OPEN_FOR_APPLICATION->value => 'open_for_application',
                 BookingStatus::CONFIRMED->value => 'confirmed',
-                BookingStatus::CANCELED->value, BookingStatus::PAYMENT_FAILED->value => 'failed',
+                BookingStatus::WAITING_CANCEL->value,
+                BookingStatus::CANCELED->value,
+                BookingStatus::PAYMENT_FAILED->value => 'failed',
                 default => throw new ServiceException(
                     message: __("booking.not_found")
                 ),
             };
+            $originalKtv = $booking->originalKtvUser ?? $booking->ktvUser;
+            $originalKtvProfile = $originalKtv?->profile;
+            $originalKtvReviewApplication = $originalKtv?->reviewApplication;
+
             return [
                 'status' => $status,
                 'data' => [
@@ -308,8 +361,20 @@ class BookingService extends BaseService
                         priceDiscount: $booking->price_discount,
                         priceTransportation: $booking->price_transportation,
                     ),
+                    'latitude' => $booking->latitude,
+                    'longitude' => $booking->longitude,
+                    'ktv_latitude' => $booking->ktv_latitude,
+                    'ktv_longitude' => $booking->ktv_longitude,
+                    'original_ktv_user' => $originalKtv ? [
+                        'id' => $originalKtv->id,
+                        'name' => $originalKtvReviewApplication?->nickname ?? $originalKtv->name,
+                        'avatar_url' => $originalKtvProfile?->avatar_url ? \App\Core\Helper::getPublicUrl($originalKtvProfile->avatar_url) : null,
+                        'latitude' => $booking->ktv_latitude,
+                        'longitude' => $booking->ktv_longitude,
+                    ] : null,
                     'reason_cancel' => $booking->reason_cancel ?? '',
                     'ktv_confirm_deadline_at' => $booking->ktv_confirm_deadline_at?->format('Y-m-d H:i:s'),
+                    'assignment_deadline_at' => $booking->ktv_confirm_deadline_at?->format('Y-m-d H:i:s'),
                     'application_opened_at' => $booking->application_opened_at?->format('Y-m-d H:i:s'),
                     'application_open_reason' => $booking->application_open_reason,
                 ]

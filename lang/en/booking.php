@@ -95,6 +95,8 @@ return [
     'confirmed_successfully' => 'Booking confirmed successfully',
     'opened_for_application' => 'Booking has been opened for KTV applications',
     'application_success' => 'Application submitted successfully',
+    'application_expired' => 'Technician selection time has expired',
+    'assignment_auto_cancel_reason' => 'System auto-cancelled because no technician was confirmed within the allowed time',
     'application_not_found' => 'Application not found',
     'reassigned_to_other_ktv' => 'Reassigned to other technician',
     'reassign_success' => 'Reassign success',

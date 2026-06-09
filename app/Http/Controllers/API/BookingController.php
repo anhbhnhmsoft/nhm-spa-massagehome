@@ -12,7 +12,6 @@ use App\Http\Resources\Booking\BookingApplicationResource;
 use App\Enums\UserRole;
 use App\Services\BookingApplicationService;
 use App\Services\BookingService;
-use App\Support\MobileVersionFlow;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -242,9 +241,7 @@ class BookingController extends BaseController
     }
 
     /**
-     * Hủy booking (hủy lịch đặt - admin duyệt sau)
-     * @param Request $request
-     * @return JsonResponse
+     * Hủy booking ngay lập tức và để hệ thống xử lý hoàn tiền theo nghiệp vụ.
      */
     public function cancelBooking(Request $request): JsonResponse
     {
@@ -262,23 +259,10 @@ class BookingController extends BaseController
                 ]
             );
 
-            $shouldUseBookingApplicationCancelFlow = $request->user()->role === UserRole::KTV->value
-                && MobileVersionFlow::shouldUseBookingApplicationCancelFlow(
-                    platform: $request->attributes->get('app_platform'),
-                    version: $request->attributes->get('app_version'),
-                );
-
-            if ($shouldUseBookingApplicationCancelFlow) {
-                $result = $this->bookingApplicationService->releaseBookingByKtv(
-                    bookingId: (string) $data['booking_id'],
-                    reason: $data['reason'] ?? null,
-                );
-            } else {
-                $result = $this->bookingService->cancelBooking(
-                    bookingId: $data['booking_id'],
-                    reason: $data['reason'] ?? null,
-                );
-            }
+            $result = $this->bookingService->cancelBooking(
+                bookingId: $data['booking_id'],
+                reason: $data['reason'] ?? null,
+            );
 
             if ($result->isError()) {
                 return $this->sendError(
@@ -286,9 +270,7 @@ class BookingController extends BaseController
                 );
             }
 
-            $status = $shouldUseBookingApplicationCancelFlow
-                ? BookingStatus::OPEN_FOR_APPLICATION
-                : BookingStatus::WAITING_CANCEL;
+            $status = BookingStatus::CANCELED;
 
             return $this->sendSuccess(
                 data: [

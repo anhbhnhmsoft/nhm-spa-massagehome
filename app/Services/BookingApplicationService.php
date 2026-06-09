@@ -10,21 +10,24 @@ use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
 use App\Enums\BookingApplicationStatus;
 use App\Enums\BookingStatus;
+use App\Enums\ConfigName;
+use App\Enums\Jobs\WalletTransCase;
 use App\Enums\NotificationType;
 use App\Enums\PaymentType;
 use App\Enums\UserRole;
+use App\Jobs\ExpireOpenApplicationBookingJob;
 use App\Enums\WalletTransactionStatus;
 use App\Enums\WalletTransactionType;
 use App\Jobs\ExpireKtvConfirmationJob;
 use App\Jobs\RemindKtvBookingConfirmationJob;
 use App\Jobs\SendNotificationJob;
+use App\Jobs\WalletTransactionBookingJob;
 use App\Models\BookingApplication;
 use App\Models\ServiceBooking;
 use App\Repositories\BookingApplicationRepository;
 use App\Repositories\BookingRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\CouponRepository;
-use App\Services\ConfigService;
 use App\Services\Validator\WalletValidator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -78,6 +81,28 @@ class BookingApplicationService extends BaseService
         return ServiceReturn::success(data: $booking);
     }
 
+    public function openBookingForAssignment(ServiceBooking $booking): ServiceReturn
+    {
+        $deadline = $this->newApplicationDeadline();
+        $now = now();
+
+        $booking->status = BookingStatus::OPEN_FOR_APPLICATION->value;
+        $booking->original_ktv_user_id = $booking->original_ktv_user_id ?: $booking->ktv_user_id;
+        $booking->ktv_confirm_deadline_at = $deadline;
+        $booking->application_opened_at = $now;
+        $booking->application_open_reason = 'booking_created';
+        $booking->reason_cancel = null;
+        $booking->cancel_by = null;
+        $booking->save();
+
+        ExpireOpenApplicationBookingJob::dispatch($booking->id)->delay($deadline)->afterCommit();
+
+        $this->dispatchKtvConfirmationNotification($booking, NotificationType::NEW_BOOKING_REQUEST, 0);
+        $this->notifyNearbyKtvs($booking);
+
+        return ServiceReturn::success(data: $booking, message: __('booking.opened_for_application'));
+    }
+
     public function sendKtvConfirmationReminder(string $bookingId, int $attemptNumber): ServiceReturn
     {
         return $this->execute(function () use ($bookingId, $attemptNumber) {
@@ -111,20 +136,29 @@ class BookingApplicationService extends BaseService
             $booking = $this->bookingRepository->query()
                 ->lockForUpdate()
                 ->where('id', $bookingId)
-                ->where('status', BookingStatus::WAITING_KTV_CONFIRM->value)
+                ->whereIn('status', [
+                    BookingStatus::WAITING_KTV_CONFIRM->value,
+                    BookingStatus::OPEN_FOR_APPLICATION->value,
+                ])
                 ->first();
 
             if (!$booking) {
                 throw new ServiceException(__('booking.not_found'));
             }
 
-            if ((string) $booking->ktv_user_id !== (string) $user->id) {
+            $originalKtvId = $booking->original_ktv_user_id ?: $booking->ktv_user_id;
+            if ((string) $originalKtvId !== (string) $user->id) {
                 throw new ServiceException(__('common_error.unauthorized'));
             }
 
             if (!$booking->ktv_confirm_deadline_at || now()->greaterThan($booking->ktv_confirm_deadline_at)) {
-                $this->openBookingForApplicationInternal($booking, 'timeout');
-                throw new ServiceException(__('booking.ktv_confirm_expired'));
+                if ((int) $booking->status === BookingStatus::WAITING_KTV_CONFIRM->value) {
+                    $this->openBookingForApplicationInternal($booking, 'timeout');
+                } else {
+                    ExpireOpenApplicationBookingJob::dispatch($booking->id)->afterCommit();
+                }
+
+                return ServiceReturn::error(__('booking.ktv_confirm_expired'));
             }
 
             $this->userRepository->query()->lockForUpdate()->find($user->id);
@@ -136,13 +170,7 @@ class BookingApplicationService extends BaseService
                 exceptBookingId: (int) $booking->id,
             );
 
-            $booking->status = BookingStatus::CONFIRMED->value;
-            $booking->ktv_confirm_deadline_at = null;
-            $booking->application_opened_at = null;
-            $booking->application_open_reason = null;
-            $booking->save();
-
-            $this->removeConflictingApplicationsForKtv($booking, (int) $user->id);
+            $this->assignBookingToKtv($booking, (int) $user->id, null, 'original_ktv_accepted');
 
             return ServiceReturn::success(data: $booking, message: __('booking.confirmed_successfully'));
         }, useTransaction: true);
@@ -166,6 +194,63 @@ class BookingApplicationService extends BaseService
             }
 
             $this->openBookingForApplicationInternal($booking, 'timeout');
+
+            return ServiceReturn::success(data: $booking);
+        }, useTransaction: true);
+    }
+
+    public function expireOpenApplicationBooking(string $bookingId): ServiceReturn
+    {
+        return $this->execute(function () use ($bookingId) {
+            $booking = $this->bookingRepository->query()
+                ->lockForUpdate()
+                ->where('id', $bookingId)
+                ->where('status', BookingStatus::OPEN_FOR_APPLICATION->value)
+                ->first();
+
+            if (!$booking || !$this->hasApplicationDeadlineExpired($booking)) {
+                return ServiceReturn::success();
+            }
+
+            $appliedKtvIds = $this->bookingApplicationRepository->query()
+                ->where('booking_id', $booking->id)
+                ->where('status', BookingApplicationStatus::APPLIED->value)
+                ->pluck('ktv_id');
+
+            $booking->status = BookingStatus::CANCELED->value;
+            $booking->reason_cancel = $booking->reason_cancel ?: __('booking.assignment_auto_cancel_reason');
+            $booking->cancel_by = null;
+            $booking->ktv_confirm_deadline_at = null;
+            $booking->save();
+
+            $this->bookingApplicationRepository->query()
+                ->where('booking_id', $booking->id)
+                ->where('status', BookingApplicationStatus::APPLIED->value)
+                ->update([
+                    'status' => BookingApplicationStatus::EXPIRED->value,
+                    'removed_reason' => 'booking_assignment_timeout',
+                    'updated_at' => now(),
+                ]);
+
+            foreach ($appliedKtvIds as $ktvId) {
+                if ((string) $ktvId === (string) $booking->ktv_user_id) {
+                    continue;
+                }
+
+                SendNotificationJob::dispatch(
+                    userId: $ktvId,
+                    type: NotificationType::BOOKING_CANCELLED,
+                    data: [
+                        'booking_id' => $booking->id,
+                        'reason' => $booking->reason_cancel,
+                    ]
+                )->afterCommit();
+            }
+
+            WalletTransactionBookingJob::dispatch(
+                bookingId: $booking->id,
+                case: WalletTransCase::AUTO_CANCEL_BOOKING,
+            )->afterCommit();
 
             return ServiceReturn::success(data: $booking);
         }, useTransaction: true);
@@ -284,6 +369,12 @@ class BookingApplicationService extends BaseService
                 throw new ServiceException(__('booking.not_found'));
             }
 
+            if ($this->hasApplicationDeadlineExpired($booking)) {
+                ExpireOpenApplicationBookingJob::dispatch($booking->id)->afterCommit();
+
+                return ServiceReturn::error(__('booking.application_expired'));
+            }
+
             $application = $this->bookingApplicationRepository->query()
                 ->where('booking_id', $booking->id)
                 ->where('ktv_id', $user->id)
@@ -366,6 +457,12 @@ class BookingApplicationService extends BaseService
                 throw new ServiceException(__('booking.not_found'));
             }
 
+            if ($this->hasApplicationDeadlineExpired($booking)) {
+                ExpireOpenApplicationBookingJob::dispatch($booking->id)->afterCommit();
+
+                return ServiceReturn::error(__('booking.application_expired'));
+            }
+
             $application = $this->bookingApplicationRepository->query()
                 ->lockForUpdate()
                 ->where('id', $applicationId)
@@ -386,38 +483,12 @@ class BookingApplicationService extends BaseService
                 exceptBookingId: (int) $booking->id,
             );
 
-            $previewData = $this->buildApplicationSelectionPreview($booking, $application);
-            $this->applyTransportationDeltaForCustomer($booking, (float) $previewData['price_transportation']);
-
-            $booking->ktv_user_id = $application->ktv_id;
-            $booking->ktv_address = $previewData['ktv_address'];
-            $booking->ktv_latitude = $previewData['ktv_latitude'];
-            $booking->ktv_longitude = $previewData['ktv_longitude'];
-            $booking->price_transportation = $previewData['price_transportation'];
-            $booking->status = BookingStatus::CONFIRMED->value;
-            $booking->ktv_confirm_deadline_at = null;
-            $booking->application_opened_at = null;
-            $booking->application_open_reason = null;
-            $booking->reason_cancel = null;
-            $booking->cancel_by = null;
-            $booking->save();
-
-            $application->status = BookingApplicationStatus::SELECTED->value;
-            $application->selected_at = now();
-            $application->removed_reason = null;
-            $application->save();
-
-            $this->bookingApplicationRepository->query()
-                ->where('booking_id', $booking->id)
-                ->where('id', '!=', $application->id)
-                ->where('status', BookingApplicationStatus::APPLIED->value)
-                ->update([
-                    'status' => BookingApplicationStatus::REJECTED->value,
-                    'removed_reason' => 'customer_selected_other_ktv',
-                    'updated_at' => now(),
-                ]);
-
-            $this->removeConflictingApplicationsForKtv($booking, (int) $application->ktv_id);
+            $this->assignBookingToKtv(
+                booking: $booking,
+                ktvId: (int) $application->ktv_id,
+                selectedApplication: $application,
+                rejectedReason: 'customer_selected_other_ktv',
+            );
 
             SendNotificationJob::dispatch(
                 userId: $application->ktv_id,
@@ -451,6 +522,12 @@ class BookingApplicationService extends BaseService
                 throw new ServiceException(__('booking.not_found'));
             }
 
+            if ($this->hasApplicationDeadlineExpired($booking)) {
+                ExpireOpenApplicationBookingJob::dispatch($booking->id)->afterCommit();
+
+                return ServiceReturn::error(__('booking.application_expired'));
+            }
+
             $application = $this->bookingApplicationRepository->queryWithRelations()
                 ->where('id', $applicationId)
                 ->where('booking_id', $booking->id)
@@ -482,11 +559,16 @@ class BookingApplicationService extends BaseService
 
     protected function openBookingForApplicationInternal(ServiceBooking $booking, string $reason): void
     {
+        $deadline = $this->newApplicationDeadline();
+
         $booking->status = BookingStatus::OPEN_FOR_APPLICATION->value;
-        $booking->ktv_confirm_deadline_at = null;
+        $booking->original_ktv_user_id = $booking->original_ktv_user_id ?: $booking->ktv_user_id;
+        $booking->ktv_confirm_deadline_at = $deadline;
         $booking->application_opened_at = now();
         $booking->application_open_reason = $reason;
         $booking->save();
+
+        ExpireOpenApplicationBookingJob::dispatch($booking->id)->delay($deadline)->afterCommit();
 
         // Khi booking được mở lại cho ứng đơn, application cũ của KTV từng được chọn
         // không còn được xem là "đang apply" để KTV có thể chủ động ứng lại.
@@ -519,7 +601,10 @@ class BookingApplicationService extends BaseService
     protected function notifyNearbyKtvs(ServiceBooking $booking): void
     {
         $query = $this->nearbyKtvQuery($booking)
-            ->where('users.id', '!=', $booking->ktv_user_id);
+            ->whereNotIn('users.id', array_filter([
+                $booking->ktv_user_id,
+                $booking->original_ktv_user_id,
+            ]));
 
         $query->chunk(100, function ($ktvs) use ($booking) {
             foreach ($ktvs as $ktv) {
@@ -543,12 +628,19 @@ class BookingApplicationService extends BaseService
         return $this->bookingRepository->queryBooking()
             ->where('service_bookings.status', BookingStatus::OPEN_FOR_APPLICATION->value)
             ->whereNotNull('service_bookings.application_opened_at')
+            ->where(function ($query) {
+                $query->whereNull('service_bookings.ktv_confirm_deadline_at')
+                    ->orWhere('service_bookings.ktv_confirm_deadline_at', '>', now());
+            })
             ->whereHas('service', function ($query) use ($ktvId) {
                 $query->whereHas('users', function ($query) use ($ktvId) {
                     $query->where('users.id', $ktvId);
                 });
             })
-            ->whereRaw("$distanceFormula <= ?", [self::APPLICATION_RADIUS_METERS])
+            ->where(function ($query) use ($ktvId, $distanceFormula) {
+                $query->where('service_bookings.original_ktv_user_id', $ktvId)
+                    ->orWhereRaw("$distanceFormula <= ?", [self::APPLICATION_RADIUS_METERS]);
+            })
             ->select('service_bookings.*')
             ->selectRaw("$distanceFormula AS distance_in_meters")
             ->withExists(['applications as has_applied' => function ($query) use ($ktvId) {
@@ -611,6 +703,72 @@ class BookingApplicationService extends BaseService
             ]);
     }
 
+    protected function assignBookingToKtv(
+        ServiceBooking $booking,
+        int $ktvId,
+        ?BookingApplication $selectedApplication,
+        string $rejectedReason,
+    ): void {
+        if ($selectedApplication) {
+            $previewData = $this->buildApplicationSelectionPreview($booking, $selectedApplication);
+            $this->applyTransportationDeltaForCustomer($booking, (float) $previewData['price_transportation']);
+
+            $booking->ktv_address = $previewData['ktv_address'];
+            $booking->ktv_latitude = $previewData['ktv_latitude'];
+            $booking->ktv_longitude = $previewData['ktv_longitude'];
+            $booking->price_transportation = $previewData['price_transportation'];
+        } else {
+            $ktv = $this->userRepository->query()
+                ->with('primaryAddress')
+                ->lockForUpdate()
+                ->find($ktvId);
+            $ktvAddress = $ktv?->primaryAddress;
+
+            if ($ktvAddress) {
+                $booking->ktv_address = $ktvAddress->address ?? $booking->ktv_address;
+                $booking->ktv_latitude = $ktvAddress->latitude ?? $booking->ktv_latitude;
+                $booking->ktv_longitude = $ktvAddress->longitude ?? $booking->ktv_longitude;
+            }
+
+            $selectedApplication = $this->bookingApplicationRepository->query()
+                ->where('booking_id', $booking->id)
+                ->where('ktv_id', $ktvId)
+                ->where('status', BookingApplicationStatus::APPLIED->value)
+                ->lockForUpdate()
+                ->first();
+        }
+
+        $booking->ktv_user_id = $ktvId;
+        $booking->status = BookingStatus::CONFIRMED->value;
+        $booking->ktv_confirm_deadline_at = null;
+        $booking->application_opened_at = null;
+        $booking->application_open_reason = null;
+        $booking->reason_cancel = null;
+        $booking->cancel_by = null;
+        $booking->save();
+
+        if ($selectedApplication) {
+            $selectedApplication->status = BookingApplicationStatus::SELECTED->value;
+            $selectedApplication->selected_at = now();
+            $selectedApplication->removed_reason = null;
+            $selectedApplication->save();
+        }
+
+        $this->bookingApplicationRepository->query()
+            ->where('booking_id', $booking->id)
+            ->when($selectedApplication, function ($query) use ($selectedApplication) {
+                $query->where('id', '!=', $selectedApplication->id);
+            })
+            ->where('status', BookingApplicationStatus::APPLIED->value)
+            ->update([
+                'status' => BookingApplicationStatus::REJECTED->value,
+                'removed_reason' => $rejectedReason,
+                'updated_at' => now(),
+            ]);
+
+        $this->removeConflictingApplicationsForKtv($booking, $ktvId);
+    }
+
     protected function ensureKtvDoesNotHaveConflictingBooking(
         int $ktvId,
         Carbon $bookingTime,
@@ -647,7 +805,7 @@ class BookingApplicationService extends BaseService
         int $reminderAttempt = 0,
     ): void {
         SendNotificationJob::dispatch(
-            userId: $booking->ktv_user_id,
+            userId: $booking->original_ktv_user_id ?: $booking->ktv_user_id,
             type: $type,
             data: [
                 'booking_id' => $booking->id,
@@ -657,6 +815,28 @@ class BookingApplicationService extends BaseService
                 'reminder_attempt' => $reminderAttempt,
             ]
         )->afterCommit();
+    }
+
+    protected function newApplicationDeadline(): Carbon
+    {
+        return now()->addMinutes($this->applicationTimeoutMinutes());
+    }
+
+    protected function applicationTimeoutMinutes(): int
+    {
+        try {
+            $minutes = (int) $this->configService->getConfigValue(ConfigName::BOOKING_APPLICATION_TIMEOUT_MINUTES);
+
+            return $minutes > 0 ? $minutes : 15;
+        } catch (\Throwable) {
+            return 15;
+        }
+    }
+
+    protected function hasApplicationDeadlineExpired(ServiceBooking $booking): bool
+    {
+        return $booking->ktv_confirm_deadline_at
+            && now()->greaterThanOrEqualTo($booking->ktv_confirm_deadline_at);
     }
 
     protected function distanceSql(string $lngColumn, string $latColumn, float $targetLng, float $targetLat): string

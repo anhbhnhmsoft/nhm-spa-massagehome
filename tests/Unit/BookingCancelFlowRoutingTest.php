@@ -21,7 +21,7 @@ it('routes legacy ktv cancel requests to booking service when app headers are mi
     $bookingService->shouldReceive('cancelBooking')
         ->once()
         ->with(123, 'Cancel reason')
-        ->andReturn(ServiceReturn::success(message: 'waiting cancel'));
+        ->andReturn(ServiceReturn::success(message: 'cancelled'));
 
     $applicationService->shouldNotReceive('releaseBookingByKtv');
 
@@ -39,19 +39,19 @@ it('routes legacy ktv cancel requests to booking service when app headers are mi
     ])
         ->assertOk()
         ->assertJsonPath('success', true)
-        ->assertJsonPath('data.status', BookingStatus::WAITING_CANCEL->value);
+        ->assertJsonPath('data.status', BookingStatus::CANCELED->value);
 });
 
-it('routes supported ktv app versions to booking application service', function () {
+it('routes supported ktv app versions to immediate cancel flow', function () {
     $bookingService = Mockery::mock(BookingService::class);
     $applicationService = Mockery::mock(BookingApplicationService::class);
 
-    $applicationService->shouldReceive('releaseBookingByKtv')
+    $bookingService->shouldReceive('cancelBooking')
         ->once()
-        ->with('123', 'Cancel reason')
-        ->andReturn(ServiceReturn::success(message: 'open for application'));
+        ->with(123, 'Cancel reason')
+        ->andReturn(ServiceReturn::success(message: 'cancelled'));
 
-    $bookingService->shouldNotReceive('cancelBooking');
+    $applicationService->shouldNotReceive('releaseBookingByKtv');
 
     $this->app->instance(BookingService::class, $bookingService);
     $this->app->instance(BookingApplicationService::class, $applicationService);
@@ -70,7 +70,7 @@ it('routes supported ktv app versions to booking application service', function 
     ])
         ->assertOk()
         ->assertJsonPath('success', true)
-        ->assertJsonPath('data.status', BookingStatus::OPEN_FOR_APPLICATION->value);
+        ->assertJsonPath('data.status', BookingStatus::CANCELED->value);
 });
 
 it('always routes customer cancel requests to legacy booking service', function () {
@@ -80,7 +80,7 @@ it('always routes customer cancel requests to legacy booking service', function 
     $bookingService->shouldReceive('cancelBooking')
         ->once()
         ->with(123, 'Cancel reason')
-        ->andReturn(ServiceReturn::success(message: 'waiting cancel'));
+        ->andReturn(ServiceReturn::success(message: 'cancelled'));
 
     $applicationService->shouldNotReceive('releaseBookingByKtv');
 
@@ -101,7 +101,7 @@ it('always routes customer cancel requests to legacy booking service', function 
     ])
         ->assertOk()
         ->assertJsonPath('success', true)
-        ->assertJsonPath('data.status', BookingStatus::WAITING_CANCEL->value);
+        ->assertJsonPath('data.status', BookingStatus::CANCELED->value);
 });
 
 it('supports legacy ktv cancel-booking endpoint alias', function () {
@@ -111,7 +111,7 @@ it('supports legacy ktv cancel-booking endpoint alias', function () {
     $bookingService->shouldReceive('cancelBooking')
         ->once()
         ->with(123, 'Cancel reason')
-        ->andReturn(ServiceReturn::success(message: 'waiting cancel'));
+        ->andReturn(ServiceReturn::success(message: 'cancelled'));
 
     $applicationService->shouldNotReceive('releaseBookingByKtv');
 
@@ -129,5 +129,5 @@ it('supports legacy ktv cancel-booking endpoint alias', function () {
     ])
         ->assertOk()
         ->assertJsonPath('success', true)
-        ->assertJsonPath('data.status', BookingStatus::WAITING_CANCEL->value);
+        ->assertJsonPath('data.status', BookingStatus::CANCELED->value);
 });
