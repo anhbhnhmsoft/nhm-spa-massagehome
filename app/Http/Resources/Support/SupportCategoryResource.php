@@ -13,6 +13,7 @@ class SupportCategoryResource extends JsonResource
             'id' => (string) $this->id,
             'name' => $this->getTranslations('name'),
             'description' => $this->getTranslations('description'),
+            'message' => $this->getTranslations('message'),
             'position' => $this->position,
             'is_active' => $this->is_active,
         ];

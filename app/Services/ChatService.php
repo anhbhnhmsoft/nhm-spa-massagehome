@@ -20,6 +20,8 @@ use App\Core\Cache\CacheKey;
 use App\Enums\NotificationType;
 use App\Jobs\SendNotificationJob;
 use App\Repositories\UserRepository;
+use App\Enums\BookingStatus;
+use App\Support\MobileVersionFlow;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -74,13 +76,27 @@ class ChatService extends BaseService
             $room = $this->chatRoomRepository->query()
                 ->where('ktv_id', $ktvId)
                 ->where('customer_id', $customerId)
+                ->withExists('activeBookings as has_active_booking')
                 ->first();
 
+            $hasActiveBooking = $this->hasActiveBookingPair(
+                customerId: (string) $customerId,
+                ktvId: (string) $ktvId,
+            );
+            $useRestrictedChatPolicy = $this->shouldUseRestrictedChatPolicy();
+
             if (!$room) {
+                if ($useRestrictedChatPolicy && !$hasActiveBooking) {
+                    throw new ServiceException(message: __('booking.chat_closed'));
+                }
+
                 $room = $this->chatRoomRepository->query()->create([
                     'ktv_id' => $ktvId,
                     'customer_id' => $customerId,
                 ]);
+                $room->setAttribute('has_active_booking', true);
+            } else {
+                $room->setAttribute('has_active_booking', $hasActiveBooking);
             }
             return [
                 'room' => $room,
@@ -189,6 +205,11 @@ class ChatService extends BaseService
                 throw new ServiceException(message: __('common_error.unauthorized'));
             }
 
+            $hasActiveBooking = $this->hasActiveBookingRoom($room);
+            if ($this->shouldUseRestrictedChatPolicy() && !$hasActiveBooking) {
+                throw new ServiceException(message: __('booking.chat_closed'));
+            }
+
             // Lưu tin nhắn vào DB
             $message = $this->messageRepository->create([
                 'room_id' => $room->id,
@@ -256,6 +277,34 @@ class ChatService extends BaseService
                 message: __('common_error.server_error')
             );
         }
+    }
+
+    private function hasActiveBookingRoom($room): bool
+    {
+        return $this->hasActiveBookingPair(
+            customerId: (string) $room->customer_id,
+            ktvId: (string) $room->ktv_id,
+        );
+    }
+
+    private function hasActiveBookingPair(string $customerId, string $ktvId): bool
+    {
+        return DB::table('service_bookings')
+            ->where('ktv_user_id', $ktvId)
+            ->where('user_id', $customerId)
+            ->whereIn('status', [
+                BookingStatus::CONFIRMED->value,
+                BookingStatus::ONGOING->value,
+            ])
+            ->exists();
+    }
+
+    private function shouldUseRestrictedChatPolicy(): bool
+    {
+        return MobileVersionFlow::shouldUseModernMobileContract(
+            platform: request()->attributes->get('app_platform'),
+            version: request()->attributes->get('app_version'),
+        );
     }
 
     /**
@@ -352,4 +401,3 @@ class ChatService extends BaseService
             ->update(['seen_at' => now()]);
     }
 }
-

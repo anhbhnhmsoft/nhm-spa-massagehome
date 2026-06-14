@@ -33,6 +33,7 @@ class SupportTicketResource extends JsonResource
                 'id' => (string) $this->category->id,
                 'name' => $this->category->getTranslations('name'),
                 'description' => $this->category->getTranslations('description'),
+                'message' => $this->category->getTranslations('message'),
                 'position' => $this->category->position,
                 'is_active' => $this->category->is_active,
             ] : null,

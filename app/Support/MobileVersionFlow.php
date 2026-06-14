@@ -39,6 +39,15 @@ class MobileVersionFlow
         );
     }
 
+    public static function shouldUseModernMobileContract(?string $platform, ?string $version): bool
+    {
+        return self::matchesMinVersion(
+            platform: $platform,
+            version: $version,
+            minimumVersions: self::bookingApplicationCreateMinVersions(),
+        );
+    }
+
     public static function bookingApplicationCreateMinVersions(): array
     {
         if (self::$cachedCreateMinVersions !== null) {

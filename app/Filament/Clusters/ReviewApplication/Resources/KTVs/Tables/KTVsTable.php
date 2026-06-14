@@ -59,6 +59,10 @@ class KTVsTable
                     ->sortable(),
             ])
             ->recordActions([
+                Action::make('edit_inline')
+                    ->label(__('admin.common.action.edit'))
+                    ->url(fn($record): string => KTVResource::getUrl('edit', ['record' => $record]))
+                    ->icon(Heroicon::PencilSquare),
                 ActionGroup::make([
                     // Xem chi tiết + chỉnh sửa
                     Action::make('edit')

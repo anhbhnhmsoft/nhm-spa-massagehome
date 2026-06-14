@@ -28,11 +28,16 @@ class CouponResource extends JsonResource
             'label' => $this->label,
             'description' => $this->description,
             'is_percentage' => $this->is_percentage,
+            'discount_type' => $this->is_percentage ? 'percentage' : 'fixed_amount',
             'discount_value' => $this->discount_value,
+            'max_discount' => $this->max_discount,
             'start_at' => $this->start_at,
             'end_at' => $this->end_at,
             'usage_limit' => $this->usage_limit,
             'used_count' => $this->used_count,
+            'remaining_quantity' => $this->usage_limit !== null
+                ? max(0, (int) $this->usage_limit - (int) $this->used_count)
+                : null,
             'is_collected' => (bool) ($userRelation || ($this->is_collected ?? false)),
             'is_used' => $isUsed,
             'display_ads' => $this->display_ads,

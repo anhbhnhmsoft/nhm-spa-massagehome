@@ -125,10 +125,19 @@ class BookingService extends BaseService
     {
         return $this->execute(function () use ($data) {
             $userId = Auth::id();
+            $platform = request()->attributes->get('app_platform');
+            $version = request()->attributes->get('app_version');
+            $useModernContract = MobileVersionFlow::shouldUseModernMobileContract(
+                platform: $platform,
+                version: $version,
+            );
 
-            $dataRes = $this->validateBooking($data, $userId);
+            $dataRes = $this->validateBooking($data, $userId, ! $useModernContract);
 
             $dataBookingToday = $this->bookingRepository->getBookingCustomerOnGoingInDay($userId);
+            $walletBalance = (float) ($dataRes['walletCustomer']->balance ?? 0);
+            $finalPrice = (float) ($dataRes['priceData']['final_price'] ?? 0);
+            $requiredTopupAmount = max(0, $finalPrice - $walletBalance);
 
             // Chỉ cần trả ra data này
             return [
@@ -139,6 +148,9 @@ class BookingService extends BaseService
                 'discount_coupon' => $dataRes['priceData']['discount_coupon'],
                 'final_price' => $dataRes['priceData']['final_price'],
                 'distance' => $dataRes['priceData']['distance'],
+                'wallet_balance' => $walletBalance,
+                'is_balance_enough' => $requiredTopupAmount <= 0,
+                'required_topup_amount' => $requiredTopupAmount,
                 'booking_today' => $dataBookingToday ? [
                     'id' => $dataBookingToday->id,
                     'status' => $dataBookingToday->status,
@@ -797,7 +809,7 @@ class BookingService extends BaseService
      * }
      * @throws ServiceException
      */
-    protected function validateBooking(array $data, $userId): array
+    protected function validateBooking(array $data, $userId, bool $validateBalance = true): array
     {
         $user = $this->userRepository->queryUser()
             ->where('id', $userId)
@@ -870,12 +882,14 @@ class BookingService extends BaseService
                 message: __("booking.payment.wallet_customer_not_found")
             );
         }
-        $this->walletValidator->validateBookingBalance(
-            wallet: $walletCustomer,
-            price: $priceData['price'],
-            priceDistance: $priceData['price_distance'],
-            couponDiscount: $priceData['discount_coupon'] ?? 0,
-        );
+        if ($validateBalance) {
+            $this->walletValidator->validateBookingBalance(
+                wallet: $walletCustomer,
+                price: $priceData['price'],
+                priceDistance: $priceData['price_distance'],
+                couponDiscount: $priceData['discount_coupon'] ?? 0,
+            );
+        }
 
 
         // Trả ra data hợp lệ

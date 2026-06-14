@@ -99,4 +99,5 @@ return [
     'application_not_found' => 'Không tìm thấy ứng đơn phù hợp',
     'reassigned_to_other_ktv' => 'Đơn đã được chuyển cho kĩ thuật viên khác',
     'reassign_success' => 'Chuyển đơn thành công',
+    'chat_closed' => 'Cuộc trò chuyện đã bị khóa vì đơn hàng không còn hoạt động',
 ];

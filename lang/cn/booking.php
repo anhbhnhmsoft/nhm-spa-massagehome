@@ -100,4 +100,5 @@ return [
     'application_not_found' => '未找到合适的接单申请',
     'reassigned_to_other_ktv' => '已重新分配给其他技师',
     'reassign_success' => '重新分配成功',
+    'chat_closed' => '由于订单已不再处于进行中状态，此聊天已被锁定',
 ];

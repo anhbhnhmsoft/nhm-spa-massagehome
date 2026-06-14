@@ -26,6 +26,11 @@ class SupportCategorySeeder extends Seeder
                         Language::ENGLISH->value => 'Check order status, changes, or the latest booking.',
                         Language::CHINESE->value => '检查订单状态、变更或最近的预约。',
                     ],
+                    'message' => [
+                        Language::VIETNAMESE->value => 'Tôi cần hỗ trợ về đơn hàng gần đây.',
+                        Language::ENGLISH->value => 'I need help with my recent booking.',
+                        Language::CHINESE->value => '我需要协助处理最近的订单。',
+                    ],
                 ],
                 [
                     'position' => 2,
@@ -38,6 +43,11 @@ class SupportCategorySeeder extends Seeder
                         Language::VIETNAMESE->value => 'Hỗ trợ nạp tiền, rút tiền, giao dịch hoặc lỗi thanh toán.',
                         Language::ENGLISH->value => 'Handle deposit, withdrawal, transactions, or payment issues.',
                         Language::CHINESE->value => '处理充值、提现、交易或支付问题。',
+                    ],
+                    'message' => [
+                        Language::VIETNAMESE->value => 'Tôi cần hỗ trợ về ví hoặc thanh toán.',
+                        Language::ENGLISH->value => 'I need help with wallet or payment.',
+                        Language::CHINESE->value => '我需要钱包或支付方面的帮助。',
                     ],
                 ],
                 [
@@ -52,6 +62,11 @@ class SupportCategorySeeder extends Seeder
                         Language::ENGLISH->value => 'Help with login, password change, and profile updates.',
                         Language::CHINESE->value => '帮助登录、修改密码和更新资料。',
                     ],
+                    'message' => [
+                        Language::VIETNAMESE->value => 'Tôi cần hỗ trợ về tài khoản hoặc hồ sơ.',
+                        Language::ENGLISH->value => 'I need help with my account or profile.',
+                        Language::CHINESE->value => '我需要账户或资料方面的帮助。',
+                    ],
                 ],
                 [
                     'position' => 4,
@@ -64,6 +79,11 @@ class SupportCategorySeeder extends Seeder
                         Language::VIETNAMESE->value => 'Ghi nhận phản hồi hoặc khiếu nại trong quá trình sử dụng dịch vụ.',
                         Language::ENGLISH->value => 'Record feedback or complaints during service usage.',
                         Language::CHINESE->value => '记录使用服务过程中的反馈或投诉。',
+                    ],
+                    'message' => [
+                        Language::VIETNAMESE->value => 'Tôi muốn phản hồi hoặc khiếu nại về dịch vụ.',
+                        Language::ENGLISH->value => 'I want to give feedback or file a complaint about the service.',
+                        Language::CHINESE->value => '我想反馈或投诉服务问题。',
                     ],
                 ],
                 [
@@ -78,6 +98,11 @@ class SupportCategorySeeder extends Seeder
                         Language::ENGLISH->value => 'Other support issues not covered by the above categories.',
                         Language::CHINESE->value => '上述类别未涵盖的其他支持问题。',
                     ],
+                    'message' => [
+                        Language::VIETNAMESE->value => 'Tôi cần hỗ trợ về vấn đề khác.',
+                        Language::ENGLISH->value => 'I need help with another issue.',
+                        Language::CHINESE->value => '我需要其他问题的帮助。',
+                    ],
                 ]
             ];
 
@@ -87,6 +112,7 @@ class SupportCategorySeeder extends Seeder
                     [
                         'name' => $item['name'],
                         'description' => $item['description'],
+                        'message' => $item['message'],
                         'is_active' => true,
                     ]
                 );
@@ -99,4 +125,3 @@ class SupportCategorySeeder extends Seeder
         }
     }
 }
-

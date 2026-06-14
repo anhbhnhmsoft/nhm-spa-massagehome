@@ -4,7 +4,12 @@ namespace App\Http\Resources\Booking;
 
 use App\Core\Helper;
 use App\Core\Helper\CalculatePrice;
+use App\Enums\ConfigName;
+use App\Enums\Gender;
 use App\Enums\UserRole;
+use App\Services\ConfigService;
+use App\Support\MobileVersionFlow;
+use App\Support\BookingContactPrivacy;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -17,8 +22,16 @@ class BookingItemResource extends JsonResource
         $ktvUserProfile = $ktvUser?->profile;
         $ktvUserReviewApplication = $ktvUser?->reviewApplication;
         $user = $this->user;
-        $userProfile = $this->user->profile;
+        $userProfile = $this->user?->profile;
         $coupon = $this->coupon ?? null;
+        $viewer = $request->user();
+        $discountRate = (float) app(ConfigService::class)->getConfigValue(ConfigName::DISCOUNT_RATE);
+        $platform = $request->attributes->get('app_platform');
+        $version = $request->attributes->get('app_version');
+        $useModernContract = MobileVersionFlow::shouldUseModernMobileContract(
+            platform: $platform,
+            version: $version,
+        );
         $isKtvSelected = in_array((int) $this->status, [
             \App\Enums\BookingStatus::WAITING_KTV_CONFIRM->value,
             \App\Enums\BookingStatus::CONFIRMED->value,
@@ -48,6 +61,32 @@ class BookingItemResource extends JsonResource
             priceDiscount: $priceDiscount,
             priceTransportation: $priceTransportation,
         );
+        $ktvServiceIncome = CalculatePrice::calculatePriceDiscountForKTV($price, $discountRate);
+        $ktvIncomeTotal = $ktvServiceIncome + $priceTransportation;
+        $customerGender = $userProfile?->gender ? Gender::getLabel((int) $userProfile->gender) : null;
+        $canViewCustomerContact = $useModernContract
+            ? BookingContactPrivacy::canViewCustomerContact($this->resource, $viewer)
+            : true;
+        $customerName = $canViewCustomerContact ? $user->name : BookingContactPrivacy::maskCustomerName($user->name);
+        $customerAddress = $canViewCustomerContact ? $this->address : BookingContactPrivacy::maskAddress($this->address);
+        $canChat = $useModernContract
+            ? $canViewCustomerContact && in_array((int) $this->status, [
+                \App\Enums\BookingStatus::CONFIRMED->value,
+                \App\Enums\BookingStatus::ONGOING->value,
+            ], true)
+            : true;
+        $canCall = $useModernContract
+            ? $canViewCustomerContact && in_array((int) $this->status, [
+                \App\Enums\BookingStatus::CONFIRMED->value,
+                \App\Enums\BookingStatus::ONGOING->value,
+            ], true)
+            : true;
+        $canOpenMap = $useModernContract
+            ? $canViewCustomerContact && in_array((int) $this->status, [
+                \App\Enums\BookingStatus::CONFIRMED->value,
+                \App\Enums\BookingStatus::ONGOING->value,
+            ], true)
+            : true;
 
         return [
             'id' => $this->id,
@@ -56,6 +95,7 @@ class BookingItemResource extends JsonResource
                 'name' => $service->name,
                 'image' => $service->image_url ? Helper::getPublicUrl($service->image_url) : null,
             ],
+            'service_category_name' => $service->name,
             'ktv_user' => [
                 'id' => $ktvUser?->id,
                 'name' => $ktvUserReviewApplication->nickname ?? "",
@@ -68,18 +108,20 @@ class BookingItemResource extends JsonResource
             ],
             'user' => [
                 'id' => $user->id,
-                'name' => $user->name,
+                'name' => $customerName,
                 'avatar_url' => $userProfile->avatar_url ? Helper::getPublicUrl($userProfile->avatar_url) : null,
-                'phone' => $user->phone ?? null,
+                'phone' => $canViewCustomerContact ? ($user->phone ?? null) : null,
             ],
-            'address' => $this->address,
-            'lat' => (string)$this->latitude,
-            'lng' => (string)$this->longitude,
+            'customer_gender' => $customerGender,
+            'address' => $customerAddress,
+            'lat' => $canViewCustomerContact ? (string)$this->latitude : null,
+            'lng' => $canViewCustomerContact ? (string)$this->longitude : null,
             'booking_time' => $this->booking_time,
             'start_time' => $this->start_time,
             'end_time' => $this->end_time,
             'note' => $this->note,
             'duration' => $this->duration,
+            'service_duration_total' => (int) $this->duration,
             'status' => $this->status,
             'booking_phase' => $bookingPhase,
             'is_ktv_selected' => $isKtvSelected,
@@ -95,6 +137,12 @@ class BookingItemResource extends JsonResource
             'price_discount' => $priceDiscount,
             'price_transportation' => $priceTransportation,
             'total_price' => $totalPrice,
+            'ktv_service_income' => $ktvServiceIncome,
+            'ktv_income_total' => $ktvIncomeTotal,
+            'is_customer_contact_visible' => $canViewCustomerContact,
+            'can_chat' => $canChat,
+            'can_call' => $canCall,
+            'can_open_map' => $canOpenMap,
             'coupon' => $coupon ? [
                 'id' => $coupon->id,
                 'label' => $coupon->label,

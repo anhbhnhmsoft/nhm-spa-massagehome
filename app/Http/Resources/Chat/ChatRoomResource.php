@@ -26,8 +26,10 @@ class ChatRoomResource extends JsonResource
             'id' => $this->id,
             'partner_id' => $this->partner->id,
             'partner_name' => $this->partner->name,
+            'can_send' => (bool) $this->has_active_booking,
+            'chat_state' => $this->chat_state,
+            'closed_reason' => $this->closed_reason,
         ];
     }
 }
-
 

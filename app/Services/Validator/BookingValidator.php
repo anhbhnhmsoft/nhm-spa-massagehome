@@ -114,87 +114,73 @@ class BookingValidator
             }
             // Kiểm tra xem kỹ thuật viên có làm việc vào ngày này không
             if ($schedule->working_schedule) {
-
-                // 2. Xác định day_key của ngày book (Monday = 2 ... Sunday = 8)
-                $currentDayKey = $startTime->dayOfWeek === 0 ? 8 : $startTime->dayOfWeek + 1;
-
-                // 3. Xác định day_key của ngày HÔM QUA (để check ca đêm vắt sang)
-                $yesterdayKey = $currentDayKey == 2 ? 8 : $currentDayKey - 1;
-
-                // Format lịch làm việc của kỹ thuật viên
                 $schedules = collect($schedule->working_schedule);
-                $todayConfig = $schedules->firstWhere('day_key', $currentDayKey);
-                $yesterdayConfig = $schedules->firstWhere('day_key', $yesterdayKey);
-                $isValidTime = false;
-                $isWorkingToday = false;
+                $hasAnyDayKey = $schedules->contains(function ($item) {
+                    return is_array($item) && array_key_exists('day_key', $item) && !is_null($item['day_key']);
+                });
 
-                // Check trong ngày đặt lịch
-                if ($todayConfig && $todayConfig['active']) {
-                    $isWorkingToday = true;
-                    $start = Carbon::createFromTimeString($todayConfig['start_time']);
-                    $end = Carbon::createFromTimeString($todayConfig['end_time']);
+                // Nếu schedule không có bất kỳ day_key hợp lệ nào
+                // thì chỉ cần is_working = true là đủ, bỏ qua validate theo ngày/giờ.
+                if ($hasAnyDayKey) {
+                    // 2. Xác định day_key của ngày book (Monday = 2 ... Sunday = 8)
+                    $currentDayKey = $startTime->dayOfWeek === 0 ? 8 : $startTime->dayOfWeek + 1;
 
-                    // Lưu ý: $startTime là object Carbon chứa thời gian khách book truyền vào từ request
-                    $booking = Carbon::createFromTimeString($startTime->format('H:i'));
-                    if ($start->lte($end)) {
-                        // Ca làm bình thường trong ngày (VD: 08:00 - 22:00)
-                        // Dùng between() của Carbon sẽ bao gồm cả dấu bằng (>= và <=)
-                        if ($booking->between($start, $end)) {
-                            $isValidTime = true;
-                        }
-                    } else {
-                        // Ca làm xuyên đêm bắt đầu từ hôm nay (VD: 16:00 - 08:00 sáng mai)
-                        // Khách book vào buổi tối hôm nay -> booking phải lớn hơn hoặc bằng giờ bắt đầu
-                        if ($booking->gte($start)) {
-                            $isValidTime = true;
-                        }
-                    }
-                }
+                    // 3. Xác định day_key của ngày HÔM QUA (để check ca đêm vắt sang)
+                    $yesterdayKey = $currentDayKey == 2 ? 8 : $currentDayKey - 1;
 
-                // --- KIỂM TRA CA ĐÊM CỦA NGÀY HÔM QUA (Vắt sang sáng nay) ---
-                // Chỉ kiểm tra nếu hôm nay chưa khớp giờ
-                if (!$isValidTime && $yesterdayConfig && $yesterdayConfig['active']) {
-                    $start = Carbon::createFromTimeString($yesterdayConfig['start_time']);
-                    $end = Carbon::createFromTimeString($yesterdayConfig['end_time']);
-                    // Nếu hôm qua là ca xuyên đêm
-                    if ($start->gt($end)) {
+                    // Format lịch làm việc của kỹ thuật viên
+                    $todayConfig = $schedules->firstWhere('day_key', $currentDayKey);
+                    $yesterdayConfig = $schedules->firstWhere('day_key', $yesterdayKey);
+                    $isValidTime = false;
+                    $isWorkingToday = false;
+
+                    // Check trong ngày đặt lịch
+                    if ($todayConfig && $todayConfig['active']) {
                         $isWorkingToday = true;
-                        // Khách book vào sáng sớm hôm nay -> booking phải nhỏ hơn hoặc bằng giờ kết thúc
-                        if ($booking->lte($end)) {
-                            $isValidTime = true;
+                        $start = Carbon::createFromTimeString($todayConfig['start_time']);
+                        $end = Carbon::createFromTimeString($todayConfig['end_time']);
+
+                        // Lưu ý: $startTime là object Carbon chứa thời gian khách book truyền vào từ request
+                        $booking = Carbon::createFromTimeString($startTime->format('H:i'));
+                        if ($start->lte($end)) {
+                            // Ca làm bình thường trong ngày (VD: 08:00 - 22:00)
+                            // Dùng between() của Carbon sẽ bao gồm cả dấu bằng (>= và <=)
+                            if ($booking->between($start, $end)) {
+                                $isValidTime = true;
+                            }
+                        } else {
+                            // Ca làm xuyên đêm bắt đầu từ hôm nay (VD: 16:00 - 08:00 sáng mai)
+                            // Khách book vào buổi tối hôm nay -> booking phải lớn hơn hoặc bằng giờ bắt đầu
+                            if ($booking->gte($start)) {
+                                $isValidTime = true;
+                            }
+                        }
+                    }
+
+                    // --- KIỂM TRA CA ĐÊM CỦA NGÀY HÔM QUA (Vắt sang sáng nay) ---
+                    // Chỉ kiểm tra nếu hôm nay chưa khớp giờ
+                    if (!$isValidTime && $yesterdayConfig && $yesterdayConfig['active']) {
+                        $start = Carbon::createFromTimeString($yesterdayConfig['start_time']);
+                        $end = Carbon::createFromTimeString($yesterdayConfig['end_time']);
+                        // Nếu hôm qua là ca xuyên đêm
+                        if ($start->gt($end)) {
+                            $isWorkingToday = true;
+                            // Khách book vào sáng sớm hôm nay -> booking phải nhỏ hơn hoặc bằng giờ kết thúc
+                            if ($booking->lte($end)) {
+                                $isValidTime = true;
+                            }
+                        }
+                    }
+
+                    if (!$isValidTime) {
+                        // Phân biệt 2 loại lỗi: Nghỉ làm cả ngày vs Có làm nhưng sai giờ
+                        if (!$isWorkingToday) {
+                            throw new ServiceException(message: __("booking.ktv.not_working"));
+                        } else {
+                            throw new ServiceException(message: __("booking.book_time.not_working"));
                         }
                     }
                 }
-
-                if (!$isValidTime) {
-                    // Phân biệt 2 loại lỗi: Nghỉ làm cả ngày vs Có làm nhưng sai giờ
-                    if (!$isWorkingToday) {
-                        throw new ServiceException(message: __("booking.ktv.not_working"));
-                    } else {
-                        throw new ServiceException(message: __("booking.book_time.not_working"));
-                    }
-                }
-
-//
-//                // Lấy ra ngày trong tuần của thời gian book (1-7)
-//                // Nếu là thứ 8 (0) thì coi như là thứ 8 (8) để hợp với array key KTVConfigSchedules
-//                $dayKey = $startTime->dayOfWeek === 0 ? 8 : $startTime->dayOfWeek + 1;
-//                // Lấy ra cấu hình làm việc của ngày này
-//                $dayConfig = collect($schedule->working_schedule)->firstWhere('day_key', $dayKey);
-//                // Kiểm tra xem kỹ thuật viên có làm việc vào ngày này không
-//                if (!$dayConfig || !$dayConfig['active']) {
-//                    throw new ServiceException(message: __("booking.ktv.not_working"));
-//                }
-//                // Kiểm tra xem thời gian book có nằm trong khoảng làm việc của kỹ thuật viên không
-//                $startTimeSchedule = Carbon::createFromTimeString($dayConfig['start_time']);
-//                $endTimeSchedule = Carbon::createFromTimeString($dayConfig['end_time']);
-//
-//                // Lấy ra thời gian book chỉ gồm giờ phút (không có giây)
-//                $timeOnly = Carbon::createFromTimeString($startTime->copy()->format('H:i'));
-//
-//                if (!$timeOnly->between($startTimeSchedule, $endTimeSchedule)) {
-//                    throw new ServiceException(message: __("booking.book_time.not_working"));
-//                }
             }
         }
 

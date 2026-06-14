@@ -31,3 +31,9 @@ Schedule::command('app:check-expired-deposit-command')
     ->hourly()
     ->withoutOverlapping()
     ->onOneServer();
+
+// reconcile lại trạng thái làm việc của KTV bị kẹt - chạy mỗi 15 phút
+Schedule::command('app:clear-ktv-working-status')
+    ->everyFifteenMinutes()
+    ->withoutOverlapping()
+    ->onOneServer();

@@ -25,7 +25,9 @@ class ChatRoomRepository extends BaseRepository
                 'latestMessage',
                 'customer',
                 'customer.profile',
+                'latestRelatedBooking',
             ])
+            ->withExists('activeBookings as has_active_booking')
             ->addSelect([
                 'last_message_at' => Message::select('created_at')
                     ->whereColumn('room_id', 'chat_rooms.id')
@@ -60,9 +62,17 @@ class ChatRoomRepository extends BaseRepository
             }
         }
 
-
-        if (isset($filters['ktv_id'])) {
-            $query->where('ktv_id', $filters['ktv_id']);
+        if (!empty($filters['active_booking_only'])) {
+            $query->whereExists(function ($subQuery) {
+                $subQuery->selectRaw('1')
+                    ->from('service_bookings')
+                    ->whereColumn('service_bookings.ktv_user_id', 'chat_rooms.ktv_id')
+                    ->whereColumn('service_bookings.user_id', 'chat_rooms.customer_id')
+                    ->whereIn('service_bookings.status', [
+                        BookingStatus::CONFIRMED->value,
+                        BookingStatus::ONGOING->value,
+                    ]);
+            });
         }
 
         if (isset($filters['id'])) {
@@ -86,5 +96,4 @@ class ChatRoomRepository extends BaseRepository
         }
     }
 }
-
 

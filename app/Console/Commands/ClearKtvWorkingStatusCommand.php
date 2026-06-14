@@ -13,9 +13,9 @@ use Symfony\Component\Console\Command\Command as CommandAlias;
 
 class ClearKtvWorkingStatusCommand extends Command
 {
-    protected $signature = 'app:clear-ktv-working-status {--hours=24 : So gio lookback de tim booking da ket thuc}';
+    protected $signature = 'app:clear-ktv-working-status {--hours=24 : So gio toi thieu ke tu lan cap nhat schedule cuoi cung}';
 
-    protected $description = 'Tu dong doi is_working ve true cho cac KTV dang bi ket false nhung khong con booking ongoing';
+    protected $description = 'Tu dong doi is_working ve true cho cac KTV dang bi ket false, khong con booking ongoing, va schedule da cu hon nguong quy dinh';
 
     public function __construct(
         protected UserRepository $userRepository,
@@ -30,7 +30,7 @@ class ClearKtvWorkingStatusCommand extends Command
         $hours = max((int) $this->option('hours'), 1);
         $cutoffTime = Carbon::now()->subHours($hours);
 
-        $this->info("Bat dau reconcile is_working cho KTV. Lookback: {$hours} gio.");
+        $this->info("Bat dau reconcile is_working cho KTV. Threshold: {$hours} gio.");
 
         $stuckSchedules = $this->userKtvScheduleRepository->query()
             ->with('technician')
@@ -63,30 +63,10 @@ class ClearKtvWorkingStatusCommand extends Command
                 continue;
             }
 
-            $hasRecentlyFinishedOrCancelledBooking = $this->bookingRepository->query()
-                ->where('ktv_user_id', $ktvId)
-                ->whereNotNull('start_time')
-                ->where(function ($query) use ($cutoffTime) {
-                    $query->where(function ($subQuery) use ($cutoffTime) {
-                        $subQuery->whereIn('status', [
-                            BookingStatus::COMPLETED->value,
-                            BookingStatus::CANCELED->value,
-                            BookingStatus::PAYMENT_FAILED->value,
-                        ])
-                            ->where(function ($timeQuery) use ($cutoffTime) {
-                                $timeQuery->where('updated_at', '>=', $cutoffTime)
-                                    ->orWhere('end_time', '>=', $cutoffTime);
-                            });
-                    })->orWhere(function ($subQuery) use ($cutoffTime) {
-                        $subQuery->where('status', BookingStatus::WAITING_CANCEL->value)
-                            ->where('updated_at', '>=', $cutoffTime);
-                    });
-                })
-                ->exists();
-
-            if (!$hasRecentlyFinishedOrCancelledBooking) {
+            $scheduleUpdatedAt = Carbon::make($schedule->updated_at);
+            if (!$scheduleUpdatedAt || $scheduleUpdatedAt->greaterThan($cutoffTime)) {
                 $skippedCount++;
-                $this->line("Skip KTV {$ktvId}: khong co dau hieu booking da ket thuc/cancel gan day.");
+                $this->line("Skip KTV {$ktvId}: schedule moi cap nhat gan day ({$schedule->updated_at}).");
                 continue;
             }
 

@@ -15,6 +15,7 @@ class SupportCategory extends Model
     protected $fillable = [
         'name',
         'description',
+        'message',
         'position',
         'is_active',
     ];
@@ -28,5 +29,6 @@ class SupportCategory extends Model
     protected array $translatable = [
         'name',
         'description',
+        'message',
     ];
 }

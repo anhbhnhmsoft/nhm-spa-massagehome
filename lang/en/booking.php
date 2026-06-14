@@ -101,4 +101,5 @@ return [
     'reassigned_to_other_ktv' => 'Reassigned to other technician',
     'reassign_success' => 'Reassign success',
     'reassigned_to_other_ktv' => 'Reassigned to other technician',
+    'chat_closed' => 'This chat is locked because the booking is no longer active',
 ];

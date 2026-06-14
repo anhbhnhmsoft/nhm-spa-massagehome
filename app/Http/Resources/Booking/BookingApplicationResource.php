@@ -27,7 +27,6 @@ class BookingApplicationResource extends JsonResource
             'ktv' => [
                 'id' => $ktv?->id,
                 'name' => $reviewApplication?->nickname ?? $ktv?->name,
-                'phone' => $ktv?->phone,
                 'avatar_url' => $profile?->avatar_url ? Helper::getPublicUrl($profile->avatar_url) : null,
                 'experience' => $reviewApplication?->experience,
                 'bio' => $reviewApplication?->bio,

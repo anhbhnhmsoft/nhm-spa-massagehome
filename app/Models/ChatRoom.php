@@ -13,6 +13,12 @@ class ChatRoom extends Model
         'ktv_id',
     ];
 
+    protected $appends = [
+        'has_active_booking',
+        'chat_state',
+        'closed_reason',
+    ];
+
     protected $casts = [
         'id' => 'string',
         'customer_id' => 'string',
@@ -39,7 +45,46 @@ class ChatRoom extends Model
     {
         return $this->hasOne(Message::class, 'room_id')->latestOfMany();
     }
-}
 
+    public function activeBookings()
+    {
+        return $this->hasMany(ServiceBooking::class, 'ktv_user_id', 'ktv_id')
+            ->whereColumn('service_bookings.user_id', 'chat_rooms.customer_id')
+            ->whereIn('service_bookings.status', [
+                \App\Enums\BookingStatus::CONFIRMED->value,
+                \App\Enums\BookingStatus::ONGOING->value,
+            ]);
+    }
+
+    public function latestRelatedBooking()
+    {
+        return $this->hasOne(ServiceBooking::class, 'ktv_user_id', 'ktv_id')
+            ->whereColumn('service_bookings.user_id', 'chat_rooms.customer_id')
+            ->latestOfMany();
+    }
+
+    public function getHasActiveBookingAttribute(): bool
+    {
+        if (array_key_exists('has_active_booking', $this->attributes)) {
+            return (bool) $this->attributes['has_active_booking'];
+        }
+
+        if ($this->relationLoaded('activeBookings')) {
+            return $this->activeBookings->isNotEmpty();
+        }
+
+        return $this->activeBookings()->exists();
+    }
+
+    public function getChatStateAttribute(): string
+    {
+        return $this->has_active_booking ? 'active' : 'closed';
+    }
+
+    public function getClosedReasonAttribute(): ?string
+    {
+        return $this->has_active_booking ? null : 'booking_completed';
+    }
+}
 
 

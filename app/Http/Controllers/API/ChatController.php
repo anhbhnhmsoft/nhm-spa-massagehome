@@ -9,6 +9,7 @@ use App\Http\Resources\Chat\ChatKTVConversationResource;
 use App\Http\Resources\Chat\ChatRoomResource;
 use App\Http\Resources\Chat\MessageResource;
 use App\Services\ChatService;
+use App\Support\MobileVersionFlow;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -138,6 +139,12 @@ class ChatController extends BaseController
         $dto = $request->getFilterOptions();
         $dto->addFilter('ktv_id', $request->user()->id);
         $dto->addFilter('unread_count', true);
+        if (MobileVersionFlow::shouldUseModernMobileContract(
+            platform: $request->attributes->get('app_platform'),
+            version: $request->attributes->get('app_version'),
+        )) {
+            $dto->addFilter('active_booking_only', true);
+        }
         $dto->setSortBy('last_message_at');
         $dto->setDirection('desc');
         $result = $this->chatService->chatRoomConversationPagination($dto);
@@ -175,5 +182,3 @@ class ChatController extends BaseController
         );
     }
 }
-
-

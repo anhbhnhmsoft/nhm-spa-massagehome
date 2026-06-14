@@ -25,6 +25,7 @@ use App\Services\DashboardService;
 use App\Services\ServiceService;
 use App\Services\UserFileService;
 use App\Services\UserService;
+use App\Enums\BookingApplicationStatus;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -91,7 +92,8 @@ class KTVController extends BaseController
     public function listBooking(ListRequest $request): JsonResponse
     {
         $dto = $request->getFilterOptions();
-        $dto->addFilter('ktv_user_id', $request->user()->id);
+        $ktvId = $request->user()->id;
+        $dto->addFilter('ktv_user_id', $ktvId);
         $address = $request->user()->primaryAddress;
         if ($address && $address->latitude && $address->longitude) {
             $dto->addFilter('include_available_open_for_application', [
@@ -109,6 +111,16 @@ class KTVController extends BaseController
             );
         }
         $data = $result->getData();
+        $data->loadExists(['applications as has_applied' => function ($query) use ($ktvId) {
+            $query->where('ktv_id', $ktvId)
+                ->whereIn('status', [
+                    BookingApplicationStatus::APPLIED->value,
+                    BookingApplicationStatus::SELECTED->value,
+                ]);
+        }]);
+        $data->load(['applications' => function ($query) use ($ktvId) {
+            $query->where('ktv_id', $ktvId);
+        }]);
         return $this->sendSuccess(
             data: BookingItemResource::collection($data)->response()->getData(),
         );

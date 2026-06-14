@@ -73,6 +73,23 @@ class SupportCategoryForm
                                     ->rows(4)
                                     ->columnSpan(1),
                             ]),
+                        Grid::make()
+                            ->columnSpanFull()
+                            ->columns(3)
+                            ->schema([
+                                Textarea::make('message.vi')
+                                    ->label(__('admin.common.form.message_vi'))
+                                    ->rows(3)
+                                    ->columnSpan(1),
+                                Textarea::make('message.en')
+                                    ->label(__('admin.common.form.message_en'))
+                                    ->rows(3)
+                                    ->columnSpan(1),
+                                Textarea::make('message.cn')
+                                    ->label(__('admin.common.form.message_cn'))
+                                    ->rows(3)
+                                    ->columnSpan(1),
+                            ]),
                     ]),
             ]);
     }
