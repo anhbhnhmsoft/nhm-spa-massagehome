@@ -271,10 +271,23 @@ class BookingService extends BaseService
             }
 
             $previousStatus = (int) $booking->status;
-
-            $booking->status = BookingStatus::CANCELED->value;
             $booking->reason_cancel = $reason;
             $booking->cancel_by = $userCurrent->role;
+
+            $shouldRequireAdminApproval = $userCurrent->role === UserRole::CUSTOMER->value
+                && $previousStatus === BookingStatus::CONFIRMED->value;
+
+            if ($shouldRequireAdminApproval) {
+                $booking->status = BookingStatus::WAITING_CANCEL->value;
+                $booking->save();
+
+                return ServiceReturn::success(
+                    data: $booking,
+                    message: __("booking.waiting_cancel")
+                );
+            }
+
+            $booking->status = BookingStatus::CANCELED->value;
             $booking->ktv_confirm_deadline_at = null;
             $booking->application_opened_at = null;
             $booking->application_open_reason = null;

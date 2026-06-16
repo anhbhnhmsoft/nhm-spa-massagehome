@@ -3,20 +3,13 @@
 namespace App\Services;
 
 use App\Core\Helper;
-use App\Core\LogHelper;
 use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
-use App\Enums\BookingStatus;
-use App\Enums\ConfigName;
-use App\Enums\NotificationType;
 use App\Enums\PaymentType;
-use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserRole;
 use App\Enums\WalletTransactionStatus;
 use App\Enums\WalletTransactionType;
-use App\Jobs\SendNotificationJob;
-use App\Models\User;
 use App\Models\Wallet;
 
 use App\Models\WalletTransaction;
@@ -25,7 +18,6 @@ use App\Repositories\UserRepository;
 use App\Repositories\WalletRepository;
 use App\Repositories\WalletTransactionRepository;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\DB;
 
 class WalletService extends BaseService
 {

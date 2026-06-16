@@ -458,6 +458,8 @@ return
                 'status' => 'Trạng thái',
                 'note_address' => 'Ghi chú địa chỉ',
                 'reason_cancel' => 'Lý do hủy',
+                'customer_paid_total' => 'Khách đã thanh toán',
+                'pay_to_ktv' => 'Trả cho KTV',
                 'amount_pay_to_ktv' => 'Số tiền trả cho KTV',
                 'amount_pay_back_to_client' => 'Số tiền trả lại khách hàng',
                 'cancel_by' => 'Bên hủy',

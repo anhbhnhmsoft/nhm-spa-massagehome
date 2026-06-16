@@ -456,6 +456,8 @@ return
                 'status' => 'Status',
                 'note_address' => 'Address Note',
                 'reason_cancel' => 'Cancel Reason',
+                'customer_paid_total' => 'Customer Paid Total',
+                'pay_to_ktv' => 'Pay to KTV',
                 'amount_pay_to_ktv' => 'Amount Pay to KTV',
                 'amount_pay_back_to_client' => 'Amount Pay Back to Client',
                 'cancel_by' => 'Cancelled By',

@@ -270,7 +270,10 @@ class BookingController extends BaseController
                 );
             }
 
-            $status = BookingStatus::CANCELED;
+            $resultData = $result->getData();
+            $status = ($resultData && isset($resultData->status))
+                ? BookingStatus::from((int) $resultData->status)
+                : BookingStatus::CANCELED;
 
             return $this->sendSuccess(
                 data: [

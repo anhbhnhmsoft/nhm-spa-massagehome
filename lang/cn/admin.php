@@ -455,6 +455,8 @@ return
                 'status' => '状态',
                 'note_address' => '地址备注',
                 'reason_cancel' => '取消原因',
+                'customer_paid_total' => '客户已支付金额',
+                'pay_to_ktv' => '支付给技师',
                 'amount_pay_to_ktv' => '支付给技师金额',
                 'amount_pay_back_to_client' => '退还客户金额',
                 'cancel_by' => '取消者',

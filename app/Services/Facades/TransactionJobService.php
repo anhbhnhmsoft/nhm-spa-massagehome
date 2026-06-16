@@ -553,84 +553,28 @@ class TransactionJobService extends BaseService
         // Lấy tỷ giá đổi tiền
         $exchangeRatePoint = $transactionOfCustomer->exchange_rate_point;
         $exchangeRatePointTransport = $transactionTransportOfCustomer->exchange_rate_point;
+        $customerPaidTotal = (float) $transactionOfCustomer->point_amount + (float) $transactionTransportOfCustomer->point_amount;
 
         // Số tiền hoàn tiền cho khách hàng
-        $amountPayBackToClient = (int) ($data['amount_pay_back_to_client'] ?? 0);
+        $amountPayBackToClient = isset($data['amount_pay_back_to_client'])
+            ? max((float) $data['amount_pay_back_to_client'], 0)
+            : $customerPaidTotal;
+        $amountPayBackToClient = min($amountPayBackToClient, $customerPaidTotal);
         if ($amountPayBackToClient > 0) {
-                    // tạo transaction hoàn số tiền dịch vụ cho khách hàng
-                    $this->walletTransactionRepository->create([
-                        'wallet_id' => $clientWallet->id,
-                        'type' => WalletTransactionType::REFUND->value,
-                        'point_amount' => $amountPayBackToClient * $exchangeRatePoint,
-                        'money_amount' => $amountPayBackToClient,
-                        'exchange_rate_point' => $exchangeRatePoint,
-                        'status' => WalletTransactionStatus::COMPLETED->value,
-                        'transaction_code' => Helper::createDescPayment(PaymentType::REFUND),
-                        'foreign_key' => $booking->id,
-                        'description' => "Hoàn tiền booking #{$booking->id} - lý do: {$booking->reason_cancel}",
-                        'expired_at' => now(),
-                    ]);
-                    $clientWallet->balance += $amountPayBackToClient;
-        } else {
-                    // tạo transaction hoàn số tiền dịch vụ cho khách hàng và phí di chuyển
-                    $this->walletTransactionRepository->create([
-                        'wallet_id' => $clientWallet->id,
-                        'type' => WalletTransactionType::REFUND->value,
-                        'point_amount' => $transactionOfCustomer->point_amount * $exchangeRatePoint,
-                        'money_amount' => $transactionOfCustomer->money_amount,
-                        'exchange_rate_point' => $exchangeRatePoint,
-                        'status' => WalletTransactionStatus::COMPLETED->value,
-                        'transaction_code' => Helper::createDescPayment(PaymentType::REFUND),
-                        'foreign_key' => $booking->id,
-                        'description' => "Hoàn tiền booking #{$booking->id} - lý do: {$booking->reason_cancel}",
-                        'expired_at' => now(),
-                    ]);
-                    // hoàn tiền phí di chuyển
-                    $this->walletTransactionRepository->create([
-                        'wallet_id' => $clientWallet->id,
-                        'type' => WalletTransactionType::REFUND_CUSTOMER_TRANSPORT->value,
-                        'point_amount' => $transactionTransportOfCustomer->point_amount * $exchangeRatePointTransport,
-                        'money_amount' => $transactionTransportOfCustomer->money_amount,
-                        'exchange_rate_point' => $exchangeRatePointTransport,
-                        'status' => WalletTransactionStatus::COMPLETED->value,
-                        'transaction_code' => Helper::createDescPayment(PaymentType::REFUND),
-                        'foreign_key' => $booking->id,
-                        'description' => "Hoàn tiền dịch vụ di chuyển  #{$booking->id} - lý do: {$booking->reason_cancel}",
-                        'expired_at' => now(),
-                    ]);
-
-                    $clientWallet->balance += $transactionOfCustomer->point_amount + $transactionTransportOfCustomer->point_amount;
-
-                    // Kiểm tra có giảm giá cho khách hàng không
-                    if (($booking->price_discount ?? 0) > 0) {
-                        // Lấy transaction giảm giá cho khách hàng
-                        $transactionDiscountOfCustomer = $this->walletTransactionRepository->query()
-                            ->where("foreign_key", $booking->id)
-                            ->where('type', WalletTransactionType::SUBTRACT_MONEY_DISCOUNT_SERVICE->value)
-                            ->first();
-                        if (!$transactionDiscountOfCustomer) {
-                            throw new ServiceException(
-                                message: __("error.transaction_not_found")
-                            );
-                        }
-                        // Lấy tỷ giá đổi điểm cho dịch vụ di chuyển
-                        $exchangeRatePointDiscount = $transactionDiscountOfCustomer->exchange_rate_point;
-
-                        // Trừ tiền giảm giá cho khách hàng
-                        $this->walletTransactionRepository->create([
-                            'wallet_id' => $clientWallet->id,
-                            'type' => WalletTransactionType::REFUND_MONEY_DISCOUNT_SERVICE->value,
-                            'point_amount' => $transactionDiscountOfCustomer->point_amount * $exchangeRatePointDiscount,
-                            'money_amount' => $transactionDiscountOfCustomer->money_amount,
-                            'exchange_rate_point' => $exchangeRatePointDiscount,
-                            'status' => WalletTransactionStatus::COMPLETED->value,
-                            'transaction_code' => Helper::createDescPayment(PaymentType::REFUND),
-                            'foreign_key' => $booking->id,
-                            'description' => "Thu hồi tiền giảm giá #{$booking->id} - lý do: {$booking->reason_cancel}",
-                            'expired_at' => now(),
-                        ]);
-                        $clientWallet->balance -= $transactionDiscountOfCustomer->point_amount;
-                    }
+            // tạo transaction hoàn tiền tổng cho khách hàng
+            $this->walletTransactionRepository->create([
+                'wallet_id' => $clientWallet->id,
+                'type' => WalletTransactionType::REFUND->value,
+                'point_amount' => $amountPayBackToClient,
+                'money_amount' => $amountPayBackToClient * $exchangeRatePoint,
+                'exchange_rate_point' => $exchangeRatePoint,
+                'status' => WalletTransactionStatus::COMPLETED->value,
+                'transaction_code' => Helper::createDescPayment(PaymentType::REFUND),
+                'foreign_key' => $booking->id,
+                'description' => "Hoàn tiền booking #{$booking->id} - lý do: {$booking->reason_cancel}",
+                'expired_at' => now(),
+            ]);
+            $clientWallet->balance += $amountPayBackToClient;
         }
         $clientWallet->save();
 
