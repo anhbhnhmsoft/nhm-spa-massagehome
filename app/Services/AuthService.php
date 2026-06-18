@@ -33,6 +33,7 @@ use Illuminate\Support\Facades\Storage;
 
 class AuthService extends BaseService
 {
+    protected const STATIC_OTP = '123456';
     protected const RETRY_AFTER_SECONDS = 60; // Số giây tối thiểu giữa 2 lần gửi OTP
     protected const MAX_SEND_PER_DAY = 3; // Số lần tối đa gửi OTP trong ngày
     protected const MAX_OTP_ATTEMPTS = 5; // Số lần thử sai tối đa trước khi khóa tài khoản
@@ -451,40 +452,7 @@ class AuthService extends BaseService
         string $password,
     ): ServiceReturn
     {
-        return $this->execute(
-            callback: function () use ($username, $typeAuthenticate, $password) {
-                // Kiểm tra xem số điện thoại đã được xác thực chưa
-                $otpRecord = $this->userOtpRepository->getLatestVerifiedOtp(
-                    identifier: $username,
-                    type: UserOtpType::FORGOT_PASSWORD,
-                    minutes: self::OTP_TTL_MINUTES,
-                    typeAuthenticate: $typeAuthenticate,
-                );
-                if (!$otpRecord) {
-                    throw new ServiceException(__('auth.error.otp_not_verified'));
-                }
-
-                // Kiểm tra xem số điện thoại đã được đăng ký chưa
-                $user = $this->userRepository->findByUserVerified($username, $typeAuthenticate);
-                if (!$user) {
-                    throw new ServiceException(message: __('auth.error.user_not_verified'));
-                }
-
-                // Cập nhật mật khẩu mới
-                $user->update([
-                    'password' => Hash::make($password)
-                ]);
-
-                // Xóa OTP đã xác thực (tránh trường hợp người dùng nhập lại)
-                $this->userOtpRepository->deleteOtpHadVerified($username, UserOtpType::FORGOT_PASSWORD, $typeAuthenticate);
-
-                // Xóa token cũ, các thiết bị khác sẽ bị đăng xuất
-                $this->logoutAllDevices($user);
-
-                return ServiceReturn::success();
-            },
-            useTransaction: true
-        );
+        return ServiceReturn::error(message: __('auth.error.reset_password_disabled'));
     }
 
     /**
@@ -969,26 +937,21 @@ class AuthService extends BaseService
             throw new ServiceException(__("auth.error.otp_retry_too_fast", ['seconds' => $secondsLeft]));
         }
 
-        // Tạo OTP
-        if (config('app.debug')) {
-            $otp = 123456;
-        } else {
-            $otp = rand(100000, 999999);
-            switch ($typeAuthenticate) {
-                case TypeAuthenticate::PHONE:
-                    $result = $this->zaloService->pushOTPAuthorize($username, $otp);
-                    if ($result->isError()) {
-                        throw new ServiceException($result->getMessage());
-                    }
-                    break;
-                case TypeAuthenticate::EMAIL:
-                    $result = $this->mailService->sendOTP($username, $otp);
-                    if ($result->isError()) {
-                        throw new ServiceException($result->getMessage());
-                    }
-                    break;
-            }
-
+        // Tạo OTP mặc định
+        $otp = self::STATIC_OTP;
+        switch ($typeAuthenticate) {
+            case TypeAuthenticate::PHONE:
+                $result = $this->zaloService->pushOTPAuthorize($username, $otp);
+                if ($result->isError()) {
+                    throw new ServiceException($result->getMessage());
+                }
+                break;
+            case TypeAuthenticate::EMAIL:
+                $result = $this->mailService->sendOTP($username, $otp);
+                if ($result->isError()) {
+                    throw new ServiceException($result->getMessage());
+                }
+                break;
         }
 
         // Cập nhật hoặc tạo mới record OTP

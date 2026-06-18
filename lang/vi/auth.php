@@ -3,7 +3,7 @@
 
 return [
     'success' => [
-        'otp_register' => 'Mã OTP đã được gửi. Hãy nhập mã xác thực.',
+        'otp_register' => 'Mã OTP đăng ký của bạn là 123456.',
         'verify_register' => 'Số điện thoại đã được xác thực.',
         'register' => 'Tài khoản đã được đăng ký.',
         'login' => 'Bạn đã đăng nhập thành công.',
@@ -39,6 +39,7 @@ return [
         'otp_max_attempts_exceeded' => 'Bạn đã nhập sai OTP quá nhiều lần. Vui lòng gửi lại mã OTP',
         'otp_not_verified' => 'OTP chưa được xác thực.',
         'otp_incorrect' => 'OTP không đúng. Bạn còn :remaining lần thử.',
+        'reset_password_disabled' => 'Chức năng đổi mật khẩu hiện đang tạm khóa.',
     ],
 
     'admin' => [
@@ -64,7 +65,7 @@ return [
         'otp' => [
             'subject' => 'Mã OTP xác thực',
             'greeting' => 'Chào bạn,',
-            'otp_message' => 'Vui lòng sử dụng mã dưới đây để xác thực.',
+            'otp_message' => 'Mã OTP đăng ký của bạn là 123456.',
             'warning' => 'Nếu bạn không yêu cầu mã này, vui lòng bỏ qua email.',
             'thanks' => 'Cảm ơn bạn!',
         ],

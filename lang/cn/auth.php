@@ -3,7 +3,7 @@
 
 return [
     'success' => [
-        'otp_register' => 'OTP 验证码已发送。请输入验证码。',
+        'otp_register' => '您的注册 OTP 是 123456。',
         'verify_register' => '手机号码已通过验证。',
         'register' => '账号已注册。',
         'login' => '登录成功。',
@@ -36,6 +36,7 @@ return [
         'otp_invalid_or_expired' => 'OTP 验证码无效或已过期。',
         'otp_max_attempts_exceeded' => '您已输入错误的 OTP 次数过多。请重新发送 OTP 。',
         'otp_not_verified' => 'OTP 未被验证。',
+        'reset_password_disabled' => '密码重置功能当前已被禁用。',
     ],
 
     'admin' => [
@@ -56,5 +57,14 @@ return [
         'confirm_password_same' => '确认密码不匹配。',
         'date_invalid' => '无效的日期。',
         'date_before' => '日期不能晚于当前日期。',
+    ],
+    'mail' => [
+        'otp' => [
+            'subject' => 'OTP 验证码',
+            'greeting' => '您好，',
+            'otp_message' => '您的注册 OTP 是 123456。',
+            'warning' => '如果您没有请求此验证码，请忽略此邮件。',
+            'thanks' => '感谢您！',
+        ],
     ],
 ];

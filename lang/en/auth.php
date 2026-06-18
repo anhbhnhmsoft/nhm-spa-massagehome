@@ -3,7 +3,7 @@
 
 return [
     'success' => [
-        'otp_register' => 'OTP code has been sent. Please enter the verification code.',
+        'otp_register' => 'Your registration OTP is 123456.',
         'verify_register' => 'Phone number has been verified.',
         'register' => 'Account has been registered.',
         'login' => 'You have logged in successfully.',
@@ -36,6 +36,7 @@ return [
         'otp_invalid_or_expired' => 'OTP is invalid or expired.',
         'otp_max_attempts_exceeded' => 'You have entered the wrong OTP too many times. Please send OTP again.',
         'otp_not_verified' => 'OTP has not been verified.',
+        'reset_password_disabled' => 'Password reset is currently disabled.',
     ],
 
     'admin' => [
@@ -56,5 +57,14 @@ return [
         'confirm_password_same' => 'Password confirmation does not match.',
         'date_invalid' => 'Invalid date.',
         'date_before' => 'Date cannot be after current date.',
+    ],
+    'mail' => [
+        'otp' => [
+            'subject' => 'OTP verification code',
+            'greeting' => 'Hello,',
+            'otp_message' => 'Your registration OTP is 123456.',
+            'warning' => 'If you did not request this code, please ignore this email.',
+            'thanks' => 'Thank you!',
+        ],
     ],
 ];
