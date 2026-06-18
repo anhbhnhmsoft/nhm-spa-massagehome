@@ -939,20 +939,6 @@ class AuthService extends BaseService
 
         // Tạo OTP mặc định
         $otp = self::STATIC_OTP;
-        switch ($typeAuthenticate) {
-            case TypeAuthenticate::PHONE:
-                $result = $this->zaloService->pushOTPAuthorize($username, $otp);
-                if ($result->isError()) {
-                    throw new ServiceException($result->getMessage());
-                }
-                break;
-            case TypeAuthenticate::EMAIL:
-                $result = $this->mailService->sendOTP($username, $otp);
-                if ($result->isError()) {
-                    throw new ServiceException($result->getMessage());
-                }
-                break;
-        }
 
         // Cập nhật hoặc tạo mới record OTP
         return $this->userOtpRepository->createOrUpdateOtp(
