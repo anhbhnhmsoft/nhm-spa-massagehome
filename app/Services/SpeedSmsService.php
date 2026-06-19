@@ -14,6 +14,7 @@ class SpeedSmsService extends BaseService
 {
     private const ROOT_URL = 'https://api.speedsms.vn/index.php';
     private const SMS_TYPE_CSKH = 2;
+    private const RESPONSE_STATUS_SUCCESS = 'success';
 
     protected bool $isBooted = false;
 
@@ -47,7 +48,7 @@ class SpeedSmsService extends BaseService
 
             $data = $response->json();
 
-            if (!$response->successful()) {
+            if (!$this->isSuccessfulResponse($response->successful(), $data)) {
                 LogHelper::error('SpeedSmsService::getUserInfo failed', null, [
                     'status' => $response->status(),
                     'response' => $data,
@@ -106,13 +107,15 @@ class SpeedSmsService extends BaseService
                 'sender' => $payload['sender'],
             ]);
 
+            $this->logUserInfoSnapshot();
+
             $response = Http::withBasicAuth($this->configs['token'], 'x')
                 ->acceptJson()
                 ->post(self::ROOT_URL . '/sms/send', $payload);
 
             $data = $response->json();
 
-            if (!$response->successful() || isset($data['status']) && (int) $data['status'] < 0) {
+            if (!$this->isSuccessfulResponse($response->successful(), $data)) {
                 LogHelper::error('SpeedSmsService::sendSms failed', null, [
                     'payload' => $payload,
                     'response' => $data,
@@ -157,7 +160,7 @@ class SpeedSmsService extends BaseService
 
             $data = $response->json();
 
-            if (!$response->successful() || isset($data['status']) && (int) $data['status'] < 0) {
+            if (!$this->isSuccessfulResponse($response->successful(), $data)) {
                 LogHelper::error('SpeedSmsService::createPin failed', null, [
                     'payload' => $payload,
                     'response' => $data,
@@ -202,7 +205,7 @@ class SpeedSmsService extends BaseService
 
             $data = $response->json();
 
-            if (!$response->successful() || isset($data['status']) && (int) $data['status'] < 0) {
+            if (!$this->isSuccessfulResponse($response->successful(), $data)) {
                 LogHelper::error('SpeedSmsService::verifyPin failed', null, [
                     'payload' => $payload,
                     'response' => $data,
@@ -254,5 +257,40 @@ class SpeedSmsService extends BaseService
             UserOtpType::FORGOT_PASSWORD => __('auth.sms.forgot_password_otp_message', ['otp' => $otp]),
             default => __('auth.sms.otp_message', ['otp' => $otp]),
         };
+    }
+
+    protected function isSuccessfulResponse(bool $httpSuccessful, mixed $data): bool
+    {
+        if (!$httpSuccessful || !is_array($data)) {
+            return false;
+        }
+
+        return strtolower((string) ($data['status'] ?? '')) === self::RESPONSE_STATUS_SUCCESS;
+    }
+
+    protected function logUserInfoSnapshot(): void
+    {
+        try {
+            $response = Http::withBasicAuth($this->configs['token'], 'x')
+                ->acceptJson()
+                ->get(self::ROOT_URL . '/user/info');
+
+            $data = $response->json();
+
+            if ($this->isSuccessfulResponse($response->successful(), $data)) {
+                LogHelper::debug('SpeedSmsService::userInfo success', [
+                    'status' => $response->status(),
+                    'response' => $data,
+                ]);
+                return;
+            }
+
+            LogHelper::error('SpeedSmsService::userInfo failed', null, [
+                'status' => $response->status(),
+                'response' => $data,
+            ]);
+        } catch (\Throwable $exception) {
+            LogHelper::error('SpeedSmsService::userInfo exception', $exception);
+        }
     }
 }
