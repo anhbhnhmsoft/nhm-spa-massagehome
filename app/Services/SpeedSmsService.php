@@ -102,7 +102,6 @@ class SpeedSmsService extends BaseService
                 'to' => array_values($to),
                 'content' => $content,
                 'sms_type' => $smsType ?: self::SMS_TYPE_NOTIFY,
-                'sender' => $finalSender,
             ];
 
             if ($this->requiresSender($payload['sms_type'])) {
@@ -114,7 +113,6 @@ class SpeedSmsService extends BaseService
                     throw new ServiceException(__('error.speedsms_sender_required'));
                 }
 
-                $payload['sender'] = $finalSender;
             }
 
             LogHelper::debug('SpeedSmsService::sendSms request', [
@@ -122,7 +120,6 @@ class SpeedSmsService extends BaseService
                 'to' => $payload['to'],
                 'content' => $payload['content'],
                 'sms_type' => $payload['sms_type'],
-                'sender' => $payload['sender'] ?? null,
             ]);
 
             $this->logUserInfoSnapshot();
