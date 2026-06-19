@@ -1,0 +1,192 @@
+<?php
+
+namespace App\Services;
+
+use App\Core\Helper;
+use App\Core\LogHelper;
+use App\Core\Service\BaseService;
+use App\Core\Service\ServiceException;
+use App\Core\Service\ServiceReturn;
+use App\Enums\UserOtpType;
+use Illuminate\Support\Facades\Http;
+
+class SpeedSmsService extends BaseService
+{
+    private const ROOT_URL = 'https://api.speedsms.vn/index.php';
+    private const SMS_TYPE_CSKH = 2;
+
+    protected bool $isBooted = false;
+
+    /**
+     * @var array{
+     *     token: string|null,
+     *     sender: string|null,
+     *     sms_type: int,
+     *     app_id: string|null,
+     * }
+     */
+    protected array $configs = [];
+
+    public function __construct()
+    {
+        parent::__construct();
+    }
+
+    public function getUserInfo(): ServiceReturn
+    {
+        return $this->execute(function () {
+            $this->boot();
+
+            $response = Http::withBasicAuth($this->configs['token'], 'x')
+                ->acceptJson()
+                ->get(self::ROOT_URL . '/user/info');
+
+            $data = $response->json();
+
+            if (!$response->successful()) {
+                throw new ServiceException($data['message'] ?? __('error.could_not_send_otp'));
+            }
+
+            return $data;
+        });
+    }
+
+    public function sendOtp(string $phoneNumber, string $otp, ?UserOtpType $type = null): ServiceReturn
+    {
+        $formattedPhone = Helper::formatPhone($phoneNumber);
+
+        if (!Helper::isValidPhone($formattedPhone)) {
+            return ServiceReturn::error(__('error.invalid_phone_number'));
+        }
+
+        $content = $this->otpMessage($otp, $type);
+
+        return $this->sendSms(
+            to: [$formattedPhone],
+            content: $content,
+            smsType: $this->configs['sms_type'] ?? self::SMS_TYPE_CSKH,
+            sender: $this->configs['sender'] ?? null,
+        );
+    }
+
+    public function sendSms(array $to, string $content, ?int $smsType = null, ?string $sender = null): ServiceReturn
+    {
+        return $this->execute(function () use ($to, $content, $smsType, $sender) {
+            $this->boot();
+
+            if (empty($to) || trim($content) === '') {
+                throw new ServiceException(__('error.could_not_send_otp'));
+            }
+
+            $payload = [
+                'to' => array_values($to),
+                'content' => $content,
+                'sms_type' => $smsType ?: self::SMS_TYPE_CSKH,
+                'sender' => $sender ?: '',
+            ];
+
+            $response = Http::withBasicAuth($this->configs['token'], 'x')
+                ->acceptJson()
+                ->post(self::ROOT_URL . '/sms/send', $payload);
+
+            $data = $response->json();
+
+            if (!$response->successful()) {
+                LogHelper::error('SpeedSmsService::sendSms failed', null, [
+                    'payload' => $payload,
+                    'response' => $data,
+                    'status' => $response->status(),
+                ]);
+                throw new ServiceException($data['message'] ?? __('error.could_not_send_otp'));
+            }
+
+            return $data;
+        });
+    }
+
+    public function createPin(string $phoneNumber, string $content): ServiceReturn
+    {
+        return $this->execute(function () use ($phoneNumber, $content) {
+            $this->boot();
+
+            if (empty($this->configs['app_id'])) {
+                throw new ServiceException(__('error.could_not_send_otp'));
+            }
+
+            $payload = [
+                'to' => Helper::formatPhone($phoneNumber),
+                'content' => $content,
+                'app_id' => $this->configs['app_id'],
+            ];
+
+            $response = Http::withBasicAuth($this->configs['token'], 'x')
+                ->acceptJson()
+                ->post(self::ROOT_URL . '/pin/create', $payload);
+
+            $data = $response->json();
+
+            if (!$response->successful()) {
+                throw new ServiceException($data['message'] ?? __('error.could_not_send_otp'));
+            }
+
+            return $data;
+        });
+    }
+
+    public function verifyPin(string $phoneNumber, string $pinCode): ServiceReturn
+    {
+        return $this->execute(function () use ($phoneNumber, $pinCode) {
+            $this->boot();
+
+            if (empty($this->configs['app_id'])) {
+                throw new ServiceException(__('error.could_not_send_otp'));
+            }
+
+            $payload = [
+                'phone' => Helper::formatPhone($phoneNumber),
+                'pin_code' => $pinCode,
+                'app_id' => $this->configs['app_id'],
+            ];
+
+            $response = Http::withBasicAuth($this->configs['token'], 'x')
+                ->acceptJson()
+                ->post(self::ROOT_URL . '/pin/verify', $payload);
+
+            $data = $response->json();
+
+            if (!$response->successful()) {
+                throw new ServiceException($data['message'] ?? __('error.could_not_send_otp'));
+            }
+
+            return $data;
+        });
+    }
+
+    protected function boot(): void
+    {
+        if ($this->isBooted) {
+            return;
+        }
+
+        $this->configs = [
+            'token' => config('services.speedsms.token'),
+            'sender' => config('services.speedsms.sender'),
+            'sms_type' => (int) config('services.speedsms.sms_type', self::SMS_TYPE_CSKH),
+            'app_id' => config('services.speedsms.app_id'),
+        ];
+
+        if (empty($this->configs['token'])) {
+            throw new ServiceException(__('error.could_not_send_otp'));
+        }
+
+        $this->isBooted = true;
+    }
+
+    protected function otpMessage(string $otp, ?UserOtpType $type = null): string
+    {
+        return match ($type) {
+            UserOtpType::FORGOT_PASSWORD => __('auth.sms.forgot_password_otp_message', ['otp' => $otp]),
+            default => __('auth.sms.otp_message', ['otp' => $otp]),
+        };
+    }
+}

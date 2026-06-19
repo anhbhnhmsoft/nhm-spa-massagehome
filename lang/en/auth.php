@@ -67,4 +67,8 @@ return [
             'thanks' => 'Thank you!',
         ],
     ],
+    'sms' => [
+        'otp_message' => 'Your registration OTP is :otp.',
+        'forgot_password_otp_message' => 'Your password reset OTP is :otp.',
+    ],
 ];

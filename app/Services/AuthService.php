@@ -33,7 +33,6 @@ use Illuminate\Support\Facades\Storage;
 
 class AuthService extends BaseService
 {
-    protected const STATIC_OTP = '123456';
     protected const RETRY_AFTER_SECONDS = 60; // Số giây tối thiểu giữa 2 lần gửi OTP
     protected const MAX_SEND_PER_DAY = 3; // Số lần tối đa gửi OTP trong ngày
     protected const MAX_OTP_ATTEMPTS = 5; // Số lần thử sai tối đa trước khi khóa tài khoản
@@ -45,7 +44,7 @@ class AuthService extends BaseService
         protected WalletRepository      $walletRepository,
         protected UserDeviceRepository $userDeviceRepository,
         protected ConfigService $configService,
-        protected ZaloService $zaloService,
+        protected SpeedSmsService $speedSmsService,
         protected MailService $mailService,
         protected UserOtpRepository $userOtpRepository,
         protected AdminUserRepository $adminUserRepository,
@@ -937,8 +936,22 @@ class AuthService extends BaseService
             throw new ServiceException(__("auth.error.otp_retry_too_fast", ['seconds' => $secondsLeft]));
         }
 
-        // Tạo OTP mặc định
-        $otp = self::STATIC_OTP;
+        // Tạo OTP ngẫu nhiên
+        $otp = (string) rand(100000, 999999);
+        switch ($typeAuthenticate) {
+            case TypeAuthenticate::PHONE:
+                $result = $this->speedSmsService->sendOtp($username, $otp, $type);
+                if ($result->isError()) {
+                    throw new ServiceException($result->getMessage());
+                }
+                break;
+            case TypeAuthenticate::EMAIL:
+                $result = $this->mailService->sendOTP($username, $otp);
+                if ($result->isError()) {
+                    throw new ServiceException($result->getMessage());
+                }
+                break;
+        }
 
         // Cập nhật hoặc tạo mới record OTP
         return $this->userOtpRepository->createOrUpdateOtp(

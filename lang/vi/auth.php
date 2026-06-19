@@ -69,5 +69,9 @@ return [
             'warning' => 'Nếu bạn không yêu cầu mã này, vui lòng bỏ qua email.',
             'thanks' => 'Cảm ơn bạn!',
         ],
+    ],
+    'sms' => [
+        'otp_message' => 'Mã OTP đăng ký của bạn là :otp.',
+        'forgot_password_otp_message' => 'Mã OTP đặt lại mật khẩu của bạn là :otp.',
     ]
 ];

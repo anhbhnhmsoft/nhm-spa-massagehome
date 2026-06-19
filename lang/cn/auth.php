@@ -67,4 +67,8 @@ return [
             'thanks' => '感谢您！',
         ],
     ],
+    'sms' => [
+        'otp_message' => '您的注册 OTP 是 :otp。',
+        'forgot_password_otp_message' => '您的重置密码 OTP 是 :otp。',
+    ],
 ];

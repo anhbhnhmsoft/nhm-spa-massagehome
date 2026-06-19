@@ -51,6 +51,12 @@ return [
         'oa_id' => env('ZALO_OA_ID'),
         'otp_template' => env('ZALO_OTP_TEMPLATE'),
     ],
+    'speedsms' => [
+        'token' => env('SPEEDSMS_ACCESS_TOKEN'),
+        'sender' => env('SPEEDSMS_SENDER'),
+        'sms_type' => env('SPEEDSMS_SMS_TYPE', 2),
+        'app_id' => env('SPEEDSMS_APP_ID'),
+    ],
     'store' => [
         'chplay' => env('CHPLAY_APP') ?? '',
         'appstore' => env('APPSTORE_APP') ?? '',
