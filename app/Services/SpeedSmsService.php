@@ -96,7 +96,7 @@ class SpeedSmsService extends BaseService
             }
 
             // Tự động fallback về config nếu tham số truyền vào hàm bị rỗng
-            $finalSender = 'Verify' ?: ($this->configs['sender'] ?? null);
+            $finalSender = 'Notify' ?: ($this->configs['sender'] ?? null);
 
             $payload = [
                 'to' => array_values($to),
