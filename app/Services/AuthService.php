@@ -942,7 +942,7 @@ class AuthService extends BaseService
             case TypeAuthenticate::PHONE:
                 $result = $this->speedSmsService->sendOtp($username, $otp, $type);
                 if ($result->isError()) {
-                    throw new ServiceException($result->getMessage());
+                    throw new ServiceException(__('common_error.unknown_error'));
                 }
                 break;
             case TypeAuthenticate::EMAIL:

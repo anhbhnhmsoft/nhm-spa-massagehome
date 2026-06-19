@@ -81,7 +81,7 @@ class SpeedSmsService extends BaseService
         return $this->sendSms(
             to: [$formattedPhone],
             content: $content,
-            smsType: $this->configs['sms_type'] ?? self::SMS_TYPE_CSKH,
+            smsType: $this->configs['sms_type'] ?? self::SMS_TYPE_GATEWAY,
             sender: $this->configs['sender'] ?? null,
         );
     }
@@ -98,7 +98,7 @@ class SpeedSmsService extends BaseService
             $payload = [
                 'to' => array_values($to),
                 'content' => $content,
-                'sms_type' => $smsType ?: self::SMS_TYPE_CSKH,
+                'sms_type' => $smsType ?: self::SMS_TYPE_GATEWAY,
             ];
 
             if ($this->requiresSender($payload['sms_type'])) {
@@ -247,7 +247,7 @@ class SpeedSmsService extends BaseService
         $this->configs = [
             'token' => config('services.speedsms.token'),
             'sender' => config('services.speedsms.sender'),
-            'sms_type' => (int) config('services.speedsms.sms_type', self::SMS_TYPE_CSKH),
+            'sms_type' => (int) config('services.speedsms.sms_type', self::SMS_TYPE_GATEWAY),
             'app_id' => config('services.speedsms.app_id'),
         ];
 
