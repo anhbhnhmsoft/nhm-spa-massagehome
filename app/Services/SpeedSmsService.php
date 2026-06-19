@@ -81,8 +81,8 @@ class SpeedSmsService extends BaseService
         return $this->sendSms(
             to: [$formattedPhone],
             content: $content,
-            smsType: $this->configs['sms_type'] ?? self::SMS_TYPE_GATEWAY,
-            sender: $this->configs['sender'] ?? null,
+            smsType: $this->configs['sms_type'] ?? self::SMS_TYPE_NOTIFY,
+            sender: null,
         );
     }
 
@@ -96,13 +96,13 @@ class SpeedSmsService extends BaseService
             }
 
             // Tự động fallback về config nếu tham số truyền vào hàm bị rỗng
-            $finalSmsType = $smsType ?: ($this->configs['sms_type'] ?? self::SMS_TYPE_GATEWAY);
-            $finalSender = $sender ?: ($this->configs['sender'] ?? null);
+            $finalSender = 'Verify' ?: ($this->configs['sender'] ?? null);
 
             $payload = [
                 'to' => array_values($to),
                 'content' => $content,
-                'sms_type' => $smsType ?: self::SMS_TYPE_GATEWAY,
+                'sms_type' => $smsType ?: self::SMS_TYPE_NOTIFY,
+                'sender' => $finalSender,
             ];
 
             if ($this->requiresSender($payload['sms_type'])) {
