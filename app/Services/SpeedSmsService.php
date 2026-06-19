@@ -37,6 +37,10 @@ class SpeedSmsService extends BaseService
         return $this->execute(function () {
             $this->boot();
 
+            LogHelper::debug('SpeedSmsService::getUserInfo request', [
+                'endpoint' => self::ROOT_URL . '/user/info',
+            ]);
+
             $response = Http::withBasicAuth($this->configs['token'], 'x')
                 ->acceptJson()
                 ->get(self::ROOT_URL . '/user/info');
@@ -44,11 +48,20 @@ class SpeedSmsService extends BaseService
             $data = $response->json();
 
             if (!$response->successful()) {
+                LogHelper::error('SpeedSmsService::getUserInfo failed', null, [
+                    'status' => $response->status(),
+                    'response' => $data,
+                ]);
                 throw new ServiceException($data['message'] ?? __('error.could_not_send_otp'));
             }
 
+            LogHelper::debug('SpeedSmsService::getUserInfo success', [
+                'status' => $response->status(),
+                'response' => $data,
+            ]);
+
             return $data;
-        });
+        }, logServiceError: true);
     }
 
     public function sendOtp(string $phoneNumber, string $otp, ?UserOtpType $type = null): ServiceReturn
@@ -85,13 +98,21 @@ class SpeedSmsService extends BaseService
                 'sender' => $sender ?: '',
             ];
 
+            LogHelper::debug('SpeedSmsService::sendSms request', [
+                'endpoint' => self::ROOT_URL . '/sms/send',
+                'to' => $payload['to'],
+                'content' => $payload['content'],
+                'sms_type' => $payload['sms_type'],
+                'sender' => $payload['sender'],
+            ]);
+
             $response = Http::withBasicAuth($this->configs['token'], 'x')
                 ->acceptJson()
                 ->post(self::ROOT_URL . '/sms/send', $payload);
 
             $data = $response->json();
 
-            if (!$response->successful()) {
+            if (!$response->successful() || isset($data['status']) && (int) $data['status'] < 0) {
                 LogHelper::error('SpeedSmsService::sendSms failed', null, [
                     'payload' => $payload,
                     'response' => $data,
@@ -100,8 +121,14 @@ class SpeedSmsService extends BaseService
                 throw new ServiceException($data['message'] ?? __('error.could_not_send_otp'));
             }
 
+            LogHelper::debug('SpeedSmsService::sendSms success', [
+                'payload' => $payload,
+                'response' => $data,
+                'status' => $response->status(),
+            ]);
+
             return $data;
-        });
+        }, logServiceError: true);
     }
 
     public function createPin(string $phoneNumber, string $content): ServiceReturn
@@ -119,18 +146,34 @@ class SpeedSmsService extends BaseService
                 'app_id' => $this->configs['app_id'],
             ];
 
+            LogHelper::debug('SpeedSmsService::createPin request', [
+                'endpoint' => self::ROOT_URL . '/pin/create',
+                'payload' => $payload,
+            ]);
+
             $response = Http::withBasicAuth($this->configs['token'], 'x')
                 ->acceptJson()
                 ->post(self::ROOT_URL . '/pin/create', $payload);
 
             $data = $response->json();
 
-            if (!$response->successful()) {
+            if (!$response->successful() || isset($data['status']) && (int) $data['status'] < 0) {
+                LogHelper::error('SpeedSmsService::createPin failed', null, [
+                    'payload' => $payload,
+                    'response' => $data,
+                    'status' => $response->status(),
+                ]);
                 throw new ServiceException($data['message'] ?? __('error.could_not_send_otp'));
             }
 
+            LogHelper::debug('SpeedSmsService::createPin success', [
+                'payload' => $payload,
+                'response' => $data,
+                'status' => $response->status(),
+            ]);
+
             return $data;
-        });
+        }, logServiceError: true);
     }
 
     public function verifyPin(string $phoneNumber, string $pinCode): ServiceReturn
@@ -148,18 +191,34 @@ class SpeedSmsService extends BaseService
                 'app_id' => $this->configs['app_id'],
             ];
 
+            LogHelper::debug('SpeedSmsService::verifyPin request', [
+                'endpoint' => self::ROOT_URL . '/pin/verify',
+                'payload' => $payload,
+            ]);
+
             $response = Http::withBasicAuth($this->configs['token'], 'x')
                 ->acceptJson()
                 ->post(self::ROOT_URL . '/pin/verify', $payload);
 
             $data = $response->json();
 
-            if (!$response->successful()) {
+            if (!$response->successful() || isset($data['status']) && (int) $data['status'] < 0) {
+                LogHelper::error('SpeedSmsService::verifyPin failed', null, [
+                    'payload' => $payload,
+                    'response' => $data,
+                    'status' => $response->status(),
+                ]);
                 throw new ServiceException($data['message'] ?? __('error.could_not_send_otp'));
             }
 
+            LogHelper::debug('SpeedSmsService::verifyPin success', [
+                'payload' => $payload,
+                'response' => $data,
+                'status' => $response->status(),
+            ]);
+
             return $data;
-        });
+        }, logServiceError: true);
     }
 
     protected function boot(): void
@@ -176,8 +235,15 @@ class SpeedSmsService extends BaseService
         ];
 
         if (empty($this->configs['token'])) {
+            LogHelper::error('SpeedSmsService::boot missing token');
             throw new ServiceException(__('error.could_not_send_otp'));
         }
+
+        LogHelper::debug('SpeedSmsService::boot success', [
+            'sender' => $this->configs['sender'],
+            'sms_type' => $this->configs['sms_type'],
+            'has_app_id' => !empty($this->configs['app_id']),
+        ]);
 
         $this->isBooted = true;
     }
