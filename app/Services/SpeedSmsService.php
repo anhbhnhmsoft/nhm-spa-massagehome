@@ -118,7 +118,7 @@ class SpeedSmsService extends BaseService
                 'to' => $payload['to'],
                 'content' => $payload['content'],
                 'sms_type' => $payload['sms_type'],
-                'sender' => $payload['sender'],
+                'sender' => $payload['sender'] ?? null,
             ]);
 
             $this->logUserInfoSnapshot();
