@@ -48,6 +48,7 @@ return [
     'zalo_service_unavailable' => '此电话号码未注册 Zalo 服务',
     'invalid_data' => '无效数据',
     'could_not_send_otp' => '无法发送 OTP，请稍后重试',
+    'speedsms_sender_required' => '当前短信类型需要配置 SpeedSMS sender。',
     'zalo_service_configuration_error' => '系统错误，请稍后重试',
     'review_application_not_found' => '审核申请不存在',
     'booking_not_found' => '预订不存在',

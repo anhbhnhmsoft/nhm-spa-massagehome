@@ -14,6 +14,9 @@ class SpeedSmsService extends BaseService
 {
     private const ROOT_URL = 'https://api.speedsms.vn/index.php';
     private const SMS_TYPE_CSKH = 2;
+    private const SMS_TYPE_BRANDNAME = 3;
+    private const SMS_TYPE_NOTIFY = 4;
+    private const SMS_TYPE_GATEWAY = 5;
     private const RESPONSE_STATUS_SUCCESS = 'success';
 
     protected bool $isBooted = false;
@@ -96,8 +99,19 @@ class SpeedSmsService extends BaseService
                 'to' => array_values($to),
                 'content' => $content,
                 'sms_type' => $smsType ?: self::SMS_TYPE_CSKH,
-                'sender' => $sender ?: '',
             ];
+
+            if ($this->requiresSender($payload['sms_type'])) {
+                if (empty($sender)) {
+                    LogHelper::error('SpeedSmsService::sendSms missing sender for sms type', null, [
+                        'sms_type' => $payload['sms_type'],
+                        'to' => $payload['to'],
+                    ]);
+                    throw new ServiceException(__('error.speedsms_sender_required'));
+                }
+
+                $payload['sender'] = $sender;
+            }
 
             LogHelper::debug('SpeedSmsService::sendSms request', [
                 'endpoint' => self::ROOT_URL . '/sms/send',
@@ -257,6 +271,15 @@ class SpeedSmsService extends BaseService
             UserOtpType::FORGOT_PASSWORD => __('auth.sms.forgot_password_otp_message', ['otp' => $otp]),
             default => __('auth.sms.otp_message', ['otp' => $otp]),
         };
+    }
+
+    protected function requiresSender(int $smsType): bool
+    {
+        return in_array($smsType, [
+            self::SMS_TYPE_BRANDNAME,
+            self::SMS_TYPE_NOTIFY,
+            self::SMS_TYPE_GATEWAY,
+        ], true);
     }
 
     protected function isSuccessfulResponse(bool $httpSuccessful, mixed $data): bool

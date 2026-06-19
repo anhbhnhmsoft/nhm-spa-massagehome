@@ -48,6 +48,7 @@ return [
     'zalo_service_unavailable' => 'This phone number has not registered for Zalo service',
     'invalid_data' => 'Invalid data',
     'could_not_send_otp' => 'Could not send OTP, please try again in a few minutes',
+    'speedsms_sender_required' => 'SpeedSMS requires a sender configuration for the current SMS type.',
     'zalo_service_configuration_error' => 'System error, please try again later',
     'review_application_not_found' => 'Review application not found',
     'booking_not_found' => 'Booking not found',
