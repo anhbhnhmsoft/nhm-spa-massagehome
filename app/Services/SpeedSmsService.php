@@ -95,6 +95,10 @@ class SpeedSmsService extends BaseService
                 throw new ServiceException(__('error.could_not_send_otp'));
             }
 
+            // Tự động fallback về config nếu tham số truyền vào hàm bị rỗng
+            $finalSmsType = $smsType ?: ($this->configs['sms_type'] ?? self::SMS_TYPE_GATEWAY);
+            $finalSender = $sender ?: ($this->configs['sender'] ?? null);
+
             $payload = [
                 'to' => array_values($to),
                 'content' => $content,
@@ -102,7 +106,7 @@ class SpeedSmsService extends BaseService
             ];
 
             if ($this->requiresSender($payload['sms_type'])) {
-                if (empty($sender)) {
+                if (empty($finalSender)) {
                     LogHelper::error('SpeedSmsService::sendSms missing sender for sms type', null, [
                         'sms_type' => $payload['sms_type'],
                         'to' => $payload['to'],
@@ -110,7 +114,7 @@ class SpeedSmsService extends BaseService
                     throw new ServiceException(__('error.speedsms_sender_required'));
                 }
 
-                $payload['sender'] = $sender;
+                $payload['sender'] = $finalSender;
             }
 
             LogHelper::debug('SpeedSmsService::sendSms request', [
