@@ -3,7 +3,7 @@
 
 return [
     'success' => [
-        'otp_register' => 'Your registration OTP is 123456.',
+        'otp_register' => 'OTP code has been sent. Please enter the verification code.',
         'verify_register' => 'Phone number has been verified.',
         'register' => 'Account has been registered.',
         'login' => 'You have logged in successfully.',
@@ -62,13 +62,9 @@ return [
         'otp' => [
             'subject' => 'OTP verification code',
             'greeting' => 'Hello,',
-            'otp_message' => 'Your registration OTP is 123456.',
+            'otp_message' => 'Please use the code below to verify.',
             'warning' => 'If you did not request this code, please ignore this email.',
             'thanks' => 'Thank you!',
         ],
-    ],
-    'sms' => [
-        'otp_message' => 'Your registration OTP is :otp.',
-        'forgot_password_otp_message' => 'Your password reset OTP is :otp.',
     ],
 ];

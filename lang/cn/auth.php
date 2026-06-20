@@ -3,7 +3,7 @@
 
 return [
     'success' => [
-        'otp_register' => '您的注册 OTP 是 123456。',
+        'otp_register' => 'OTP 验证码已发送。请输入验证码。',
         'verify_register' => '手机号码已通过验证。',
         'register' => '账号已注册。',
         'login' => '登录成功。',
@@ -62,13 +62,9 @@ return [
         'otp' => [
             'subject' => 'OTP 验证码',
             'greeting' => '您好，',
-            'otp_message' => '您的注册 OTP 是 123456。',
+            'otp_message' => '请使用下方验证码完成验证。',
             'warning' => '如果您没有请求此验证码，请忽略此邮件。',
             'thanks' => '感谢您！',
         ],
-    ],
-    'sms' => [
-        'otp_message' => '您的注册 OTP 是 :otp。',
-        'forgot_password_otp_message' => '您的重置密码 OTP 是 :otp。',
     ],
 ];

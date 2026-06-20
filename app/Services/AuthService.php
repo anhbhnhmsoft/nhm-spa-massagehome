@@ -29,6 +29,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 
 class AuthService extends BaseService
@@ -44,7 +45,7 @@ class AuthService extends BaseService
         protected WalletRepository      $walletRepository,
         protected UserDeviceRepository $userDeviceRepository,
         protected ConfigService $configService,
-        protected SpeedSmsService $speedSmsService,
+        protected TwilioVerifyService $twilioVerifyService,
         protected MailService $mailService,
         protected UserOtpRepository $userOtpRepository,
         protected AdminUserRepository $adminUserRepository,
@@ -936,31 +937,43 @@ class AuthService extends BaseService
             throw new ServiceException(__("auth.error.otp_retry_too_fast", ['seconds' => $secondsLeft]));
         }
 
-        // Tạo OTP ngẫu nhiên
-        $otp = (string) rand(100000, 999999);
         switch ($typeAuthenticate) {
             case TypeAuthenticate::PHONE:
-                $result = $this->speedSmsService->sendOtp($username, $otp, $type);
+                $result = $this->twilioVerifyService->sendOtp($username);
                 if ($result->isError()) {
-                    throw new ServiceException(__('common_error.unknown_error'));
+                    throw new ServiceException($result->getMessage());
                 }
+                $otpRecord = $this->userOtpRepository->createOrUpdateOtp(
+                    identifier: $username,
+                    type: $type,
+                    otp: Str::random(32),
+                    ip: request()->ip(),
+                    typeAuthenticate: $typeAuthenticate,
+                );
+                $otpRecord->update([
+                    'expired_at' => now()->addMinutes(10),
+                ]);
+                return $otpRecord;
+
                 break;
             case TypeAuthenticate::EMAIL:
+                // Tạo OTP ngẫu nhiên cho email
+                $otp = (string) rand(100000, 999999);
                 $result = $this->mailService->sendOTP($username, $otp);
                 if ($result->isError()) {
                     throw new ServiceException($result->getMessage());
                 }
+                return $this->userOtpRepository->createOrUpdateOtp(
+                    identifier: $username,
+                    type: $type,
+                    otp: $otp,
+                    ip: request()->ip(),
+                    typeAuthenticate: $typeAuthenticate,
+                );
                 break;
         }
 
-        // Cập nhật hoặc tạo mới record OTP
-        return $this->userOtpRepository->createOrUpdateOtp(
-            identifier: $username,
-            type: $type,
-            otp: $otp,
-            ip: request()->ip(),
-            typeAuthenticate: $typeAuthenticate,
-        );
+        throw new ServiceException(__('validation.type_authenticate.invalid'));
     }
 
     /**
@@ -989,7 +1002,14 @@ class AuthService extends BaseService
         }
 
         // Kiểm tra mã OTP
-        if (!Hash::check($otpCode, $otpRecord->otp_hash)) {
+        if ($typeAuthenticate === TypeAuthenticate::PHONE) {
+            $verifyResult = $this->twilioVerifyService->verifyOtp($username, $otpCode);
+            if ($verifyResult->isError()) {
+                $otpRecord->increment('attempts');
+                $remaining = self::MAX_OTP_ATTEMPTS - $otpRecord->attempts;
+                throw new ServiceException(__("auth.error.otp_incorrect", ['remaining' => $remaining]));
+            }
+        } elseif (!Hash::check($otpCode, $otpRecord->otp_hash)) {
             // Tăng số lần thử sai (attempts increment)
             $otpRecord->increment('attempts');
             $remaining = self::MAX_OTP_ATTEMPTS - $otpRecord->attempts;

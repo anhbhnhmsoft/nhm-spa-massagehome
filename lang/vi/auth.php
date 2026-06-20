@@ -3,7 +3,7 @@
 
 return [
     'success' => [
-        'otp_register' => 'Mã OTP đăng ký của bạn là 123456.',
+        'otp_register' => 'Mã OTP đã được gửi. Hãy nhập mã xác thực.',
         'verify_register' => 'Số điện thoại đã được xác thực.',
         'register' => 'Tài khoản đã được đăng ký.',
         'login' => 'Bạn đã đăng nhập thành công.',
@@ -65,13 +65,9 @@ return [
         'otp' => [
             'subject' => 'Mã OTP xác thực',
             'greeting' => 'Chào bạn,',
-            'otp_message' => 'Mã OTP đăng ký của bạn là 123456.',
+            'otp_message' => 'Vui lòng sử dụng mã dưới đây để xác thực.',
             'warning' => 'Nếu bạn không yêu cầu mã này, vui lòng bỏ qua email.',
             'thanks' => 'Cảm ơn bạn!',
         ],
     ],
-    'sms' => [
-        'otp_message' => 'Mã OTP đăng ký của bạn là :otp.',
-        'forgot_password_otp_message' => 'Mã OTP đặt lại mật khẩu của bạn là :otp.',
-    ]
 ];

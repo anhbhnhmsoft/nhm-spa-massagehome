@@ -51,11 +51,11 @@ return [
         'oa_id' => env('ZALO_OA_ID'),
         'otp_template' => env('ZALO_OTP_TEMPLATE'),
     ],
-    'speedsms' => [
-        'token' => env('SPEEDSMS_ACCESS_TOKEN'),
-        'sender' => env('SPEEDSMS_SENDER'),
-        'sms_type' => env('SPEEDSMS_SMS_TYPE', 2),
-        'app_id' => env('SPEEDSMS_APP_ID'),
+    'twilio_verify' => [
+        'account_sid' => env('TWILIO_ACCOUNT_SID'),
+        'auth_token' => env('TWILIO_AUTH_TOKEN'),
+        'service_sid' => env('TWILIO_VERIFY_SERVICE_SID'),
+        'channel' => env('TWILIO_VERIFY_CHANNEL', 'sms'),
     ],
     'store' => [
         'chplay' => env('CHPLAY_APP') ?? '',

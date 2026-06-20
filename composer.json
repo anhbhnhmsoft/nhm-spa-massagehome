@@ -21,6 +21,7 @@
         "opcodesio/log-viewer": "^3.21",
         "predis/predis": "^3.3",
         "spatie/laravel-translatable": "^6.12",
+        "twilio/sdk": "^8.11",
         "zaloplatform/zalo-php-sdk": "^4.0"
     },
     "require-dev": {
