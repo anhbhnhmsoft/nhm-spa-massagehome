@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Core\BaseRepository;
+use App\Enums\BookingStatus;
 use App\Models\ChatRoom;
 use App\Models\Message;
 use Illuminate\Database\Eloquent\Builder;
@@ -96,4 +97,3 @@ class ChatRoomRepository extends BaseRepository
         }
     }
 }
-
