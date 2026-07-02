@@ -29,6 +29,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 
 class AuthService extends BaseService
@@ -45,7 +46,7 @@ class AuthService extends BaseService
         protected WalletRepository      $walletRepository,
         protected UserDeviceRepository $userDeviceRepository,
         protected ConfigService $configService,
-        protected ZaloService $zaloService,
+        protected TwilioVerifyService $twilioVerifyService,
         protected MailService $mailService,
         protected UserOtpRepository $userOtpRepository,
         protected AdminUserRepository $adminUserRepository,
@@ -939,8 +940,7 @@ class AuthService extends BaseService
 
         switch ($typeAuthenticate) {
             case TypeAuthenticate::PHONE:
-                $otp = $this->generateOtpCode();
-                $result = $this->zaloService->pushOTPAuthorize($username, $otp);
+                $result = $this->twilioVerifyService->sendOtp($username);
                 if ($result->isError()) {
                     throw new ServiceException($result->getMessage());
                 }
@@ -948,7 +948,7 @@ class AuthService extends BaseService
                 $otpRecord = $this->userOtpRepository->createOrUpdateOtp(
                     identifier: $username,
                     type: $type,
-                    otp: $otp,
+                    otp: Str::random(32),
                     ip: request()->ip(),
                     typeAuthenticate: $typeAuthenticate,
                 );
@@ -1002,8 +1002,15 @@ class AuthService extends BaseService
             throw new ServiceException(__("auth.error.otp_max_attempts_exceeded"));
         }
 
-        // Kiểm tra mã OTP theo OTP đã lưu
-        if (!Hash::check($otpCode, $otpRecord->otp_hash)) {
+        // Kiểm tra mã OTP
+        if ($typeAuthenticate === TypeAuthenticate::PHONE) {
+            $verifyResult = $this->twilioVerifyService->verifyOtp($username, $otpCode);
+            if ($verifyResult->isError()) {
+                $otpRecord->increment('attempts');
+                $remaining = self::MAX_OTP_ATTEMPTS - $otpRecord->attempts;
+                throw new ServiceException(__("auth.error.otp_incorrect", ['remaining' => $remaining]));
+            }
+        } elseif (!Hash::check($otpCode, $otpRecord->otp_hash)) {
             // Tăng số lần thử sai (attempts increment)
             $otpRecord->increment('attempts');
             $remaining = self::MAX_OTP_ATTEMPTS - $otpRecord->attempts;
@@ -1017,10 +1024,4 @@ class AuthService extends BaseService
         ]);
 
     }
-
-    protected function generateOtpCode(): string
-    {
-        return str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-    }
-
 }
