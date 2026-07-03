@@ -29,6 +29,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 
 class AuthService extends BaseService
@@ -46,6 +47,7 @@ class AuthService extends BaseService
         protected UserDeviceRepository $userDeviceRepository,
         protected ConfigService $configService,
         protected ZaloService $zaloService,
+        protected TwilioVerifyService $twilioVerifyService,
         protected MailService $mailService,
         protected UserOtpRepository $userOtpRepository,
         protected AdminUserRepository $adminUserRepository,
@@ -939,23 +941,7 @@ class AuthService extends BaseService
 
         switch ($typeAuthenticate) {
             case TypeAuthenticate::PHONE:
-                $otp = $this->generateOtpCode();
-                $result = $this->zaloService->pushOTPAuthorize($username, $otp);
-                if ($result->isError()) {
-                    throw new ServiceException($result->getMessage());
-                }
-
-                $otpRecord = $this->userOtpRepository->createOrUpdateOtp(
-                    identifier: $username,
-                    type: $type,
-                    otp: $otp,
-                    ip: request()->ip(),
-                    typeAuthenticate: $typeAuthenticate,
-                );
-                $otpRecord->update([
-                    'expired_at' => now()->addMinutes(10),
-                ]);
-                return $otpRecord;
+                return $this->sendPhoneOtp($username, $type, $typeAuthenticate);
 
                 break;
             case TypeAuthenticate::EMAIL:
@@ -1002,8 +988,19 @@ class AuthService extends BaseService
             throw new ServiceException(__("auth.error.otp_max_attempts_exceeded"));
         }
 
-        // Kiểm tra mã OTP theo OTP đã lưu
+        // Kiểm tra mã OTP theo OTP đã lưu trước, nếu không khớp thì fallback verify qua Twilio
         if (!Hash::check($otpCode, $otpRecord->otp_hash)) {
+            if ($typeAuthenticate === TypeAuthenticate::PHONE) {
+                $verifyResult = $this->twilioVerifyService->verifyOtp($username, $otpCode);
+                if (!$verifyResult->isError()) {
+                    $otpRecord->update([
+                        'verified_at' => now(),
+                        'attempts' => $otpRecord->attempts + 1
+                    ]);
+                    return;
+                }
+            }
+
             // Tăng số lần thử sai (attempts increment)
             $otpRecord->increment('attempts');
             $remaining = self::MAX_OTP_ATTEMPTS - $otpRecord->attempts;
@@ -1021,5 +1018,59 @@ class AuthService extends BaseService
     protected function generateOtpCode(): string
     {
         return str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+    }
+
+    protected function sendPhoneOtp(
+        string $username,
+        UserOtpType $type,
+        TypeAuthenticate $typeAuthenticate
+    ): Model {
+        $otp = $this->generateOtpCode();
+        $zaloResult = $this->zaloService->pushOTPAuthorize($username, $otp);
+
+        if (!$zaloResult->isError()) {
+            $otpRecord = $this->userOtpRepository->createOrUpdateOtp(
+                identifier: $username,
+                type: $type,
+                otp: $otp,
+                ip: request()->ip(),
+                typeAuthenticate: $typeAuthenticate,
+            );
+            $otpRecord->update([
+                'expired_at' => now()->addMinutes(10),
+            ]);
+            return $otpRecord;
+        }
+
+        LogHelper::error('AuthService::sendPhoneOtp Zalo failed, fallback to Twilio', null, [
+            'phone' => $username,
+            'type' => $type->value,
+            'message' => $zaloResult->getMessage(),
+        ]);
+
+        $twilioResult = $this->twilioVerifyService->sendOtp($username);
+        if ($twilioResult->isError()) {
+            LogHelper::error('AuthService::sendPhoneOtp Twilio fallback failed', null, [
+                'phone' => $username,
+                'type' => $type->value,
+                'zalo_message' => $zaloResult->getMessage(),
+                'twilio_message' => $twilioResult->getMessage(),
+            ]);
+
+            throw new ServiceException(__('error.could_not_send_to_current_number'));
+        }
+
+        $otpRecord = $this->userOtpRepository->createOrUpdateOtp(
+            identifier: $username,
+            type: $type,
+            otp: Str::random(32),
+            ip: request()->ip(),
+            typeAuthenticate: $typeAuthenticate,
+        );
+        $otpRecord->update([
+            'expired_at' => now()->addMinutes(10),
+        ]);
+
+        return $otpRecord;
     }
 }

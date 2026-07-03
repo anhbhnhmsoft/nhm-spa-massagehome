@@ -49,6 +49,7 @@ return [
     'zalo_service_unavailable' => 'Số điện thoại này chưa đăng ký dịch vụ Zalo',
     'invalid_data' => 'Dữ liệu không hợp lệ',
     'could_not_send_otp' => 'Không thể gửi OTP, hãy thử lại sau vài phút',
+    'could_not_send_to_current_number' => 'Không thể gửi tới số hiện tại',
     'speedsms_sender_required' => 'SpeedSMS yêu cầu cấu hình sender cho loại tin nhắn hiện tại.',
     'zalo_service_configuration_error' => 'Hiện tại đang có trục trặc hệ thống, xin quý khách thông cảm và thử lại sau',
     'review_application_not_found' => 'Ứng tuyển review không tồn tại',
