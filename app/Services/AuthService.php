@@ -454,7 +454,41 @@ class AuthService extends BaseService
         string $password,
     ): ServiceReturn
     {
-        return ServiceReturn::error(message: __('auth.error.reset_password_disabled'));
+        return $this->execute(
+            callback: function () use ($username, $typeAuthenticate, $password) {
+                $user = $this->userRepository->findByUserVerified($username, $typeAuthenticate);
+                if (!$user) {
+                    throw new ServiceException(message: __('auth.error.user_not_verified'));
+                }
+                if (!$user->is_active) {
+                    throw new ServiceException(message: __('auth.error.disabled'));
+                }
+
+                $otpRecord = $this->userOtpRepository->getLatestVerifiedOtp(
+                    identifier: $username,
+                    type: UserOtpType::FORGOT_PASSWORD,
+                    minutes: self::OTP_TTL_MINUTES,
+                    typeAuthenticate: $typeAuthenticate,
+                );
+                if (!$otpRecord) {
+                    throw new ServiceException(__('auth.error.otp_not_verified'));
+                }
+
+                $this->userOtpRepository->deleteOtpHadVerified(
+                    identifier: $username,
+                    type: UserOtpType::FORGOT_PASSWORD,
+                    typeAuthenticate: $typeAuthenticate,
+                );
+
+                $user->password = Hash::make($password);
+                $user->save();
+
+                $this->logoutAllDevices($user);
+
+                return ServiceReturn::success();
+            },
+            useTransaction: true
+        );
     }
 
     /**
