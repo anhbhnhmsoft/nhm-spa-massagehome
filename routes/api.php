@@ -216,6 +216,8 @@ Route::middleware(['set-api-locale', 'update-last-active'])->group(function () {
         Route::middleware(['auth:sanctum'])->group(function () {
             // Lấy danh sách giao dịch
             Route::get('transactions', [PaymentController::class, 'listTransaction']);
+            // Lấy chi tiết giao dịch
+            Route::get('transactions/{id}', [PaymentController::class, 'transactionDetail'])->whereNumber('id');
             // Lấy ví người dùng
             Route::get('wallet', [PaymentController::class, 'userWallet']);
             // Lấy cấu hình thanh toán

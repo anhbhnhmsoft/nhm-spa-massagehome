@@ -150,6 +150,38 @@ class PaymentService extends BaseService
         }
     }
 
+    /**
+     * Lấy chi tiết giao dịch thuộc về ví của người dùng hiện tại.
+     * @param int $transactionId
+     * @return ServiceReturn
+     */
+    public function getUserTransactionDetail(int $transactionId): ServiceReturn
+    {
+        try {
+            $transaction = $this->getUserTransactionOrFail($transactionId);
+
+            return ServiceReturn::success(
+                data: [
+                    'transaction' => $transaction,
+                    'detail_kind' => $this->resolveTransactionDetailKind($transaction),
+                    'payment_data' => $this->resolveTransactionPaymentData($transaction),
+                ]
+            );
+        } catch (ServiceException $exception) {
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        } catch (\Exception $exception) {
+            LogHelper::error(
+                message: "Lỗi PaymentService@getUserTransactionDetail",
+                ex: $exception
+            );
+            return ServiceReturn::error(
+                message: __("common_error.server_error")
+            );
+        }
+    }
+
 
     /**
      * Lấy cấu hình thanh toán
@@ -361,6 +393,17 @@ class PaymentService extends BaseService
                     );
                     $exchangeRate = $this->configService->getConfigValue(ConfigName::EXCHANGE_RATE_VND_CNY);
                     $amountCNY = $amount / $exchangeRate;
+                    $paymentData = [
+                        'qr_image' => $wechatQrUrl,
+                        'amount' => $amount,
+                        'description' => $transaction->transaction_code,
+                        'amount_cny' => $amountCNY,
+                        'exchange_rate' => $exchangeRate,
+                    ];
+
+                    $transaction->update([
+                        'metadata' => json_encode($paymentData),
+                    ]);
 
                     // Thông báo tới admin
                     SendNotificationAdminJob::dispatch(
@@ -375,13 +418,7 @@ class PaymentService extends BaseService
                     return ServiceReturn::success([
                         'transaction_id' => $transaction->id,
                         'payment_type' => $paymentType->value,
-                        'data_payment' => [
-                            'qr_image' => $wechatQrUrl,
-                            'amount' => $amount,
-                            'description' => $transaction->transaction_code,
-                            'amount_cny' => $amountCNY,
-                            'exchange_rate' => $exchangeRate,
-                        ]
+                        'data_payment' => $paymentData,
                     ]);
                 case PaymentType::ALIPAY:
                     $alipayQrImage = $this->configService->getConfigValue(ConfigName::SP_ALIPAY_QR_IMAGE);
@@ -408,6 +445,17 @@ class PaymentService extends BaseService
                     );
                     $exchangeRate = $this->configService->getConfigValue(ConfigName::EXCHANGE_RATE_VND_CNY);
                     $amountCNY = $amount / $exchangeRate;
+                    $paymentData = [
+                        'qr_image' => $alipayQrUrl,
+                        'amount' => $amount,
+                        'description' => $transaction->transaction_code,
+                        'amount_cny' => $amountCNY,
+                        'exchange_rate' => $exchangeRate,
+                    ];
+
+                    $transaction->update([
+                        'metadata' => json_encode($paymentData),
+                    ]);
 
                     // Thông báo tới admin
                     SendNotificationAdminJob::dispatch(
@@ -422,13 +470,7 @@ class PaymentService extends BaseService
                     return ServiceReturn::success([
                         'transaction_id' => $transaction->id,
                         'payment_type' => $paymentType->value,
-                        'data_payment' => [
-                            'qr_image' => $alipayQrUrl,
-                            'amount' => $amount,
-                            'description' => $transaction->transaction_code,
-                            'amount_cny' => $amountCNY,
-                            'exchange_rate' => $exchangeRate,
-                        ]
+                        'data_payment' => $paymentData,
                     ]);
                 default:
                     // Hiện tại không hỗ trợ nạp tiền qua ZaloPay và MoMoPay
@@ -462,25 +504,7 @@ class PaymentService extends BaseService
     public function checkTransaction(int $transactionId): ServiceReturn
     {
         try {
-            $user = Auth::user();
-            $wallet = $this->walletRepository->queryWallet()
-                ->where('user_id', $user->id)
-                ->first(['id']);
-            if (!$wallet) {
-                throw new ServiceException(
-                    message: __("error.wallet_not_found")
-                );
-            }
-            $transaction = $this->walletTransactionRepository
-                ->query()
-                // Kiểm tra xem transaction có phải của user hay không
-                ->where('wallet_id', $wallet->id)
-                ->find($transactionId);
-            if (!$transaction) {
-                throw new ServiceException(
-                    message: __("error.transaction_not_found")
-                );
-            }
+            $transaction = $this->getUserTransactionOrFail($transactionId);
 
             return ServiceReturn::success(
                 data: $transaction->status == WalletTransactionStatus::COMPLETED->value
@@ -718,6 +742,135 @@ class PaymentService extends BaseService
     protected function calculatePointAmount(string $amount, float $exchangeRate): float
     {
         return $amount / $exchangeRate;
+    }
+
+    protected function getUserTransactionOrFail(int $transactionId): WalletTransaction
+    {
+        $user = Auth::user();
+        $wallet = $this->walletRepository->queryWallet()
+            ->where('user_id', $user->id)
+            ->first(['id']);
+        if (!$wallet) {
+            throw new ServiceException(
+                message: __("error.wallet_not_found")
+            );
+        }
+
+        $transaction = $this->walletTransactionRepository
+            ->query()
+            ->where('wallet_id', $wallet->id)
+            ->find($transactionId);
+        if (!$transaction) {
+            throw new ServiceException(
+                message: __("error.transaction_not_found")
+            );
+        }
+
+        return $transaction;
+    }
+
+    protected function resolveTransactionDetailKind(WalletTransaction $transaction): string
+    {
+        return match ((int) $transaction->type) {
+            WalletTransactionType::DEPOSIT_QR_CODE->value => 'deposit_qr',
+            WalletTransactionType::DEPOSIT_WECHAT_PAY->value => 'deposit_wechat',
+            WalletTransactionType::DEPOSIT_ALIPAY_PAY->value => 'deposit_alipay',
+            default => 'generic',
+        };
+    }
+
+    protected function resolveTransactionPaymentData(WalletTransaction $transaction): ?array
+    {
+        return match ($this->resolveTransactionDetailKind($transaction)) {
+            'deposit_qr' => $this->resolveQrBankPaymentData($transaction),
+            'deposit_wechat' => $this->resolveWechatPaymentData($transaction),
+            'deposit_alipay' => $this->resolveAlipayPaymentData($transaction),
+            default => null,
+        };
+    }
+
+    protected function resolveQrBankPaymentData(WalletTransaction $transaction): ?array
+    {
+        $metadata = $this->decodeTransactionMetadata($transaction->metadata);
+        $payosData = isset($metadata['data']) && is_array($metadata['data']) ? $metadata['data'] : $metadata;
+        if (empty($payosData)) {
+            return null;
+        }
+
+        $bin = (string) ($payosData['bin'] ?? '');
+
+        return [
+            'bin' => $bin,
+            'bank_name' => BankBin::getBankByBin($bin)['short_name'] ?? __("error.bank_not_found"),
+            'account_number' => (string) ($payosData['accountNumber'] ?? $payosData['account_number'] ?? ''),
+            'account_name' => (string) ($payosData['accountName'] ?? $payosData['account_name'] ?? ''),
+            'amount' => (float) ($payosData['amount'] ?? $transaction->money_amount ?? 0),
+            'description' => (string) ($payosData['description'] ?? $transaction->transaction_code ?? ''),
+            'qr_code' => (string) ($payosData['qrCode'] ?? $payosData['qr_code'] ?? ''),
+        ];
+    }
+
+    protected function resolveWechatPaymentData(WalletTransaction $transaction): array
+    {
+        return $this->resolveCrossBorderPaymentData(
+            transaction: $transaction,
+            imageConfig: ConfigName::SP_WECHAT_QR_IMAGE,
+        );
+    }
+
+    protected function resolveAlipayPaymentData(WalletTransaction $transaction): array
+    {
+        return $this->resolveCrossBorderPaymentData(
+            transaction: $transaction,
+            imageConfig: ConfigName::SP_ALIPAY_QR_IMAGE,
+        );
+    }
+
+    protected function resolveCrossBorderPaymentData(
+        WalletTransaction $transaction,
+        ConfigName $imageConfig,
+    ): array {
+        $metadata = $this->decodeTransactionMetadata($transaction->metadata);
+        $paymentData = isset($metadata['data_payment']) && is_array($metadata['data_payment'])
+            ? $metadata['data_payment']
+            : $metadata;
+
+        $exchangeRate = (string) ($paymentData['exchange_rate']
+            ?? $this->configService->getConfigValue(ConfigName::EXCHANGE_RATE_VND_CNY)
+            ?? '1');
+        $amount = (string) ($paymentData['amount'] ?? $transaction->money_amount ?? '0');
+        $amountCny = $paymentData['amount_cny'] ?? null;
+        if ($amountCny === null) {
+            $rate = (float) $exchangeRate;
+            $amountCny = $rate > 0 ? (float) $amount / $rate : 0;
+        }
+
+        $qrImage = $paymentData['qr_image'] ?? null;
+        if (empty($qrImage)) {
+            $qrImageConfig = $this->configService->getConfigValue($imageConfig);
+            if (!empty($qrImageConfig)) {
+                $qrImage = Helper::getPublicUrl($qrImageConfig);
+            }
+        }
+
+        return [
+            'qr_image' => (string) ($qrImage ?? ''),
+            'amount' => $amount,
+            'description' => (string) ($paymentData['description'] ?? $transaction->transaction_code ?? ''),
+            'amount_cny' => $amountCny,
+            'exchange_rate' => $exchangeRate,
+        ];
+    }
+
+    protected function decodeTransactionMetadata(?string $metadata): array
+    {
+        if (empty($metadata)) {
+            return [];
+        }
+
+        $decoded = json_decode($metadata, true);
+
+        return is_array($decoded) ? $decoded : [];
     }
 
 

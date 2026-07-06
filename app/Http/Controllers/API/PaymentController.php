@@ -8,6 +8,7 @@ use App\Core\Helper;
 use App\Enums\BankBin;
 use App\Enums\ConfigName;
 use App\Enums\PaymentType;
+use App\Http\Resources\Payment\WalletTransactionDetailResource;
 use App\Http\Resources\Payment\WalletResource;
 use App\Http\Resources\Payment\WalletTransactionResource;
 use App\Services\ConfigService;
@@ -74,6 +75,22 @@ class PaymentController extends BaseController
         $data = $resService->getData();
         return $this->sendSuccess(
             data: WalletTransactionResource::collection($data)->response()->getData(),
+        );
+    }
+
+    public function transactionDetail(int $id): JsonResponse
+    {
+        $resService = $this->paymentService->getUserTransactionDetail(
+            transactionId: $id,
+        );
+        if ($resService->isError()) {
+            return $this->sendError(
+                message: $resService->getMessage(),
+            );
+        }
+
+        return $this->sendSuccess(
+            data: new WalletTransactionDetailResource($resService->getData()),
         );
     }
 
