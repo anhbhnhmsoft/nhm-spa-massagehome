@@ -17,10 +17,17 @@ use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\AffiliateController;
 use App\Http\Controllers\API\ConfigController;
 use App\Http\Controllers\API\WithdrawController;
+use App\Http\Controllers\API\ZaloController as ApiZaloController;
 use Illuminate\Support\Facades\Route;
 
 
 Route::middleware(['set-api-locale', 'update-last-active'])->group(function () {
+    Route::prefix('integration')->group(function () {
+        Route::get('zalo/access-token', [ApiZaloController::class, 'accessToken'])
+            ->middleware(['internal-api-secret', 'throttle:30,1'])
+            ->name('api.integration.zalo.access-token');
+    });
+
     Route::prefix('auth')->group(function () {
         // Guest middleware
         // Xác thực đăng nhập hay đăng ký.

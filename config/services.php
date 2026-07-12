@@ -45,6 +45,9 @@ return [
         'channel_support' => env('REDIS_CHANNEL_SUPPORT', 'support_messages'),
         'admin_socket_secret' => env('ADMIN_SOCKET_SECRET', env('APP_KEY')),
     ],
+    'internal_api' => [
+        'secret' => env('INTERNAL_API_SECRET', env('ADMIN_SOCKET_SECRET', env('APP_KEY'))),
+    ],
     'zalo' => [
         'app_id' => env('ZALO_APP_ID'),
         'app_secret' => env('ZALO_APP_SECRET'),
