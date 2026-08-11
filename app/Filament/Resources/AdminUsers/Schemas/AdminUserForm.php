@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\AdminUsers\Schemas;
 
 use App\Enums\Admin\AdminRole;
+use App\Enums\Language;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -58,6 +59,12 @@ class AdminUserForm
                                         'required' => __('common.error.required'),
                                         'max' => __('common.error.max_length', ['max' => 255])
                                     ]),
+                                Select::make('language')
+                                    ->label(__('admin.common.table.language'))
+                                    ->options(Language::toOptions())
+                                    ->default(Language::VIETNAMESE->value)
+                                    ->required()
+                                    ->searchable(),
                                 Select::make('role')
                                     ->label(__('admin.common.table.role'))
                                     ->options(fn (): array => auth('web')->user()?->role === AdminRole::SUPER_ADMIN

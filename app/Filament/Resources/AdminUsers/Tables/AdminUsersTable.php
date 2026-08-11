@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\AdminUsers\Tables;
 
 use App\Enums\Admin\AdminRole;
+use App\Enums\Language;
 use App\Filament\Components\CommonFields;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -24,10 +25,27 @@ class AdminUsersTable
                 TextColumn::make('username')
                     ->searchable()
                     ->label(__('admin.common.table.username')),
+                TextColumn::make('language')
+                    ->badge()
+                    ->formatStateUsing(fn ($state): string => $state instanceof Language
+                        ? $state->label()
+                        : (Language::tryFrom((string) $state)?->label() ?? (string) $state))
+                    ->label(__('admin.common.table.language')),
                 TextColumn::make('role')
                     ->badge()
                     ->formatStateUsing(fn (AdminRole $state): string => $state->label())
                     ->label(__('admin.common.table.role')),
+                TextColumn::make('is_active')
+                    ->badge()
+                    ->formatStateUsing(fn ($state): string => $state
+                        ? __('admin.common.status.active')
+                        : __('admin.common.status.inactive'))
+                    ->color(fn ($state): string => $state ? 'success' : 'gray')
+                    ->label(__('admin.common.table.status')),
+                TextColumn::make('last_seen_at')
+                    ->dateTime()
+                    ->placeholder('-')
+                    ->label(__('admin.common.table.is_online')),
                 TextColumn::make('created_at')
                     ->dateTime('H:i d/m/Y')
                     ->label(__('admin.common.table.created_at')),
@@ -36,6 +54,12 @@ class AdminUsersTable
                 SelectFilter::make('role')
                     ->options(AdminRole::toOptions())
                     ->label(__('admin.common.table.role')),
+                SelectFilter::make('is_active')
+                    ->options([
+                        1 => __('admin.common.status.active'),
+                        0 => __('admin.common.status.inactive'),
+                    ])
+                    ->label(__('admin.common.table.status')),
             ])
             ->defaultSort('created_at', 'desc')
             ->recordActions([

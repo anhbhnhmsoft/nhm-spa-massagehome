@@ -4,6 +4,7 @@ namespace App\Filament\Resources\AdminUsers;
 
 use App\Enums\Admin\AdminGate;
 use App\Enums\Admin\AdminRole;
+use App\Filament\Clusters\HumanResource\HumanResourceCluster;
 use App\Filament\Resources\AdminUsers\Pages\CreateAdminUser;
 use App\Filament\Resources\AdminUsers\Pages\EditAdminUser;
 use App\Filament\Resources\AdminUsers\Pages\ListAdminUsers;
@@ -22,11 +23,12 @@ class AdminUserResource extends Resource
 {
     protected static ?string $model = AdminUser::class;
 
+    protected static ?string $cluster = HumanResourceCluster::class;
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserPlus;
 
     /**
-     * Chỉ có admin mới có thể xem danh sách admin user
-     * @return bool
+     * Only profile managers and superadmins can manage system users.
      */
     public static function canViewAny(): bool
     {
