@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\AdminUsers\Tables;
 
 use App\Enums\Admin\AdminRole;
+use App\Enums\Admin\AdminGate;
 use App\Enums\Language;
 use App\Filament\Components\CommonFields;
 use Filament\Actions\DeleteAction;
@@ -10,6 +11,7 @@ use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Gate;
 
 class AdminUsersTable
 {
@@ -52,7 +54,9 @@ class AdminUsersTable
             ])
             ->filters([
                 SelectFilter::make('role')
-                    ->options(AdminRole::toOptions())
+                    ->options(fn (): array => Gate::allows(AdminGate::ALLOW_SUPER_ADMIN)
+                        ? AdminRole::toOptions()
+                        : AdminRole::managementOptions())
                     ->label(__('admin.common.table.role')),
                 SelectFilter::make('is_active')
                     ->options([

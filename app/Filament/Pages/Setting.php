@@ -15,7 +15,7 @@ class Setting extends Page
 
     public static function canAccess(): bool
     {
-        return Gate::check(AdminGate::ALLOW_PROFILE);
+        return Gate::check(AdminGate::ALLOW_SUPER_ADMIN);
     }
     public static function getNavigationLabel(): string
     {

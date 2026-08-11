@@ -16,6 +16,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
 
@@ -50,6 +51,17 @@ class AdminUserResource extends Resource
     {
         return Gate::allows(AdminGate::ALLOW_SUPER_ADMIN)
             || (Gate::allows(AdminGate::ALLOW_PROFILE) && $record->role !== AdminRole::SUPER_ADMIN);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        if (! Gate::allows(AdminGate::ALLOW_SUPER_ADMIN)) {
+            $query->whereIn('role', array_keys(AdminRole::managementOptions()));
+        }
+
+        return $query;
     }
 
     public static function getNavigationLabel(): string
