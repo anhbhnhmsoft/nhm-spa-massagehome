@@ -287,6 +287,13 @@ class AppServiceProvider extends ServiceProvider
             ]);
         });
 
+        Gate::define(AdminGate::ALLOW_HUMAN_RESOURCE, function (AdminUser $user) {
+            return $user->hasAnyRole([
+                AdminRole::SUPER_ADMIN,
+                AdminRole::CUSTOMER_SUPPORT,
+            ]);
+        });
+
         Gate::define(AdminGate::ALLOW_CUSTOMER_SUPPORT, function (AdminUser $user) {
             return $user->hasAnyRole([
                 AdminRole::SUPER_ADMIN,

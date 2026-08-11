@@ -11,6 +11,7 @@ enum AdminGate: string
     case ALLOW_OPERATION = 'allow_operation';
     case ALLOW_MARKETING = 'allow_marketing';
     case ALLOW_PROFILE = 'allow_profile';
+    case ALLOW_HUMAN_RESOURCE = 'allow_human_resource';
     case ALLOW_CUSTOMER_SUPPORT = 'allow_customer_support';
     case ALLOW_ORDER_DASHBOARD = 'allow_order_dashboard';
 }

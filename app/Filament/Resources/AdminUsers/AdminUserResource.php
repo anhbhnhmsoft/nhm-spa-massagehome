@@ -29,28 +29,28 @@ class AdminUserResource extends Resource
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserPlus;
 
     /**
-     * Profile managers, customer support, and superadmins can manage system users.
+     * Customer support and superadmins can manage system users.
      */
     public static function canViewAny(): bool
     {
-        return Gate::allows(AdminGate::ALLOW_PROFILE);
+        return Gate::allows(AdminGate::ALLOW_HUMAN_RESOURCE);
     }
 
     public static function canCreate(): bool
     {
-        return Gate::allows(AdminGate::ALLOW_PROFILE);
+        return Gate::allows(AdminGate::ALLOW_HUMAN_RESOURCE);
     }
 
     public static function canEdit(Model $record): bool
     {
         return Gate::allows(AdminGate::ALLOW_SUPER_ADMIN)
-            || (Gate::allows(AdminGate::ALLOW_PROFILE) && $record->role !== AdminRole::SUPER_ADMIN);
+            || (Gate::allows(AdminGate::ALLOW_HUMAN_RESOURCE) && $record->role !== AdminRole::SUPER_ADMIN);
     }
 
     public static function canDelete(Model $record): bool
     {
         return Gate::allows(AdminGate::ALLOW_SUPER_ADMIN)
-            || (Gate::allows(AdminGate::ALLOW_PROFILE) && $record->role !== AdminRole::SUPER_ADMIN);
+            || (Gate::allows(AdminGate::ALLOW_HUMAN_RESOURCE) && $record->role !== AdminRole::SUPER_ADMIN);
     }
 
     public static function getEloquentQuery(): Builder
