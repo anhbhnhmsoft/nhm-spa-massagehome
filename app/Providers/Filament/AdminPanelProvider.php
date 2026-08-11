@@ -80,10 +80,7 @@ class AdminPanelProvider extends PanelProvider
             ->databaseNotificationsPolling(false)
             ->navigationItems([
                 NavigationItem::make(__('System Logs'))
-                    ->visible(fn () => auth('web')->user()?->hasAnyRole([
-                        AdminRole::SUPER_ADMIN,
-                        AdminRole::PROFILE_MANAGER,
-                    ]) ?? false)
+                    ->visible(fn () => auth('web')->user()?->hasRole(AdminRole::SUPER_ADMIN) ?? false)
                     ->url(url('system-log-viewer'), shouldOpenInNewTab: true)
                     ->icon('heroicon-o-document-magnifying-glass'),
             ])

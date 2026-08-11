@@ -251,10 +251,7 @@ class AppServiceProvider extends ServiceProvider
     protected function registerLogViewer(): void
     {
         LogViewer::auth(function ($request) {
-            return $request->user() && $request->user()->hasAnyRole([
-                AdminRole::SUPER_ADMIN,
-                AdminRole::PROFILE_MANAGER,
-            ]);
+            return $request->user()?->hasRole(AdminRole::SUPER_ADMIN) ?? false;
         });
     }
 
