@@ -2,10 +2,11 @@
 
 namespace App\Filament\Widgets;
 
-use App\Enums\Admin\AdminRole;
+use App\Enums\Admin\AdminGate;
 use App\Enums\DateRangeDashboard;
 use Filament\Widgets\ChartWidget;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
+use Illuminate\Support\Facades\Gate;
 
 class TransactionChart extends ChartWidget
 {
@@ -20,13 +21,7 @@ class TransactionChart extends ChartWidget
 
     public static function canView(): bool
     {
-        // Chỉ cho phép ADMIN và ACCOUNTANT nhìn thấy Widget này
-        $user = auth('web')->user();
-
-        return $user && in_array($user->role, [
-                AdminRole::ADMIN,
-                AdminRole::ACCOUNTANT
-            ]);
+        return Gate::allows(AdminGate::ALLOW_SUPER_ADMIN);
     }
     protected function getData(): array
     {

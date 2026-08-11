@@ -3,7 +3,6 @@
 namespace App\Filament\Clusters\Marketing;
 
 use App\Enums\Admin\AdminGate;
-use App\Enums\Admin\AdminRole;
 use BackedEnum;
 use Filament\Clusters\Cluster;
 use Filament\Support\Icons\Heroicon;
@@ -15,7 +14,7 @@ class MarketingCluster extends Cluster
 
     public static function canAccess(): bool
     {
-        return Gate::allows(AdminGate::ALLOW_EMPLOYEE);
+        return Gate::allows(AdminGate::ALLOW_MARKETING);
     }
     public static function getNavigationLabel(): string
     {

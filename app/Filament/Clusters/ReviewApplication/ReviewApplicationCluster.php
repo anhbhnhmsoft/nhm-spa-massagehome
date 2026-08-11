@@ -3,7 +3,6 @@
 namespace App\Filament\Clusters\ReviewApplication;
 
 use App\Enums\Admin\AdminGate;
-use App\Enums\Admin\AdminRole;
 use BackedEnum;
 use Filament\Clusters\Cluster;
 use Filament\Support\Icons\Heroicon;
@@ -15,7 +14,7 @@ class ReviewApplicationCluster extends Cluster
 
     public static function canAccess(): bool
     {
-        return Gate::allows(AdminGate::ALLOW_FULL);
+        return Gate::allows(AdminGate::ALLOW_PROFILE);
     }
 
     public static function getNavigationGroup(): \UnitEnum|string|null

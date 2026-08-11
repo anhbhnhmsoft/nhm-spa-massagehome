@@ -251,7 +251,10 @@ class AppServiceProvider extends ServiceProvider
     protected function registerLogViewer(): void
     {
         LogViewer::auth(function ($request) {
-            return $request->user() && $request->user()->hasRole(AdminRole::ADMIN);
+            return $request->user() && $request->user()->hasAnyRole([
+                AdminRole::SUPER_ADMIN,
+                AdminRole::PROFILE_MANAGER,
+            ]);
         });
     }
 
@@ -261,28 +264,46 @@ class AppServiceProvider extends ServiceProvider
      */
     protected function registerAdminGate(): void
     {
-        Gate::define(AdminGate::ALLOW_ADMIN, function (AdminUser $user) {
-            return $user->hasRole(AdminRole::ADMIN);
+        Gate::define(AdminGate::ALLOW_SUPER_ADMIN, function (AdminUser $user) {
+            return $user->hasRole(AdminRole::SUPER_ADMIN);
         });
 
-        Gate::define(AdminGate::ALLOW_ACCOUNTANT, function (AdminUser $user) {
-            return $user->hasAnyRole([AdminRole::ADMIN, AdminRole::ACCOUNTANT]);
+        Gate::define(AdminGate::ALLOW_OPERATION, function (AdminUser $user) {
+            return $user->hasAnyRole([
+                AdminRole::SUPER_ADMIN,
+                AdminRole::OPERATION_MANAGER,
+            ]);
         });
 
-        Gate::define(AdminGate::ALLOW_ACCOUNTANT_SELF, function (AdminUser $user) {
-            return $user->hasRole(AdminRole::ACCOUNTANT);
+        Gate::define(AdminGate::ALLOW_MARKETING, function (AdminUser $user) {
+            return $user->hasAnyRole([
+                AdminRole::SUPER_ADMIN,
+                AdminRole::MARKETING_MANAGER,
+            ]);
         });
 
-        Gate::define(AdminGate::ALLOW_EMPLOYEE, function (AdminUser $user) {
-            return $user->hasAnyRole([AdminRole::ADMIN, AdminRole::EMPLOYEE]);
+        Gate::define(AdminGate::ALLOW_PROFILE, function (AdminUser $user) {
+            return $user->hasAnyRole([
+                AdminRole::SUPER_ADMIN,
+                AdminRole::PROFILE_MANAGER,
+            ]);
         });
 
-        Gate::define(AdminGate::ALLOW_EMPLOYEE_SELF, function (AdminUser $user) {
-            return $user->hasRole(AdminRole::EMPLOYEE);
+        Gate::define(AdminGate::ALLOW_CUSTOMER_SUPPORT, function (AdminUser $user) {
+            return $user->hasAnyRole([
+                AdminRole::SUPER_ADMIN,
+                AdminRole::CUSTOMER_SUPPORT,
+            ]);
         });
 
-        Gate::define(AdminGate::ALLOW_FULL, function (AdminUser $user) {
-            return $user->hasAnyRole([AdminRole::ADMIN, AdminRole::ACCOUNTANT, AdminRole::EMPLOYEE]);
+        Gate::define(AdminGate::ALLOW_ORDER_DASHBOARD, function (AdminUser $user) {
+            return $user->hasAnyRole([
+                AdminRole::SUPER_ADMIN,
+                AdminRole::OPERATION_MANAGER,
+                AdminRole::MARKETING_MANAGER,
+                AdminRole::PROFILE_MANAGER,
+                AdminRole::CUSTOMER_SUPPORT,
+            ]);
         });
     }
 }

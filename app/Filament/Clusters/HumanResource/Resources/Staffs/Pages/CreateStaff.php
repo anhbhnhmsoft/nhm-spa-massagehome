@@ -12,7 +12,7 @@ class CreateStaff extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $data['role'] = AdminRole::EMPLOYEE->value; // Mặc định khi tạo mới sẽ là nhân viên
+        $data['role'] = AdminRole::CUSTOMER_SUPPORT->value;
         return $data;
     }
 }

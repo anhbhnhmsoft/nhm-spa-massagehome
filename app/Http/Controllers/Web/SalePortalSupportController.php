@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Core\Controller\ListRequest;
+use App\Enums\Admin\AdminRole;
 use App\Http\Resources\Support\SupportMessageResource;
 use App\Http\Resources\Support\SupportTicketResource;
 use App\Services\AuthService;
@@ -42,6 +43,16 @@ class SalePortalSupportController
 
         $request->session()->regenerate();
         $admin = $result->getData()['user'];
+
+        if ($admin->role !== AdminRole::CUSTOMER_SUPPORT) {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+
+            return response()->json([
+                'success' => false,
+                'message' => __('common_error.unauthorized'),
+            ], 403);
+        }
 
         return response()->json([
             'success' => true,

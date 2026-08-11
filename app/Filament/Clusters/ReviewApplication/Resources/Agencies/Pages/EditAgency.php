@@ -152,7 +152,7 @@ class EditAgency extends EditRecord
     protected function getSaveFormAction(): Action
     {
         $record = $this->getRecord();
-        if (Gate::check(AdminGate::ALLOW_EMPLOYEE)){
+        if (Gate::check(AdminGate::ALLOW_PROFILE)){
             $status = $record->reviewApplication?->status;
             $isLocked = in_array($status, [
                 ReviewApplicationStatus::PENDING,

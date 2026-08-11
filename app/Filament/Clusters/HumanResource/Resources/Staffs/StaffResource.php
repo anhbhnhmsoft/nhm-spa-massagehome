@@ -29,22 +29,22 @@ class StaffResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return Gate::allows(AdminGate::ALLOW_ADMIN);
+        return Gate::allows(AdminGate::ALLOW_PROFILE);
     }
 
     public static function canCreate(): bool
     {
-        return Gate::allows(AdminGate::ALLOW_ADMIN);
+        return Gate::allows(AdminGate::ALLOW_PROFILE);
     }
 
     public static function canEdit($record): bool
     {
-        return Gate::allows(AdminGate::ALLOW_ADMIN);
+        return Gate::allows(AdminGate::ALLOW_PROFILE);
     }
 
     public static function canDelete($record): bool
     {
-        return Gate::allows(AdminGate::ALLOW_ADMIN);
+        return Gate::allows(AdminGate::ALLOW_PROFILE);
     }
 
     public static function getNavigationLabel(): string
@@ -84,6 +84,6 @@ class StaffResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->where('role', AdminRole::EMPLOYEE->value);
+            ->where('role', AdminRole::CUSTOMER_SUPPORT->value);
     }
 }

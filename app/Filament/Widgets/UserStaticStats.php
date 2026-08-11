@@ -26,7 +26,7 @@ class UserStaticStats extends BaseWidget
 
     public function getColumnSpan(): int|string|array
     {
-        if (Gate::allows(AdminGate::ALLOW_EMPLOYEE_SELF)) {
+        if (Gate::allows(AdminGate::ALLOW_PROFILE)) {
             return 'full';
         }
 
@@ -34,7 +34,7 @@ class UserStaticStats extends BaseWidget
     }
     public static function canView(): bool
     {
-        return Gate::allows(AdminGate::ALLOW_EMPLOYEE);
+        return Gate::allows(AdminGate::ALLOW_PROFILE);
 
     }
 

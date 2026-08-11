@@ -26,7 +26,7 @@ class CustomerResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return Gate::allows(AdminGate::ALLOW_FULL);
+        return Gate::allows(AdminGate::ALLOW_PROFILE);
     }
     public static function getNavigationGroup(): \UnitEnum|string|null
     {

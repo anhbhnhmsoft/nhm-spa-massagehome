@@ -25,22 +25,22 @@ class SupportCategoryResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return Gate::allows(AdminGate::ALLOW_ADMIN);
+        return Gate::allows(AdminGate::ALLOW_CUSTOMER_SUPPORT);
     }
 
     public static function canCreate(): bool
     {
-        return Gate::allows(AdminGate::ALLOW_ADMIN);
+        return Gate::allows(AdminGate::ALLOW_CUSTOMER_SUPPORT);
     }
 
     public static function canEdit($record): bool
     {
-        return Gate::allows(AdminGate::ALLOW_ADMIN);
+        return Gate::allows(AdminGate::ALLOW_CUSTOMER_SUPPORT);
     }
 
     public static function canDelete($record): bool
     {
-        return Gate::allows(AdminGate::ALLOW_ADMIN);
+        return Gate::allows(AdminGate::ALLOW_CUSTOMER_SUPPORT);
     }
 
     public static function getNavigationGroup(): \UnitEnum|string|null

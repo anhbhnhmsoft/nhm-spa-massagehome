@@ -19,7 +19,7 @@ class GeneralStats extends BaseWidget
 
     public static function canView(): bool
     {
-        return Gate::allows(AdminGate::ALLOW_ACCOUNTANT);
+        return Gate::allows(AdminGate::ALLOW_SUPER_ADMIN);
     }
     protected function getStats(): array
     {

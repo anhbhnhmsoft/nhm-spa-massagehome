@@ -27,7 +27,7 @@ class SupportTicketResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return Gate::allows(AdminGate::ALLOW_EMPLOYEE);
+        return Gate::allows(AdminGate::ALLOW_CUSTOMER_SUPPORT);
     }
 
     public static function canCreate(): bool
@@ -37,7 +37,7 @@ class SupportTicketResource extends Resource
 
     public static function canEdit($record): bool
     {
-        return Gate::allows(AdminGate::ALLOW_EMPLOYEE);
+        return Gate::allows(AdminGate::ALLOW_CUSTOMER_SUPPORT);
     }
 
     public static function canDelete($record): bool

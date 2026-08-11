@@ -14,7 +14,7 @@ class HumanResourceCluster extends Cluster
 
     public static function canAccess(): bool
     {
-        return Gate::allows(AdminGate::ALLOW_ADMIN);
+        return Gate::allows(AdminGate::ALLOW_PROFILE);
     }
 
     public static function getNavigationLabel(): string

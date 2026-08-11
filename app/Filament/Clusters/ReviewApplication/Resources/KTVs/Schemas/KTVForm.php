@@ -35,7 +35,7 @@ class KTVForm
     {
         return $schema
             ->disabled(function ($record) {
-                if (Gate::allows(AdminGate::ALLOW_EMPLOYEE)){
+                if (Gate::allows(AdminGate::ALLOW_PROFILE)){
                     if (!$record) {
                         return false;
                     }

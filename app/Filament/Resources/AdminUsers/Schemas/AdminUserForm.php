@@ -60,7 +60,9 @@ class AdminUserForm
                                     ]),
                                 Select::make('role')
                                     ->label(__('admin.common.table.role'))
-                                    ->options(AdminRole::toOptions())
+                                    ->options(fn (): array => auth('web')->user()?->role === AdminRole::SUPER_ADMIN
+                                        ? AdminRole::toOptions()
+                                        : AdminRole::managementOptions())
                                     ->required()
                                     ->validationMessages([
                                         'required' => __('common.error.required'),

@@ -7,31 +7,10 @@ namespace App\Enums\Admin;
  */
 enum AdminGate: string
 {
-    /**
-     * Chỉ có admin mới có quyền truy cập
-     */
-    case ALLOW_ADMIN = 'allow_admin';
-    /**
-     * Chỉ có accountant mới có quyền truy cập (bao gồm cả admin)
-     */
-    case ALLOW_ACCOUNTANT = 'allow_accountant';
-
-    /**
-     * Chỉ có accountant mới có quyền truy cập (không bao gồm admin)
-     */
-    case ALLOW_ACCOUNTANT_SELF = 'allow_accountant_self';
-    /**
-     * Chỉ có employee mới có quyền truy cập (bao gồm cả admin)
-     */
-    case ALLOW_EMPLOYEE = 'allow_employee';
-
-    /**
-     * Chỉ có employee mới có quyền truy cập (không bao gồm admin)
-     */
-    case ALLOW_EMPLOYEE_SELF = 'allow_employee_self';
-
-    /**
-     * Full quyền truy cập
-     */
-    case ALLOW_FULL = 'allow_full';
+    case ALLOW_SUPER_ADMIN = 'allow_super_admin';
+    case ALLOW_OPERATION = 'allow_operation';
+    case ALLOW_MARKETING = 'allow_marketing';
+    case ALLOW_PROFILE = 'allow_profile';
+    case ALLOW_CUSTOMER_SUPPORT = 'allow_customer_support';
+    case ALLOW_ORDER_DASHBOARD = 'allow_order_dashboard';
 }

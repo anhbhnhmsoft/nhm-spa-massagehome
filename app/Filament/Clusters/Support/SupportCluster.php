@@ -14,7 +14,7 @@ class SupportCluster extends Cluster
 
     public static function canAccess(): bool
     {
-        return Gate::allows(AdminGate::ALLOW_EMPLOYEE);
+        return Gate::allows(AdminGate::ALLOW_CUSTOMER_SUPPORT);
     }
 
     public static function getNavigationLabel(): string

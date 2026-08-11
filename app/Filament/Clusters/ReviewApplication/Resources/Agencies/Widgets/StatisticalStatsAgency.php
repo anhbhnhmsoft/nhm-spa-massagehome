@@ -34,14 +34,14 @@ class StatisticalStatsAgency extends BaseWidget
             Grid::make()
                 ->columnSpanFull()
                 ->columns(function () {
-                    return Gate::allows(AdminGate::ALLOW_ACCOUNTANT) ? 5 : 3;
+                    return Gate::allows(AdminGate::ALLOW_OPERATION) ? 5 : 3;
                 })
                 ->schema([
                     Stat::make(
                         label: __('admin.agency.infolist.total_profit_referral_ktv'),
                         value: number_format(($dataDashboard['total_profit_referral_ktv'] ?? 0), 2)
                     )
-                        ->visible(fn() => Gate::allows(AdminGate::ALLOW_ACCOUNTANT))
+                        ->visible(fn() => Gate::allows(AdminGate::ALLOW_OPERATION))
                         ->description(__('admin.agency.infolist.total_profit_referral_ktv_desc'))
                         ->icon(Heroicon::CurrencyDollar)
                         ->color('info'),
@@ -49,7 +49,7 @@ class StatisticalStatsAgency extends BaseWidget
                         label: __('admin.agency.infolist.total_profit_affiliate'),
                         value: number_format(($dataDashboard['total_profit_affiliate'] ?? 0), 2)
                     )
-                        ->visible(fn() => Gate::allows(AdminGate::ALLOW_ACCOUNTANT))
+                        ->visible(fn() => Gate::allows(AdminGate::ALLOW_OPERATION))
                         ->description(__('admin.agency.infolist.total_profit_affiliate'))
                         ->icon(Heroicon::CurrencyDollar)
                         ->color('info'),

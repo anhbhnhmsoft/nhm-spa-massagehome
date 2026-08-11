@@ -22,27 +22,23 @@ enum NotificationAdminType
     public function getTargetRoles(): array
     {
         return match ($this) {
-            // Full Access
             self::EMERGENCY_SUPPORT => [
-                AdminRole::ADMIN,
-                AdminRole::EMPLOYEE,
-                AdminRole::ACCOUNTANT
+                AdminRole::OPERATION_MANAGER,
+                AdminRole::CUSTOMER_SUPPORT,
             ],
-            // Chỉ admin và nhân viên
             self::OVERDUE_ONGOING_BOOKING,
-            self::USER_APPLY_KTV_PARTNER,
-            self::USER_APPLY_AGENCY_PARTNER ,
             self::OVERDUE_CONFIRMED_BOOKING => [
-                AdminRole::ADMIN,
-                AdminRole::EMPLOYEE,
+                AdminRole::OPERATION_MANAGER,
             ],
-            // Chỉ admin và kế toán
+            self::USER_APPLY_KTV_PARTNER,
+            self::USER_APPLY_AGENCY_PARTNER => [
+                AdminRole::PROFILE_MANAGER,
+            ],
             self::CONFIRM_WECHAT_PAYMENT,
             self::CONFIRM_ALIPAY_PAYMENT => [
-                AdminRole::ADMIN,
-                AdminRole::ACCOUNTANT
+                AdminRole::OPERATION_MANAGER,
             ],
-            default => [AdminRole::ADMIN],
+            default => [AdminRole::PROFILE_MANAGER],
         };
     }
 }

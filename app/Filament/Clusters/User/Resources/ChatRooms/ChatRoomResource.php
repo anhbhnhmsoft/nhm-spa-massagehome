@@ -21,7 +21,7 @@ class ChatRoomResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return Gate::allows(AdminGate::ALLOW_EMPLOYEE);
+        return Gate::allows(AdminGate::ALLOW_PROFILE);
     }
     public static function getModelLabel(): string
     {

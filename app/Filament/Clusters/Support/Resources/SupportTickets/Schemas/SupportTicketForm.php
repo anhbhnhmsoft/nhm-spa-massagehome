@@ -47,7 +47,7 @@ class SupportTicketForm
                         Select::make('assigned_staff_id')
                             ->label(__('admin.support_ticket.fields.assigned_staff'))
                             ->options(fn () => AdminUser::query()
-                                ->where('role', AdminRole::EMPLOYEE->value)
+                                ->where('role', AdminRole::CUSTOMER_SUPPORT->value)
                                 ->where('is_active', true)
                                 ->orderBy('name')
                                 ->pluck('name', 'id')

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\CheckRole;
+use App\Http\Middleware\CheckAdminRole;
 use App\Http\Middleware\DetectAppVersion;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\SetLocale;
@@ -26,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'set-api-locale' => SetLocale::class,
             'check-role' => CheckRole::class,
+            'check-admin-role' => CheckAdminRole::class,
             'internal-api-secret' => VerifyInternalApiSecret::class,
             'update-last-active' => UpdateLastActive::class,
         ]);

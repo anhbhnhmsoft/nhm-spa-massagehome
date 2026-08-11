@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\AdminUsers;
 
+use App\Enums\Admin\AdminGate;
 use App\Enums\Admin\AdminRole;
 use App\Filament\Resources\AdminUsers\Pages\CreateAdminUser;
 use App\Filament\Resources\AdminUsers\Pages\EditAdminUser;
@@ -14,6 +15,8 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Gate;
 
 class AdminUserResource extends Resource
 {
@@ -27,7 +30,24 @@ class AdminUserResource extends Resource
      */
     public static function canViewAny(): bool
     {
-        return auth('web')->user()->role === AdminRole::ADMIN;
+        return Gate::allows(AdminGate::ALLOW_PROFILE);
+    }
+
+    public static function canCreate(): bool
+    {
+        return Gate::allows(AdminGate::ALLOW_PROFILE);
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return Gate::allows(AdminGate::ALLOW_SUPER_ADMIN)
+            || (Gate::allows(AdminGate::ALLOW_PROFILE) && $record->role !== AdminRole::SUPER_ADMIN);
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return Gate::allows(AdminGate::ALLOW_SUPER_ADMIN)
+            || (Gate::allows(AdminGate::ALLOW_PROFILE) && $record->role !== AdminRole::SUPER_ADMIN);
     }
 
     public static function getNavigationLabel(): string

@@ -41,10 +41,10 @@ class CommonActions
             ->icon('heroicon-m-chevron-left');
     }
 
-    public static function deleteAction(): Action
+    public static function deleteAction(AdminGate $gate = AdminGate::ALLOW_PROFILE): Action
     {
         return  DeleteAction::make()
-            ->visible(fn() => Gate::allows(AdminGate::ALLOW_ADMIN))
+            ->visible(fn() => Gate::allows($gate))
             ->label(__('admin.common.action.delete'))
             ->tooltip(__('admin.common.tooltip.delete'))
             ->icon('heroicon-o-trash')
@@ -66,7 +66,7 @@ class CommonActions
             ->icon('heroicon-o-sparkles')
             ->color('info')
             ->visible(function (User $record) {
-                if (Gate::check(AdminGate::ALLOW_EMPLOYEE)){
+                if (Gate::check(AdminGate::ALLOW_PROFILE)){
                     return $record->reviewApplication?->status === ReviewApplicationStatus::APPROVED;
                 }
                 return false;
@@ -177,7 +177,7 @@ class CommonActions
             ->label(__('admin.common.action.view_service'))
             ->icon('heroicon-o-tag')
             ->visible(function (User $record) {
-                if (Gate::check(AdminGate::ALLOW_EMPLOYEE)){
+                if (Gate::check(AdminGate::ALLOW_PROFILE)){
                     return $record->reviewApplication?->status === ReviewApplicationStatus::APPROVED;
                 }
                 return false;
@@ -215,7 +215,7 @@ class CommonActions
             ->label(__('admin.common.action.buff_service'))
             ->icon('heroicon-o-tag')
             ->visible(function (User $record) {
-                if (Gate::check(AdminGate::ALLOW_EMPLOYEE)){
+                if (Gate::check(AdminGate::ALLOW_PROFILE)){
                     return $record->reviewApplication?->status === ReviewApplicationStatus::APPROVED;
                 }
                 return false;

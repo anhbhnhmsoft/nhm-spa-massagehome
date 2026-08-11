@@ -19,7 +19,7 @@ class CategoryForm
     public static function configure(Schema $schema): Schema
     {
         return $schema
-            ->disabled(fn() => !Gate::allows(AdminGate::ALLOW_ADMIN))
+            ->disabled(fn() => !Gate::allows(AdminGate::ALLOW_OPERATION))
             ->components([
                 Section::make(__('admin.category.basic_info'))
                     ->compact()

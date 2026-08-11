@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Enums\DateRangeDashboard;
+use App\Enums\Admin\AdminGate;
 use App\Filament\Resources\DangerSupports\DangerSupportResource;
 use App\Filament\Widgets\GeneralBookingStats;
 use App\Filament\Widgets\GeneralStats;
@@ -12,8 +13,8 @@ use App\Services\DashboardService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Pages\Dashboard as PagesDashboard;
-use Filament\Pages\Dashboard\Actions\FilterAction;
 use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
+use Illuminate\Support\Facades\Gate;
 
 class Dashboard extends PagesDashboard
 {
@@ -67,6 +68,7 @@ class Dashboard extends PagesDashboard
                 ->badge($sosCount)
                 ->icon('heroicon-m-exclamation-triangle')
                 ->url(DangerSupportResource::getUrl('index'))
+                ->visible(fn () => Gate::allows(AdminGate::ALLOW_OPERATION))
                 ->extraAttributes([
                     'class' => $sosCount > 0 ? 'animate-pulse' : '', // Nhấp nháy nếu có SOS
                 ]),
@@ -75,6 +77,12 @@ class Dashboard extends PagesDashboard
 
     public function getWidgets(): array
     {
+        if (! Gate::allows(AdminGate::ALLOW_SUPER_ADMIN)) {
+            return [
+                GeneralBookingStats::class,
+            ];
+        }
+
         return [
             GeneralStats::class,
             GeneralBookingStats::class,

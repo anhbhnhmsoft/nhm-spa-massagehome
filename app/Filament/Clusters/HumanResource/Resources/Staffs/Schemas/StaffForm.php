@@ -63,7 +63,7 @@ class StaffForm
                             ->label(__('admin.common.table.status'))
                             ->default(true),
                         TextInput::make('role')
-                            ->default(AdminRole::EMPLOYEE->value)
+                            ->default(AdminRole::CUSTOMER_SUPPORT->value)
                             ->hidden()
                             ->dehydrated(true),
                     ]),

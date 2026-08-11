@@ -2,13 +2,20 @@
 
 namespace App\Filament\Clusters\User;
 
+use App\Enums\Admin\AdminGate;
 use BackedEnum;
 use Filament\Clusters\Cluster;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\Facades\Gate;
 
 class UserCluster extends Cluster
 {
     protected static string|BackedEnum|null $navigationIcon = Heroicon::User;
+
+    public static function canAccess(): bool
+    {
+        return Gate::allows(AdminGate::ALLOW_PROFILE);
+    }
 
     public static function getNavigationLabel(): string
     {

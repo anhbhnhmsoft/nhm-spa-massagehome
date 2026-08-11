@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\DangerSupports;
 
+use App\Enums\Admin\AdminGate;
 use App\Enums\DangerSupportStatus;
 use App\Filament\Resources\DangerSupports\Pages\ListDangerSupports;
 use App\Filament\Resources\DangerSupports\Tables\DangerSupportsTable;
@@ -11,12 +12,18 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Gate;
 
 class DangerSupportResource extends Resource
 {
     protected static ?string $model = DangerSupport::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::ShieldExclamation;
+
+    public static function canViewAny(): bool
+    {
+        return Gate::allows(AdminGate::ALLOW_OPERATION);
+    }
 
     public static function getNavigationLabel(): string
     {

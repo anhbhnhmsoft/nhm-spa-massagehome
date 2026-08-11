@@ -32,14 +32,14 @@ class StatisticalStatsKTV extends BaseWidget
             Grid::make()
                 ->columnSpanFull()
                 ->columns(function () {
-                    return Gate::allows(AdminGate::ALLOW_ACCOUNTANT) ? 5 : 3;
+                    return Gate::allows(AdminGate::ALLOW_OPERATION) ? 5 : 3;
                 })
                 ->schema([
                     Stat::make(
                         label: __('admin.ktv.infolist.received_income'),
                         value: Helper::formatPrice($dataDashboard['received_income'] ?? 0)
                     )
-                        ->visible(fn() => Gate::allows(AdminGate::ALLOW_ACCOUNTANT))
+                        ->visible(fn() => Gate::allows(AdminGate::ALLOW_OPERATION))
                         ->description(__('admin.ktv.infolist.received_income_desc'))
                         ->icon(Heroicon::CurrencyDollar)
                         ->color('success'),
@@ -61,7 +61,7 @@ class StatisticalStatsKTV extends BaseWidget
                         label: __('admin.ktv.infolist.affiliate_income'),
                         value: Helper::formatPrice($dataDashboard['affiliate_income'] ?? 0)
                     )
-                        ->visible(fn() => Gate::allows(AdminGate::ALLOW_ACCOUNTANT))
+                        ->visible(fn() => Gate::allows(AdminGate::ALLOW_OPERATION))
                         ->description(__('admin.ktv.infolist.affiliate_income_desc'))
                         ->icon(Heroicon::ShoppingBag)
                         ->color('info'),

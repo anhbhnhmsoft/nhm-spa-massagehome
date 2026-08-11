@@ -18,7 +18,7 @@ class DangerSupportStats extends BaseWidget
 
     public static function canView(): bool
     {
-        if (!Gate::allows(AdminGate::ALLOW_FULL)) {
+        if (!Gate::allows(AdminGate::ALLOW_OPERATION)) {
             return false;
         }
 

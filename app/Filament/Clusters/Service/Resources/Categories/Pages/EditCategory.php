@@ -36,7 +36,7 @@ class EditCategory extends EditRecord
 
     protected function getSaveFormAction(): Action
     {
-        $isLocked = !Gate::allows(AdminGate::ALLOW_ADMIN);
+        $isLocked = !Gate::allows(AdminGate::ALLOW_OPERATION);
         return parent::getSaveFormAction()
             // 3. Đổi màu sang xám nếu bị khóa (tạo cảm giác disabled)
             ->color($isLocked ? 'gray' : 'primary')

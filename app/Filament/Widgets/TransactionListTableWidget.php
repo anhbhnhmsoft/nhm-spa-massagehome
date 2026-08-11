@@ -20,7 +20,7 @@ class TransactionListTableWidget extends TableWidget
 
     public static function canView(): bool
     {
-        return Gate::allows(AdminGate::ALLOW_ACCOUNTANT);
+        return Gate::allows(AdminGate::ALLOW_OPERATION);
     }
     protected function getTableHeading(): string|Htmlable|null
     {

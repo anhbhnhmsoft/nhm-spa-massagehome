@@ -19,7 +19,7 @@ class AdminSeeder extends Seeder
             [
                 'password' => Hash::make('Test12345678@'),
                 'name' => 'Admin System',
-                'role' => AdminRole::ADMIN,
+                'role' => AdminRole::SUPER_ADMIN,
                 'language' => Language::VIETNAMESE->value,
                 'is_active' => true,
             ]);

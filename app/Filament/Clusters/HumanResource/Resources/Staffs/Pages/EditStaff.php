@@ -16,7 +16,7 @@ class EditStaff extends EditRecord
     {
         return [
             DeleteAction::make()
-                ->visible(fn () => Gate::allows(AdminGate::ALLOW_ADMIN)),
+                ->visible(fn () => Gate::allows(AdminGate::ALLOW_PROFILE)),
         ];
     }
 }

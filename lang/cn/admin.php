@@ -1068,9 +1068,11 @@ return
             'all' => '全部时间',
         ],
         'admin_role' => [
-            'ADMIN' => '管理员',
-            'ACCOUNTANT' => '会计',
-            'EMPLOYEE' => '员工',
+            'OPERATION_MANAGER' => '运营订单管理',
+            'MARKETING_MANAGER' => '营销管理',
+            'PROFILE_MANAGER' => '资料管理',
+            'CUSTOMER_SUPPORT' => '客户支持',
+            'SUPER_ADMIN' => '超级管理员',
         ],
         'admin_user' => [
             'label' => '员工',

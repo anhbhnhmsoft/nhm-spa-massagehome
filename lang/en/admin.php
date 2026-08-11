@@ -1069,9 +1069,11 @@ return
             'all' => 'All Time',
         ],
         'admin_role' => [
-            'ADMIN' => 'Admin',
-            'ACCOUNTANT' => 'Accountant',
-            'EMPLOYEE' => 'Employee',
+            'OPERATION_MANAGER' => 'Operations Manager',
+            'MARKETING_MANAGER' => 'Marketing Manager',
+            'PROFILE_MANAGER' => 'Profile Manager',
+            'CUSTOMER_SUPPORT' => 'Customer Support',
+            'SUPER_ADMIN' => 'Superadmin',
         ],
         'admin_user' => [
             'label' => 'Staff',

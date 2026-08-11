@@ -479,7 +479,7 @@ class SupportService extends BaseService
     protected function selectOnlineStaff(): ?AdminUser
     {
         return $this->adminUserRepository->queryAdminUser()
-            ->where('role', AdminRole::EMPLOYEE->value)
+            ->where('role', AdminRole::CUSTOMER_SUPPORT->value)
             ->where('is_active', true)
             ->orderByDesc('last_seen_at')
             ->get()

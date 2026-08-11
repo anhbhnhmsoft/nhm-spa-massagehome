@@ -249,7 +249,12 @@ class NotificationService extends BaseService
 
             // Gửi thông báo cho admin
             $adUsers = $this->adminUserRepository->queryAdminUser()
-                ->where('role', AdminRole::ADMIN)
+                ->whereIn('role', [
+                    AdminRole::OPERATION_MANAGER,
+                    AdminRole::MARKETING_MANAGER,
+                    AdminRole::PROFILE_MANAGER,
+                    AdminRole::CUSTOMER_SUPPORT,
+                ])
                 ->get();
             if (!$adUsers->isEmpty()){
                 $adUsers->each(function ($adUser) use ($type,  $data, $user){

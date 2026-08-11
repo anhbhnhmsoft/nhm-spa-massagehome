@@ -3,6 +3,7 @@
 namespace App\Filament\Clusters\Support\Resources\SupportCategories\Tables;
 
 use App\Filament\Components\CommonActions;
+use App\Enums\Admin\AdminGate;
 use App\Models\SupportCategory;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
@@ -52,7 +53,7 @@ class SupportCategoriesTable
                     EditAction::make()
                         ->label(__('admin.common.action.edit'))
                         ->icon('heroicon-o-pencil-square'),
-                    CommonActions::deleteAction(),
+                    CommonActions::deleteAction(AdminGate::ALLOW_CUSTOMER_SUPPORT),
                 ]), 
             ])
             ->emptyStateHeading(__('admin.common.support_category.empty_state.heading'))

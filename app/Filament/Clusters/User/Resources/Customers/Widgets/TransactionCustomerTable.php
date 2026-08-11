@@ -18,7 +18,7 @@ class TransactionCustomerTable extends TableWidget
     protected int | string | array $columnSpan = 2;
     public static function canView(): bool
     {
-        return Gate::allows(AdminGate::ALLOW_ACCOUNTANT);
+        return Gate::allows(AdminGate::ALLOW_OPERATION);
     }
     protected function getTableHeading(): string|Htmlable|null
     {

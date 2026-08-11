@@ -1081,9 +1081,11 @@ return
             ],
         ],
         'admin_role' => [
-            'ADMIN' => 'Quản trị viên',
-            'ACCOUNTANT' => 'Quản lý tài chính',
-            'EMPLOYEE' => 'Nhân viên',
+            'OPERATION_MANAGER' => 'Quản lý vận hành đơn',
+            'MARKETING_MANAGER' => 'Quản lý marketing',
+            'PROFILE_MANAGER' => 'Quản lý hồ sơ',
+            'CUSTOMER_SUPPORT' => 'Nhân viên CSKH',
+            'SUPER_ADMIN' => 'Superadmin',
         ],
         'admin_user' => [
             'label' => 'Nhân sự',

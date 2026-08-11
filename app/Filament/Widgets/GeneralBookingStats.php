@@ -19,7 +19,7 @@ class GeneralBookingStats extends BaseWidget
 
     public static function canView(): bool
     {
-        return Gate::allows(AdminGate::ALLOW_FULL);
+        return Gate::allows(AdminGate::ALLOW_ORDER_DASHBOARD);
     }
     protected function getStats(): array
     {

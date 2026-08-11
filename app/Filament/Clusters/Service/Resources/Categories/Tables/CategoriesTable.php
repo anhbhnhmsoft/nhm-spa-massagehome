@@ -3,6 +3,7 @@
 namespace App\Filament\Clusters\Service\Resources\Categories\Tables;
 
 use App\Filament\Components\CommonActions;
+use App\Enums\Admin\AdminGate;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -62,7 +63,7 @@ class CategoriesTable
                         ->tooltip(__('admin.common.tooltip.edit'))
                         ->icon('heroicon-o-pencil-square'),
 
-                   CommonActions::deleteAction()
+                   CommonActions::deleteAction(AdminGate::ALLOW_OPERATION)
                 ]),
             ])
             ->filters([

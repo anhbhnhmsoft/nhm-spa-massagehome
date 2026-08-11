@@ -43,7 +43,7 @@ class EditCustomer extends EditRecord
 
     protected function getSaveFormAction(): Action
     {
-        $isLocked = !Gate::allows(AdminGate::ALLOW_ADMIN);
+        $isLocked = !Gate::allows(AdminGate::ALLOW_PROFILE);
         return parent::getSaveFormAction()
             ->color($isLocked ? 'gray' : 'primary')
             ->icon($isLocked ? 'heroicon-m-lock-closed' : 'heroicon-m-check')

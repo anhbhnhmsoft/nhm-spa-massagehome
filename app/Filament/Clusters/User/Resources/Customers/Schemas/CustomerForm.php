@@ -21,7 +21,7 @@ class CustomerForm
     public static function configure(Schema $schema): Schema
     {
         return $schema
-            ->disabled(fn(): bool => !Gate::allows(AdminGate::ALLOW_ADMIN))
+            ->disabled(fn(): bool => !Gate::allows(AdminGate::ALLOW_PROFILE))
             ->components([
                 // Thông tin cơ bản
                 Section::make(__('admin.common.table.basic_info'))

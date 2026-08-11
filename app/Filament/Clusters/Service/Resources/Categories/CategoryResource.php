@@ -26,12 +26,12 @@ class CategoryResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return Gate::allows(AdminGate::ALLOW_FULL);
+        return Gate::allows(AdminGate::ALLOW_OPERATION);
     }
 
     public static function canCreate(): bool
     {
-        return Gate::allows(AdminGate::ALLOW_ADMIN);
+        return Gate::allows(AdminGate::ALLOW_OPERATION);
     }
     public static function getNavigationGroup(): \UnitEnum|string|null
     {

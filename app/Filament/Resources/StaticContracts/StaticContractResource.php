@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\StaticContracts;
 
-use App\Enums\Admin\AdminRole;
+use App\Enums\Admin\AdminGate;
 use App\Filament\Resources\StaticContracts\Pages\CreateStaticContract;
 use App\Filament\Resources\StaticContracts\Pages\EditStaticContract;
 use App\Filament\Resources\StaticContracts\Pages\ListStaticContracts;
@@ -15,6 +15,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Gate;
 
 class StaticContractResource extends Resource
 {
@@ -26,7 +27,7 @@ class StaticContractResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth('web')->user()->role === AdminRole::ADMIN;
+        return Gate::allows(AdminGate::ALLOW_PROFILE);
     }
 
     public static function form(Schema $schema): Schema

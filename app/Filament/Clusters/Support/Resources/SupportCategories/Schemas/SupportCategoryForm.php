@@ -16,7 +16,7 @@ class SupportCategoryForm
     public static function configure(Schema $schema): Schema
     {
         return $schema
-            ->disabled(fn () => ! Gate::allows(AdminGate::ALLOW_ADMIN))
+            ->disabled(fn () => ! Gate::allows(AdminGate::ALLOW_CUSTOMER_SUPPORT))
             ->components([
                 Section::make(__('admin.common.support_category.section.general'))
                     ->compact()
