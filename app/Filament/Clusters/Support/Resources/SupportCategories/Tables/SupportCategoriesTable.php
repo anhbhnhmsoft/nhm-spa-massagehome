@@ -53,7 +53,7 @@ class SupportCategoriesTable
                     EditAction::make()
                         ->label(__('admin.common.action.edit'))
                         ->icon('heroicon-o-pencil-square'),
-                    CommonActions::deleteAction(AdminGate::ALLOW_CUSTOMER_SUPPORT),
+                    CommonActions::deleteAction(AdminGate::ALLOW_SUPPORT_MANAGEMENT),
                 ]), 
             ])
             ->emptyStateHeading(__('admin.common.support_category.empty_state.heading'))

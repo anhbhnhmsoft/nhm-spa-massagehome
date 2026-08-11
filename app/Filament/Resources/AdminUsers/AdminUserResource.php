@@ -29,7 +29,7 @@ class AdminUserResource extends Resource
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserPlus;
 
     /**
-     * Customer support and superadmins can manage system users.
+     * Only superadmins can manage system users.
      */
     public static function canViewAny(): bool
     {
