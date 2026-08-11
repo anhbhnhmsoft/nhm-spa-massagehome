@@ -26,16 +26,12 @@ class UserStaticStats extends BaseWidget
 
     public function getColumnSpan(): int|string|array
     {
-        if (Gate::allows(AdminGate::ALLOW_PROFILE)) {
-            return 'full';
-        }
-
-        return 3;
+        return 'full';
     }
+
     public static function canView(): bool
     {
-        return Gate::allows(AdminGate::ALLOW_PROFILE);
-
+        return Gate::allows(AdminGate::ALLOW_ORDER_DASHBOARD);
     }
 
     protected function getStats(): array
@@ -53,6 +49,31 @@ class UserStaticStats extends BaseWidget
         }
         $data = $result->getData();
 
+        $userStats = [
+            Stat::make(__('dashboard.user_static_stats.total_customer'), $data['total_customer'])
+                ->icon(Heroicon::UserGroup)
+                ->url(Gate::allows(AdminGate::ALLOW_PROFILE) ? CustomerResource::getUrl('index') : null)
+                ->color('primary'),
+        ];
+
+        if (Gate::allows(AdminGate::ALLOW_SUPER_ADMIN)) {
+            $userStats[] = Stat::make(__('dashboard.user_static_stats.withdraw_requests'), $data['withdraw_requests'])
+                ->icon(Heroicon::Banknotes)
+                ->url(WalletTransactionResource::getUrl('pending', [
+                    'filters' => [
+                        'type' => [
+                            'value' => WalletTransactionType::WITHDRAWAL->value,
+                        ],
+                    ],
+                ]))
+                ->color('info');
+        }
+
+        $userStats[] = Stat::make(__('dashboard.user_static_stats.review'), $data['review_count'])
+            ->icon(Heroicon::ChatBubbleOvalLeft)
+            ->url(Gate::allows(AdminGate::ALLOW_PROFILE) ? ReviewResource::getUrl('index') : null)
+            ->color('warning');
+
         return [
             Section::make(__('dashboard.user_static_stats.title'))
                 ->columnSpanFull()
@@ -66,18 +87,18 @@ class UserStaticStats extends BaseWidget
                                 ->schema([
                                     Stat::make(__('dashboard.user_static_stats.total_ktv'), $data['total_ktv'])
                                         ->icon(Heroicon::User)
-                                        ->url(KTVResource::getUrl('index'))
+                                        ->url(Gate::allows(AdminGate::ALLOW_PROFILE) ? KTVResource::getUrl('index') : null)
                                         ->chart([7, 2, 10, 3, 15, 4, 17])
                                         ->color('primary'),
                                     Stat::make(__('dashboard.user_static_stats.pending_ktv'), $data['pending_ktv'])
                                         ->icon(Heroicon::UserPlus)
-                                        ->url(KTVResource::getUrl('index',[
+                                        ->url(Gate::allows(AdminGate::ALLOW_PROFILE) ? KTVResource::getUrl('index', [
                                             'filters' => [
                                                 'review_status' => [
                                                     'value' => ReviewApplicationStatus::PENDING->value,
                                                 ],
-                                            ]
-                                        ]))
+                                            ],
+                                        ]) : null)
                                         ->chart([7, 2, 10, 3, 15, 4, 17])
                                         ->color('warning'),
                                 ]),
@@ -86,44 +107,25 @@ class UserStaticStats extends BaseWidget
                                 ->schema([
                                     Stat::make(__('dashboard.user_static_stats.total_agency'), $data['total_agency'])
                                         ->icon(Heroicon::UserGroup)
-                                        ->url(AgencyResource::getUrl('index'))
+                                        ->url(Gate::allows(AdminGate::ALLOW_PROFILE) ? AgencyResource::getUrl('index') : null)
                                         ->chart([7, 2, 10, 3, 15, 4, 17])
                                         ->color('info'),
                                     Stat::make(__('dashboard.user_static_stats.pending_agency'), $data['pending_agency'])
                                         ->icon(Heroicon::OutlinedUserGroup)
-                                        ->url(AgencyResource::getUrl('index',[
+                                        ->url(Gate::allows(AdminGate::ALLOW_PROFILE) ? AgencyResource::getUrl('index', [
                                             'filters' => [
                                                 'review_status' => [
                                                     'value' => ReviewApplicationStatus::PENDING->value,
                                                 ],
-                                            ]
-                                        ]))
+                                            ],
+                                        ]) : null)
                                         ->chart([7, 2, 10, 3, 15, 4, 17])
                                         ->color('warning'),
                                 ])
                         ]),
                     Grid::make()
-                        ->columns(3)
-                        ->schema([
-                            Stat::make(__('dashboard.user_static_stats.total_customer'), $data['total_customer'])
-                                ->icon(Heroicon::UserGroup)
-                                ->url(CustomerResource::getUrl('index'))
-                                ->color('primary'),
-                            Stat::make(__('dashboard.user_static_stats.withdraw_requests'), $data['withdraw_requests'])
-                                ->icon(Heroicon::Banknotes)
-                                ->url(WalletTransactionResource::getUrl('pending',[
-                                    'filters' => [
-                                        'type' => [
-                                            'value' => WalletTransactionType::WITHDRAWAL->value,
-                                        ],
-                                    ]
-                                ]))
-                                ->color('info'),
-                            Stat::make(__('dashboard.user_static_stats.review'), $data['review_count'])
-                                ->icon(Heroicon::ChatBubbleOvalLeft)
-                                ->url(ReviewResource::getUrl('index'))
-                                ->color('warning'),
-                        ]),
+                        ->columns(count($userStats))
+                        ->schema($userStats),
                 ])
         ];
     }

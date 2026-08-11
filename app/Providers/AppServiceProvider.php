@@ -286,6 +286,7 @@ class AppServiceProvider extends ServiceProvider
             return $user->hasAnyRole([
                 AdminRole::SUPER_ADMIN,
                 AdminRole::PROFILE_MANAGER,
+                AdminRole::CUSTOMER_SUPPORT,
             ]);
         });
 

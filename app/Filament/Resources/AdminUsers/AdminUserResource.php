@@ -29,7 +29,7 @@ class AdminUserResource extends Resource
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserPlus;
 
     /**
-     * Only profile managers and superadmins can manage system users.
+     * Profile managers, customer support, and superadmins can manage system users.
      */
     public static function canViewAny(): bool
     {

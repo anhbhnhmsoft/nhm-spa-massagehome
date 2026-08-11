@@ -27,7 +27,7 @@ class StaticContractResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return Gate::allows(AdminGate::ALLOW_PROFILE);
+        return Gate::allows(AdminGate::ALLOW_SUPER_ADMIN);
     }
 
     public static function form(Schema $schema): Schema

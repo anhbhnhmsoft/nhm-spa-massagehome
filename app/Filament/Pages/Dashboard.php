@@ -80,6 +80,7 @@ class Dashboard extends PagesDashboard
         if (! Gate::allows(AdminGate::ALLOW_SUPER_ADMIN)) {
             return [
                 GeneralBookingStats::class,
+                UserStaticStats::class,
             ];
         }
 
