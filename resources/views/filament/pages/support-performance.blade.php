@@ -1,4 +1,6 @@
 <x-filament-panels::page>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+
     <div class="space-y-4" wire:poll.30s>
         <x-filament::section>
             <div class="flex flex-wrap items-end gap-4">
@@ -15,6 +17,18 @@
                         @endforeach
                     </select>
                 </label>
+                <label class="block min-w-48">
+                    <span class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('admin.support_monitor.period') }}</span>
+                    <select wire:model.live="period" class="fi-select block w-full rounded-lg border-gray-300 shadow-sm">
+                        <option value="day">{{ __('admin.support_monitor.period_day') }}</option>
+                        <option value="week">{{ __('admin.support_monitor.period_week') }}</option>
+                        <option value="month">{{ __('admin.support_monitor.period_month') }}</option>
+                    </select>
+                </label>
+            </div>
+            <div class="mt-4 rounded-lg border border-sky-100 bg-sky-50 px-4 py-3 text-xs text-sky-800 dark:border-sky-900/60 dark:bg-sky-950/30 dark:text-sky-200">
+                <strong>{{ __('admin.support_monitor.sla_legend') }}</strong>
+                {{ __('admin.support_monitor.sla_legend_description') }}
             </div>
         </x-filament::section>
 
@@ -26,14 +40,14 @@
                             <th class="px-3 py-3">{{ __('admin.support_monitor.staff') }}</th>
                             <th class="px-3 py-3">{{ __('admin.support_monitor.presence') }}</th>
                             <th class="px-3 py-3">{{ __('admin.support_monitor.received') }}</th>
-                            <th class="px-3 py-3">Claim</th>
+                            <th class="px-3 py-3">{{ __('admin.support_monitor.claimed') }}</th>
                             <th class="px-3 py-3">{{ __('admin.support_monitor.active') }}</th>
                             <th class="px-3 py-3">{{ __('admin.support_monitor.closed') }}</th>
                             <th class="px-3 py-3">{{ __('admin.support_monitor.messages') }}</th>
                             <th class="px-3 py-3">{{ __('admin.support_monitor.unread') }}</th>
                             <th class="px-3 py-3">{{ __('admin.support_monitor.avg_response') }}</th>
-                            <th class="px-3 py-3">Xử lý TB</th>
-                            <th class="px-3 py-3">Phân lại</th><th class="px-3 py-3">SLA cảnh báo/quá hạn</th><th class="px-3 py-3">Đúng SLA</th>
+                            <th class="px-3 py-3">{{ __('admin.support_monitor.avg_processing') }}</th>
+                            <th class="px-3 py-3">{{ __('admin.support_monitor.reassigned') }}</th><th class="px-3 py-3">{{ __('admin.support_monitor.sla_warning_breached') }}</th><th class="px-3 py-3">{{ __('admin.support_monitor.sla_rate') }}</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
@@ -52,7 +66,7 @@
                                 <td class="px-3 py-3">{{ $row['reassigned'] }}</td><td class="px-3 py-3">{{ $row['sla_warning'] }}/{{ $row['sla_breached'] }}</td><td class="px-3 py-3">{{ $row['sla_rate'] === null ? '-' : $row['sla_rate'].'%' }}</td>
                             </tr>
                         @empty
-                            <tr><td colspan="8" class="px-3 py-10 text-center text-gray-500">{{ __('admin.support_monitor.no_staff') }}</td></tr>
+                            <tr><td colspan="13" class="px-3 py-10 text-center text-gray-500">{{ __('admin.support_monitor.no_staff') }}</td></tr>
                         @endforelse
                     </tbody>
                 </table>

@@ -6,6 +6,7 @@ use App\Enums\Admin\AdminGate;
 use App\Enums\SupportMessageSenderType;
 use App\Enums\SupportTicketStatus;
 use App\Filament\Clusters\Support\SupportCluster;
+use App\Filament\Clusters\Support\Resources\SupportTickets\SupportTicketResource;
 use App\Models\SupportTicket;
 use Illuminate\Support\Facades\DB;
 use Filament\Pages\Page;
@@ -53,6 +54,11 @@ class SupportConversations extends Page
     protected function selectFirstTicket(): void
     {
         $this->ticketId = $this->tickets->first()?->id;
+    }
+
+    public function ticketUrl(SupportTicket $ticket): string
+    {
+        return SupportTicketResource::getUrl('edit', ['record' => $ticket]);
     }
 
     public function getQueueSummaryProperty(): array

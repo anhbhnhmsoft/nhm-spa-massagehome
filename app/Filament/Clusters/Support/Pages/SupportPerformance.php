@@ -25,6 +25,8 @@ class SupportPerformance extends Page
 
     public string $date;
 
+    public string $period = 'day';
+
     public ?string $staffId = null;
 
     public static function canAccess(): bool
@@ -59,9 +61,7 @@ class SupportPerformance extends Page
 
     public function getRowsProperty(): array
     {
-        $day = Carbon::parse($this->date ?: now()->toDateString());
-        $from = $day->copy()->startOfDay();
-        $to = $day->copy()->endOfDay();
+        [$from, $to] = $this->reportRange();
         $staffQuery = AdminUser::query()
             ->where('role', AdminRole::CUSTOMER_SUPPORT->value)
             ->orderBy('name');
@@ -136,5 +136,16 @@ class SupportPerformance extends Page
                 'sla_rate' => $closed > 0 ? (int) round($closedWithSla / $closed * 100) : null,
             ];
         })->all();
+    }
+
+    protected function reportRange(): array
+    {
+        $base = Carbon::parse($this->date ?: now()->toDateString());
+
+        return match ($this->period) {
+            'week' => [$base->copy()->startOfWeek(), $base->copy()->endOfWeek()],
+            'month' => [$base->copy()->startOfMonth(), $base->copy()->endOfMonth()],
+            default => [$base->copy()->startOfDay(), $base->copy()->endOfDay()],
+        };
     }
 }

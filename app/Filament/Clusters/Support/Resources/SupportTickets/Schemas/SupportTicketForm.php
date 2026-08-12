@@ -64,6 +64,19 @@ class SupportTicketForm
                             ->columnSpanFull()
                             ->content(fn ($record) => $record?->latestMessage?->content ?? '-'),
                     ]),
+                Section::make(__('admin.support_ticket.section.sla'))
+                    ->compact()
+                    ->schema([
+                        Placeholder::make('sla_policy')
+                            ->label(__('admin.support_ticket.fields.sla'))
+                            ->content(__('admin.support_ticket.fields.sla_hint')),
+                        Placeholder::make('sla_warning_at')
+                            ->label(__('admin.support_ticket.fields.sla_warning_at'))
+                            ->content(fn ($record) => $record?->sla_warning_at?->toDateTimeString() ?? '-'),
+                        Placeholder::make('sla_breached_at')
+                            ->label(__('admin.support_ticket.fields.sla_breached_at'))
+                            ->content(fn ($record) => $record?->sla_breached_at?->toDateTimeString() ?? '-'),
+                    ])->columns(3),
             ]);
     }
 }

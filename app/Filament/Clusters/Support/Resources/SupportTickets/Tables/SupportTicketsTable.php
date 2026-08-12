@@ -55,9 +55,10 @@ class SupportTicketsTable
                     ->dateTime()
                     ->sortable(),
                 TextColumn::make('sla_breached_at')
-                    ->label('SLA')
+                    ->label(__('admin.support_ticket.fields.sla'))
                     ->badge()
-                    ->formatStateUsing(fn ($state, $record) => $record->sla_breached_at ? 'Quá SLA' : ($record->sla_warning_at ? 'Cảnh báo' : 'Trong SLA'))
+                    ->formatStateUsing(fn ($state, $record) => $record->sla_breached_at ? __('admin.support_ticket.sla_status.breached') : ($record->sla_warning_at ? __('admin.support_ticket.sla_status.warning') : __('admin.support_ticket.sla_status.ok')))
+                    ->tooltip(fn () => __('admin.support_ticket.fields.sla_hint'))
                     ->color(fn ($record) => $record->sla_breached_at ? 'danger' : ($record->sla_warning_at ? 'warning' : 'success')),
                 TextColumn::make('created_at')
                     ->label(__('admin.common.table.created_at'))
