@@ -58,7 +58,10 @@ class SupportTicketResource extends Resource
     public static function getNavigationBadge(): ?string
     {
         $count = static::getModel()::query()
-            ->where('status', SupportTicketStatus::PENDING->dbValue())
+            ->where(function ($query) {
+                $query->where('status', SupportTicketStatus::PENDING->dbValue())
+                    ->orWhereNotNull('sla_breached_at');
+            })
             ->count();
 
         return $count > 0 ? (string) $count : null;

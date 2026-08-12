@@ -18,6 +18,10 @@ for (const envPath of envCandidates) {
 }
 
 const prefix = process.env.REDIS_PREFIX || 'massagehome-redis-';
+const channelName = (value: string | undefined, fallback: string) => {
+    const channel = value || fallback;
+    return channel.startsWith(prefix) ? channel : `${prefix}${channel}`;
+};
 export const config = {
     redis: {
         host: process.env.REDIS_HOST || '127.0.0.1',
@@ -26,10 +30,10 @@ export const config = {
         prefix: prefix,
         channels: {
             // Nối luôn prefix vào đây
-            notification: `${prefix}${process.env.REDIS_CHANNEL_NOTIFICATION || 'expo_notifications'}`,
-            chat: `${prefix}${process.env.REDIS_CHANNEL_CHAT || 'chat_messages'}`,
-            chat_auth: `${prefix}${process.env.REDIS_CHANNEL_CHAT_AUTH || 'chat_auth'}`,
-            support: `${prefix}${process.env.REDIS_CHANNEL_SUPPORT || 'support_messages'}`,
+            notification: channelName(process.env.REDIS_CHANNEL_NOTIFICATION, 'expo_notifications'),
+            chat: channelName(process.env.REDIS_CHANNEL_CHAT, 'chat_messages'),
+            chat_auth: channelName(process.env.REDIS_CHANNEL_CHAT_AUTH, 'chat_auth'),
+            support: channelName(process.env.REDIS_CHANNEL_SUPPORT, 'support_messages'),
         },
         secrets: {
             adminSocket: process.env.ADMIN_SOCKET_SECRET || process.env.APP_KEY || '',

@@ -31,6 +31,7 @@ Route::prefix('sale-api')
             Route::get('me', [SalePortalSupportController::class, 'me']);
             Route::get('socket-token', [SalePortalSupportController::class, 'socketToken']);
             Route::post('heartbeat', [SalePortalSupportController::class, 'heartbeat']);
+            Route::get('queue-stats', [SalePortalSupportController::class, 'queueStats']);
 
             Route::get('customers', [SalePortalCustomerController::class, 'index']);
             Route::get('tickets', [SalePortalSupportController::class, 'inbox']);
@@ -42,6 +43,8 @@ Route::prefix('sale-api')
             Route::post('messages', [SalePortalSupportController::class, 'sendMessage']);
             Route::post('seen', [SalePortalSupportController::class, 'seen']);
         });
+        Route::post('tickets/{id}/reopen', [SalePortalSupportController::class, 'reopen'])
+            ->middleware('auth:web')->where('id', '[0-9]+');
     });
 
 Route::get('/{slug}', [PageController::class, 'show'])->name('page.show');

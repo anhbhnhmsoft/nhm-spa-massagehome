@@ -22,6 +22,8 @@ class SupportTicket extends Model
         'room_id',
         'status',
         'last_message_at',
+        'assigned_at', 'first_response_at', 'closed_at', 'closed_by_admin_id',
+        'close_reason', 'close_note', 'sla_warning_at', 'sla_breached_at',
     ];
 
     protected $casts = [
@@ -33,6 +35,12 @@ class SupportTicket extends Model
         'room_id' => 'string',
         'status' => 'integer',
         'last_message_at' => 'datetime',
+        'assigned_at' => 'datetime',
+        'first_response_at' => 'datetime',
+        'closed_at' => 'datetime',
+        'closed_by_admin_id' => 'string',
+        'sla_warning_at' => 'datetime',
+        'sla_breached_at' => 'datetime',
     ];
 
     public function setStatusAttribute(mixed $value): void
@@ -85,4 +93,8 @@ class SupportTicket extends Model
     {
         return $this->hasOne(SupportMessage::class, 'support_ticket_id')->latestOfMany();
     }
+
+    public function closedBy(): BelongsTo { return $this->belongsTo(AdminUser::class, 'closed_by_admin_id'); }
+
+    public function events(): HasMany { return $this->hasMany(SupportTicketEvent::class, 'support_ticket_id'); }
 }

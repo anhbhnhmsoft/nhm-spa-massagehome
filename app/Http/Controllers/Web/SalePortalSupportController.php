@@ -154,6 +154,21 @@ class SalePortalSupportController
         ]);
     }
 
+    public function queueStats(): JsonResponse
+    {
+        $user = Auth::guard('web')->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => __('common_error.unauthorized')], 401);
+        }
+
+        $result = $this->supportService->getStaffQueueStats((int) $user->id);
+        if ($result->isError()) {
+            return response()->json(['success' => false, 'message' => $result->getMessage()], 422);
+        }
+
+        return response()->json(['success' => true, 'data' => $result->getData()]);
+    }
+
     public function detail(int $id): JsonResponse
     {
         $user = Auth::guard('web')->user();
@@ -167,7 +182,8 @@ class SalePortalSupportController
         }
 
         $ticket = $result->getData();
-        if ($ticket->assigned_staff_id && (string) $ticket->assigned_staff_id !== (string) $user->id) {
+        if (($ticket->assigned_staff_id && (string) $ticket->assigned_staff_id !== (string) $user->id)
+            || (!$ticket->assigned_staff_id && $ticket->status !== \App\Enums\SupportTicketStatus::PENDING->dbValue())) {
             return response()->json(['success' => false, 'message' => __('common_error.unauthorized')], 403);
         }
 
@@ -188,7 +204,8 @@ class SalePortalSupportController
         if ($ticket->isError()) {
             return response()->json(['success' => false, 'message' => $ticket->getMessage()], 422);
         }
-        if ($ticket->getData()->assigned_staff_id && (string) $ticket->getData()->assigned_staff_id !== (string) $user->id) {
+        if (($ticket->getData()->assigned_staff_id && (string) $ticket->getData()->assigned_staff_id !== (string) $user->id)
+            || (!$ticket->getData()->assigned_staff_id && $ticket->getData()->status !== \App\Enums\SupportTicketStatus::PENDING->dbValue())) {
             return response()->json(['success' => false, 'message' => __('common_error.unauthorized')], 403);
         }
 
@@ -217,7 +234,8 @@ class SalePortalSupportController
 
         $result = $this->supportService->claimTicket((int) $id, (int) $user->id);
         if ($result->isError()) {
-            return response()->json(['success' => false, 'message' => $result->getMessage()], 422);
+            $status = $result->getException()?->getCode() === 409 ? 409 : 422;
+            return response()->json(['success' => false, 'message' => $result->getMessage()], $status);
         }
 
         return response()->json([
@@ -248,22 +266,48 @@ class SalePortalSupportController
         ]);
     }
 
-    public function close(int $id): JsonResponse
+    public function close(int $id, Request $request): JsonResponse
     {
         $user = Auth::guard('web')->user();
         if (!$user) {
             return response()->json(['success' => false, 'message' => __('common_error.unauthorized')], 401);
         }
 
-        $result = $this->supportService->closeTicket((int) $id, (int) $user->id);
+        $data = $request->validate([
+            'close_reason' => ['required', 'string', 'in:resolved,customer_no_response,duplicate,out_of_scope'],
+            'close_note' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $result = $this->supportService->closeTicketWithReason(
+            (int) $id,
+            (int) $user->id,
+            $data['close_reason'],
+            $data['close_note'] ?? null,
+        );
         if ($result->isError()) {
-            return response()->json(['success' => false, 'message' => $result->getMessage()], 422);
+            $status = $result->getException()?->getCode() === 409 ? 409 : 422;
+            return response()->json(['success' => false, 'message' => $result->getMessage()], $status);
         }
 
         return response()->json([
             'success' => true,
             'data' => new SupportTicketResource($result->getData()),
         ]);
+    }
+
+    public function reopen(int $id): JsonResponse
+    {
+        $user = Auth::guard('web')->user();
+        if (!$user || $user->role !== AdminRole::SUPER_ADMIN) {
+            return response()->json(['success' => false, 'message' => __('common_error.unauthorized')], 403);
+        }
+
+        $result = $this->supportService->reopenTicket((int) $id, (int) $user->id);
+        if ($result->isError()) {
+            return response()->json(['success' => false, 'message' => $result->getMessage()], 422);
+        }
+
+        return response()->json(['success' => true, 'data' => new SupportTicketResource($result->getData())]);
     }
 
     public function sendMessage(Request $request): JsonResponse

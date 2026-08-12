@@ -10,11 +10,13 @@ use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
 use App\Enums\NodeServerConstant;
 use App\Enums\SupportMessageSenderType;
+use App\Enums\SupportTicketEventType;
 use App\Enums\SupportTicketStatus;
 use App\Enums\Admin\AdminRole;
 use App\Models\AdminUser;
 use App\Models\SupportMessage;
 use App\Models\SupportTicket;
+use App\Models\SupportTicketEvent;
 use App\Repositories\AdminUserRepository;
 use App\Repositories\BookingRepository;
 use App\Repositories\SupportCategoryRepository;
@@ -22,7 +24,9 @@ use App\Repositories\SupportMessageRepository;
 use App\Repositories\SupportTicketRepository;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis as RedisFacade;
+use Filament\Notifications\Notification as FilamentNotification;
 use Illuminate\Support\Str;
 
 class SupportService extends BaseService
@@ -90,8 +94,14 @@ class SupportService extends BaseService
             if ($staff) {
                 $ticket->assigned_staff_id = $staff->id;
                 $ticket->status = SupportTicketStatus::ASSIGNED;
+                $ticket->assigned_at = now();
             }
             $ticket->save();
+
+            $this->recordTicketEvent($ticket, SupportTicketEventType::CREATED, toStaffId: $ticket->assigned_staff_id);
+            if ($ticket->assigned_staff_id) {
+                $this->recordTicketEvent($ticket, SupportTicketEventType::CLAIMED, toStaffId: $ticket->assigned_staff_id, metadata: ['automatic' => true]);
+            }
 
             $message = null;
             if ($content && trim($content) !== '') {
@@ -118,6 +128,7 @@ class SupportService extends BaseService
             $this->publishSupportEvent(NodeServerConstant::SUPPORT_TICKET_CREATED, [
                 'ticket' => $this->serializeTicket($ticket),
                 'message' => $message ? $this->serializeMessage($message) : null,
+                'broadcast_staff_ids' => $ticket->assigned_staff_id ? [(string) $ticket->assigned_staff_id] : $this->onlineSupportStaffIds(),
             ]);
 
             return ServiceReturn::success(data: [
@@ -161,7 +172,10 @@ class SupportService extends BaseService
                     'status' => SupportTicketStatus::ASSIGNED,
                 ]);
                 $ticket->room_id = $this->makeRoomId($ticket->id);
+                $ticket->assigned_at = now();
                 $ticket->save();
+                $this->recordTicketEvent($ticket, SupportTicketEventType::CREATED, actorAdminId: $staffId, toStaffId: $staffId, metadata: ['initiated_by_staff' => true]);
+                $this->recordTicketEvent($ticket, SupportTicketEventType::CLAIMED, actorAdminId: $staffId, toStaffId: $staffId, metadata: ['automatic' => true]);
                 $shouldNotifyCustomer = true;
             }
 
@@ -201,7 +215,8 @@ class SupportService extends BaseService
         try {
             $query = $this->supportTicketRepository->queryWithRelations();
             if ($scope === 'mine') {
-                $query->where('assigned_staff_id', $staffId);
+                $query->whereIn('status', [SupportTicketStatus::ASSIGNED->dbValue(), SupportTicketStatus::IN_PROGRESS->dbValue()])
+                    ->where('assigned_staff_id', $staffId);
             } elseif ($scope === 'pending') {
                 $query->whereNull('assigned_staff_id')->where('status', SupportTicketStatus::PENDING->dbValue());
             } elseif ($scope === 'open') {
@@ -210,14 +225,91 @@ class SupportService extends BaseService
                     SupportTicketStatus::ASSIGNED->dbValue(),
                     SupportTicketStatus::IN_PROGRESS->dbValue(),
                 ])->where(function ($q) use ($staffId) {
-                    $q->whereNull('assigned_staff_id')
-                      ->orWhere('assigned_staff_id', $staffId);
+                    $q->where(function ($pending) {
+                        $pending->whereNull('assigned_staff_id')->where('status', SupportTicketStatus::PENDING->dbValue());
+                    })->orWhere('assigned_staff_id', $staffId);
+                });
+            } else {
+                // The sale portal must never receive another staff member's ticket.
+                $query->whereIn('status', [
+                    SupportTicketStatus::PENDING->dbValue(),
+                    SupportTicketStatus::ASSIGNED->dbValue(),
+                    SupportTicketStatus::IN_PROGRESS->dbValue(),
+                ])->where(function ($q) use ($staffId) {
+                    $q->where(function ($pending) {
+                        $pending->whereNull('assigned_staff_id')->where('status', SupportTicketStatus::PENDING->dbValue());
+                    })->orWhere('assigned_staff_id', $staffId);
                 });
             }
             $paginator = $query->orderByDesc('last_message_at')->paginate(perPage: $perPage, page: $page);
             return ServiceReturn::success(data: $paginator);
         } catch (\Throwable $exception) {
             LogHelper::error('Lỗi SupportService@listStaffTickets', $exception);
+            return ServiceReturn::error(__('common_error.server_error'));
+        }
+    }
+
+    /**
+     * Return exact queue counters for the staff workspace.
+     * The portal previously inferred totals from the first paginated page.
+     */
+    public function getStaffQueueStats(int $staffId): ServiceReturn
+    {
+        try {
+            $activeStatuses = [
+                SupportTicketStatus::PENDING->dbValue(),
+                SupportTicketStatus::ASSIGNED->dbValue(),
+                SupportTicketStatus::IN_PROGRESS->dbValue(),
+            ];
+
+            $base = $this->supportTicketRepository->query();
+            $pending = (clone $base)
+                ->whereNull('assigned_staff_id')
+                ->where('status', SupportTicketStatus::PENDING->dbValue())
+                ->count();
+            $open = (clone $base)
+                ->whereIn('status', $activeStatuses)
+                ->where(function ($query) use ($staffId) {
+                    $query->where(function ($pending) {
+                        $pending->whereNull('assigned_staff_id')->where('status', SupportTicketStatus::PENDING->dbValue());
+                    })->orWhere('assigned_staff_id', $staffId);
+                })
+                ->count();
+            $mine = (clone $base)
+                ->whereIn('status', $activeStatuses)
+                ->where('assigned_staff_id', $staffId)
+                ->count();
+            $unread = $this->supportMessageRepository->query()
+                ->where('sender_type', SupportMessageSenderType::CUSTOMER->dbValue())
+                ->whereNull('seen_at')
+                ->whereHas('ticket', fn ($query) => $query
+                    ->whereIn('status', $activeStatuses)
+                    ->where(function ($q) use ($staffId) {
+                        $q->where(function ($pending) {
+                            $pending->whereNull('assigned_staff_id')->where('status', SupportTicketStatus::PENDING->dbValue());
+                        })->orWhere('assigned_staff_id', $staffId);
+                    }))
+                ->count();
+
+            return ServiceReturn::success(data: [
+                'pending' => $pending,
+                'open' => $open,
+                'mine' => $mine,
+                'unread' => $unread,
+                'online_staff' => $this->onlineSupportStaffCount(),
+                'sla_warning' => (clone $base)->whereIn('status', $activeStatuses)->whereNotNull('sla_warning_at')->whereNull('first_response_at')->where(function ($q) use ($staffId) {
+                    $q->where(function ($pending) {
+                        $pending->whereNull('assigned_staff_id')->where('status', SupportTicketStatus::PENDING->dbValue());
+                    })->orWhere('assigned_staff_id', $staffId);
+                })->count(),
+                'sla_breached' => (clone $base)->whereIn('status', $activeStatuses)->whereNotNull('sla_breached_at')->where(function ($q) use ($staffId) {
+                    $q->where(function ($pending) {
+                        $pending->whereNull('assigned_staff_id')->where('status', SupportTicketStatus::PENDING->dbValue());
+                    })->orWhere('assigned_staff_id', $staffId);
+                })->count(),
+            ]);
+        } catch (\Throwable $exception) {
+            LogHelper::error('Lỗi SupportService@getStaffQueueStats', $exception);
             return ServiceReturn::error(__('common_error.server_error'));
         }
     }
@@ -245,7 +337,6 @@ class SupportService extends BaseService
             if (!$ticket) {
                 throw new ServiceException(__('common_error.data_not_found'));
             }
-
             $paginator = $this->supportMessageRepository->queryByTicket($ticketId)
                 ->orderByDesc('id')
                 ->paginate(perPage: $perPage, page: $page);
@@ -260,9 +351,12 @@ class SupportService extends BaseService
     public function sendMessage(int $ticketId, string $content, ?string $tempId = null, ?SupportMessageSenderType $senderType = null): ServiceReturn
     {
         return $this->execute(function () use ($ticketId, $content, $tempId, $senderType) {
-            $ticket = $this->supportTicketRepository->find($ticketId);
+            $ticket = $this->supportTicketRepository->query()->lockForUpdate()->find($ticketId);
             if (!$ticket) {
                 throw new ServiceException(__('common_error.data_not_found'));
+            }
+            if ($ticket->status === SupportTicketStatus::CLOSED->dbValue()) {
+                throw new ServiceException('Ticket đã đóng, không thể gửi tin nhắn.');
             }
 
             $user = Auth::user();
@@ -271,6 +365,9 @@ class SupportService extends BaseService
             }
 
             $senderType = $senderType ?? ($user instanceof AdminUser ? SupportMessageSenderType::STAFF : SupportMessageSenderType::CUSTOMER);
+            if ($user instanceof AdminUser && (string) $ticket->assigned_staff_id !== (string) $user->id) {
+                throw new ServiceException(__('common_error.unauthorized'));
+            }
             $data = [
                 'support_ticket_id' => $ticket->id,
                 'sender_type' => $senderType,
@@ -289,8 +386,13 @@ class SupportService extends BaseService
             if (!$ticket->assigned_staff_id && $user instanceof AdminUser) {
                 $ticket->assigned_staff_id = $user->id;
                 $ticket->status = SupportTicketStatus::ASSIGNED;
-            } elseif ($ticket->status === SupportTicketStatus::PENDING->dbValue()) {
+                $ticket->assigned_at ??= now();
+            } elseif ($user instanceof AdminUser && $ticket->status === SupportTicketStatus::PENDING->dbValue()) {
                 $ticket->status = SupportTicketStatus::ASSIGNED;
+            }
+
+            if ($user instanceof AdminUser && !$ticket->first_response_at) {
+                $ticket->first_response_at = now();
             }
 
             $ticket->last_message_at = $message->created_at;
@@ -365,21 +467,22 @@ class SupportService extends BaseService
     public function claimTicket(int $ticketId, int $staffId): ServiceReturn
     {
         return $this->execute(function () use ($ticketId, $staffId) {
-            $ticket = $this->supportTicketRepository->find($ticketId);
+            $ticket = $this->supportTicketRepository->query()->lockForUpdate()->find($ticketId);
             if (!$ticket) {
                 throw new ServiceException(__('common_error.data_not_found'));
             }
-            if ($ticket->assigned_staff_id && (string) $ticket->assigned_staff_id !== (string) $staffId) {
-                throw new ServiceException(__('common_error.unauthorized'));
+            if ($ticket->assigned_staff_id || $ticket->status !== SupportTicketStatus::PENDING->dbValue()) {
+                throw new ServiceException(__('common_error.unauthorized'), 409);
             }
 
             $staff = $this->adminUserRepository->find($staffId);
-            if (!$staff || !$staff->is_active) {
+            if (!$staff || !$staff->is_active || $staff->role !== AdminRole::CUSTOMER_SUPPORT) {
                 throw new ServiceException(__('common_error.unauthorized'));
             }
 
             $ticket->assigned_staff_id = $staffId;
             $ticket->status = SupportTicketStatus::ASSIGNED;
+            $ticket->assigned_at = now();
             $ticket->save();
 
             $message = $this->supportMessageRepository->create([
@@ -390,6 +493,7 @@ class SupportService extends BaseService
             ]);
             $ticket->last_message_at = $message->created_at;
             $ticket->save();
+            $this->recordTicketEvent($ticket, SupportTicketEventType::CLAIMED, actorAdminId: $staffId, toStaffId: $staffId);
 
             $ticket->load([
                 'customer.profile',
@@ -417,17 +521,33 @@ class SupportService extends BaseService
 
     public function closeTicket(int $ticketId, int $staffId): ServiceReturn
     {
-        return $this->execute(function () use ($ticketId, $staffId) {
-            $ticket = $this->supportTicketRepository->find($ticketId);
+        return $this->closeTicketWithReason($ticketId, $staffId, 'resolved', null);
+    }
+
+    public function closeTicketWithReason(int $ticketId, int $staffId, string $reason, ?string $note = null): ServiceReturn
+    {
+        return $this->execute(function () use ($ticketId, $staffId, $reason, $note) {
+            if (!in_array($reason, ['resolved', 'customer_no_response', 'duplicate', 'out_of_scope'], true)) {
+                throw new ServiceException('Lý do đóng ticket không hợp lệ.');
+            }
+            $ticket = $this->supportTicketRepository->query()->lockForUpdate()->find($ticketId);
             if (!$ticket) {
                 throw new ServiceException(__('common_error.data_not_found'));
             }
             if ((string) $ticket->assigned_staff_id !== (string) $staffId) {
                 throw new ServiceException(__('common_error.unauthorized'));
             }
+            if ($ticket->status === SupportTicketStatus::CLOSED->dbValue()) {
+                return ServiceReturn::success(data: $ticket);
+            }
 
             $ticket->status = SupportTicketStatus::CLOSED;
+            $ticket->closed_at = now();
+            $ticket->closed_by_admin_id = $staffId;
+            $ticket->close_reason = $reason;
+            $ticket->close_note = $note;
             $ticket->save();
+            $this->recordTicketEvent($ticket, SupportTicketEventType::CLOSED, actorAdminId: $staffId, fromStaffId: $staffId, metadata: ['reason' => $reason, 'note' => $note]);
 
             $ticket->load([
                 'customer.profile',
@@ -444,6 +564,136 @@ class SupportService extends BaseService
 
             return ServiceReturn::success(data: $ticket);
         }, useTransaction: true);
+    }
+
+    /** Administrative close path used by the superadmin monitor; it still records the same audit event. */
+    public function adminCloseTicket(int $ticketId, int $adminId, string $reason, ?string $note = null): ServiceReturn
+    {
+        return $this->execute(function () use ($ticketId, $adminId, $reason, $note) {
+            $ticket = $this->supportTicketRepository->query()->lockForUpdate()->find($ticketId);
+            if (!$ticket) {
+                throw new ServiceException(__('common_error.data_not_found'));
+            }
+            if ($ticket->status === SupportTicketStatus::CLOSED->dbValue()) {
+                return ServiceReturn::success(data: $ticket);
+            }
+            $ticket->status = SupportTicketStatus::CLOSED;
+            $ticket->closed_at = now();
+            $ticket->closed_by_admin_id = $adminId;
+            $ticket->close_reason = $reason;
+            $ticket->close_note = $note;
+            $ticket->save();
+            $this->recordTicketEvent($ticket, SupportTicketEventType::CLOSED, actorAdminId: $adminId, fromStaffId: $ticket->assigned_staff_id, metadata: ['reason' => $reason, 'administrative' => true]);
+            $ticket->load(['customer.profile', 'assignedStaff', 'category', 'latestBooking.service', 'latestMessage.customer', 'latestMessage.staff']);
+            $this->publishSupportEvent(NodeServerConstant::SUPPORT_TICKET_CLOSED, ['ticket' => $this->serializeTicket($ticket)]);
+            return ServiceReturn::success(data: $ticket);
+        }, useTransaction: true);
+    }
+
+    public function reopenTicket(int $ticketId, int $adminId): ServiceReturn
+    {
+        return $this->execute(function () use ($ticketId, $adminId) {
+            $ticket = $this->supportTicketRepository->query()->lockForUpdate()->find($ticketId);
+            if (!$ticket) {
+                throw new ServiceException(__('common_error.data_not_found'));
+            }
+            $fromStaffId = $ticket->assigned_staff_id;
+            $ticket->status = $fromStaffId ? SupportTicketStatus::ASSIGNED : SupportTicketStatus::PENDING;
+            $ticket->closed_at = null;
+            $ticket->closed_by_admin_id = null;
+            $ticket->close_reason = null;
+            $ticket->close_note = null;
+            $ticket->sla_warning_at = null;
+            $ticket->sla_breached_at = null;
+            $ticket->save();
+            $this->recordTicketEvent($ticket, SupportTicketEventType::REOPENED, actorAdminId: $adminId, toStaffId: $ticket->assigned_staff_id);
+            $ticket->load(['customer.profile', 'assignedStaff', 'category', 'latestBooking.service', 'latestMessage.customer', 'latestMessage.staff']);
+            $reopenPayload = [
+                'ticket' => $this->serializeTicket($ticket),
+                'broadcast_staff_ids' => $ticket->assigned_staff_id ? [$ticket->assigned_staff_id] : $this->onlineSupportStaffIds(),
+            ];
+            $this->publishSupportEvent(NodeServerConstant::SUPPORT_TICKET_REOPENED, $reopenPayload);
+            return ServiceReturn::success(data: $ticket);
+        }, useTransaction: true);
+    }
+
+    /** Process warning and breach thresholds once; safe to call from a one-minute scheduler. */
+    public function processSla(): array
+    {
+        $warningIds = [];
+        $breachedIds = [];
+        $now = now();
+
+        $this->supportTicketRepository->query()
+            ->whereIn('status', [SupportTicketStatus::PENDING->dbValue(), SupportTicketStatus::ASSIGNED->dbValue(), SupportTicketStatus::IN_PROGRESS->dbValue()])
+            ->whereNull('first_response_at')
+            ->whereNull('sla_warning_at')
+            ->where('created_at', '<=', $now->copy()->subMinutes(5))
+            ->pluck('id')
+            ->each(function ($id) use (&$warningIds) {
+                $result = $this->execute(function () use ($id, &$warningIds) {
+                    $ticket = $this->supportTicketRepository->query()->lockForUpdate()->find($id);
+                    if (!$ticket || $ticket->first_response_at || $ticket->sla_warning_at || $ticket->status === SupportTicketStatus::CLOSED->dbValue()) {
+                        return ServiceReturn::success();
+                    }
+                    $ticket->sla_warning_at = now();
+                    $ticket->save();
+                    $this->recordTicketEvent($ticket, SupportTicketEventType::SLA_WARNING, metadata: ['threshold_minutes' => 5]);
+                    $ticket->load(['customer.profile', 'assignedStaff', 'category', 'latestBooking.service', 'latestMessage.customer', 'latestMessage.staff']);
+                    $this->notifySlaAdmins($ticket, warning: true);
+                    $this->publishSupportEvent(NodeServerConstant::SUPPORT_SLA_WARNING, ['ticket' => $this->serializeTicket($ticket), 'broadcast_staff_ids' => $ticket->assigned_staff_id ? [(string) $ticket->assigned_staff_id] : $this->onlineSupportStaffIds()]);
+                    $warningIds[] = (string) $ticket->id;
+                    return ServiceReturn::success();
+                }, useTransaction: true);
+                return $result;
+            });
+
+        $this->supportTicketRepository->query()
+            ->whereIn('status', [SupportTicketStatus::PENDING->dbValue(), SupportTicketStatus::ASSIGNED->dbValue(), SupportTicketStatus::IN_PROGRESS->dbValue()])
+            ->whereNull('first_response_at')
+            ->whereNull('sla_breached_at')
+            ->where('created_at', '<=', $now->copy()->subMinutes(15))
+            ->pluck('id')
+            ->each(function ($id) use (&$breachedIds) {
+                $this->execute(function () use ($id, &$breachedIds) {
+                    $ticket = $this->supportTicketRepository->query()->lockForUpdate()->find($id);
+                    if (!$ticket || $ticket->first_response_at || $ticket->sla_breached_at || $ticket->status === SupportTicketStatus::CLOSED->dbValue()) {
+                        return ServiceReturn::success();
+                    }
+                    $fromStaffId = $ticket->assigned_staff_id;
+                    $ticket->sla_breached_at = now();
+                    $ticket->assigned_staff_id = null;
+                    $ticket->assigned_at = null;
+                    $ticket->status = SupportTicketStatus::PENDING;
+                    $ticket->save();
+                    $this->recordTicketEvent($ticket, SupportTicketEventType::SLA_BREACHED, fromStaffId: $fromStaffId, metadata: ['threshold_minutes' => 15]);
+                    $this->recordTicketEvent($ticket, SupportTicketEventType::REASSIGNED, fromStaffId: $fromStaffId, metadata: ['reason' => 'sla_breached']);
+                    $ticket->load(['customer.profile', 'assignedStaff', 'category', 'latestBooking.service', 'latestMessage.customer', 'latestMessage.staff']);
+                    $this->notifySlaAdmins($ticket, warning: false);
+                    $this->publishSupportEvent(NodeServerConstant::SUPPORT_SLA_BREACHED, ['ticket' => $this->serializeTicket($ticket), 'broadcast_staff_ids' => $this->onlineSupportStaffIds()]);
+                    $this->publishSupportEvent(NodeServerConstant::SUPPORT_TICKET_REASSIGNED, ['ticket' => $this->serializeTicket($ticket), 'broadcast_staff_ids' => $this->onlineSupportStaffIds()]);
+                    $breachedIds[] = (string) $ticket->id;
+                    return ServiceReturn::success();
+                }, useTransaction: true);
+            });
+
+        return ['warning_ids' => $warningIds, 'breached_ids' => $breachedIds];
+    }
+
+    protected function notifySlaAdmins(SupportTicket $ticket, bool $warning): void
+    {
+        $admins = $this->adminUserRepository->queryAdminUser()
+            ->where('role', AdminRole::SUPER_ADMIN->value)
+            ->where('is_active', true)
+            ->get();
+        if ($admins->isEmpty()) return;
+
+        $notification = FilamentNotification::make()
+            ->title($warning ? 'Cảnh báo SLA hỗ trợ' : 'Ticket đã vi phạm SLA')
+            ->body("Ticket #{$ticket->id} - " . ($ticket->customer?->name ?? 'Khách hàng'))
+            ->persistent()
+            ->{$warning ? 'warning' : 'danger'}();
+        $notification->sendToDatabase($admins, isEventDispatched: true);
     }
 
     public function heartbeatAdmin(int $adminId): ServiceReturn
@@ -478,17 +728,77 @@ class SupportService extends BaseService
 
     protected function selectOnlineStaff(): ?AdminUser
     {
-        return $this->adminUserRepository->queryAdminUser()
+        $activeStatuses = [
+            SupportTicketStatus::PENDING->dbValue(),
+            SupportTicketStatus::ASSIGNED->dbValue(),
+            SupportTicketStatus::IN_PROGRESS->dbValue(),
+        ];
+
+        $onlineStaff = $this->adminUserRepository->queryAdminUser()
             ->where('role', AdminRole::CUSTOMER_SUPPORT->value)
             ->where('is_active', true)
             ->orderByDesc('last_seen_at')
+            ->lockForUpdate()
             ->get()
-            ->first(function (AdminUser $admin) {
+            ->filter(function (AdminUser $admin) {
                 if ($admin->last_seen_at && $admin->last_seen_at->diffInMinutes(now()) <= 3) {
                     return true;
                 }
                 return Caching::hasCache(CacheKey::CACHE_USER_HEARTBEAT, "admin:{$admin->id}");
             });
+
+        if ($onlineStaff->isEmpty()) {
+            return null;
+        }
+
+        // Least-loaded first, then the least recently active account for fairness.
+        $openCounts = $this->supportTicketRepository->query()
+            ->selectRaw('assigned_staff_id, COUNT(*) as total')
+            ->whereIn('status', $activeStatuses)
+            ->whereIn('assigned_staff_id', $onlineStaff->pluck('id')->all())
+            ->groupBy('assigned_staff_id')
+            ->pluck('total', 'assigned_staff_id');
+
+        return $onlineStaff
+            ->sortBy(fn (AdminUser $admin) => [
+                (int) ($openCounts[(string) $admin->id] ?? 0),
+                $admin->last_seen_at?->timestamp ?? 0,
+            ])
+            ->first();
+    }
+
+    public function onlineSupportStaffIds(): array
+    {
+        return $this->onlineSupportStaff()->pluck('id')->map(fn ($id) => (string) $id)->values()->all();
+    }
+
+    protected function onlineSupportStaff()
+    {
+        return $this->adminUserRepository->queryAdminUser()
+            ->where('role', AdminRole::CUSTOMER_SUPPORT->value)
+            ->where('is_active', true)
+            ->get()
+            ->filter(fn (AdminUser $admin) =>
+                ($admin->last_seen_at && $admin->last_seen_at->diffInMinutes(now()) <= 3)
+                || Caching::hasCache(CacheKey::CACHE_USER_HEARTBEAT, "admin:{$admin->id}")
+            );
+    }
+
+    protected function onlineSupportStaffCount(): int
+    {
+        return $this->onlineSupportStaff()->count();
+    }
+
+    public function recordTicketEvent(SupportTicket $ticket, SupportTicketEventType $type, ?int $actorAdminId = null, ?int $fromStaffId = null, ?int $toStaffId = null, ?array $metadata = null): SupportTicketEvent
+    {
+        return SupportTicketEvent::create([
+            'support_ticket_id' => $ticket->id,
+            'actor_admin_id' => $actorAdminId,
+            'event_type' => $type->value,
+            'from_staff_id' => $fromStaffId,
+            'to_staff_id' => $toStaffId,
+            'metadata' => $metadata,
+        ]);
     }
 
     protected function makeRoomId(string|int $ticketId): string
@@ -534,6 +844,12 @@ class SupportService extends BaseService
                 'service_name' => $ticket->latestBooking->service?->name ?? null,
             ] : null,
             'last_message_at' => $ticket->last_message_at?->toISOString(),
+            'assigned_at' => $ticket->assigned_at?->toISOString(),
+            'first_response_at' => $ticket->first_response_at?->toISOString(),
+            'closed_at' => $ticket->closed_at?->toISOString(),
+            'sla_warning_at' => $ticket->sla_warning_at?->toISOString(),
+            'sla_breached_at' => $ticket->sla_breached_at?->toISOString(),
+            'is_sla_breached' => (bool) $ticket->sla_breached_at,
             'latest_message' => $ticket->latestMessage ? $this->serializeMessage($ticket->latestMessage) : null,
         ];
     }

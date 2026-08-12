@@ -16,4 +16,8 @@ final class NodeServerConstant
     const SUPPORT_TICKET_CLAIMED = 'support:ticket:claimed';
     const SUPPORT_TICKET_CLOSED = 'support:ticket:closed';
     const SUPPORT_MESSAGE_NEW = 'support:message:new';
+    const SUPPORT_TICKET_REASSIGNED = 'support:ticket:reassigned';
+    const SUPPORT_SLA_WARNING = 'support:sla:warning';
+    const SUPPORT_SLA_BREACHED = 'support:sla:breached';
+    const SUPPORT_TICKET_REOPENED = 'support:ticket:reopened';
 }

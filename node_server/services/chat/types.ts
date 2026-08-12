@@ -5,6 +5,10 @@ export enum _ChatConstant {
     SUPPORT_TICKET_CLAIMED = 'support:ticket:claimed',
     SUPPORT_TICKET_CLOSED = 'support:ticket:closed',
     SUPPORT_MESSAGE_NEW = 'support:message:new',
+    SUPPORT_TICKET_REASSIGNED = 'support:ticket:reassigned',
+    SUPPORT_TICKET_REOPENED = 'support:ticket:reopened',
+    SUPPORT_SLA_WARNING = 'support:sla:warning',
+    SUPPORT_SLA_BREACHED = 'support:sla:breached',
 }
 
 export type SessionKind = 'user' | 'admin';

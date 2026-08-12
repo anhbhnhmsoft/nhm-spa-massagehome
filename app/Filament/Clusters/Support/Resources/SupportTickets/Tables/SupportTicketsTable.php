@@ -5,6 +5,10 @@ namespace App\Filament\Clusters\Support\Resources\SupportTickets\Tables;
 use App\Enums\Admin\AdminRole;
 use App\Enums\SupportTicketStatus;
 use App\Models\AdminUser;
+use App\Services\SupportService;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
+use App\Enums\Admin\AdminGate;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
@@ -50,6 +54,11 @@ class SupportTicketsTable
                     ->label(__('admin.support_ticket.fields.last_message_at'))
                     ->dateTime()
                     ->sortable(),
+                TextColumn::make('sla_breached_at')
+                    ->label('SLA')
+                    ->badge()
+                    ->formatStateUsing(fn ($state, $record) => $record->sla_breached_at ? 'Quá SLA' : ($record->sla_warning_at ? 'Cảnh báo' : 'Trong SLA'))
+                    ->color(fn ($record) => $record->sla_breached_at ? 'danger' : ($record->sla_warning_at ? 'warning' : 'success')),
                 TextColumn::make('created_at')
                     ->label(__('admin.common.table.created_at'))
                     ->dateTime()
@@ -75,10 +84,26 @@ class SupportTicketsTable
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->requiresConfirmation()
-                    ->action(function ($record) {
-                        $record->update(['status' => SupportTicketStatus::CLOSED]);
+                    ->form([
+                        \Filament\Forms\Components\Select::make('close_reason')->label('Lý do')->required()->options([
+                            'resolved' => 'Đã giải quyết',
+                            'customer_no_response' => 'Khách không phản hồi',
+                            'duplicate' => 'Trùng ticket',
+                            'out_of_scope' => 'Ngoài phạm vi',
+                        ]),
+                        \Filament\Forms\Components\Textarea::make('close_note')->label('Ghi chú')->maxLength(2000),
+                    ])
+                    ->action(function ($record, array $data) {
+                        app(SupportService::class)->adminCloseTicket((int) $record->id, (int) Auth::id(), $data['close_reason'], $data['close_note'] ?? null);
                     })
                     ->visible(fn ($record) => $record->statusEnum() !== SupportTicketStatus::CLOSED),
+                Action::make('reopen')
+                    ->label('Mở lại')
+                    ->icon('heroicon-o-arrow-uturn-left')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->action(fn ($record) => app(SupportService::class)->reopenTicket((int) $record->id, (int) Auth::id()))
+                    ->visible(fn ($record) => $record->statusEnum() === SupportTicketStatus::CLOSED && Gate::allows(AdminGate::ALLOW_SUPER_ADMIN)),
                 EditAction::make()
                     ->label(__('common.action.edit')),
             ])

@@ -70,16 +70,23 @@ export class ChatService {
             if (!type || !ticket) return;
 
             const roomName = this.getConversationRoom(ticket.room_id ?? `support-ticket:${ticket.id}`);
+            const customerVisible = new Set([
+                _ChatConstant.SUPPORT_MESSAGE_NEW,
+                _ChatConstant.SUPPORT_TICKET_CLOSED,
+                _ChatConstant.SUPPORT_TICKET_REOPENED,
+            ]);
 
             // Lấy danh sách socket đang ở trong conversation room
             const socketsInRoom = await this.io.in(roomName).fetchSockets();
             const socketIdsInRoom = new Set(socketsInRoom.map((s) => s.id));
 
-            // Broadcast vào conversation room — mọi thành viên đang join đều nhận
-            this.io.to(roomName).emit(type, payload);
+            // Only customer-facing events enter the conversation room.
+            if (customerVisible.has(type)) {
+                this.io.to(roomName).emit(type, payload);
+            }
 
             // Chỉ emit private khi customer KHÔNG đang ở trong room (tránh duplicate)
-            if (ticket.customer?.id) {
+            if (ticket.customer?.id && customerVisible.has(type)) {
                 const customerPrivateRoom = this.getPrivateUserRoom(ticket.customer.id);
                 const customerSockets = await this.io.in(customerPrivateRoom).fetchSockets();
                 const customerInRoom = customerSockets.some((s) => socketIdsInRoom.has(s.id));
@@ -88,11 +95,14 @@ export class ChatService {
                 }
             }
 
-            // Staff: luôn emit tới private room (sale portal không join conversation room)
-            if (ticket.assigned_staff?.id) {
-                this.io
-                    .to(this.getPrivateAdminRoom(ticket.assigned_staff.id))
-                    .emit(type, payload);
+            // Unassigned tickets are a shared queue; assigned tickets are private.
+            const staffIds = Array.isArray(payload?.broadcast_staff_ids)
+                ? payload.broadcast_staff_ids
+                : ticket.assigned_staff?.id
+                    ? [ticket.assigned_staff.id]
+                    : [];
+            for (const staffId of staffIds) {
+                if (staffId) this.io.to(this.getPrivateAdminRoom(staffId)).emit(type, payload);
             }
         } catch (error) {
             console.error('ChatService@handleSupportLaravelMessage error', error);

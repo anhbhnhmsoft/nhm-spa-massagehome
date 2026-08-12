@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Support;
 
 use App\Enums\SupportMessageSenderType;
+use App\Enums\SupportTicketStatus;
 use App\Models\AdminUser;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -44,6 +45,13 @@ class SupportTicketResource extends JsonResource
                 'service_name' => $this->latestBooking->service?->name,
             ] : null,
             'last_message_at' => $this->last_message_at?->toISOString(),
+            'assigned_at' => $this->assigned_at?->toISOString(),
+            'first_response_at' => $this->first_response_at?->toISOString(),
+            'closed_at' => $this->closed_at?->toISOString(),
+            'sla_warning_at' => $this->sla_warning_at?->toISOString(),
+            'sla_breached_at' => $this->sla_breached_at?->toISOString(),
+            'is_sla_breached' => (bool) ($this->sla_breached_at || ((int) $this->status !== SupportTicketStatus::CLOSED->dbValue() && !$this->first_response_at && $this->created_at?->lte(now()->subMinutes(15)))),
+            'is_assignment_anomaly' => !$this->assigned_staff_id && (int) $this->status === 1,
             'unread_count' => $this->unreadCountFor($request),
             'latest_message' => $this->latestMessage ? [
                 'id' => (string) $this->latestMessage->id,

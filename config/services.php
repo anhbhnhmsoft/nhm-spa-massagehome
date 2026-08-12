@@ -42,7 +42,13 @@ return [
         'channel_notification' => env('REDIS_CHANNEL_NOTIFICATION', 'expo_notifications'),
         'channel_chat' => env('REDIS_CHANNEL_CHAT', 'chat_messages'),
         'channel_chat_auth' => env('REDIS_CHANNEL_CHAT_AUTH', 'chat_auth'),
-        'channel_support' => env('REDIS_CHANNEL_SUPPORT', 'support_messages'),
+        // The Laravel Redis connection applies REDIS_PREFIX to publish commands.
+        // Node subscribes to the resulting full channel explicitly.
+        'channel_support' => (function () {
+            $prefix = (string) env('REDIS_PREFIX', 'massagehome-redis-');
+            $channel = (string) env('REDIS_CHANNEL_SUPPORT', 'support_messages');
+            return str_starts_with($channel, $prefix) ? substr($channel, strlen($prefix)) : $channel;
+        })(),
         'admin_socket_secret' => env('ADMIN_SOCKET_SECRET', env('APP_KEY')),
     ],
     'internal_api' => [

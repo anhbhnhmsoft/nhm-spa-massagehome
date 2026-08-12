@@ -37,3 +37,8 @@ Schedule::command('app:clear-ktv-working-status')
     ->everyFifteenMinutes()
     ->withoutOverlapping()
     ->onOneServer();
+
+Schedule::command('support:process-sla')
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->onOneServer();
