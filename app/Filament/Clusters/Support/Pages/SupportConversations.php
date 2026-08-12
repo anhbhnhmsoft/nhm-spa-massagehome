@@ -7,6 +7,7 @@ use App\Enums\SupportMessageSenderType;
 use App\Enums\SupportTicketStatus;
 use App\Filament\Clusters\Support\SupportCluster;
 use App\Models\SupportTicket;
+use Illuminate\Support\Facades\DB;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Gate;
 
@@ -44,10 +45,38 @@ class SupportConversations extends Page
         $this->ticketId = $this->tickets->first()?->id;
     }
 
+    public function updatedStatusFilter(): void { $this->selectFirstTicket(); }
+    public function updatedStaffFilter(): void { $this->selectFirstTicket(); }
+    public function updatedCategoryFilter(): void { $this->selectFirstTicket(); }
+    public function updatedSlaFilter(): void { $this->selectFirstTicket(); }
+
+    protected function selectFirstTicket(): void
+    {
+        $this->ticketId = $this->tickets->first()?->id;
+    }
+
+    public function getQueueSummaryProperty(): array
+    {
+        $active = [SupportTicketStatus::PENDING->dbValue(), SupportTicketStatus::ASSIGNED->dbValue(), SupportTicketStatus::IN_PROGRESS->dbValue()];
+        $query = SupportTicket::query()->whereIn('status', $active);
+
+        return [
+            'pending' => (clone $query)->whereNull('assigned_staff_id')->count(),
+            'assigned' => (clone $query)->whereNotNull('assigned_staff_id')->count(),
+            'unread' => SupportTicket::query()->whereIn('status', $active)->whereHas('messages', fn ($q) => $q->where('sender_type', SupportMessageSenderType::CUSTOMER->dbValue())->whereNull('seen_at'))->count(),
+            'warning' => (clone $query)->whereNotNull('sla_warning_at')->whereNull('sla_breached_at')->count(),
+            'breached' => (clone $query)->whereNotNull('sla_breached_at')->count(),
+            'online' => \App\Models\AdminUser::query()->where('role', \App\Enums\Admin\AdminRole::CUSTOMER_SUPPORT->value)->where('is_active', true)->where('last_seen_at', '>=', now()->subMinutes(3))->count(),
+        ];
+    }
+
     public function getTicketsProperty()
     {
         $query = SupportTicket::query()
             ->with(['customer.profile', 'assignedStaff', 'category', 'latestMessage.customer', 'latestMessage.staff'])
+            ->withCount(['messages as unread_count' => fn ($q) => $q->where('sender_type', SupportMessageSenderType::CUSTOMER->dbValue())->whereNull('seen_at')])
+            ->orderByDesc(DB::raw("CASE WHEN sla_breached_at IS NOT NULL THEN 2 WHEN sla_warning_at IS NOT NULL THEN 1 ELSE 0 END"))
+            ->orderByDesc('unread_count')
             ->orderByDesc('last_message_at')
             ->orderByDesc('created_at');
         if ($this->statusFilter === 'active') {
@@ -78,6 +107,11 @@ class SupportConversations extends Page
             ->orderBy('created_at')
             ->limit(200)
             ->get() ?? collect();
+    }
+
+    public function getEventsProperty()
+    {
+        return $this->selectedTicket?->events()->with(['actor', 'fromStaff', 'toStaff'])->latest()->limit(30)->get() ?? collect();
     }
 
     public function isStaffMessage($message): bool
