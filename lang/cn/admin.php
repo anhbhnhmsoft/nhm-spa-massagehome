@@ -1117,6 +1117,9 @@ return
                 'sla_hint' => '5分钟未首次回复时发出警告；15分钟后违反SLA并返回公共队列。',
                 'sla_warning_at' => 'SLA警告时间',
                 'sla_breached_at' => 'SLA超时时间',
+                'assigned_at' => '领取时间',
+                'first_response_at' => '首次回复时间',
+                'closed_at' => '关闭时间',
             ],
             'empty_state' => [
                 'heading' => '暂无支持工单',
@@ -1125,6 +1128,13 @@ return
         ],
         'support_monitor' => [
             'conversations' => '会话监控',
+            'conversation_detail' => '完整会话',
+            'ticket' => '工单',
+            'audit' => '处理历史',
+            'system' => '系统',
+            'no_audit' => '暂无处理历史',
+            'ticket_not_found' => '找不到工单',
+            'load_older_messages' => '加载更早消息',
             'performance' => '客服绩效',
             'date' => '工作日期',
             'period' => '报告周期',

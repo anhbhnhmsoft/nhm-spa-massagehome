@@ -1118,6 +1118,9 @@ return
                 'sla_hint' => 'Warning after 5 minutes without a first response; breached after 15 minutes and returned to the shared queue.',
                 'sla_warning_at' => 'SLA warning time',
                 'sla_breached_at' => 'SLA breach time',
+                'assigned_at' => 'Assigned at',
+                'first_response_at' => 'First response at',
+                'closed_at' => 'Closed at',
             ],
             'empty_state' => [
                 'heading' => 'No support tickets yet',
@@ -1126,6 +1129,13 @@ return
         ],
         'support_monitor' => [
             'conversations' => 'Conversation monitor',
+            'conversation_detail' => 'Full conversation',
+            'ticket' => 'Ticket',
+            'audit' => 'Handling history',
+            'system' => 'System',
+            'no_audit' => 'No handling history yet',
+            'ticket_not_found' => 'Ticket not found',
+            'load_older_messages' => 'Load older messages',
             'performance' => 'Support performance',
             'active_tickets' => 'Active queue',
             'conversation' => 'Conversation',
