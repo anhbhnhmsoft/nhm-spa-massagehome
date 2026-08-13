@@ -1082,9 +1082,7 @@ return
             ],
         ],
         'admin_role' => [
-            'OPERATION_MANAGER' => 'Quản lý vận hành đơn',
-            'MARKETING_MANAGER' => 'Quản lý marketing',
-            'PROFILE_MANAGER' => 'Quản lý hồ sơ',
+            'ADMIN' => 'Quản trị viên',
             'CUSTOMER_SUPPORT' => 'Nhân viên CSKH',
             'SUPER_ADMIN' => 'Superadmin',
         ],

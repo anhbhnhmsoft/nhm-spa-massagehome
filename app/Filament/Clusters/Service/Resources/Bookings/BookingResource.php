@@ -24,7 +24,7 @@ class BookingResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return Gate::allows(AdminGate::ALLOW_OPERATION);
+        return Gate::allows(AdminGate::ALLOW_PROFILE);
     }
     public static function getNavigationGroup(): \UnitEnum|string|null
     {

@@ -23,22 +23,22 @@ enum NotificationAdminType
     {
         return match ($this) {
             self::EMERGENCY_SUPPORT => [
-                AdminRole::OPERATION_MANAGER,
+                AdminRole::ADMIN,
                 AdminRole::CUSTOMER_SUPPORT,
             ],
             self::OVERDUE_ONGOING_BOOKING,
             self::OVERDUE_CONFIRMED_BOOKING => [
-                AdminRole::OPERATION_MANAGER,
+                AdminRole::ADMIN,
             ],
             self::USER_APPLY_KTV_PARTNER,
             self::USER_APPLY_AGENCY_PARTNER => [
-                AdminRole::PROFILE_MANAGER,
+                AdminRole::ADMIN,
             ],
             self::CONFIRM_WECHAT_PAYMENT,
             self::CONFIRM_ALIPAY_PAYMENT => [
-                AdminRole::OPERATION_MANAGER,
+                AdminRole::ADMIN,
             ],
-            default => [AdminRole::PROFILE_MANAGER],
+            default => [AdminRole::ADMIN],
         };
     }
 }

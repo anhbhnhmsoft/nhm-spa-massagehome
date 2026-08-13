@@ -268,21 +268,21 @@ class AppServiceProvider extends ServiceProvider
         Gate::define(AdminGate::ALLOW_OPERATION, function (AdminUser $user) {
             return $user->hasAnyRole([
                 AdminRole::SUPER_ADMIN,
-                AdminRole::OPERATION_MANAGER,
+                AdminRole::ADMIN,
             ]);
         });
 
         Gate::define(AdminGate::ALLOW_MARKETING, function (AdminUser $user) {
             return $user->hasAnyRole([
                 AdminRole::SUPER_ADMIN,
-                AdminRole::MARKETING_MANAGER,
+                AdminRole::ADMIN,
             ]);
         });
 
         Gate::define(AdminGate::ALLOW_PROFILE, function (AdminUser $user) {
             return $user->hasAnyRole([
                 AdminRole::SUPER_ADMIN,
-                AdminRole::PROFILE_MANAGER,
+                AdminRole::ADMIN,
                 AdminRole::CUSTOMER_SUPPORT,
             ]);
         });
@@ -292,15 +292,16 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Gate::define(AdminGate::ALLOW_SUPPORT_MANAGEMENT, function (AdminUser $user) {
-            return $user->hasRole(AdminRole::SUPER_ADMIN);
+            return $user->hasAnyRole([
+                AdminRole::SUPER_ADMIN,
+                AdminRole::ADMIN,
+            ]);
         });
 
         Gate::define(AdminGate::ALLOW_ORDER_DASHBOARD, function (AdminUser $user) {
             return $user->hasAnyRole([
                 AdminRole::SUPER_ADMIN,
-                AdminRole::OPERATION_MANAGER,
-                AdminRole::MARKETING_MANAGER,
-                AdminRole::PROFILE_MANAGER,
+                AdminRole::ADMIN,
                 AdminRole::CUSTOMER_SUPPORT,
             ]);
         });

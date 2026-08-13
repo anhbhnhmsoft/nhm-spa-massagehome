@@ -14,7 +14,7 @@ class TransactionCluster extends Cluster
 
     public static function canAccess(): bool
     {
-        return Gate::allows(AdminGate::ALLOW_OPERATION);
+        return Gate::allows(AdminGate::ALLOW_PROFILE);
     }
     public static function getNavigationLabel(): string
     {

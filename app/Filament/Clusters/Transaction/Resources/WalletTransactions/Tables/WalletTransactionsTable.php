@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\Transaction\Resources\WalletTransactions\Tables;
 
+use App\Enums\Admin\AdminGate;
 use App\Enums\UserRole;
 use App\Enums\WalletTransactionStatus;
 use App\Enums\WalletTransactionType;
@@ -24,6 +25,7 @@ use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Gate;
 
 class WalletTransactionsTable
 {
@@ -153,7 +155,7 @@ class WalletTransactionsTable
                             ->modalFooterActions(fn ($action): array => self::confirmationFooterActions($action, 'danger'))
                             ->modalSubmitActionLabel(__('admin.transaction.actions.approve')) // Nút "Xác nhận"
                             ->modalCancelActionLabel(__('admin.transaction.actions.cancel')),
-                    ])->buttonGroup(),
+                    ])->buttonGroup()->visible(fn (): bool => Gate::allows(AdminGate::ALLOW_OPERATION)),
                 ])
                 ->filtersLayout(FiltersLayout::AboveContent)
                 ->filtersFormColumns(2)
@@ -232,7 +234,7 @@ class WalletTransactionsTable
                             ->modalDescription(__('admin.transaction.actions.cancel_confirmation_message'))
                             ->modalSubmitActionLabel(__('admin.transaction.actions.approve'))
                             ->modalCancelActionLabel(__('admin.transaction.actions.cancel')),
-                    ])->buttonGroup(),
+                    ])->buttonGroup()->visible(fn (): bool => Gate::allows(AdminGate::ALLOW_OPERATION)),
                 ])
                 ->filtersLayout(FiltersLayout::AboveContent)
                 ->filtersFormColumns(5)

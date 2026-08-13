@@ -7,18 +7,15 @@ use App\Core\Helper\EnumHelper;
 enum AdminRole: int
 {
     use EnumHelper;
-    case OPERATION_MANAGER = 1;
-    case MARKETING_MANAGER = 2;
-    case PROFILE_MANAGER = 3;
+    // Keep the existing database values for support and superadmin accounts.
+    case ADMIN = 1;
     case CUSTOMER_SUPPORT = 4;
     case SUPER_ADMIN = 5;
 
     public function label(): string
     {
         return match ($this) {
-            self::OPERATION_MANAGER => __('admin.admin_role.OPERATION_MANAGER'),
-            self::MARKETING_MANAGER => __('admin.admin_role.MARKETING_MANAGER'),
-            self::PROFILE_MANAGER => __('admin.admin_role.PROFILE_MANAGER'),
+            self::ADMIN => __('admin.admin_role.ADMIN'),
             self::CUSTOMER_SUPPORT => __('admin.admin_role.CUSTOMER_SUPPORT'),
             self::SUPER_ADMIN => __('admin.admin_role.SUPER_ADMIN'),
         };

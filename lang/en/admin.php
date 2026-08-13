@@ -1069,9 +1069,7 @@ return
             'all' => 'All Time',
         ],
         'admin_role' => [
-            'OPERATION_MANAGER' => 'Operations Manager',
-            'MARKETING_MANAGER' => 'Marketing Manager',
-            'PROFILE_MANAGER' => 'Profile Manager',
+            'ADMIN' => 'Administrator',
             'CUSTOMER_SUPPORT' => 'Customer Support',
             'SUPER_ADMIN' => 'Superadmin',
         ],

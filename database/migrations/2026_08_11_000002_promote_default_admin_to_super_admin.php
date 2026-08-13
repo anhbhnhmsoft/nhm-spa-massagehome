@@ -19,6 +19,6 @@ return new class extends Migration
         DB::table('admin_users')
             ->where('username', '012345678910')
             ->where('role', AdminRole::SUPER_ADMIN->value)
-            ->update(['role' => AdminRole::PROFILE_MANAGER->value]);
+            ->update(['role' => 1]);
     }
 };

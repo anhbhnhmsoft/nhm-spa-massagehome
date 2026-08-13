@@ -26,10 +26,20 @@ class CategoryResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return Gate::allows(AdminGate::ALLOW_OPERATION);
+        return Gate::allows(AdminGate::ALLOW_PROFILE);
     }
 
     public static function canCreate(): bool
+    {
+        return Gate::allows(AdminGate::ALLOW_OPERATION);
+    }
+
+    public static function canEdit($record): bool
+    {
+        return Gate::allows(AdminGate::ALLOW_OPERATION);
+    }
+
+    public static function canDelete($record): bool
     {
         return Gate::allows(AdminGate::ALLOW_OPERATION);
     }
