@@ -10,6 +10,7 @@ use App\Http\Controllers\API\AgencyController;
 use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\API\PaymentController;
 use App\Http\Controllers\API\ProfileController;
+use App\Http\Controllers\API\ProactiveMatchingController;
 use App\Http\Controllers\API\ServiceController;
 use App\Http\Controllers\API\SupportController;
 use App\Http\Controllers\API\ChatController;
@@ -17,6 +18,7 @@ use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\AffiliateController;
 use App\Http\Controllers\API\ConfigController;
 use App\Http\Controllers\API\CustomerCrmController;
+use App\Http\Controllers\API\ServiceRequestController;
 use App\Http\Controllers\API\WithdrawController;
 use App\Http\Controllers\API\ZaloController as ApiZaloController;
 use Illuminate\Support\Facades\Route;
@@ -369,6 +371,25 @@ Route::middleware(['set-api-locale', 'update-last-active'])->group(function () {
         Route::get('verification', [KTVController::class, 'getVerification']);
         Route::post('verification', [KTVController::class, 'updateVerification']);
         Route::post('upload-certificate', [KTVController::class, 'uploadCertificate']);
+        // Service Request Proposals cho KTV
+        Route::get('service-request-proposals', [ServiceRequestController::class, 'ktvProposals']);
+        Route::post('service-request-proposals/{proposalId}/respond', [ServiceRequestController::class, 'respondProposalByKtv']);
+    });
+
+    // Yêu cầu Dịch vụ & CSKH Matching (Dành cho Khách hàng)
+    Route::prefix('service-requests')->middleware(['auth:sanctum'])->group(function () {
+        Route::post('/', [ServiceRequestController::class, 'store']);
+        Route::get('/', [ServiceRequestController::class, 'index']);
+        Route::post('proposals/{proposalId}/respond', [ServiceRequestController::class, 'respondProposalByCustomer']);
+
+        // Proactive Matching (Giai đoạn 2 - KTV chủ động tìm khách)
+        Route::prefix('proactive')->group(function () {
+            Route::get('nearby-demands', [ProactiveMatchingController::class, 'nearbyDemands']);
+            Route::post('send-invite', [ProactiveMatchingController::class, 'sendInvite']);
+            Route::get('customer-invites', [ProactiveMatchingController::class, 'getCustomerInvites']);
+            Route::post('invites/{id}/respond', [ProactiveMatchingController::class, 'respondInvite']);
+            Route::post('toggle-status', [ProactiveMatchingController::class, 'toggleStatus']);
+        });
     });
 
     // Dành cho agency

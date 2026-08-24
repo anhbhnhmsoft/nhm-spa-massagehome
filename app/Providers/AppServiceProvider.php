@@ -4,7 +4,11 @@ namespace App\Providers;
 
 use App\Enums\Admin\AdminGate;
 use App\Enums\Admin\AdminRole;
+use App\Events\ProposalRespondedEvent;
+use App\Events\ServiceRequestCreatedEvent;
+use App\Events\ServiceRequestProposedEvent;
 use App\Filament\Pages\Dashboard;
+use App\Listeners\SendServiceRequestNotificationListener;
 use App\Models\AdminUser;
 use App\Models\Banner;
 use App\Models\Category;
@@ -77,9 +81,11 @@ use App\Services\MailService;
 use App\Services\NotificationService;
 use App\Services\PaymentService;
 use App\Services\PayOsService;
+use App\Services\ProactiveMatchingService;
 use App\Services\ProfileService;
 use App\Services\ProvinceService;
 use App\Services\ReviewService;
+use App\Services\ServiceRequestService;
 use App\Services\ServiceService;
 use App\Services\SupportService;
 use App\Services\UserFileService;
@@ -90,6 +96,7 @@ use App\Services\Validator\CouponValidator;
 use App\Services\WalletService;
 use App\Services\ZaloService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Opcodes\LogViewer\Facades\LogViewer;
@@ -127,6 +134,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Register admin gates
         $this->registerAdminGate();
+
+        // Register events & listeners
+        $this->registerEvents();
     }
 
     /**
@@ -214,6 +224,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(AgencyService::class);
         $this->app->singleton(ProfileService::class);
         $this->app->singleton(SupportService::class);
+        $this->app->singleton(ServiceRequestService::class);
+        $this->app->singleton(ProactiveMatchingService::class);
     }
 
 
@@ -307,5 +319,27 @@ class AppServiceProvider extends ServiceProvider
                 AdminRole::CUSTOMER_SUPPORT,
             ]);
         });
+    }
+
+    /**
+     * Đăng ký các Event & Listener cho Service Requests.
+     * @return void
+     */
+    protected function registerEvents(): void
+    {
+        Event::listen(
+            ServiceRequestCreatedEvent::class,
+            [SendServiceRequestNotificationListener::class, 'handleRequestCreated']
+        );
+
+        Event::listen(
+            ServiceRequestProposedEvent::class,
+            [SendServiceRequestNotificationListener::class, 'handleRequestProposed']
+        );
+
+        Event::listen(
+            ProposalRespondedEvent::class,
+            [SendServiceRequestNotificationListener::class, 'handleProposalResponded']
+        );
     }
 }

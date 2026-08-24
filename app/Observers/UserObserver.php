@@ -41,5 +41,8 @@ class UserObserver
                 $newCoupon->id => ['is_used' => false]
             ]);
         }
+
+        // Tự động khởi tạo dữ liệu CRM cho Khách hàng
+        \App\Models\CustomerCrmData::firstOrCreate(['user_id' => $user->id]);
     }
 }
