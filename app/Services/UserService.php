@@ -763,6 +763,144 @@ class UserService extends BaseService
     }
 
     /**
+     * Cập nhật thông tin xác thực và chuyên môn KTV
+     * @param int $userId
+     * @param array $data
+     * @return ServiceReturn
+     */
+    public function updateKtvVerificationInfo(int $userId, array $data): ServiceReturn
+    {
+        DB::beginTransaction();
+        try {
+            $user = $this->userRepository->queryUser()
+                ->where('id', $userId)
+                ->where('role', UserRole::KTV->value)
+                ->first();
+
+            if (!$user) {
+                throw new ServiceException(__("error.user_not_found"));
+            }
+
+            $reviewApp = $user->getStaffReviewsAttribute()->first();
+            if (!$reviewApp) {
+                throw new ServiceException(__("error.user_not_found"));
+            }
+
+            $updateData = [];
+
+            if (array_key_exists('contact_phone', $data)) {
+                $updateData['contact_phone'] = $data['contact_phone'];
+            }
+            if (array_key_exists('techniques', $data)) {
+                $updateData['techniques'] = $data['techniques'];
+            }
+            if (array_key_exists('strength_service_ids', $data)) {
+                $updateData['strength_service_ids'] = $data['strength_service_ids'];
+            }
+            if (array_key_exists('province_code', $data)) {
+                $updateData['province_code'] = $data['province_code'];
+            }
+            if (array_key_exists('district_code', $data)) {
+                $updateData['district_code'] = $data['district_code'];
+            }
+            if (array_key_exists('ward_code', $data)) {
+                $updateData['ward_code'] = $data['ward_code'];
+            }
+            if (array_key_exists('priority_areas', $data)) {
+                $updateData['priority_areas'] = $data['priority_areas'];
+            }
+            if (array_key_exists('service_locations', $data)) {
+                $updateData['service_locations'] = $data['service_locations'];
+            }
+
+            if (!empty($updateData)) {
+                $this->userReviewApplicationRepository->update($reviewApp->id, $updateData);
+            }
+
+            DB::commit();
+
+            $user->load(['profile', 'reviewApplication']);
+
+            return ServiceReturn::success(
+                data: $user,
+                message: __("common.success.data_updated")
+            );
+        } catch (ServiceException $exception) {
+            DB::rollBack();
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            LogHelper::error("Lỗi UserService@updateKtvVerificationInfo: " . $exception->getMessage(), $exception);
+            return ServiceReturn::error(
+                message: $exception->getMessage()
+            );
+        }
+    }
+
+    /**
+     * Upload chứng chỉ chuyên môn KTV
+     * @param int $userId
+     * @param UploadedFile $file
+     * @return ServiceReturn
+     */
+    public function uploadKtvCertificate(int $userId, UploadedFile $file): ServiceReturn
+    {
+        DB::beginTransaction();
+        try {
+            $user = $this->userRepository->queryUser()
+                ->where('id', $userId)
+                ->where('role', UserRole::KTV->value)
+                ->first();
+
+            if (!$user) {
+                throw new ServiceException(__("error.user_not_found"));
+            }
+
+            $path = $file->store(DirectFile::makePathById(
+                type: DirectFile::USER_FILE_UPLOAD,
+                id: $userId
+            ), 'private');
+
+            $userFile = $this->userFileRepository->create([
+                'user_id' => $userId,
+                'type' => UserFileType::CERTIFICATE->value,
+                'file_path' => $path,
+                'is_public' => false,
+                'role' => UserRole::KTV->value,
+            ]);
+
+            $reviewApp = $user->getStaffReviewsAttribute()->first();
+            if ($reviewApp) {
+                $certs = $reviewApp->certificates ?? [];
+                $certs[] = [
+                    'id' => $userFile->id,
+                    'file_path' => $path,
+                    'uploaded_at' => now()->toIso8601String(),
+                ];
+                $reviewApp->certificates = $certs;
+                $reviewApp->save();
+            }
+
+            DB::commit();
+
+            return ServiceReturn::success(
+                data: [
+                    'id' => $userFile->id,
+                    'file_path' => $path,
+                ],
+                message: __('admin.ktv.messages.upload_success')
+            );
+        } catch (\Exception $e) {
+            DB::rollBack();
+            LogHelper::error('Lỗi UserService@uploadKtvCertificate: ' . $e->getMessage(), $e);
+            return ServiceReturn::error($e->getMessage());
+        }
+    }
+
+
+    /**
      * Update agency profile
      * @param array $data
      * @return ServiceReturn

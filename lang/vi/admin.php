@@ -192,6 +192,17 @@ return
             ]
 
         ],
+        "ktv_technique" => [
+            "acupressure" => "Ấn huyệt",
+            "massage" => "Xoa bóp",
+            "therapy" => "Trị liệu chuyên sâu",
+            "stretching" => "Giãn cơ",
+            "essential_oil" => "Thư giãn tinh dầu",
+        ],
+        "ktv_service_location" => [
+            "home" => "Nhà riêng",
+            "hotel" => "Khách sạn",
+        ],
         "ktv_apply" => [
             "nav" => "Đơn đăng ký KTV",
             "label" => "Đơn đăng ký KTV",
@@ -204,6 +215,7 @@ return
                 "identity_card_front" => "CMND/CCCD mặt trước",
                 "identity_card_back" => "CMND/CCCD mặt sau",
                 "license" => "Bằng cấp/Chứng chỉ",
+                "certificate" => "Bằng cấp / Chứng chỉ chuyên môn",
                 "health_insurance" => "Bảo hiểm y tế",
                 "business_image" => "Hình ảnh doanh nghiệp",
                 "ktv_image_display" => "Hình ảnh hiển thị cho khách hàng (tối thiểu :min, tối đa :max)",
@@ -247,6 +259,20 @@ return
                 'is_leader' => 'Trưởng nhóm',
                 'is_priority' => 'Ưu tiên hiển thị',
                 'nickname' => 'Biệt danh',
+                'contact_phone' => 'SĐT liên hệ điều phối',
+                'contact_verified' => 'Đã xác thực liên lạc được',
+                'portrait_verified' => 'Đã xác thực chân dung bởi MasaHome',
+                'certificate_verified' => 'Đã xác thực chứng chỉ',
+                'certificates' => 'Bằng cấp / Chứng chỉ chuyên môn',
+                'techniques' => 'Kỹ thuật chuyên môn',
+                'strength_service_ids' => 'Dịch vụ thế mạnh (Tối đa 3)',
+                'district' => 'Quận/Huyện',
+                'ward' => 'Xã/Phường',
+                'priority_areas' => 'Khu vực ưu tiên hoạt động',
+                'service_locations' => 'Địa điểm phục vụ',
+                'verification_section' => 'Trạng thái Xác thực MasaHome',
+                'expertise_section' => 'Kỹ thuật & Dịch vụ Thế mạnh',
+                'area_section' => 'Khu vực hoạt động & Địa điểm phục vụ',
             ],
             "actions" => [
                 "approve" => [

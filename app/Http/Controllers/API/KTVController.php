@@ -25,6 +25,8 @@ use App\Services\DashboardService;
 use App\Services\ServiceService;
 use App\Services\UserFileService;
 use App\Services\UserService;
+use App\Enums\KtvTechnique;
+use App\Enums\KtvServiceLocation;
 use App\Enums\BookingApplicationStatus;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -451,4 +453,89 @@ class KTVController extends BaseController
         }
         return $this->sendSuccess();
     }
+
+    /**
+     * Lấy thông tin xác thực và chuyên môn KTV
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getVerification(Request $request): JsonResponse
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        return $this->sendSuccess(data: new ProfileKTVResource($user));
+    }
+
+    /**
+     * Cập nhật thông tin xác thực và chuyên môn KTV
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function updateVerification(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'contact_phone' => 'nullable|string|max:20',
+            'techniques' => 'nullable|array',
+            'techniques.*' => ['string', Rule::in(KtvTechnique::values())],
+            'strength_service_ids' => 'nullable|array|max:3',
+            'strength_service_ids.*' => 'integer',
+            'province_code' => 'nullable|string',
+            'district_code' => 'nullable|string',
+            'ward_code' => 'nullable|string',
+            'priority_areas' => 'nullable|array',
+            'priority_areas.*' => 'string',
+            'service_locations' => 'nullable|array',
+            'service_locations.*' => ['string', Rule::in(KtvServiceLocation::values())],
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendValidation(
+                errors: $validator->errors()->toArray()
+            );
+        }
+
+        $userId = $request->user()->id;
+        $result = $this->userService->updateKtvVerificationInfo($userId, $validator->validated());
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage());
+        }
+
+        return $this->sendSuccess(
+            data: new ProfileKTVResource($result->getData()),
+            message: __('admin.notification.success.update_success')
+        );
+    }
+
+    /**
+     * Upload chứng chỉ chuyên môn KTV
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function uploadCertificate(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'file' => 'required|file|mimes:jpeg,png,jpg,pdf|max:10240',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendValidation(
+                errors: $validator->errors()->toArray()
+            );
+        }
+
+        $userId = $request->user()->id;
+        $file = $request->file('file');
+        $result = $this->userService->uploadKtvCertificate($userId, $file);
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage());
+        }
+
+        return $this->sendSuccess(
+            data: $result->getData(),
+            message: __('admin.ktv.messages.upload_success')
+        );
+    }
 }
+

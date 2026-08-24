@@ -12,6 +12,11 @@ use App\Enums\ReviewApplicationStatus;
 use App\Enums\UserFileType;
 use App\Enums\UserRole;
 use App\Filament\Components\CommonFields;
+use App\Enums\KtvTechnique;
+use App\Enums\KtvServiceLocation;
+use App\Models\Category;
+use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\TimePicker;
@@ -199,6 +204,63 @@ class KTVForm
                         Textarea::make('bio.' . Language::CHINESE->value)
                             ->label(__('admin.ktv_apply.fields.experience_desc_cn'))
                             ->rows(3)
+                            ->columnSpanFull(),
+
+                        // Trạng thái xác thực MasaHome
+                        Section::make(__('admin.ktv_apply.fields.verification_section'))
+                            ->schema([
+                                TextInput::make('contact_phone')
+                                    ->label(__('admin.ktv_apply.fields.contact_phone'))
+                                    ->tel()
+                                    ->maxLength(20),
+                                Toggle::make('contact_verified')
+                                    ->label(__('admin.ktv_apply.fields.contact_verified'))
+                                    ->onColor('success'),
+                                Toggle::make('portrait_verified')
+                                    ->label(__('admin.ktv_apply.fields.portrait_verified'))
+                                    ->onColor('success')
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, $set) {
+                                        if ($state) {
+                                            $set('portrait_verified_at', now());
+                                        } else {
+                                            $set('portrait_verified_at', null);
+                                        }
+                                    }),
+                                DateTimePicker::make('portrait_verified_at')
+                                    ->label(__('admin.ktv_apply.fields.portrait_verified'))
+                                    ->disabled(),
+                                Toggle::make('certificate_verified')
+                                    ->label(__('admin.ktv_apply.fields.certificate_verified'))
+                                    ->onColor('success'),
+                            ])
+                            ->columns(2)
+                            ->columnSpanFull(),
+
+                        // Kỹ thuật chuyên môn & Dịch vụ thế mạnh
+                        Section::make(__('admin.ktv_apply.fields.expertise_section'))
+                            ->schema([
+                                CheckboxList::make('techniques')
+                                    ->label(__('admin.ktv_apply.fields.techniques'))
+                                    ->options(KtvTechnique::toOptions())
+                                    ->columns(3),
+                                Select::make('strength_service_ids')
+                                    ->label(__('admin.ktv_apply.fields.strength_service_ids'))
+                                    ->multiple()
+                                    ->maxItems(3)
+                                    ->options(fn() => Category::query()->pluck('title', 'id')->toArray())
+                                    ->columnSpanFull(),
+                            ])
+                            ->columnSpanFull(),
+
+                        // Địa bàn & Địa điểm làm việc
+                        Section::make(__('admin.ktv_apply.fields.area_section'))
+                            ->schema([
+                                CheckboxList::make('service_locations')
+                                    ->label(__('admin.ktv_apply.fields.service_locations'))
+                                    ->options(KtvServiceLocation::toOptions())
+                                    ->columns(2),
+                            ])
                             ->columnSpanFull(),
                     ])
                     ->columns(2),

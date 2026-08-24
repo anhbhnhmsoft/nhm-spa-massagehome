@@ -365,6 +365,10 @@ Route::middleware(['set-api-locale', 'update-last-active'])->group(function () {
         Route::post('link-referrer', [KTVController::class, 'linkReferrer']);
         // Gửi hỗ trợ nguy hiểm
         Route::post('danger-support', [KTVController::class, 'dangerSupport']);
+        // Thông tin xác thực & chuyên môn KTV
+        Route::get('verification', [KTVController::class, 'getVerification']);
+        Route::post('verification', [KTVController::class, 'updateVerification']);
+        Route::post('upload-certificate', [KTVController::class, 'uploadCertificate']);
     });
 
     // Dành cho agency

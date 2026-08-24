@@ -11,6 +11,7 @@ use App\Filament\Components\CommonFields;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -50,6 +51,10 @@ class KTVsTable
                 TextColumn::make('profile.gender')
                     ->label(__('admin.common.table.gender'))
                     ->formatStateUsing(fn($state) => Gender::getLabel($state)),
+                IconColumn::make('reviewApplication.portrait_verified')
+                    ->label(__('admin.ktv_apply.fields.portrait_verified'))
+                    ->boolean()
+                    ->alignCenter(),
                 TextColumn::make('reviewApplication.status')
                     ->label(__('admin.common.table.status_review'))
                     ->badge()
@@ -106,6 +111,20 @@ class KTVsTable
                         }
                         return $query->whereHas('reviewApplication', function ($q) use ($data) {
                             $q->where('is_leader', $data['value']);
+                        });
+                    }),
+                SelectFilter::make('portrait_verified')
+                    ->label(__('admin.ktv_apply.fields.portrait_verified'))
+                    ->options([
+                        true => __('admin.common.yes'),
+                        false => __('admin.common.no'),
+                    ])
+                    ->query(function ($query, array $data) {
+                        if (empty($data['value'])) {
+                            return $query;
+                        }
+                        return $query->whereHas('reviewApplication', function ($q) use ($data) {
+                            $q->where('portrait_verified', $data['value']);
                         });
                     }),
                 SelectFilter::make('review_status')

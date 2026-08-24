@@ -31,3 +31,5 @@ yarn-error.log
 pnpm-lock.yaml
 pnpm-workspace.yaml
 .codex
+/docs
+/gemini_appdata

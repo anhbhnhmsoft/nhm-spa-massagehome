@@ -6,6 +6,7 @@ use App\Core\GenerateId\HasBigIntId;
 use App\Enums\ReviewApplicationStatus;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Translatable\HasTranslations;
+
 class UserReviewApplication extends Model
 {
     use HasBigIntId, HasTranslations;
@@ -13,7 +14,6 @@ class UserReviewApplication extends Model
     protected $table = 'user_review_application';
 
     public array $translatable = ['bio'];
-
 
     protected $fillable = [
         'user_id',
@@ -32,6 +32,19 @@ class UserReviewApplication extends Model
         'latitude',
         'longitude',
         'service_performed_count',
+        'contact_phone',
+        'contact_verified',
+        'portrait_verified',
+        'portrait_verified_at',
+        'certificate_verified',
+        'certificates',
+        'techniques',
+        'strength_service_ids',
+        'province_code',
+        'district_code',
+        'ward_code',
+        'priority_areas',
+        'service_locations',
     ];
 
     protected $casts = [
@@ -44,6 +57,15 @@ class UserReviewApplication extends Model
         'application_date' => 'date',
         'is_leader' => 'boolean',
         'is_priority' => 'boolean',
+        'contact_verified' => 'boolean',
+        'portrait_verified' => 'boolean',
+        'portrait_verified_at' => 'datetime',
+        'certificate_verified' => 'boolean',
+        'certificates' => 'array',
+        'techniques' => 'array',
+        'strength_service_ids' => 'array',
+        'priority_areas' => 'array',
+        'service_locations' => 'array',
     ];
 
     /**
@@ -61,5 +83,4 @@ class UserReviewApplication extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
-
 }

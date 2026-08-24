@@ -7,6 +7,7 @@ enum UserFileType: int
     case IDENTITY_CARD_FRONT = 1; // Hình ảnh mặt trước thẻ căn cước
     case IDENTITY_CARD_BACK = 2; // Hình ảnh mặt sau thẻ căn cước
     case LICENSE = 3; // Hình ảnh giấy phép
+    case CERTIFICATE = 4; // Bằng cấp / Chứng chỉ chuyên môn
     case KTV_IMAGE_DISPLAY = 5; // Hình ảnh hiển thị cho khách hàng
     case FACE_WITH_IDENTITY_CARD = 6; // Hình ảnh mặt trước thẻ căn cước kèm theo khuôn mặt
 
@@ -17,6 +18,7 @@ enum UserFileType: int
             self::IDENTITY_CARD_FRONT => __('admin.ktv_apply.file_type.identity_card_front'),
             self::IDENTITY_CARD_BACK => __('admin.ktv_apply.file_type.identity_card_back'),
             self::LICENSE => __('admin.ktv_apply.file_type.license'),
+            self::CERTIFICATE => __('admin.ktv_apply.file_type.certificate'),
             self::KTV_IMAGE_DISPLAY => __('admin.ktv_apply.file_type.ktv_image_display'),
             self::FACE_WITH_IDENTITY_CARD => __('admin.ktv_apply.file_type.face_with_identity_card'),
         };
@@ -48,6 +50,7 @@ enum UserFileType: int
             self::IDENTITY_CARD_FRONT->value,
             self::IDENTITY_CARD_BACK->value,
             self::LICENSE->value,
+            self::CERTIFICATE->value,
             self::FACE_WITH_IDENTITY_CARD->value,
         ];
     }

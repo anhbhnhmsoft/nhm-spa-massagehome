@@ -24,6 +24,7 @@
         "@types/pg": "^8.18.0",
         "@types/socket.io": "^3.0.1",
         "axios": "1.13.5",
+        "concurrently": "^10.0.5",
         "eslint": "^9.17.0",
         "eslint-config-prettier": "^10.0.1",
         "eslint-plugin-react": "^7.37.3",
@@ -39,7 +40,6 @@
     },
     "dependencies": {
         "class-variance-authority": "^0.7.1",
-        "concurrently": "^9.0.1",
         "cors": "^2.8.5",
         "dotenv": "^17.2.3",
         "expo-server-sdk": "^4.0.0",
