@@ -23,5 +23,29 @@ class AdminSeeder extends Seeder
                 'language' => Language::VIETNAMESE->value,
                 'is_active' => true,
             ]);
+
+        AdminUser::query()->createOrFirst(
+            [
+                'username' => 'cskh01',
+            ],
+            [
+                'password' => Hash::make('Test12345678@'),
+                'name' => 'Nhân viên CSKH 01',
+                'role' => AdminRole::CUSTOMER_SUPPORT,
+                'language' => Language::VIETNAMESE->value,
+                'is_active' => true,
+            ]);
+
+        AdminUser::query()->createOrFirst(
+            [
+                'username' => 'sale-user',
+            ],
+            [
+                'password' => Hash::make('Test12345678@'),
+                'name' => 'Nhân viên Sale',
+                'role' => AdminRole::CUSTOMER_SUPPORT,
+                'language' => Language::VIETNAMESE->value,
+                'is_active' => true,
+            ]);
     }
 }

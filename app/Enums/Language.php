@@ -27,4 +27,13 @@ enum Language: string
             self::KOREAN => 'Korean',
         };
     }
+
+    public static function toOptions(): array
+    {
+        $options = [];
+        foreach (self::cases() as $case) {
+            $options[$case->value] = $case->label();
+        }
+        return $options;
+    }
 }

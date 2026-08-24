@@ -686,6 +686,23 @@ return
                 'withdraw_info_not_found' => 'Thông tin rút tiền không tồn tại',
             ],
         ],
+        'customer_rank' => [
+            'standard' => 'Standard',
+            'gold' => 'Gold',
+            'vip' => 'VIP',
+        ],
+        'demand_status' => [
+            'need_now' => 'Đang cần gấp',
+            'exploring' => 'Đang tìm hiểu',
+            'booked' => 'Đã đặt dịch vụ',
+            'no_need' => 'Chưa có nhu cầu',
+        ],
+        'preferred_time_slot' => [
+            'night' => '00h - 06h (Đêm)',
+            'morning' => '06h - 12h (Sáng)',
+            'afternoon' => '12h - 18h (Chiều)',
+            'evening' => '18h - 24h (Tối)',
+        ],
         'customer' => [
             'label' => 'Khách hàng',
             'section' => [
@@ -693,6 +710,8 @@ return
                 'booking_history' => 'Lịch sử đặt dịch vụ',
                 'wallet' => 'Ví tiền',
                 'reviews' => 'Đánh giá',
+                'service_needs' => 'Nhu cầu dịch vụ & Vị trí',
+                'crm_management' => 'Quản lý CRM & Phân hạng CSKH',
             ],
             'fields' => [
                 'name' => 'Tên',
@@ -705,6 +724,18 @@ return
                 'address' => 'Địa chỉ',
                 'created_at' => 'Ngày tạo',
                 'updated_at' => 'Ngày cập nhật',
+                'languages' => 'Ngôn ngữ giao tiếp',
+                'demand_status' => 'Trạng thái nhu cầu',
+                'preferred_services' => 'Dịch vụ quan tâm',
+                'preferred_techniques' => 'Kỹ thuật mong muốn',
+                'preferred_time_slots' => 'Khung giờ quan tâm',
+                'address_detail' => 'Địa chỉ khu vực dịch vụ',
+                'customer_rank' => 'Phân hạng khách hàng',
+                'assigned_cskh' => 'Nhân viên CSKH phụ trách',
+                'total_spent' => 'Tổng chi tiêu (VNĐ)',
+                'booking_count' => 'Số đơn hoàn thành',
+                'aov' => 'Giá trị đơn trung bình (AOV)',
+                'cskh_notes' => 'Ghi chú CSKH',
             ],
         ],
         'review' => [

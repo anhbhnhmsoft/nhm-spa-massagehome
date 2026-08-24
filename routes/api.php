@@ -16,6 +16,7 @@ use App\Http\Controllers\API\ChatController;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\AffiliateController;
 use App\Http\Controllers\API\ConfigController;
+use App\Http\Controllers\API\CustomerCrmController;
 use App\Http\Controllers\API\WithdrawController;
 use App\Http\Controllers\API\ZaloController as ApiZaloController;
 use Illuminate\Support\Facades\Route;
@@ -54,6 +55,9 @@ Route::middleware(['set-api-locale', 'update-last-active'])->group(function () {
         Route::middleware(['auth:sanctum'])->group(function () {
             // Lấy thông tin hồ sơ người dùng.
             Route::get('profile', [AuthController::class, 'getProfile']);
+            // Quản lý CRM & Nhu cầu mở rộng
+            Route::get('crm-preferences', [CustomerCrmController::class, 'getPreferences']);
+            Route::put('crm-preferences', [CustomerCrmController::class, 'updatePreferences']);
             // Cập nhật ngôn ngữ hệ thống.
             Route::post('set-language', [AuthController::class, 'setLanguage']);
             // Cập nhật thông tin thiết bị.

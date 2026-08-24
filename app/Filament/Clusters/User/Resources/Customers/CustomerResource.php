@@ -66,6 +66,7 @@ class CustomerResource extends Resource
         $query = parent::getEloquentQuery();
 
         return $query
+            ->with(['profile', 'crmData', 'crmData.assignedCskh'])
             ->where('role', UserRole::CUSTOMER->value);
     }
 
@@ -80,7 +81,7 @@ class CustomerResource extends Resource
     public static function getRecordRouteBindingEloquentQuery(): Builder
     {
         return parent::getRecordRouteBindingEloquentQuery()
-            ->with('profile')
+            ->with(['profile', 'crmData', 'crmData.assignedCskh'])
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

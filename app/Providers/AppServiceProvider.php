@@ -125,7 +125,6 @@ class AppServiceProvider extends ServiceProvider
 
         // Register admin gates
         $this->registerAdminGate();
-
     }
 
     /**

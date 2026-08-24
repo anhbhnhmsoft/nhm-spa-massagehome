@@ -33,6 +33,9 @@ class DatabaseSeeder extends Seeder
         $this->seedConfig();
         $this->seedConfigAffiliate();
         $this->call(SupportCategorySeeder::class);
+        $this->call(AdminSeeder::class);
+        $this->call(PageSeeder::class);
+        $this->call(SeedingScheduleForKtv::class);
     }
 
     /**

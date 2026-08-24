@@ -62,7 +62,7 @@ class User extends Authenticatable
                     if ($file->file_path) {
                         if ($file->is_public) {
                             Storage::disk('public')->delete($file->file_path);
-                        }else{
+                        } else {
                             Storage::disk('private')->delete($file->file_path);
                         }
                     }
@@ -90,6 +90,11 @@ class User extends Authenticatable
     public function getStaffReviewsAttribute()
     {
         return $this->hasOne(UserReviewApplication::class)->where('role', UserRole::KTV->value)->latestOfMany();
+    }
+
+    public function crmData()
+    {
+        return $this->hasOne(CustomerCrmData::class, 'user_id', 'id');
     }
 
     public function files()
@@ -134,7 +139,7 @@ class User extends Authenticatable
     public function categories()
     {
         return $this->belongsToMany(Category::class, 'services', 'user_id', 'category_id')
-            ->withPivot('id','performed_count') // lấy ID của service và số lần thực hiện dịch vụ
+            ->withPivot('id', 'performed_count') // lấy ID của service và số lần thực hiện dịch vụ
             ->withTimestamps();
     }
 
@@ -288,6 +293,4 @@ class User extends Authenticatable
     {
         return $this->hasMany(UserReviewApplication::class, 'referrer_id');
     }
-
-
 }

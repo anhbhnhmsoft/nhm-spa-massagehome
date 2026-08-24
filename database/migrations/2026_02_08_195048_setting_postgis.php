@@ -11,8 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement('CREATE EXTENSION IF NOT EXISTS postgis');
-
+        try {
+            DB::statement('CREATE EXTENSION IF NOT EXISTS postgis');
+        } catch (\Throwable $e) {
+            // PostGIS package optional / skipped if not installed in PostgreSQL system
+        }
     }
 
     /**
@@ -20,6 +23,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement('DROP EXTENSION IF EXISTS postgis');
+        try {
+            DB::statement('DROP EXTENSION IF EXISTS postgis');
+        } catch (\Throwable $e) {
+            // Ignore if postgis not present
+        }
     }
 };

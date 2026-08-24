@@ -3,8 +3,15 @@
 namespace App\Filament\Clusters\User\Resources\Customers\Schemas;
 
 use App\Enums\Admin\AdminGate;
+use App\Enums\CustomerRank;
+use App\Enums\DemandStatus;
 use App\Enums\DirectFile;
 use App\Enums\Gender;
+use App\Enums\Language;
+use App\Enums\PreferredTimeSlot;
+use App\Models\AdminUser;
+use App\Models\Category;
+use App\Models\ServiceOption;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
@@ -23,7 +30,7 @@ class CustomerForm
         return $schema
             ->disabled(fn(): bool => !Gate::allows(AdminGate::ALLOW_PROFILE))
             ->components([
-                // Thông tin cơ bản
+                // 1. Thông tin cơ bản & Hồ sơ
                 Section::make(__('admin.common.table.basic_info'))
                     ->schema([
                         Section::make()
@@ -107,6 +114,74 @@ class CustomerForm
                                     ]),
                             ]),
 
+                    ])
+                    ->compact()
+                    ->columns(2)
+                    ->columnSpanFull(),
+
+                // 2. Nhu cầu dịch vụ & Vị trí
+                Section::make(__('admin.customer.section.service_needs'))
+                    ->relationship('crmData')
+                    ->schema([
+                        Select::make('languages')
+                            ->label(__('admin.customer.fields.languages'))
+                            ->multiple()
+                            ->options(Language::toOptions()),
+                        Select::make('demand_status')
+                            ->label(__('admin.customer.fields.demand_status'))
+                            ->options(DemandStatus::toOptions()),
+                        Select::make('preferred_services')
+                            ->label(__('admin.customer.fields.preferred_services'))
+                            ->multiple()
+                            ->options(fn () => Category::pluck('name', 'id')->toArray()),
+                        Select::make('preferred_techniques')
+                            ->label(__('admin.customer.fields.preferred_techniques'))
+                            ->multiple()
+                            ->options(fn () => ServiceOption::pluck('name', 'id')->toArray()),
+                        Select::make('preferred_time_slots')
+                            ->label(__('admin.customer.fields.preferred_time_slots'))
+                            ->multiple()
+                            ->options(PreferredTimeSlot::toOptions()),
+                        TextInput::make('address_detail')
+                            ->label(__('admin.customer.fields.address_detail')),
+                    ])
+                    ->compact()
+                    ->columns(2)
+                    ->columnSpanFull(),
+
+                // 3. Quản lý CRM & Chăm sóc khách hàng
+                Section::make(__('admin.customer.section.crm_management'))
+                    ->relationship('crmData')
+                    ->schema([
+                        Select::make('customer_rank')
+                            ->label(__('admin.customer.fields.customer_rank'))
+                            ->options(CustomerRank::toOptions()),
+                        Select::make('demand_status')
+                            ->label(__('admin.customer.fields.demand_status'))
+                            ->options(DemandStatus::toOptions()),
+                        Select::make('assigned_cskh_id')
+                            ->label(__('admin.customer.fields.assigned_cskh'))
+                            ->options(fn() => AdminUser::pluck('name', 'id'))
+                            ->searchable()
+                            ->placeholder(__('admin.common.placeholder.select')),
+                        TextInput::make('total_spent')
+                            ->label(__('admin.customer.fields.total_spent'))
+                            ->numeric()
+                            ->prefix('₫')
+                            ->disabled(),
+                        TextInput::make('booking_count')
+                            ->label(__('admin.customer.fields.booking_count'))
+                            ->numeric()
+                            ->disabled(),
+                        TextInput::make('aov')
+                            ->label(__('admin.customer.fields.aov'))
+                            ->numeric()
+                            ->prefix('₫')
+                            ->disabled(),
+                        Textarea::make('cskh_notes')
+                            ->label(__('admin.customer.fields.cskh_notes'))
+                            ->rows(3)
+                            ->columnSpanFull(),
                     ])
                     ->compact()
                     ->columns(2)
