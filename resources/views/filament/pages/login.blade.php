@@ -6,7 +6,7 @@
             : 'bg-primary-100 border-gray-200 hover:bg-gray-50 hover:border-primary-300',
             ])
             title="{{ __('common.vietnam') }}">
-            <img src="{{ asset('images/vietnam.png') }}" alt="Vietnam flag" class="w-6 h-4 rounded-sm object-cover" />
+            <img src="{{ asset('images/vietnam.png') }}" alt="Vietnam flag" class="w-6 h-4 rounded-sm object-cover" style="width: 24px; height: 16px; object-fit: cover;" />
             <span class="font-medium text-sm">VI</span>
         </button>
 
@@ -16,7 +16,7 @@
             : 'bg-primary-100 border-gray-200 hover:bg-gray-50 hover:border-primary-300',
             ]) title="{{ __('common.english') }}">
             <img src="{{ asset('images/english.png') }}" alt="English flag"
-                class="w-6 h-4 rounded-sm object-cover" />
+                class="w-6 h-4 rounded-sm object-cover" style="width: 24px; height: 16px; object-fit: cover;" />
             <span class="font-medium text-sm">EN</span>
         </button>
         <button wire:click="switchLanguage('cn')" type="button" @class([ 'flex items-center gap-2 text-gray-700  px-3 py-2 rounded-lg transition-all duration-200 border' ,
@@ -25,7 +25,7 @@
             : 'bg-primary-100 border-gray-200 hover:bg-gray-50 hover:border-primary-300',
             ]) title="{{ __('common.china') }}">
             <img src="{{ asset('images/china.png') }}" alt="China flag"
-                class="w-6 h-4 rounded-sm object-cover" />
+                class="w-6 h-4 rounded-sm object-cover" style="width: 24px; height: 16px; object-fit: cover;" />
             <span class="font-medium text-sm">CH</span>
         </button>
     </div>

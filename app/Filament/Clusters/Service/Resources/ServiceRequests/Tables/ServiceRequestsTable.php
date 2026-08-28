@@ -35,9 +35,31 @@ class ServiceRequestsTable
                     ->searchable()
                     ->sortable(),
 
-                TextColumn::make('service.title')
+                TextColumn::make('province')
+                    ->label(__('admin.service_request.fields.province'))
+                    ->default('—')
+                    ->searchable()
+                    ->sortable(),
+
+                TextColumn::make('ward')
+                    ->label(__('admin.service_request.fields.ward'))
+                    ->default('—')
+                    ->searchable(),
+
+                TextColumn::make('service.category.name')
                     ->label(__('admin.service_request.fields.service'))
-                    ->formatStateUsing(fn ($state) => is_array($state) ? ($state['vi'] ?? reset($state)) : $state)
+                    ->formatStateUsing(function ($state) {
+                        if (is_array($state)) {
+                            return $state[app()->getLocale()] ?? $state['vi'] ?? reset($state);
+                        }
+                        if (is_string($state) && str_starts_with(trim($state), '{')) {
+                            $decoded = json_decode($state, true);
+                            if (is_array($decoded)) {
+                                return $decoded[app()->getLocale()] ?? $decoded['vi'] ?? reset($decoded);
+                            }
+                        }
+                        return $state;
+                    })
                     ->searchable(),
 
                 TextColumn::make('urgency_level')
@@ -64,12 +86,18 @@ class ServiceRequestsTable
                     })
                     ->formatStateUsing(fn (ServiceRequestStatus $state) => $state->label()),
 
+                TextColumn::make('cskh_note')
+                    ->label(__('admin.service_request.fields.cskh_notes'))
+                    ->limit(25)
+                    ->default('—')
+                    ->toggleable(),
+
                 TextColumn::make('cskh.name')
                     ->label(__('admin.service_request.fields.cskh'))
                     ->placeholder(__('admin.unassigned')),
 
                 TextColumn::make('created_at')
-                    ->label(__('admin.created_at'))
+                    ->label(__('admin.common.table.created_at'))
                     ->dateTime('d/m/Y H:i')
                     ->sortable(),
             ])
@@ -105,11 +133,73 @@ class ServiceRequestsTable
                     ->color('primary')
                     ->form([
                         Select::make('ktv_id')
-                            ->label(__('admin.booking.fields.staff'))
-                            ->options(
-                                User::where('role', UserRole::KTV->value)
-                                    ->pluck('name', 'id')
-                            )
+                            ->label(__('admin.service_request.action.recommend_ktv'))
+                            ->allowHtml()
+                            ->options(function (ServiceRequest $record) {
+                                $province = $record->province ?? $record->customer?->province ?? $record->customer?->profile?->province;
+                                $ward = $record->ward ?? $record->customer?->ward ?? $record->customer?->profile?->ward;
+
+                                $query = User::where('role', UserRole::KTV->value)
+                                    ->where('is_active', true);
+
+                                if (!empty($province)) {
+                                    $query->where(function ($q) use ($province, $ward) {
+                                        $q->where(function ($sub) use ($province) {
+                                            $sub->where('work_province', 'ILIKE', "%{$province}%")
+                                                ->orWhere('province', 'ILIKE', "%{$province}%")
+                                                ->orWhereHas('reviewApplication', function ($appQ) use ($province) {
+                                                    $appQ->where('work_province', 'ILIKE', "%{$province}%");
+                                                });
+                                        });
+
+                                        if (!empty($ward)) {
+                                            $cleanWard = preg_replace('/\s*\(.*?\)\s*$/', '', $ward);
+                                            $q->where(function ($wq) use ($ward, $cleanWard) {
+                                                $wq->where('ward', 'ILIKE', "%{$cleanWard}%")
+                                                    ->orWhere('work_wards', 'ILIKE', "%{$cleanWard}%")
+                                                    ->orWhereJsonContains('work_wards', $ward)
+                                                    ->orWhereJsonContains('work_wards', $cleanWard)
+                                                    ->orWhereHas('reviewApplication', function ($appQ) use ($ward, $cleanWard) {
+                                                        $appQ->where('work_wards', 'ILIKE', "%{$cleanWard}%")
+                                                            ->orWhereJsonContains('work_wards', $ward)
+                                                            ->orWhereJsonContains('work_wards', $cleanWard);
+                                                    });
+                                            });
+                                        }
+                                    });
+                                }
+
+                                $ktvs = $query->get();
+
+                                // Nếu tìm chính xác Phường/Xã không có KTV, mở rộng tìm trong cùng Tỉnh/Thành phố của khách
+                                if ($ktvs->isEmpty() && !empty($province)) {
+                                    $ktvs = User::where('role', UserRole::KTV->value)
+                                        ->where('is_active', true)
+                                        ->where(function ($sub) use ($province) {
+                                            $sub->where('work_province', 'ILIKE', "%{$province}%")
+                                                ->orWhere('province', 'ILIKE', "%{$province}%")
+                                                ->orWhereHas('reviewApplication', function ($appQ) use ($province) {
+                                                    $appQ->where('work_province', 'ILIKE', "%{$province}%");
+                                                });
+                                        })->get();
+                                }
+
+                                return $ktvs->mapWithKeys(function ($ktv) {
+                                    $isOnline = $ktv->is_online ?? true;
+                                    $statusBadge = $isOnline
+                                        ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300 mr-2"><span class="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse"></span> Online</span>'
+                                        : '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300 mr-2"><span class="w-2 h-2 rounded-full bg-rose-500 inline-block"></span> Offline</span>';
+
+                                    $phone = $ktv->phone ? '<span class="text-xs text-gray-500 font-mono ml-1.5"> ' . e($ktv->phone) . '</span>' : '';
+                                    $ktvProvince = $ktv->reviewApplication?->work_province ?? $ktv->work_province ?? '';
+                                    $ktvWard = $ktv->reviewApplication?->work_wards[0] ?? $ktv->work_wards[0] ?? $ktv->ward ?? '';
+                                    $loc = array_filter([$ktvWard, $ktvProvince]);
+                                    $locStr = !empty($loc) ? '<span class="text-xs text-amber-600 dark:text-amber-400 ml-2 font-medium"> ' . e(implode(', ', $loc)) . '</span>' : '';
+
+                                    $html = '<div class="inline-flex items-center py-1 flex-wrap">' . $statusBadge . '<span class="font-semibold text-gray-900 dark:text-white">' . e($ktv->name) . '</span>' . $phone . $locStr . '</div>';
+                                    return [$ktv->id => $html];
+                                });
+                            })
                             ->searchable()
                             ->required(),
                     ])
@@ -157,6 +247,21 @@ class ServiceRequestsTable
                                 ->danger()
                                 ->send();
                         }
+                    }),
+
+                Action::make('view_proposals')
+                    ->label(__('admin.service_request.action.invite_history'))
+                    ->icon('heroicon-o-queue-list')
+                    ->color('info')
+                    ->modalHeading(__('admin.service_request.action.invite_history'))
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel(__('common.action.close'))
+                    ->modalContent(function (ServiceRequest $record) {
+                        $proposals = $record->proposals()->with(['ktv', 'cskh'])->latest()->get();
+                        return view('filament.clusters.service.proposals-modal', [
+                            'record' => $record,
+                            'proposals' => $proposals,
+                        ]);
                     }),
             ]);
     }

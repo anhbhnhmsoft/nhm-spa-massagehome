@@ -8,16 +8,19 @@ use App\Enums\UserRole;
 use App\Filament\Clusters\ReviewApplication\Resources\KTVs\KTVResource;
 use App\Filament\Components\CommonActions;
 use App\Filament\Components\CommonFields;
+use App\Services\ProvinceService;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
+use Filament\Forms\Components\Select;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-use Filament\Tables\Enums\FiltersLayout;
-
+use Illuminate\Database\Eloquent\Builder;
 
 class KTVsTable
 {
@@ -51,6 +54,34 @@ class KTVsTable
                 TextColumn::make('profile.gender')
                     ->label(__('admin.common.table.gender'))
                     ->formatStateUsing(fn($state) => Gender::getLabel($state)),
+                TextColumn::make('work_province')
+                    ->label(__('admin.ktv_apply.fields.work_province'))
+                    ->getStateUsing(fn ($record) => $record->reviewApplication?->work_province ?? $record->work_province)
+                    ->placeholder('—')
+                    ->sortable()
+                    ->searchable(),
+                TextColumn::make('work_wards')
+                    ->label(__('admin.ktv_apply.fields.work_wards'))
+                    ->getStateUsing(function ($record) {
+                        $province = $record->reviewApplication?->work_province ?? $record->work_province;
+                        if (empty($province)) {
+                            return null;
+                        }
+                        $wards = $record->reviewApplication?->work_wards ?? $record->work_wards ?? $record->ward;
+                        if (is_array($wards)) {
+                            return $wards[0] ?? null;
+                        }
+                        if (is_string($wards)) {
+                            $decoded = json_decode($wards, true);
+                            if (is_array($decoded)) {
+                                return $decoded[0] ?? null;
+                            }
+                            return $wards;
+                        }
+                        return null;
+                    })
+                    ->placeholder('—')
+                    ->searchable(),
                 IconColumn::make('reviewApplication.portrait_verified')
                     ->label(__('admin.ktv_apply.fields.portrait_verified'))
                     ->boolean()
@@ -99,6 +130,71 @@ class KTVsTable
                 ]),
             ])
             ->filters([
+                Filter::make('location')
+                    ->form([
+                        Select::make('work_province')
+                            ->label(__('admin.ktv_apply.fields.work_province'))
+                            ->searchable()
+                            ->options(ProvinceService::toOptions())
+                            ->placeholder(__('common.placeholder.all'))
+                            ->live()
+                            ->afterStateUpdated(fn ($set) => $set('work_ward', null)),
+                        Select::make('work_ward')
+                            ->label(__('admin.ktv_apply.fields.work_wards'))
+                            ->searchable()
+                            ->disabled(fn ($get) => blank($get('work_province')))
+                            ->placeholder(fn ($get) => blank($get('work_province')) ? __('admin.ktv_apply.fields.select_province_first') : __('common.placeholder.all'))
+                            ->options(function ($get) {
+                                $province = $get('work_province');
+                                if (blank($province)) {
+                                    return [];
+                                }
+                                return ProvinceService::getWardsByProvince($province);
+                            }),
+                    ])
+                    ->columns(2)
+                    ->columnSpan(2)
+                    ->query(function (Builder $query, array $data) {
+                        $province = $data['work_province'] ?? null;
+                        $ward = $data['work_ward'] ?? null;
+
+                        if (!empty($province)) {
+                            $query->where(function ($q) use ($province, $ward) {
+                                $q->where(function ($sub) use ($province) {
+                                    $sub->where('work_province', $province)
+                                        ->orWhere('province', $province)
+                                        ->orWhereHas('reviewApplication', function ($appQ) use ($province) {
+                                            $appQ->where('work_province', $province);
+                                        });
+                                });
+
+                                if (!empty($ward)) {
+                                    $cleanWardName = preg_replace('/\s*\(.*?\)\s*$/', '', $ward);
+                                    $q->where(function ($wq) use ($ward, $cleanWardName) {
+                                        $wq->where('ward', 'ILIKE', "%{$cleanWardName}%")
+                                            ->orWhere('work_wards', 'ILIKE', "%{$cleanWardName}%")
+                                            ->orWhereJsonContains('work_wards', $ward)
+                                            ->orWhereJsonContains('work_wards', $cleanWardName)
+                                            ->orWhereHas('reviewApplication', function ($appQ) use ($ward, $cleanWardName) {
+                                                $appQ->where('work_wards', 'ILIKE', "%{$cleanWardName}%")
+                                                    ->orWhereJsonContains('work_wards', $ward)
+                                                    ->orWhereJsonContains('work_wards', $cleanWardName);
+                                            });
+                                    });
+                                }
+                            });
+                        }
+                    })
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+                        if (!empty($data['work_province'])) {
+                            $indicators[] = __('admin.ktv_apply.fields.work_province') . ': ' . $data['work_province'];
+                        }
+                        if (!empty($data['work_ward'])) {
+                            $indicators[] = __('admin.ktv_apply.fields.work_wards') . ': ' . $data['work_ward'];
+                        }
+                        return $indicators;
+                    }),
                 SelectFilter::make('is_leader')
                     ->label(__('admin.common.filter.is_leader'))
                     ->options([
@@ -168,7 +264,8 @@ class KTVsTable
                     ]),
             ])
             ->filtersLayout(FiltersLayout::AboveContent)
-            ->filtersFormColumns(5)
+            ->filtersFormColumns(4)
+            ->deferFilters(false)
 
             ->emptyStateHeading(__('admin.ktv.empty_state.heading'))
             ->defaultSort('reviewApplication.status', 'asc');

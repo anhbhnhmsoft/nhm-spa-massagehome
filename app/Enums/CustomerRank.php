@@ -25,6 +25,18 @@ enum CustomerRank: int
     }
 
     /**
+     * Màu sắc hiển thị badge
+     */
+    public function color(): string
+    {
+        return match ($this) {
+            self::STANDARD => 'gray',
+            self::GOLD => 'warning',
+            self::VIP => 'danger',
+        };
+    }
+
+    /**
      * Chuyển đổi danh sách Enum thành mảng Select Options cho Filament Form
      */
     public static function toOptions(): array

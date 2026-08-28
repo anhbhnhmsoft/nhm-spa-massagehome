@@ -52,5 +52,31 @@ class UserProfile extends Model
         return $this->belongsTo(User::class, 'user_id', 'id');
     }
 
+    public function getWardAttribute()
+    {
+        return $this->user?->ward;
+    }
+
+    public function setWardAttribute($value)
+    {
+        if ($this->user) {
+            $this->user->ward = $value;
+            $this->user->save();
+        }
+    }
+
+    public function getProvinceAttribute()
+    {
+        return $this->user?->province;
+    }
+
+    public function setProvinceAttribute($value)
+    {
+        if ($this->user) {
+            $this->user->province = $value;
+            $this->user->save();
+        }
+    }
+
 
 }

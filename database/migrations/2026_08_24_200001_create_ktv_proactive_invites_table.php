@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('ktv_proactive_invites', function (Blueprint $table) {
             $table->id();
-            $table->string('ktv_id')->comment('ID KTV gửi lời mời');
-            $table->string('customer_id')->comment('ID Khách nhận lời mời');
+            $table->unsignedBigInteger('ktv_id')->comment('ID KTV gửi lời mời');
+            $table->unsignedBigInteger('customer_id')->comment('ID Khách nhận lời mời');
             $table->unsignedBigInteger('request_id')->nullable()->comment('ID Yêu cầu dịch vụ (nếu có)');
             $table->smallInteger('status')->default(1)->comment('Trạng thái lời mời: 1=pending, 2=accepted, 3=declined, 4=expired, 5=canceled_by_admin');
             $table->string('note', 500)->nullable()->comment('Ghi chú/Lời nhắn từ KTV');

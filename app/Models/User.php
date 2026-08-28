@@ -32,6 +32,11 @@ class User extends Authenticatable
         'referred_at',
         'last_login_at',
         'device_id',
+        'ward',
+        'province',
+        'work_province',
+        'work_wards',
+        'is_online',
     ];
 
     protected $hidden = [
@@ -46,6 +51,8 @@ class User extends Authenticatable
         'last_login_at' => 'datetime',
         'referred_at' => 'datetime',
         'is_active' => 'boolean',
+        'is_online' => 'boolean',
+        'work_wards' => 'array',
     ];
 
     protected static function booted(): void

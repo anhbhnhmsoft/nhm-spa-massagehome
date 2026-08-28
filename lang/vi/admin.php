@@ -2,6 +2,8 @@
 return
     [
         'currency' => 'VND',
+        'unassigned' => 'Chưa phân công',
+        'created_at' => 'Ngày tạo',
         "nav" => [
             "review_application" => "Quản lý hồ sơ",
             "category" => "Quản lý danh mục",
@@ -29,6 +31,9 @@ return
             'date' => 'Ngày',
             'count' => 'Số lượng',
             'select_placeholder' => 'Chọn giá trị',
+            'placeholder' => [
+                'select' => 'Chọn',
+            ],
             'affiliate_qr' => 'QR code giới thiệu',
             'wallet' => 'Ví tiền',
             'balance' => 'Số dư',
@@ -262,6 +267,7 @@ return
                 'contact_phone' => 'SĐT liên hệ điều phối',
                 'contact_verified' => 'Đã xác thực liên lạc được',
                 'portrait_verified' => 'Đã xác thực chân dung bởi MasaHome',
+                'portrait_verified_at' => 'Thời gian xác thực chân dung',
                 'certificate_verified' => 'Đã xác thực chứng chỉ',
                 'certificates' => 'Bằng cấp / Chứng chỉ chuyên môn',
                 'techniques' => 'Kỹ thuật chuyên môn',
@@ -273,6 +279,13 @@ return
                 'verification_section' => 'Trạng thái Xác thực MasaHome',
                 'expertise_section' => 'Kỹ thuật & Dịch vụ Thế mạnh',
                 'area_section' => 'Khu vực hoạt động & Địa điểm phục vụ',
+                'work_province' => 'Tỉnh / Thành phố',
+                'work_province_placeholder' => 'Ví dụ: TP. Hồ Chí Minh',
+                'work_wards' => 'Phường / Xã',
+                'work_wards_placeholder' => 'Ví dụ: Phường Bến Nghé, Phường Bến Thành, Phường Tân Định',
+                'select_province_first' => 'Vui lòng chọn Tỉnh / Thành phố trước',
+                'is_online' => 'Trạng thái ON/OFF nhận đơn (Bật/Tắt hoạt động trong khu vực)',
+                'certificates_upload' => 'Chứng chỉ / Chứng nhận chuyên môn KTV',
             ],
             "actions" => [
                 "approve" => [
@@ -460,6 +473,9 @@ return
             ],
         ],
         'booking' => [
+            'fields' => [
+                'staff' => 'Kĩ thuật viên',
+            ],
             'label' => 'Lịch đặt',
             'fields' => [
                 'user' => 'Khách hàng',
@@ -729,6 +745,13 @@ return
             'afternoon' => '12h - 18h (Chiều)',
             'evening' => '18h - 24h (Tối)',
         ],
+        'language' => [
+            'vietnamese' => 'Tiếng Việt',
+            'english' => 'Tiếng Anh',
+            'chinese' => 'Tiếng Trung',
+            'japanese' => 'Tiếng Nhật',
+            'korean' => 'Tiếng Hàn',
+        ],
         'customer' => [
             'label' => 'Khách hàng',
             'section' => [
@@ -758,10 +781,15 @@ return
                 'address_detail' => 'Địa chỉ khu vực dịch vụ',
                 'customer_rank' => 'Phân hạng khách hàng',
                 'assigned_cskh' => 'Nhân viên CSKH phụ trách',
+                'unassigned' => 'Chưa phân công',
                 'total_spent' => 'Tổng chi tiêu (VNĐ)',
                 'booking_count' => 'Số đơn hoàn thành',
                 'aov' => 'Giá trị đơn trung bình (AOV)',
                 'cskh_notes' => 'Ghi chú CSKH',
+                'cskh_notes_helper' => 'Chỉnh sửa ghi chú chăm sóc khách hàng và bấm Lưu để cập nhật.',
+                'ward' => 'Phường / Xã',
+                'province' => 'Tỉnh / Thành phố',
+                'select_province_first' => 'Vui lòng chọn Tỉnh / Thành phố trước',
             ],
         ],
         'review' => [
@@ -1278,9 +1306,25 @@ return
                 'urgency_level' => 'Mức độ gấp',
                 'status' => 'Trạng thái',
                 'note' => 'Ghi chú của khách',
+                'ward' => 'Phường / Xã',
+                'province' => 'Tỉnh / Thành phố',
+                'cskh_notes' => 'Ghi chú CSKH',
                 'propose_ktv' => 'Đề xuất KTV',
                 'create_booking' => 'Tạo Booking 1-Click',
                 'assign_me' => 'Tiếp nhận xử lý',
+            ],
+            'action' => [
+                'recommend_ktv' => 'Chọn KTV đề xuất (Lọc theo Khu vực Khách)',
+                'invite_history' => 'Lịch sử Đề xuất',
+            ],
+            'modal' => [
+                'request_status' => 'Trạng thái Yêu cầu',
+                'proposed_ktv' => 'KTV được đề xuất',
+                'proposed_by_cskh' => 'CSKH đề xuất',
+                'response_status' => 'Trạng thái Phản hồi',
+                'time' => 'Thời gian',
+                'no_proposals' => 'Chưa có lịch sử đề xuất KTV nào cho yêu cầu này.',
+                'close' => 'Đóng',
             ],
             'messages' => [
                 'create_success' => 'Gửi yêu cầu dịch vụ thành công! CSKH sẽ liên hệ và tìm KTV phù hợp.',
@@ -1288,6 +1332,7 @@ return
                 'respond_success' => 'Đã cập nhật trạng thái phản hồi.',
                 'booking_created_success' => 'Đã tự động tạo Booking mới thành công từ Yêu cầu dịch vụ.',
                 'already_matched' => 'Yêu cầu dịch vụ này đã được Matching hoặc đã tạo Booking.',
+                'proposal_not_found' => 'Chưa có đề xuất KTV nào được gửi hoặc chấp nhận cho yêu cầu này.',
             ],
         ],
         'invitation_status' => [

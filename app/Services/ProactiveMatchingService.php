@@ -43,12 +43,15 @@ class ProactiveMatchingService extends BaseService
                     $distanceKm = $this->calculateHaversineDistance($lat, $lng, (float)$req->latitude, (float)$req->longitude);
                 }
 
-                // Privacy Guard: Masks PII (Tên, SĐT, Địa chỉ chi tiết)
+                // Privacy Guard: Masks PII (Tên hiển thị, Ẩn SĐT, Chỉ hiện Phường/Thành phố)
+                $customerName = $req->customer?->name ?? ('Khách hàng #' . substr($req->customer_id, 0, 6));
                 $maskedCustomer = [
                     'id' => $req->customer_id,
-                    'display_name' => 'Khách hàng #' . substr($req->customer_id, 0, 6),
-                    'avatar' => null, // Hide avatar before match
+                    'display_name' => $customerName,
+                    'avatar' => null, // Ẩn avatar trước khi ghép đôi thành công
                 ];
+
+                $areaText = implode(', ', array_filter([$req->ward, $req->province])) ?: 'Khu vực gần bạn';
 
                 return [
                     'request_id' => $req->id,
@@ -57,9 +60,9 @@ class ProactiveMatchingService extends BaseService
                     'preferred_date' => $req->preferred_date,
                     'time_slot' => $req->time_slot,
                     'urgency_level' => $req->urgency_level,
-                    'province_id' => $req->province_id,
-                    'district_id' => $req->district_id,
-                    'relative_address' => $req->district_id ? "Quận/Huyện {$req->district_id}" : 'Khu vực gần bạn',
+                    'ward' => $req->ward,
+                    'province' => $req->province,
+                    'relative_address' => $areaText,
                     'distance_km' => $distanceKm ? round($distanceKm, 1) : null,
                     'customer' => $maskedCustomer,
                     'created_at' => $req->created_at,

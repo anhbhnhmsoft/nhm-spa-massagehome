@@ -1,6 +1,8 @@
 <?php
 return
     [
+        'unassigned' => 'Unassigned',
+        'created_at' => 'Created At',
         "nav" => [
             "review_application" => "Application Management",
             "category" => "Category Management",
@@ -28,6 +30,9 @@ return
             'date' => 'Date',
             'count' => 'Count',
             'select_placeholder' => 'Select a value',
+            'placeholder' => [
+                'select' => 'Select',
+            ],
             'affiliate_qr' => 'Affiliate QR',
             'count_collect' => 'Limit Collect',
             'wallet' => 'Wallet',
@@ -313,6 +318,7 @@ return
                 'contact_phone' => 'Dispatch Contact Phone',
                 'contact_verified' => 'Contact Verified',
                 'portrait_verified' => 'Portrait Verified by MasaHome',
+                'portrait_verified_at' => 'Portrait Verification Time',
                 'certificate_verified' => 'Certificate Verified',
                 'certificates' => 'Professional Certificates',
                 'techniques' => 'Specialized Techniques',
@@ -324,6 +330,13 @@ return
                 'verification_section' => 'MasaHome Verification Status',
                 'expertise_section' => 'Techniques & Strength Services',
                 'area_section' => 'Operating Areas & Service Locations',
+                'work_province' => 'Province / City',
+                'work_province_placeholder' => 'e.g.: Ho Chi Minh City',
+                'work_wards' => 'Ward / Commune',
+                'work_wards_placeholder' => 'e.g.: Ben Nghe Ward, Ben Thanh Ward',
+                'select_province_first' => 'Please select Province / City first',
+                'is_online' => 'ON/OFF Order Reception Status',
+                'certificates_upload' => 'KTV Professional Certificates',
             ],
             "actions" => [
                 "approve" => [
@@ -460,6 +473,7 @@ return
         'booking' => [
             'label' => 'Booking',
             'fields' => [
+                'staff' => 'Technician',
                 'user' => 'Customer',
                 'ktv_user' => 'Technician',
                 'service' => 'Service',
@@ -697,6 +711,30 @@ return
                 'withdraw_info_not_found' => 'Withdrawal info not found',
             ],
         ],
+        'customer_rank' => [
+            'standard' => 'Standard',
+            'gold' => 'Gold',
+            'vip' => 'VIP',
+        ],
+        'demand_status' => [
+            'need_now' => 'Need Now',
+            'exploring' => 'Exploring',
+            'booked' => 'Booked',
+            'no_need' => 'No Need',
+        ],
+        'preferred_time_slot' => [
+            'night' => '00:00 - 06:00 (Night)',
+            'morning' => '06:00 - 12:00 (Morning)',
+            'afternoon' => '12:00 - 18:00 (Afternoon)',
+            'evening' => '18:00 - 24:00 (Evening)',
+        ],
+        'language' => [
+            'vietnamese' => 'Vietnamese',
+            'english' => 'English',
+            'chinese' => 'Chinese',
+            'japanese' => 'Japanese',
+            'korean' => 'Korean',
+        ],
         'customer' => [
             'label' => 'Customer',
             'section' => [
@@ -704,6 +742,8 @@ return
                 'booking_history' => 'Booking History',
                 'wallet' => 'Wallet',
                 'reviews' => 'Reviews',
+                'service_needs' => 'Service Needs & Location',
+                'crm_management' => 'CRM Management & CSKH Tier',
             ],
             'fields' => [
                 'name' => 'Name',
@@ -716,6 +756,23 @@ return
                 'address' => 'Address',
                 'created_at' => 'Created At',
                 'updated_at' => 'Updated At',
+                'languages' => 'Languages Spoken',
+                'demand_status' => 'Demand Status',
+                'preferred_services' => 'Preferred Services',
+                'preferred_techniques' => 'Preferred Techniques',
+                'preferred_time_slots' => 'Preferred Time Slots',
+                'address_detail' => 'Service Area Address',
+                'customer_rank' => 'Customer Rank',
+                'assigned_cskh' => 'Assigned CSKH Staff',
+                'unassigned' => 'Unassigned',
+                'total_spent' => 'Total Spent (VND)',
+                'booking_count' => 'Completed Bookings',
+                'aov' => 'Average Order Value (AOV)',
+                'cskh_notes' => 'CSKH Notes',
+                'cskh_notes_helper' => 'Edit CSKH notes and click Save to update.',
+                'ward' => 'Ward / Commune',
+                'province' => 'Province / City',
+                'select_province_first' => 'Please select Province / City first',
             ],
         ],
         'review' => [
@@ -1234,9 +1291,25 @@ return
                 'urgency_level' => 'Urgency Level',
                 'status' => 'Status',
                 'note' => 'Customer Notes',
+                'ward' => 'Ward / Commune',
+                'province' => 'Province / City',
+                'cskh_notes' => 'CSKH Notes',
                 'propose_ktv' => 'Propose KTV',
                 'create_booking' => '1-Click Create Booking',
                 'assign_me' => 'Assign to Me',
+            ],
+            'action' => [
+                'recommend_ktv' => 'Select Recommended KTV (Filtered by Customer Area)',
+                'invite_history' => 'Recommendation History',
+            ],
+            'modal' => [
+                'request_status' => 'Request Status',
+                'proposed_ktv' => 'Proposed KTV',
+                'proposed_by_cskh' => 'Proposed by CSKH',
+                'response_status' => 'Response Status',
+                'time' => 'Time',
+                'no_proposals' => 'No KTV proposal history for this request yet.',
+                'close' => 'Close',
             ],
             'messages' => [
                 'create_success' => 'Service request submitted successfully! CSKH will contact you soon.',
@@ -1244,6 +1317,35 @@ return
                 'respond_success' => 'Proposal response updated successfully.',
                 'booking_created_success' => 'New booking auto-created from service request.',
                 'already_matched' => 'This request has already been matched or converted to a booking.',
+                'proposal_not_found' => 'No KTV proposal has been sent or accepted for this request yet.',
+            ],
+        ],
+        'invitation_status' => [
+            'pending' => 'Pending Response',
+            'accepted' => 'Customer Accepted',
+            'declined' => 'Customer Declined',
+            'expired' => 'Expired',
+            'canceled_by_admin' => 'Canceled by CSKH',
+        ],
+        'proactive_invite' => [
+            'nav' => 'KTV Proactive Matching',
+            'label' => 'KTV Invitation',
+            'plural' => 'KTV Invitations',
+            'fields' => [
+                'ktv' => 'Inviting KTV',
+                'customer' => 'Customer',
+                'status' => 'Status',
+                'note' => 'KTV Message',
+                'expires_at' => 'Expires At',
+                'created_at' => 'Sent Time',
+                'cancel_invite' => 'Cancel Invitation (CSKH)',
+            ],
+            'messages' => [
+                'send_success' => 'Direct invitation sent successfully!',
+                'invite_limit_reached' => 'You reached the maximum limit of 3 pending invitations. Please wait for customer response!',
+                'cooldown_active' => 'Customer just declined your invite. Please try again after 60 minutes!',
+                'invite_not_found' => 'Invitation not found or expired.',
+                'invite_canceled' => 'Invitation canceled successfully.',
             ],
         ],
     ];

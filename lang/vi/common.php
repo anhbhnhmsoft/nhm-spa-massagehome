@@ -59,6 +59,7 @@ return [
     'placeholder' => [
         'type' => 'Loại',
         'select' => 'Chọn',
+        'all' => 'Tất cả',
     ],
     'modal' => [
         'view_title' => 'Xem chi tiết',

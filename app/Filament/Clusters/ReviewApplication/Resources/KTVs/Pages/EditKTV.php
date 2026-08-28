@@ -212,6 +212,15 @@ class EditKTV extends EditRecord
                 );
             }
         }
+
+        // Đồng bộ work_province và work_wards từ hồ sơ đăng ký sang bảng user
+        $app = $record->reviewApplication;
+        if ($app) {
+            $record->updateQuietly([
+                'work_province' => $app->work_province,
+                'work_wards' => $app->work_wards,
+            ]);
+        }
     }
     protected function getSaveFormAction(): Action
     {

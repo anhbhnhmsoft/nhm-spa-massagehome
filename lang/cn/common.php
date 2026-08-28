@@ -59,6 +59,7 @@ return [
     'placeholder' => [
         'type' => '类型',
         'select' => '请选择',
+        'all' => '全部',
     ],
     'modal' => [
         'view_title' => '查看详情',

@@ -22,7 +22,12 @@ class ProactiveMatchingController extends BaseController
      */
     public function nearbyDemands(Request $request): JsonResponse
     {
-        $ktvId = (string) Auth::id();
+        $user = Auth::user();
+        if (!$user || $user->role !== \App\Enums\UserRole::KTV->value) {
+            return $this->sendError('Chỉ KTV mới có quyền thực hiện chức năng này', code: 403);
+        }
+
+        $ktvId = (string) $user->id;
         $lat = $request->query('lat') ? (float) $request->query('lat') : null;
         $lng = $request->query('lng') ? (float) $request->query('lng') : null;
         $radiusKm = $request->query('radius') ? (float) $request->query('radius') : 15.0;
@@ -41,6 +46,11 @@ class ProactiveMatchingController extends BaseController
      */
     public function sendInvite(Request $request): JsonResponse
     {
+        $user = Auth::user();
+        if (!$user || $user->role !== \App\Enums\UserRole::KTV->value) {
+            return $this->sendError('Chỉ KTV mới có quyền gửi lời mời trực tiếp', code: 403);
+        }
+
         $validator = Validator::make($request->all(), [
             'customer_id' => 'required|string|exists:users,id',
             'request_id' => 'nullable|integer|exists:service_requests,id',

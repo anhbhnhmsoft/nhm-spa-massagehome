@@ -45,6 +45,8 @@ class UserReviewApplication extends Model
         'ward_code',
         'priority_areas',
         'service_locations',
+        'work_province',
+        'work_wards',
     ];
 
     protected $casts = [
@@ -66,6 +68,7 @@ class UserReviewApplication extends Model
         'strength_service_ids' => 'array',
         'priority_areas' => 'array',
         'service_locations' => 'array',
+        'work_wards' => 'array',
     ];
 
     /**

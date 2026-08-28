@@ -65,4 +65,17 @@ class Category extends Model
     {
         return $this->hasMany(ServiceBooking::class, 'category_id');
     }
+
+    /**
+     * Lấy mảng tùy chọn dịch vụ chung đa ngôn ngữ cho Filament Select [id => name]
+     */
+    public static function toOptions(): array
+    {
+        return static::query()
+            ->where('is_active', true)
+            ->orderBy('position', 'asc')
+            ->get()
+            ->pluck('name', 'id')
+            ->toArray();
+    }
 }

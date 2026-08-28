@@ -37,6 +37,9 @@ class ServiceRequest extends Model
         'urgency_level',
         'preferred_ktv_ids',
         'note',
+        'cskh_note',
+        'ward',
+        'province',
         'status',
         'expires_at',
     ];

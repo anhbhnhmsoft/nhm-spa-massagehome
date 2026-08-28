@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Enums\Admin\AdminRole;
 use App\Filament\Pages\Dashboard as PagesDashboard;
 use App\Filament\Pages\Login;
+use App\Http\Middleware\SetWebLocale;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -14,6 +15,7 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\Width;
+use Filament\Tables\Table;
 use Filament\View\PanelsRenderHook;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
@@ -66,7 +68,7 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
-                \App\Http\Middleware\SetWebLocale::class,
+                SetWebLocale::class,
             ])
             ->authMiddleware([
                 Authenticate::class,
@@ -149,5 +151,19 @@ class AdminPanelProvider extends PanelProvider
     </script>
     BLADE)
             );
+    }
+
+    public function boot(): void
+    {
+        $getNumberLocale = fn (): string => match (app()->getLocale()) {
+            'cn' => 'zh_CN',
+            'vi' => 'vi_VN',
+            'en' => 'en_US',
+            default => app()->getLocale(),
+        };
+
+        Table::configureUsing(function (Table $table) use ($getNumberLocale): void {
+            $table->defaultNumberLocale($getNumberLocale);
+        });
     }
 }

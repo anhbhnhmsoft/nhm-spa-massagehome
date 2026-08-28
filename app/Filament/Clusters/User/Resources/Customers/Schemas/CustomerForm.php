@@ -9,9 +9,12 @@ use App\Enums\DirectFile;
 use App\Enums\Gender;
 use App\Enums\Language;
 use App\Enums\PreferredTimeSlot;
+use App\Enums\KtvTechnique;
 use App\Models\AdminUser;
 use App\Models\Category;
-use App\Models\ServiceOption;
+use App\Models\Province;
+use App\Models\User;
+use App\Services\ProvinceService;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
@@ -97,12 +100,41 @@ class CustomerForm
                                     ->label(__('admin.common.table.bio'))
                                     ->rows(3),
                                 TextInput::make('temp_address')
-                                    ->label(__('admin.common.table.address')),
+                                    ->label(__('admin.common.table.address'))
+                                    ->columnSpanFull(),
+                                Select::make('province')
+                                    ->label(__('admin.customer.fields.province'))
+                                    ->searchable()
+                                    ->options(ProvinceService::toOptions())
+                                    ->placeholder(__('common.placeholder.select'))
+                                    ->live()
+                                    ->afterStateUpdated(fn ($set) => $set('ward', null)),
+                                Select::make('ward')
+                                    ->label(__('admin.customer.fields.ward'))
+                                    ->searchable()
+                                    ->disabled(fn ($get) => blank($get('province')))
+                                    ->placeholder(fn ($get) => blank($get('province')) ? __('admin.customer.fields.select_province_first') : __('common.placeholder.select'))
+                                    ->options(function ($get, $record) {
+                                        $province = $get('province');
+                                        if (blank($province)) {
+                                            return [];
+                                        }
+                                        $wards = ProvinceService::getWardsByProvince($province);
+                                        $currentWard = $get('ward') ?? ($record?->profile?->ward ?? $record?->ward ?? null);
+                                        if (!empty($currentWard) && !isset($wards[$currentWard])) {
+                                            $wards = [$currentWard => $currentWard] + $wards;
+                                        }
+                                        return $wards;
+                                    })
+                                    ->createOptionForm([
+                                        TextInput::make('ward')->label(__('admin.customer.fields.ward'))->required(),
+                                    ])
+                                    ->createOptionUsing(fn ($data) => $data['ward']),
                                 Select::make('gender')
                                     ->label(__('admin.common.table.gender'))
                                     ->options(Gender::toOptions())
                                     ->required()
-                                    ->placeholder(__('common.placeholder.type'))
+                                    ->placeholder(__('common.placeholder.select'))
                                     ->validationMessages([
                                         'required' => __('common.error.required'),
                                     ]),
@@ -126,24 +158,30 @@ class CustomerForm
                         Select::make('languages')
                             ->label(__('admin.customer.fields.languages'))
                             ->multiple()
-                            ->options(Language::toOptions()),
+                            ->options(Language::toOptions())
+                            ->placeholder(__('common.placeholder.select')),
                         Select::make('demand_status')
                             ->label(__('admin.customer.fields.demand_status'))
-                            ->options(DemandStatus::toOptions()),
+                            ->options(DemandStatus::toOptions())
+                            ->placeholder(__('common.placeholder.select')),
                         Select::make('preferred_services')
                             ->label(__('admin.customer.fields.preferred_services'))
                             ->multiple()
-                            ->options(fn () => Category::pluck('name', 'id')->toArray()),
+                            ->options(fn () => Category::toOptions())
+                            ->placeholder(__('common.placeholder.select')),
                         Select::make('preferred_techniques')
                             ->label(__('admin.customer.fields.preferred_techniques'))
                             ->multiple()
-                            ->options(fn () => ServiceOption::pluck('name', 'id')->toArray()),
+                            ->options(KtvTechnique::toOptions())
+                            ->placeholder(__('common.placeholder.select')),
                         Select::make('preferred_time_slots')
                             ->label(__('admin.customer.fields.preferred_time_slots'))
                             ->multiple()
-                            ->options(PreferredTimeSlot::toOptions()),
+                            ->options(PreferredTimeSlot::toOptions())
+                            ->placeholder(__('common.placeholder.select')),
                         TextInput::make('address_detail')
-                            ->label(__('admin.customer.fields.address_detail')),
+                            ->label(__('admin.customer.fields.address_detail'))
+                            ->columnSpanFull(),
                     ])
                     ->compact()
                     ->columns(2)
@@ -155,15 +193,17 @@ class CustomerForm
                     ->schema([
                         Select::make('customer_rank')
                             ->label(__('admin.customer.fields.customer_rank'))
-                            ->options(CustomerRank::toOptions()),
+                            ->options(CustomerRank::toOptions())
+                            ->placeholder(__('common.placeholder.select')),
                         Select::make('demand_status')
                             ->label(__('admin.customer.fields.demand_status'))
-                            ->options(DemandStatus::toOptions()),
+                            ->options(DemandStatus::toOptions())
+                            ->placeholder(__('common.placeholder.select')),
                         Select::make('assigned_cskh_id')
                             ->label(__('admin.customer.fields.assigned_cskh'))
                             ->options(fn() => AdminUser::pluck('name', 'id'))
                             ->searchable()
-                            ->placeholder(__('admin.common.placeholder.select')),
+                            ->placeholder(__('common.placeholder.select')),
                         TextInput::make('total_spent')
                             ->label(__('admin.customer.fields.total_spent'))
                             ->numeric()

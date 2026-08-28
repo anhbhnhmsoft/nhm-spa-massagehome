@@ -20,11 +20,11 @@ enum Language: string
     public function label(): string
     {
         return match ($this) {
-            self::ENGLISH => 'English',
-            self::VIETNAMESE => 'Vietnamese',
-            self::CHINESE => 'Chinese',
-            self::JAPANESE => 'Japanese',
-            self::KOREAN => 'Korean',
+            self::ENGLISH => __('admin.language.english'),
+            self::VIETNAMESE => __('admin.language.vietnamese'),
+            self::CHINESE => __('admin.language.chinese'),
+            self::JAPANESE => __('admin.language.japanese'),
+            self::KOREAN => __('admin.language.korean'),
         };
     }
 
@@ -35,5 +35,13 @@ enum Language: string
             $options[$case->value] = $case->label();
         }
         return $options;
+    }
+
+    public static function getLabel(?string $value): string
+    {
+        if (is_null($value)) {
+            return '';
+        }
+        return self::tryFrom($value)?->label() ?? '';
     }
 }

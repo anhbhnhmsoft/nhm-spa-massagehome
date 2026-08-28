@@ -71,6 +71,7 @@ class SupportTicketsTable
                     ->options(SupportTicketStatus::toOptions()),
                 SelectFilter::make('assigned_staff_id')
                     ->label(__('admin.support_ticket.fields.assigned_staff'))
+                    ->searchable()
                     ->options(fn () => AdminUser::query()
                         ->where('role', AdminRole::CUSTOMER_SUPPORT->value)
                         

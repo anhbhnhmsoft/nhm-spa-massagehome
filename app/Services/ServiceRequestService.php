@@ -224,18 +224,34 @@ class ServiceRequestService extends BaseService
     public function createBookingFromRequest(ServiceRequest $request, string $ktvId): ServiceReturn
     {
         try {
-            $bookingTime = $request->preferred_date ? Carbon::parse($request->preferred_date->format('Y-m-d') . ' ' . ($request->time_slot ?? '09:00')) : now()->addHour();
+            $startTime = '09:00';
+            if (!empty($request->time_slot)) {
+                $parts = explode('-', $request->time_slot);
+                $startTime = trim($parts[0]);
+            }
+
+            $bookingTime = $request->preferred_date
+                ? Carbon::parse($request->preferred_date->format('Y-m-d') . ' ' . $startTime)
+                : now()->addHour();
+
+            $categoryId = $request->service?->category_id ?? $request->service_id;
+            if (!\App\Models\Category::where('id', $categoryId)->exists()) {
+                $categoryId = \App\Models\Category::first()?->id;
+            }
 
             $booking = ServiceBooking::create([
                 'user_id' => $request->customer_id,
-                'staff_id' => $ktvId,
-                'service_id' => $request->service_id,
+                'ktv_user_id' => $ktvId,
+                'category_id' => $categoryId,
+                'duration' => $request->service?->duration ?? 60,
                 'booking_time' => $bookingTime,
                 'address' => $request->address ?? '',
-                'latitude' => $request->latitude,
-                'longitude' => $request->longitude,
+                'latitude' => $request->latitude ?? 0,
+                'longitude' => $request->longitude ?? 0,
                 'status' => BookingStatus::CONFIRMED->value,
                 'price' => $request->service?->price ?? 0,
+                'price_discount' => 0,
+                'price_transportation' => 0,
                 'note' => $request->note,
             ]);
 

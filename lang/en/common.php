@@ -54,9 +54,10 @@ return [
         'edit' => 'Edit',
         'view' => 'View',
     ],
-    "placeholder" => [
+    'placeholder' => [
         'type' => 'Type',
-        'select' => 'Select'    
+        'select' => 'Select',
+        'all' => 'All',
     ],
     'modal' => [
         'view_title' => 'View',

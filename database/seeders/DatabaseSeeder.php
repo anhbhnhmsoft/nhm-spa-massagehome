@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->call(ProvinceSeeder::class);
         $this->seedCategory();
         $this->seedConfig();
         $this->seedConfigAffiliate();
@@ -36,6 +37,7 @@ class DatabaseSeeder extends Seeder
         $this->call(AdminSeeder::class);
         $this->call(PageSeeder::class);
         $this->call(SeedingScheduleForKtv::class);
+        $this->call(CustomerSeeder::class);
     }
 
     /**

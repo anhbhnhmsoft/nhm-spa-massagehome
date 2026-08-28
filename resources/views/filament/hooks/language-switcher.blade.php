@@ -6,7 +6,7 @@
             ? 'bg-primary-600 shadow-md scale-105 border-blue-500'
             : 'bg-white border-gray-200 hover:bg-gray-50 hover:border-primary-300',
     ]) title="{{ __('Tiếng Việt') }}">
-        <img src="{{ asset('images/vietnam.png') }}" alt="Vietnam flag" class="w-6 h-4 rounded-sm object-cover" />
+        <img src="{{ asset('images/vietnam.png') }}" alt="Vietnam flag" class="w-6 h-4 rounded-sm object-cover" style="width: 24px; height: 16px; object-fit: cover;" />
         <span
             class="font-medium text-sm">VI</span>
     </button>
@@ -19,7 +19,7 @@
             : 'bg-white border-gray-200 hover:bg-gray-50 hover:border-primary-300',
     ]) title="{{ __('English') }}">
         <img src="{{ asset('images/english.png') }}" alt="English flag"
-            class="w-6 h-4 rounded-sm object-cover" />
+            class="w-6 h-4 rounded-sm object-cover" style="width: 24px; height: 16px; object-fit: cover;" />
         <span
             class="font-medium text-sm">EN</span>
     </button>
@@ -32,7 +32,7 @@
             : 'bg-white border-gray-200 hover:bg-gray-50 hover:border-primary-300',
     ]) title="{{ __('English') }}">
         <img src="{{ asset('images/china.png') }}" alt="China flag"
-            class="w-6 h-4 rounded-sm object-cover" />
+            class="w-6 h-4 rounded-sm object-cover" style="width: 24px; height: 16px; object-fit: cover;" />
         <span
             class="font-medium text-sm"> 中国人 </span>
     </button>

@@ -27,6 +27,19 @@ enum DemandStatus: int
     }
 
     /**
+     * Màu sắc hiển thị badge
+     */
+    public function color(): string
+    {
+        return match ($this) {
+            self::NEED_NOW => 'danger',
+            self::EXPLORING => 'info',
+            self::BOOKED => 'success',
+            self::NO_NEED => 'gray',
+        };
+    }
+
+    /**
      * Chuyển đổi danh sách Enum thành mảng Select Options cho Filament Form
      */
     public static function toOptions(): array
