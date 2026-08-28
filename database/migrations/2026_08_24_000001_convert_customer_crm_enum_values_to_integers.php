@@ -10,14 +10,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::table('customer_crm_data')->where('customer_rank', 'standard')->update(['customer_rank' => 1]);
-        DB::table('customer_crm_data')->where('customer_rank', 'gold')->update(['customer_rank' => 2]);
-        DB::table('customer_crm_data')->where('customer_rank', 'vip')->update(['customer_rank' => 3]);
+        if (\Illuminate\Support\Facades\Schema::hasTable('customer_crm_data')) {
+            DB::table('customer_crm_data')->where('customer_rank', 'standard')->update(['customer_rank' => 1]);
+            DB::table('customer_crm_data')->where('customer_rank', 'gold')->update(['customer_rank' => 2]);
+            DB::table('customer_crm_data')->where('customer_rank', 'vip')->update(['customer_rank' => 3]);
 
-        DB::table('customer_crm_data')->where('demand_status', 'need_now')->update(['demand_status' => 1]);
-        DB::table('customer_crm_data')->where('demand_status', 'exploring')->update(['demand_status' => 2]);
-        DB::table('customer_crm_data')->where('demand_status', 'booked')->update(['demand_status' => 3]);
-        DB::table('customer_crm_data')->where('demand_status', 'no_need')->update(['demand_status' => 4]);
+            DB::table('customer_crm_data')->where('demand_status', 'need_now')->update(['demand_status' => 1]);
+            DB::table('customer_crm_data')->where('demand_status', 'exploring')->update(['demand_status' => 2]);
+            DB::table('customer_crm_data')->where('demand_status', 'booked')->update(['demand_status' => 3]);
+            DB::table('customer_crm_data')->where('demand_status', 'no_need')->update(['demand_status' => 4]);
+        }
     }
 
     /**
