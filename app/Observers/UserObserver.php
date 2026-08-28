@@ -43,6 +43,12 @@ class UserObserver
         }
 
         // Tự động khởi tạo dữ liệu CRM cho Khách hàng
-        \App\Models\CustomerCrmData::firstOrCreate(['user_id' => $user->id]);
+        \App\Models\CustomerCrmData::firstOrCreate(
+            ['user_id' => $user->id],
+            [
+                'customer_rank' => \App\Enums\CustomerRank::STANDARD,
+                'demand_status' => \App\Enums\DemandStatus::EXPLORING,
+            ]
+        );
     }
 }

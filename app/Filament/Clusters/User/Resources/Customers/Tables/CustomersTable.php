@@ -57,12 +57,14 @@ class CustomersTable
                 TextColumn::make('crmData.customer_rank')
                     ->label(__('admin.customer.fields.customer_rank'))
                     ->badge()
+                    ->alignCenter()
                     ->formatStateUsing(fn ($state) => $state instanceof CustomerRank ? $state->label() : ($state ? CustomerRank::tryFrom($state)?->label() ?? $state : null))
                     ->color(fn ($state) => $state instanceof CustomerRank ? $state->color() : ($state ? CustomerRank::tryFrom($state)?->color() : null))
                     ->sortable(),
                 TextColumn::make('crmData.demand_status')
                     ->label(__('admin.customer.fields.demand_status'))
                     ->badge()
+                    ->alignCenter()
                     ->formatStateUsing(fn ($state) => $state instanceof DemandStatus ? $state->label() : ($state ? DemandStatus::tryFrom($state)?->label() ?? $state : null))
                     ->color(fn ($state) => $state instanceof DemandStatus ? $state->color() : ($state ? DemandStatus::tryFrom($state)?->color() : null))
                     ->sortable(),

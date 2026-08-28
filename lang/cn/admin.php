@@ -1293,7 +1293,7 @@ return
                 'province' => '省/市',
                 'cskh_notes' => '客服备注',
                 'propose_ktv' => '推荐技师',
-                'create_booking' => '一键创建订单',
+                'create_booking' => '创建订单',
                 'assign_me' => '领取处理',
             ],
             'action' => [

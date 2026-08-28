@@ -1295,7 +1295,7 @@ return
                 'province' => 'Province / City',
                 'cskh_notes' => 'CSKH Notes',
                 'propose_ktv' => 'Propose KTV',
-                'create_booking' => '1-Click Create Booking',
+                'create_booking' => 'Create Booking',
                 'assign_me' => 'Assign to Me',
             ],
             'action' => [

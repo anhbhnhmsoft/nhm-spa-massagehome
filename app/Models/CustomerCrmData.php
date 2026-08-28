@@ -17,6 +17,11 @@ class CustomerCrmData extends Model
 
     public $incrementing = false;
 
+    protected $attributes = [
+        'customer_rank' => CustomerRank::STANDARD->value,
+        'demand_status' => DemandStatus::EXPLORING->value,
+    ];
+
     protected $fillable = [
         'user_id',
         'languages',

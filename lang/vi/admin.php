@@ -1310,7 +1310,7 @@ return
                 'province' => 'Tỉnh / Thành phố',
                 'cskh_notes' => 'Ghi chú CSKH',
                 'propose_ktv' => 'Đề xuất KTV',
-                'create_booking' => 'Tạo Booking 1-Click',
+                'create_booking' => 'Tạo Booking',
                 'assign_me' => 'Tiếp nhận xử lý',
             ],
             'action' => [
