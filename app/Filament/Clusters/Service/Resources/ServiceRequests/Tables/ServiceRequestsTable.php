@@ -18,6 +18,7 @@ use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\HtmlString;
 
@@ -87,10 +88,18 @@ class ServiceRequestsTable
                     })
                     ->formatStateUsing(fn (ServiceRequestStatus $state) => $state->label()),
 
+                TextColumn::make('note')
+                    ->label(__('admin.service_request.fields.note'))
+                    ->limit(25)
+                    ->tooltip(fn (Model $record): ?string => !empty($record->note) ? $record->note : null)
+                    ->placeholder('—')
+                    ->toggleable(),
+
                 TextColumn::make('cskh_note')
                     ->label(__('admin.service_request.fields.cskh_notes'))
                     ->limit(25)
-                    ->default('—')
+                    ->tooltip(fn (Model $record): ?string => !empty($record->cskh_note) ? $record->cskh_note : null)
+                    ->placeholder('—')
                     ->toggleable(),
 
                 TextColumn::make('cskh.name')
