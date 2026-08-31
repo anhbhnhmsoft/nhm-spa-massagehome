@@ -31,6 +31,31 @@ enum ProposalStatus: int
     }
 
     /**
+     * Màu sắc hiển thị badge
+     */
+    public function color(): string
+    {
+        return match ($this) {
+            self::PROPOSED => 'info',
+            self::KTV_ACCEPTED => 'warning',
+            self::CUSTOMER_ACCEPTED => 'success',
+            self::KTV_DECLINED, self::CUSTOMER_DECLINED => 'danger',
+            self::EXPIRED => 'gray',
+        };
+    }
+
+    /**
+     * Lấy màu sắc an toàn từ giá trị thô (int)
+     */
+    public static function getColor(?int $value): string
+    {
+        if (is_null($value)) {
+            return 'gray';
+        }
+        return self::tryFrom($value)?->color() ?? 'gray';
+    }
+
+    /**
      * Chuyển đổi danh sách Enum thành mảng Select Options cho Filament Form
      */
     public static function toOptions(): array

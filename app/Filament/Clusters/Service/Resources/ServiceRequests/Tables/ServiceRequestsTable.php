@@ -157,7 +157,7 @@ class ServiceRequestsTable
                                 $html = '<div class="space-y-2 rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3 border border-gray-200 dark:border-gray-700">';
                                 $html .= '<div class="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">';
                                 $html .= '<svg class="w-4 h-4 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
-                                $html .= 'Danh sách KTV đã từng được đề xuất:';
+                                $html .= e(__('admin.service_request.fields.previous_proposals')) . ':';
                                 $html .= '</div>';
                                 $html .= '<div class="space-y-1.5">';
 
@@ -167,7 +167,7 @@ class ServiceRequestsTable
                                     $cskhName = $p->cskh?->name ? ' <span class="text-xs text-gray-400">bởi ' . e($p->cskh->name) . '</span>' : '';
                                     $timeStr = $p->created_at ? '<span class="text-xs text-gray-400 font-mono">' . $p->created_at->format('H:i d/m/Y') . '</span>' : '';
 
-                                    $statusEnum = $p->status instanceof ProposalStatus ? $p->status : (is_string($p->status) ? ProposalStatus::tryFrom($p->status) : null);
+                                    $statusEnum = $p->status instanceof ProposalStatus ? $p->status : (is_numeric($p->status) ? ProposalStatus::tryFrom((int)$p->status) : null);
                                     $statusLabel = $statusEnum ? $statusEnum->label() : ($p->status ?? '—');
                                     $statusColor = $statusEnum ? $statusEnum->color() : 'gray';
 

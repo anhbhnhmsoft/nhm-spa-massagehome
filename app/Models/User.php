@@ -121,7 +121,12 @@ class User extends Authenticatable
 
     public function certificate()
     {
-        return $this->hasOne(UserFile::class)->where('type', UserFileType::LICENSE);
+        return $this->hasMany(UserFile::class)->whereIn('type', [UserFileType::CERTIFICATE, UserFileType::LICENSE]);
+    }
+
+    public function certificates()
+    {
+        return $this->hasMany(UserFile::class)->whereIn('type', [UserFileType::CERTIFICATE, UserFileType::LICENSE]);
     }
 
     public function faceWithIdentityCard()

@@ -37,9 +37,13 @@ class ListKTVResource extends JsonResource
                 'gender' => $profile->gender,
             ],
             'review_application' => [
-                'experience' => $reviewApplication->experience,
-                'bio' => $reviewApplication->bio,
-                'is_priority' => (bool) ($reviewApplication->is_priority ?? false),
+                'experience' => $reviewApplication?->experience,
+                'bio' => $reviewApplication?->bio,
+                'is_priority' => (bool) ($reviewApplication?->is_priority ?? false),
+                'portrait_verified' => (bool) ($reviewApplication?->portrait_verified ?? false),
+                'certificate_verified' => (bool) ($reviewApplication?->certificate_verified ?? false),
+                'techniques' => $reviewApplication?->techniques ?? [],
+                'strength_service_ids' => $reviewApplication?->strength_service_ids ?? [],
             ],
             'location' => [
                 'address' => $primaryAddress?->address ?? null,

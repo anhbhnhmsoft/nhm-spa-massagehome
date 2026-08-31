@@ -18,6 +18,7 @@ class UserReviewApplicationResource extends JsonResource
         $cccdBack = $user->cccdBack;
         $faceWithIdentityCard = $user->faceWithIdentityCard;
         $gallery = $user->gallery;
+        $certificates = $user->certificates;
         return [
             'id' => $this->id,
             'user_id' => $this->user_id,
@@ -42,6 +43,7 @@ class UserReviewApplicationResource extends JsonResource
             'cccd_front' => $cccdFront ? Helper::getPrivateUrl($cccdFront->id) : null,
             'cccd_back' => $cccdBack ? Helper::getPrivateUrl($cccdBack->id) : null,
             'face_with_identity_card' => $faceWithIdentityCard ? Helper::getPrivateUrl($faceWithIdentityCard->id) : null,
+            'certificates' => $certificates ? $certificates->map(fn($item) => Helper::getPrivateUrl($item->id))->values()->toArray() : [],
         ];
     }
 
