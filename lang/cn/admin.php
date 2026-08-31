@@ -745,6 +745,8 @@ return
                 'crm_management' => 'CRM管理与客服等级',
             ],
             'fields' => [
+                'id' => '#ID',
+                'avatar' => '头像',
                 'name' => '姓名',
                 'email' => '电子邮件',
                 'phone' => '电话',

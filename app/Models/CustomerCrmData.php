@@ -43,6 +43,7 @@ class CustomerCrmData extends Model
         'assigned_cskh_id',
         'customer_rank',
         'cskh_notes',
+        'cskh_note',
     ];
 
     protected $casts = [

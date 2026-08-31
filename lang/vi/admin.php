@@ -763,6 +763,8 @@ return
                 'crm_management' => 'Quản lý CRM & Phân hạng CSKH',
             ],
             'fields' => [
+                'id' => '#ID',
+                'avatar' => 'Ảnh đại diện',
                 'name' => 'Tên',
                 'email' => 'Email',
                 'phone' => 'Số điện thoại',

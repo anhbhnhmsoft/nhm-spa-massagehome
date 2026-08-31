@@ -746,6 +746,8 @@ return
                 'crm_management' => 'CRM Management & CSKH Tier',
             ],
             'fields' => [
+                'id' => '#ID',
+                'avatar' => 'Avatar',
                 'name' => 'Name',
                 'email' => 'Email',
                 'phone' => 'Phone',

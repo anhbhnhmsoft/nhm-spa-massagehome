@@ -143,7 +143,7 @@ class KTVsTable
                             ->label(__('admin.ktv_apply.fields.work_wards'))
                             ->searchable()
                             ->disabled(fn ($get) => blank($get('work_province')))
-                            ->placeholder(fn ($get) => blank($get('work_province')) ? __('admin.ktv_apply.fields.select_province_first') : __('common.placeholder.all'))
+                            ->placeholder(__('common.placeholder.all'))
                             ->options(function ($get) {
                                 $province = $get('work_province');
                                 if (blank($province)) {

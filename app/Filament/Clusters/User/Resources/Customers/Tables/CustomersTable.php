@@ -32,57 +32,100 @@ class CustomersTable
                 TextColumn::make('id')
                     ->searchable()
                     ->sortable()
-                    ->label(__('admin.customer.fields.id')),
+                    ->label(__('admin.customer.fields.id'))
+                    ->toggleable(),
                 ImageColumn::make('profile.avatar_url')
                     ->label(__('admin.customer.fields.avatar'))
                     ->disk('public')
                     ->defaultImageUrl(url('/images/avatar-default.svg'))
-                    ->circular(),
+                    ->circular()
+                    ->toggleable(),
                 TextColumn::make('name')
                     ->searchable()
                     ->sortable()
-                    ->label(__('admin.customer.fields.name')),
+                    ->label(__('admin.customer.fields.name'))
+                    ->toggleable(),
                 TextColumn::make('email')
                     ->searchable()
-                    ->label(__('admin.customer.fields.email')),
+                    ->label(__('admin.customer.fields.email'))
+                    ->toggleable(),
                 TextColumn::make('phone')
                     ->searchable()
-                    ->label(__('admin.customer.fields.phone')),
+                    ->label(__('admin.customer.fields.phone'))
+                    ->toggleable(),
                 TextColumn::make('province')
                     ->label(__('admin.customer.fields.province'))
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(),
                 TextColumn::make('ward')
                     ->label(__('admin.customer.fields.ward'))
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(),
                 TextColumn::make('crmData.customer_rank')
                     ->label(__('admin.customer.fields.customer_rank'))
                     ->badge()
                     ->alignCenter()
                     ->formatStateUsing(fn ($state) => $state instanceof CustomerRank ? $state->label() : ($state ? CustomerRank::tryFrom($state)?->label() ?? $state : null))
                     ->color(fn ($state) => $state instanceof CustomerRank ? $state->color() : ($state ? CustomerRank::tryFrom($state)?->color() : null))
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(),
                 TextColumn::make('crmData.demand_status')
                     ->label(__('admin.customer.fields.demand_status'))
                     ->badge()
                     ->alignCenter()
                     ->formatStateUsing(fn ($state) => $state instanceof DemandStatus ? $state->label() : ($state ? DemandStatus::tryFrom($state)?->label() ?? $state : null))
                     ->color(fn ($state) => $state instanceof DemandStatus ? $state->color() : ($state ? DemandStatus::tryFrom($state)?->color() : null))
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(),
                 TextColumn::make('crmData.assignedCskh.name')
                     ->label(__('admin.customer.fields.assigned_cskh'))
                     ->placeholder(__('admin.customer.fields.unassigned'))
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(),
                 TextColumn::make('crmData.total_spent')
                     ->label(__('admin.customer.fields.total_spent'))
                     ->money('VND')
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(),
                 TextColumn::make('crmData.booking_count')
                     ->label(__('admin.customer.fields.booking_count'))
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(),
+                TextColumn::make('crmData.cskh_notes')
+                    ->label(__('admin.customer.fields.cskh_notes'))
+                    ->limit(35)
+                    ->placeholder('—')
+                    ->tooltip(fn ($state) => $state ?: __('admin.customer.fields.cskh_notes'))
+                    ->toggleable()
+                    ->action(
+                        Action::make('edit_cskh_note_column')
+                            ->label(__('admin.customer.fields.cskh_notes'))
+                            ->modalHeading(__('admin.customer.fields.cskh_notes'))
+                            ->form([
+                                Textarea::make('cskh_notes')
+                                    ->label(__('admin.customer.fields.cskh_notes'))
+                                    ->rows(5)
+                                    ->default(fn (User $record) => $record->crmData?->cskh_notes)
+                                    ->helperText(__('admin.customer.fields.cskh_notes_helper')),
+                            ])
+                            ->action(function (User $record, array $data): void {
+                                $crm = $record->crmData()->firstOrCreate([]);
+                                $crm->update([
+                                    'cskh_notes' => $data['cskh_notes'] ?? null,
+                                    'cskh_note' => $data['cskh_notes'] ?? null,
+                                ]);
+                                Notification::make()
+                                    ->title(__('admin.customer.fields.cskh_notes'))
+                                    ->body(__('common.success.update'))
+                                    ->success()
+                                    ->send();
+                            })
+                    ),
                 TextColumn::make('created_at')
                     ->dateTime('d/m/Y H:i')
                     ->sortable()
-                    ->label(__('admin.customer.fields.created_at')),
+                    ->label(__('admin.customer.fields.created_at'))
+                    ->toggleable(),
             ])
             ->recordActions([
                 Action::make('edit_inline')
@@ -100,31 +143,13 @@ class CustomersTable
                         ->icon('heroicon-o-calendar-days')
                         ->url(fn (User $record): string => CustomerResource::getUrl('edit', ['record' => $record])),
 
-                    Action::make('cskh_note')
-                        ->label(__('admin.customer.fields.cskh_notes'))
-                        ->icon('heroicon-o-chat-bubble-bottom-center-text')
-                        ->form([
-                            Textarea::make('cskh_notes')
-                                ->label(__('admin.customer.fields.cskh_notes'))
-                                ->rows(4)
-                                ->default(fn (User $record) => $record->crmData?->cskh_notes)
-                                ->helperText(__('admin.customer.fields.cskh_notes_helper')),
-                        ])
-                        ->action(function (User $record, array $data): void {
-                            $crm = $record->crmData()->firstOrCreate([]);
-                            $crm->update(['cskh_notes' => $data['cskh_notes'] ?? null]);
-                            Notification::make()
-                                ->title(__('admin.customer.fields.cskh_notes'))
-                                ->body(__('common.success.update'))
-                                ->success()
-                                ->send();
-                        }),
-
                     CommonActions::qrAffiliateAction(),
                     CommonActions::deleteAction(),
                 ]),
             ])
             ->defaultSort('created_at', 'desc')
+            ->deferFilters(false)
+            ->filtersFormColumns(2)
             ->filters([
                 Filter::make('location')
                     ->form([
@@ -139,7 +164,7 @@ class CustomersTable
                             ->label(__('admin.customer.fields.ward'))
                             ->searchable()
                             ->disabled(fn ($get) => blank($get('province')))
-                            ->placeholder(fn ($get) => blank($get('province')) ? __('admin.customer.fields.select_province_first') : __('common.placeholder.all'))
+                            ->placeholder(__('common.placeholder.all'))
                             ->options(function ($get) {
                                 $province = $get('province');
                                 if (blank($province)) {
