@@ -189,15 +189,35 @@ class EditKTV extends EditRecord
             );
         }
         if (array_key_exists('certificate_path', $this->tempFiles)) {
-            if ($this->tempFiles['certificate_path'] === null) {
+            if (empty($this->tempFiles['certificate_path'])) {
                 UserFile::where('user_id', $record->id)
-                    ->where('type', UserFileType::LICENSE)
+                    ->whereIn('type', [UserFileType::LICENSE, UserFileType::CERTIFICATE])
                     ->delete();
             } else {
-                UserFile::updateOrCreate(
-                    ['user_id' => $record->id, 'type' => UserFileType::LICENSE],
-                    ['file_path' => $this->tempFiles['certificate_path'], 'role' => UserRole::KTV->value, 'is_public' => false]
-                );
+                $certPaths = is_array($this->tempFiles['certificate_path'])
+                    ? array_filter($this->tempFiles['certificate_path'])
+                    : (filled($this->tempFiles['certificate_path']) ? [$this->tempFiles['certificate_path']] : []);
+
+                // Xóa các cert cũ không còn trong danh sách mới
+                UserFile::where('user_id', $record->id)
+                    ->whereIn('type', [UserFileType::LICENSE, UserFileType::CERTIFICATE])
+                    ->whereNotIn('file_path', $certPaths)
+                    ->delete();
+
+                // Thêm hoặc giữ lại các cert mới
+                foreach ($certPaths as $path) {
+                    UserFile::firstOrCreate(
+                        [
+                            'user_id' => $record->id,
+                            'file_path' => $path,
+                        ],
+                        [
+                            'type' => UserFileType::CERTIFICATE,
+                            'role' => UserRole::KTV->value,
+                            'is_public' => false,
+                        ]
+                    );
+                }
             }
         }
         if (array_key_exists('face_with_identity_card_path', $this->tempFiles)) {
