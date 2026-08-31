@@ -1311,6 +1311,7 @@ return
                 'ward' => 'Phường / Xã',
                 'province' => 'Tỉnh / Thành phố',
                 'cskh_notes' => 'Ghi chú CSKH',
+                'previous_proposals' => 'KTV đã đề xuất trước đó',
                 'propose_ktv' => 'Đề xuất KTV',
                 'create_booking' => 'Tạo Booking',
                 'assign_me' => 'Tiếp nhận xử lý',

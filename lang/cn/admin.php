@@ -1294,6 +1294,7 @@ return
                 'ward' => '坊/社',
                 'province' => '省/市',
                 'cskh_notes' => '客服备注',
+                'previous_proposals' => '先前推荐的技师',
                 'propose_ktv' => '推荐技师',
                 'create_booking' => '创建订单',
                 'assign_me' => '领取处理',

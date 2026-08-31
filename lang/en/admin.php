@@ -1296,6 +1296,7 @@ return
                 'ward' => 'Ward / Commune',
                 'province' => 'Province / City',
                 'cskh_notes' => 'CSKH Notes',
+                'previous_proposals' => 'Previously Proposed KTVs',
                 'propose_ktv' => 'Propose KTV',
                 'create_booking' => 'Create Booking',
                 'assign_me' => 'Assign to Me',

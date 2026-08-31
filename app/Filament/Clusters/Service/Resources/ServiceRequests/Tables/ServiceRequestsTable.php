@@ -10,7 +10,7 @@ use App\Models\ServiceRequest;
 use App\Models\User;
 use App\Services\ServiceRequestService;
 use Filament\Actions\Action;
-
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
 use Filament\Support\Colors\Color;
@@ -19,6 +19,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\HtmlString;
 
 class ServiceRequestsTable
 {
@@ -132,6 +133,56 @@ class ServiceRequestsTable
                     ->icon('heroicon-o-paper-airplane')
                     ->color('primary')
                     ->form([
+                        Placeholder::make('previous_proposals')
+                            ->label(__('admin.service_request.fields.previous_proposals'))
+                            ->visible(fn (?ServiceRequest $record) => $record && $record->proposals()->exists())
+                            ->content(function (?ServiceRequest $record) {
+                                if (!$record) {
+                                    return null;
+                                }
+                                $proposals = $record->proposals()->with(['ktv', 'cskh'])->latest()->get();
+                                if ($proposals->isEmpty()) {
+                                    return null;
+                                }
+
+                                $html = '<div class="space-y-2 rounded-xl bg-gray-50 dark:bg-gray-800/80 p-3 border border-gray-200 dark:border-gray-700">';
+                                $html .= '<div class="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">';
+                                $html .= '<svg class="w-4 h-4 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+                                $html .= 'Danh sách KTV đã từng được đề xuất:';
+                                $html .= '</div>';
+                                $html .= '<div class="space-y-1.5">';
+
+                                foreach ($proposals as $p) {
+                                    $ktvName = e($p->ktv?->name ?? 'KTV #' . $p->ktv_id);
+                                    $ktvPhone = $p->ktv?->phone ? '<span class="text-xs text-gray-500 font-mono ml-1">(' . e($p->ktv->phone) . ')</span>' : '';
+                                    $cskhName = $p->cskh?->name ? ' <span class="text-xs text-gray-400">bởi ' . e($p->cskh->name) . '</span>' : '';
+                                    $timeStr = $p->created_at ? '<span class="text-xs text-gray-400 font-mono">' . $p->created_at->format('H:i d/m/Y') . '</span>' : '';
+
+                                    $statusEnum = $p->status instanceof ProposalStatus ? $p->status : (is_string($p->status) ? ProposalStatus::tryFrom($p->status) : null);
+                                    $statusLabel = $statusEnum ? $statusEnum->label() : ($p->status ?? '—');
+                                    $statusColor = $statusEnum ? $statusEnum->color() : 'gray';
+
+                                    $badgeClass = match ($statusColor) {
+                                        'success' => 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800',
+                                        'warning' => 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800',
+                                        'danger' => 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border border-rose-200 dark:border-rose-800',
+                                        'info' => 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800',
+                                        default => 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+                                    };
+
+                                    $html .= '<div class="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm">';
+                                    $html .= '<div>';
+                                    $html .= '<div class="font-medium text-sm text-gray-900 dark:text-white flex items-center flex-wrap">' . $ktvName . $ktvPhone . $cskhName . '</div>';
+                                    $html .= '<div class="mt-0.5">' . $timeStr . '</div>';
+                                    $html .= '</div>';
+                                    $html .= '<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold ' . $badgeClass . '">' . e($statusLabel) . '</span>';
+                                    $html .= '</div>';
+                                }
+
+                                $html .= '</div></div>';
+                                return new HtmlString($html);
+                            }),
+
                         Select::make('ktv_id')
                             ->label(__('admin.service_request.action.recommend_ktv'))
                             ->allowHtml()
