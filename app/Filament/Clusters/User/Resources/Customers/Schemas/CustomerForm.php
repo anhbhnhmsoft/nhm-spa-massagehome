@@ -187,10 +187,12 @@ class CustomerForm
                         Select::make('customer_rank')
                             ->label(__('admin.customer.fields.customer_rank'))
                             ->options(CustomerRank::toOptions())
+                            ->default(CustomerRank::STANDARD->value)
                             ->placeholder(__('common.placeholder.select')),
                         Select::make('demand_status')
                             ->label(__('admin.customer.fields.demand_status'))
                             ->options(DemandStatus::toOptions())
+                            ->default(DemandStatus::EXPLORING->value)
                             ->placeholder(__('common.placeholder.select')),
                         Select::make('assigned_cskh_id')
                             ->label(__('admin.customer.fields.assigned_cskh'))

@@ -22,6 +22,18 @@ class CustomerCrmData extends Model
         'demand_status' => DemandStatus::EXPLORING->value,
     ];
 
+    protected static function booted(): void
+    {
+        static::creating(function (CustomerCrmData $model) {
+            if (empty($model->demand_status)) {
+                $model->demand_status = DemandStatus::EXPLORING;
+            }
+            if (empty($model->customer_rank)) {
+                $model->customer_rank = CustomerRank::STANDARD;
+            }
+        });
+    }
+
     protected $fillable = [
         'user_id',
         'languages',
