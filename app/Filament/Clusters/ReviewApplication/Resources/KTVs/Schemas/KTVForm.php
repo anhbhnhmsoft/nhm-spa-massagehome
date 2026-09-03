@@ -184,18 +184,6 @@ class KTVForm
                                         ->searchable()
                                         ->disabled(fn ($get) => blank($get('work_province')))
                                         ->placeholder(fn ($get) => blank($get('work_province')) ? __('admin.ktv_apply.fields.select_province_first') : __('common.placeholder.select'))
-                                        ->formatStateUsing(function ($state) {
-                                            if (is_array($state)) {
-                                                return $state[0] ?? null;
-                                            }
-                                            return $state;
-                                        })
-                                        ->dehydrateStateUsing(function ($state) {
-                                            if (empty($state)) {
-                                                return null;
-                                            }
-                                            return is_array($state) ? $state : [$state];
-                                        })
                                         ->options(function ($get, $record) {
                                             $province = $get('work_province');
                                             if (blank($province)) {

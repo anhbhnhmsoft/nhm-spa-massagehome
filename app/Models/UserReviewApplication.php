@@ -6,6 +6,7 @@ use App\Core\GenerateId\HasBigIntId;
 use App\Enums\ReviewApplicationStatus;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Translatable\HasTranslations;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class UserReviewApplication extends Model
 {
@@ -68,8 +69,36 @@ class UserReviewApplication extends Model
         'strength_service_ids' => 'array',
         'priority_areas' => 'array',
         'service_locations' => 'array',
-        'work_wards' => 'array',
     ];
+
+    /**
+     * Getter & Setter cho work_wards: Luôn trả về 1 Phường/Xã (chuỗi đơn) cho giao diện
+     */
+    protected function workWards(): Attribute
+    {
+        return Attribute::make(
+            get: function ($value) {
+                if (blank($value)) {
+                    return null;
+                }
+                $decoded = json_decode($value, true);
+                if (is_array($decoded)) {
+                    return $decoded[0] ?? null;
+                }
+                return $value;
+            },
+            set: function ($value) {
+                if (blank($value)) {
+                    return null;
+                }
+                if (is_array($value)) {
+                    $first = array_values(array_filter($value))[0] ?? null;
+                    return $first ? json_encode([$first]) : null;
+                }
+                return json_encode([$value]);
+            }
+        );
+    }
 
     /**
      * Lấy thông tin về người giới thiệu.

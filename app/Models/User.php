@@ -12,6 +12,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class User extends Authenticatable
 {
@@ -52,8 +53,36 @@ class User extends Authenticatable
         'referred_at' => 'datetime',
         'is_active' => 'boolean',
         'is_online' => 'boolean',
-        'work_wards' => 'array',
     ];
+
+    /**
+     * Getter & Setter cho work_wards: Luôn trả về 1 Phường/Xã (chuỗi đơn) cho giao diện
+     */
+    protected function workWards(): Attribute
+    {
+        return Attribute::make(
+            get: function ($value) {
+                if (blank($value)) {
+                    return null;
+                }
+                $decoded = json_decode($value, true);
+                if (is_array($decoded)) {
+                    return $decoded[0] ?? null;
+                }
+                return $value;
+            },
+            set: function ($value) {
+                if (blank($value)) {
+                    return null;
+                }
+                if (is_array($value)) {
+                    $first = array_values(array_filter($value))[0] ?? null;
+                    return $first ? json_encode([$first]) : null;
+                }
+                return json_encode([$value]);
+            }
+        );
+    }
 
     protected static function booted(): void
     {
