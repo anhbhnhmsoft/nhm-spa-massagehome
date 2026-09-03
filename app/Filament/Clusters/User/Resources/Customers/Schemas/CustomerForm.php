@@ -89,13 +89,10 @@ class CustomerForm
                                     ->imageEditor()
                                     ->disk('public')
                                     ->directory(DirectFile::KTVA->value)
-                                    ->required()
+                                    ->nullable()
                                     ->downloadable()
                                     ->alignCenter()
-                                    ->maxSize(102400)
-                                    ->validationMessages([
-                                        'required' => __('common.error.required'),
-                                    ]),
+                                    ->maxSize(102400),
                                 Textarea::make('bio')
                                     ->label(__('admin.common.table.bio'))
                                     ->rows(3),
@@ -159,10 +156,6 @@ class CustomerForm
                             ->label(__('admin.customer.fields.languages'))
                             ->multiple()
                             ->options(Language::toOptions())
-                            ->placeholder(__('common.placeholder.select')),
-                        Select::make('demand_status')
-                            ->label(__('admin.customer.fields.demand_status'))
-                            ->options(DemandStatus::toOptions())
                             ->placeholder(__('common.placeholder.select')),
                         Select::make('preferred_services')
                             ->label(__('admin.customer.fields.preferred_services'))
