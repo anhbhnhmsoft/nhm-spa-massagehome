@@ -84,9 +84,7 @@ class CustomerForm
                             ->schema([
                                 FileUpload::make('avatar_url')
                                     ->label(__('admin.common.table.avatar'))
-                                    ->image()
                                     ->avatar()
-                                    ->imageEditor()
                                     ->disk('public')
                                     ->directory(DirectFile::KTVA->value)
                                     ->nullable()
