@@ -84,10 +84,15 @@ class UserRepository extends BaseRepository
      */
     public function filterQuery(Builder $query, array $filters): Builder
     {
-        // Lọc theo từ khóa
+        // Lọc theo từ khóa (tìm cả theo tên CCCD/thật và nickname hiển thị trên app)
         if (isset($filters['keyword']) && !empty(trim($filters['keyword']))) {
             $keyword = trim($filters['keyword']);
-            $query->whereRaw("unaccent(name) ILIKE unaccent(?)", ["%{$keyword}%"]);
+            $query->where(function ($q) use ($keyword) {
+                $q->whereRaw("unaccent(users.name) ILIKE unaccent(?)", ["%{$keyword}%"])
+                  ->orWhereHas('reviewApplication', function ($sub) use ($keyword) {
+                      $sub->whereRaw("unaccent(nickname) ILIKE unaccent(?)", ["%{$keyword}%"]);
+                  });
+            });
         }
         // Lọc theo vai trò
         if (isset($filters['role'])) {
