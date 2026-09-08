@@ -473,11 +473,9 @@ return
             ],
         ],
         'booking' => [
-            'fields' => [
-                'staff' => 'Kĩ thuật viên',
-            ],
             'label' => 'Lịch đặt',
             'fields' => [
+                'staff' => 'Kĩ thuật viên',
                 'user' => 'Khách hàng',
                 'ktv_user' => 'KTV',
                 'service' => 'Dịch vụ',
