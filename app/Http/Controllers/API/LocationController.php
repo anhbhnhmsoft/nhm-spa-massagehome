@@ -50,7 +50,7 @@ class LocationController extends BaseController
             );
         }
         return $this->sendSuccess(
-            data: PlacePredictionResource::collection($result->getData())
+            data: PlacePredictionResource::collection($result->getData() ?? [])
         );
     }
 

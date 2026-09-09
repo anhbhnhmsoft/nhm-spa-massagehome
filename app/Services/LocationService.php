@@ -180,7 +180,7 @@ class LocationService  extends BaseService
     }
 
 
-    public function autoComplete(string $keyword, float $longitude = 0, float $latitude = 0, int $limit = 9, int $radius = 10)
+    public function autoComplete(string $keyword, float $latitude = 0, float $longitude = 0, int $limit = 9, int $radius = 10)
     {
         try {
             if (empty($keyword)) {
@@ -231,9 +231,9 @@ class LocationService  extends BaseService
             $data = $response->json();
 
             /** 4. Prepare caching (CHỈ cache nếu API trả ra kết quả) */
+            $dataReturn = [];
             if (!empty($data['predictions'])) {
                 $placesToCache = [];
-                $dataReturn = [];
 
                 foreach ($data['predictions'] as $item) {
                     $placesToCache[] = [
