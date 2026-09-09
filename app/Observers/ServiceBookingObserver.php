@@ -3,15 +3,58 @@
 namespace App\Observers;
 
 use App\Enums\BookingStatus;
+use App\Models\Category;
 use App\Models\CustomerCrmData;
 use App\Models\ServiceBooking;
+use App\Models\User;
 use Illuminate\Support\Carbon;
 
 /**
- * Observer theo dõi sự kiện trên ServiceBooking để tự động hóa CRM.
+ * Observer theo dõi sự kiện trên ServiceBooking để tự động hóa CRM và Snapshot dữ liệu.
  */
 class ServiceBookingObserver
 {
+    /**
+     * Tự động lưu Snapshot thông tin KTV, Khách hàng và Dịch vụ trước khi lưu đơn.
+     */
+    public function saving(ServiceBooking $booking): void
+    {
+        // 1. Snapshot KTV nếu có ktv_user_id
+        if ($booking->isDirty('ktv_user_id') || (empty($booking->ktv_name) && !empty($booking->ktv_user_id))) {
+            if ($booking->ktv_user_id) {
+                $ktv = User::with(['profile', 'reviewApplication'])->find($booking->ktv_user_id);
+                if ($ktv) {
+                    $booking->ktv_name = $ktv->reviewApplication?->nickname ?: $ktv->name;
+                    $booking->ktv_phone = $ktv->phone;
+                    $booking->ktv_avatar_url = $ktv->profile?->avatar_url;
+                }
+            }
+        }
+
+        // 2. Snapshot Khách hàng nếu có user_id
+        if ($booking->isDirty('user_id') || (empty($booking->customer_name) && !empty($booking->user_id))) {
+            if ($booking->user_id) {
+                $customer = User::with('profile')->find($booking->user_id);
+                if ($customer) {
+                    $booking->customer_name = $customer->name;
+                    $booking->customer_phone = $customer->phone;
+                    $booking->customer_avatar_url = $customer->profile?->avatar_url;
+                    $booking->customer_gender = $customer->profile?->gender;
+                }
+            }
+        }
+
+        // 3. Snapshot Dịch vụ nếu có category_id
+        if ($booking->isDirty('category_id') || (empty($booking->service_name) && !empty($booking->category_id))) {
+            if ($booking->category_id) {
+                $category = Category::find($booking->category_id);
+                if ($category) {
+                    $booking->service_name = $category->name;
+                }
+            }
+        }
+    }
+
     /**
      * Lắng nghe sự kiện cập nhật trạng thái đơn hàng.
      */

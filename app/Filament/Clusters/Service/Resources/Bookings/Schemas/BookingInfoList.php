@@ -3,6 +3,7 @@
 namespace App\Filament\Clusters\Service\Resources\Bookings\Schemas;
 
 use App\Enums\BookingStatus;
+use App\Enums\Gender;
 use App\Enums\UserRole;
 use App\Filament\Clusters\ReviewApplication\Resources\KTVs\KTVResource;
 use App\Filament\Clusters\User\Resources\Customers\CustomerResource;
@@ -33,29 +34,52 @@ class BookingInfoList
                             ->color(fn($state): string => BookingStatus::getColor($state))
                             ->formatStateUsing(fn($state) => BookingStatus::getLabel($state)),
 
-                        TextEntry::make('user.name')
+                        TextEntry::make('user_display_name')
                             ->label(__('admin.booking.fields.user'))
                             ->color('primary')
                             ->weight('bold')
                             ->icon('heroicon-m-user')
-                            ->url(fn ($record): ?string => $record->user_id
+                            ->state(function ($record) {
+                                $phone = $record->user?->phone ?? $record->customer_phone;
+                                $phoneStr = $phone ? " ({$phone})" : "";
+                                if ($record->user) {
+                                    return $record->user->name . $phoneStr;
+                                }
+                                return $record->customer_name ? $record->customer_name . $phoneStr . ' (Đã xóa)' : '-';
+                            })
+                            ->url(fn ($record): ?string => $record->user_id && $record->user
                                 ? CustomerResource::getUrl('edit', ['record' => $record->user_id])
                                 : null
                             )
                             ->openUrlInNewTab(),
 
-                        TextEntry::make('ktvUser.reviewApplication.nickname')
+                        TextEntry::make('ktv_display_name')
                             ->label(__('admin.booking.fields.ktv_user'))
                             ->weight('bold')
-                            ->url(fn ($record): ?string => $record->ktv_user_id
+                            ->state(function ($record) {
+                                if ($record->ktvUser) {
+                                    $name = $record->ktvUser->reviewApplication?->nickname ?: $record->ktvUser->name;
+                                    $phone = $record->ktvUser->phone ? " ({$record->ktvUser->phone})" : "";
+                                    return $name . $phone;
+                                }
+                                if ($record->ktv_name) {
+                                    $phone = $record->ktv_phone ? " ({$record->ktv_phone})" : "";
+                                    return $record->ktv_name . $phone . ' (Đã xóa)';
+                                }
+                                return '-';
+                            })
+                            ->url(fn ($record): ?string => $record->ktv_user_id && $record->ktvUser
                                 ? KTVResource::getUrl('view', ['record' => $record->ktv_user_id])
                                 : null
                             )
                             ->openUrlInNewTab()
                             ->icon('heroicon-m-identification'),
 
-                        TextEntry::make('service.name')
+                        TextEntry::make('service_display_name')
                             ->label(__('admin.booking.fields.service'))
+                            ->state(function ($record) {
+                                return $record->service?->name ?? $record->service_name ?? '-';
+                            })
                             ->color('primary')
                             ->weight('bold'),
 
@@ -135,6 +159,13 @@ class BookingInfoList
                                     })
                                     ->openUrlInNewTab()
                             ),
+                        TextEntry::make('customer_gender')
+                            ->label(__('admin.common.table.gender'))
+                            ->icon('heroicon-m-user')
+                            ->state(function ($record) {
+                                $gender = $record->user?->profile?->gender ?? $record->customer_gender;
+                                return $gender ? Gender::getLabel((int) $gender) : '-';
+                            }),
                         TextEntry::make('note')
                             ->label(__('admin.booking.fields.note'))
                             ->columnSpanFull()

@@ -22,27 +22,55 @@ class BookingsTable
                 TextColumn::make('id')
                     ->label(__('admin.common.table.id'))
                     ->searchable(),
-                TextColumn::make('ktvUser.name')
+                TextColumn::make('ktv_display_name')
                     ->label(__('admin.booking.fields.ktv_user'))
+                    ->getStateUsing(function ($record) {
+                        if ($record->ktvUser) {
+                            return $record->ktvUser->reviewApplication?->nickname ?: $record->ktvUser->name;
+                        }
+                        return $record->ktv_name ? $record->ktv_name . ' (Đã xóa)' : '-';
+                    })
+                    ->description(fn ($record) => $record->ktvUser?->phone ?? $record->ktv_phone ?? null)
                     ->url(fn ($record): string =>
-                        $record->ktv_user_id
+                        $record->ktv_user_id && $record->ktvUser
                             ? KTVResource::getUrl('edit', ['record' => $record->ktv_user_id])
                             : '#'
-                        )
-                    ->openUrlInNewTab()
-                    ->searchable(),
-                TextColumn::make('user.name')
-                    ->label(__('admin.booking.fields.user'))
-                    ->url(fn ($record): string =>
-                    $record->user_id
-                        ? CustomerResource::getUrl('edit', ['record' => $record->user_id])
-                        : '#'
                     )
                     ->openUrlInNewTab()
-                    ->searchable(),
-                TextColumn::make('service.name')
+                    ->searchable(query: function ($query, string $search) {
+                        $query->whereHas('ktvUser', fn ($q) => $q->where('name', 'ILIKE', "%{$search}%")->orWhere('phone', 'ILIKE', "%{$search}%"))
+                              ->orWhere('ktv_name', 'ILIKE', "%{$search}%")
+                              ->orWhere('ktv_phone', 'ILIKE', "%{$search}%");
+                    }),
+                TextColumn::make('user_display_name')
+                    ->label(__('admin.booking.fields.user'))
+                    ->getStateUsing(function ($record) {
+                        if ($record->user) {
+                            return $record->user->name;
+                        }
+                        return $record->customer_name ? $record->customer_name . ' (Đã xóa)' : '-';
+                    })
+                    ->description(fn ($record) => $record->user?->phone ?? $record->customer_phone ?? null)
+                    ->url(fn ($record): string =>
+                        $record->user_id && $record->user
+                            ? CustomerResource::getUrl('edit', ['record' => $record->user_id])
+                            : '#'
+                    )
+                    ->openUrlInNewTab()
+                    ->searchable(query: function ($query, string $search) {
+                        $query->whereHas('user', fn ($q) => $q->where('name', 'ILIKE', "%{$search}%")->orWhere('phone', 'ILIKE', "%{$search}%"))
+                              ->orWhere('customer_name', 'ILIKE', "%{$search}%")
+                              ->orWhere('customer_phone', 'ILIKE', "%{$search}%");
+                    }),
+                TextColumn::make('service_display_name')
                     ->label(__('admin.booking.fields.service'))
-                    ->searchable(),
+                    ->getStateUsing(function ($record) {
+                        return $record->service?->name ?? $record->service_name ?? '-';
+                    })
+                    ->searchable(query: function ($query, string $search) {
+                        $query->whereHas('service', fn ($q) => $q->where('name', 'ILIKE', "%{$search}%"))
+                              ->orWhere('service_name', 'ILIKE', "%{$search}%");
+                    }),
                 TextColumn::make('booking_time')
                     ->sortable()
                     ->label(__('admin.booking.fields.time_range')) // Nhãn chung: Thời gian

@@ -37,6 +37,14 @@ class ServiceBooking extends Model
         'ktv_confirm_deadline_at',
         'application_opened_at',
         'application_open_reason',
+        'ktv_name',
+        'ktv_phone',
+        'ktv_avatar_url',
+        'customer_name',
+        'customer_phone',
+        'customer_avatar_url',
+        'customer_gender',
+        'service_name',
     ];
 
     protected $casts = [
@@ -60,6 +68,7 @@ class ServiceBooking extends Model
         'cancel_by' => 'integer',
         'ktv_confirm_deadline_at' => 'datetime',
         'application_opened_at' => 'datetime',
+        'customer_gender' => 'integer',
     ];
 
     // Lấy thông tin khách hàng đặt

@@ -63,11 +63,13 @@ class BookingItemResource extends JsonResource
         );
         $ktvServiceIncome = CalculatePrice::calculatePriceDiscountForKTV($price, $discountRate);
         $ktvIncomeTotal = $ktvServiceIncome + $priceTransportation;
-        $customerGender = $userProfile?->gender ? Gender::getLabel((int) $userProfile->gender) : null;
+        $rawCustomerGender = $userProfile?->gender ?? $this->customer_gender;
+        $customerGender = $rawCustomerGender ? Gender::getLabel((int) $rawCustomerGender) : null;
         $canViewCustomerContact = $useModernContract
             ? BookingContactPrivacy::canViewCustomerContact($this->resource, $viewer)
             : true;
-        $customerName = $canViewCustomerContact ? $user->name : BookingContactPrivacy::maskCustomerName($user->name);
+        $rawCustomerName = $user?->name ?? $this->customer_name ?? "";
+        $customerName = $canViewCustomerContact ? $rawCustomerName : BookingContactPrivacy::maskCustomerName($rawCustomerName);
         $customerAddress = $canViewCustomerContact ? $this->address : BookingContactPrivacy::maskAddress($this->address);
         $canChat = $useModernContract
             ? $canViewCustomerContact && in_array((int) $this->status, [
@@ -88,29 +90,50 @@ class BookingItemResource extends JsonResource
             ], true)
             : true;
 
+        $serviceDisplayName = $service?->name ?? $this->service_name ?? "";
+        $serviceImage = $service?->image_url ? Helper::getPublicUrl($service->image_url) : null;
+
+        $ktvDisplayName = $ktvUserReviewApplication?->nickname 
+            ?? $ktvUser?->name 
+            ?? $this->ktv_name 
+            ?? "";
+        $ktvDisplayAvatar = $ktvUserProfile?->avatar_url 
+            ? Helper::getPublicUrl($ktvUserProfile->avatar_url) 
+            : ($this->ktv_avatar_url ? Helper::getPublicUrl($this->ktv_avatar_url) : null);
+
+        $selectedKtvDisplayName = $selectedKtvReviewApplication?->nickname 
+            ?? $selectedKtvUser?->name 
+            ?? ($isKtvSelected ? $this->ktv_name : null) 
+            ?? "";
+        $selectedKtvDisplayAvatar = $selectedKtvProfile?->avatar_url 
+            ? Helper::getPublicUrl($selectedKtvProfile->avatar_url) 
+            : ($isKtvSelected && $this->ktv_avatar_url ? Helper::getPublicUrl($this->ktv_avatar_url) : null);
+
         return [
             'id' => $this->id,
             'service' => [
-                'id' => $service->id,
-                'name' => $service->name,
-                'image' => $service->image_url ? Helper::getPublicUrl($service->image_url) : null,
+                'id' => $service?->id ?? $this->category_id,
+                'name' => $serviceDisplayName,
+                'image' => $serviceImage,
             ],
-            'service_category_name' => $service->name,
+            'service_category_name' => $serviceDisplayName,
             'ktv_user' => [
-                'id' => $ktvUser?->id,
-                'name' => $ktvUserReviewApplication->nickname ?? "",
-                'avatar_url' => $ktvUserProfile?->avatar_url ? Helper::getPublicUrl($ktvUserProfile->avatar_url) : null,
+                'id' => $ktvUser?->id ?? $this->ktv_user_id,
+                'name' => $ktvDisplayName,
+                'avatar_url' => $ktvDisplayAvatar,
+                'phone' => $ktvUser?->phone ?? $this->ktv_phone ?? null,
             ],
             'selected_ktv_user' => [
-                'id' => $selectedKtvUser?->id,
-                'name' => $selectedKtvReviewApplication?->nickname ?? "",
-                'avatar_url' => $selectedKtvProfile?->avatar_url ? Helper::getPublicUrl($selectedKtvProfile->avatar_url) : null,
+                'id' => $selectedKtvUser?->id ?? ($isKtvSelected ? $this->ktv_user_id : null),
+                'name' => $selectedKtvDisplayName,
+                'avatar_url' => $selectedKtvDisplayAvatar,
+                'phone' => $selectedKtvUser?->phone ?? ($isKtvSelected ? $this->ktv_phone : null),
             ],
             'user' => [
-                'id' => $user->id,
+                'id' => $user?->id ?? $this->user_id,
                 'name' => $customerName,
-                'avatar_url' => $userProfile->avatar_url ? Helper::getPublicUrl($userProfile->avatar_url) : null,
-                'phone' => $canViewCustomerContact ? ($user->phone ?? null) : null,
+                'avatar_url' => $userProfile?->avatar_url ? Helper::getPublicUrl($userProfile->avatar_url) : ($this->customer_avatar_url ? Helper::getPublicUrl($this->customer_avatar_url) : null),
+                'phone' => $canViewCustomerContact ? ($user?->phone ?? $this->customer_phone ?? null) : null,
             ],
             'customer_gender' => $customerGender,
             'address' => $customerAddress,
