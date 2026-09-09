@@ -28,13 +28,13 @@ class BookingsTable
                         if ($record->ktvUser) {
                             return $record->ktvUser->reviewApplication?->nickname ?: $record->ktvUser->name;
                         }
-                        return $record->ktv_name ? $record->ktv_name . ' (Đã xóa)' : '-';
+                        return $record->ktv_name ?: '-';
                     })
                     ->description(fn ($record) => $record->ktvUser?->phone ?? $record->ktv_phone ?? null)
-                    ->url(fn ($record): string =>
+                    ->url(fn ($record): ?string =>
                         $record->ktv_user_id && $record->ktvUser
                             ? KTVResource::getUrl('edit', ['record' => $record->ktv_user_id])
-                            : '#'
+                            : null
                     )
                     ->openUrlInNewTab()
                     ->searchable(query: function ($query, string $search) {
@@ -48,13 +48,13 @@ class BookingsTable
                         if ($record->user) {
                             return $record->user->name;
                         }
-                        return $record->customer_name ? $record->customer_name . ' (Đã xóa)' : '-';
+                        return $record->customer_name ?: '-';
                     })
                     ->description(fn ($record) => $record->user?->phone ?? $record->customer_phone ?? null)
-                    ->url(fn ($record): string =>
+                    ->url(fn ($record): ?string =>
                         $record->user_id && $record->user
                             ? CustomerResource::getUrl('edit', ['record' => $record->user_id])
-                            : '#'
+                            : null
                     )
                     ->openUrlInNewTab()
                     ->searchable(query: function ($query, string $search) {

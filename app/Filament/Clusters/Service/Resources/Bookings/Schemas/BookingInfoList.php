@@ -45,7 +45,7 @@ class BookingInfoList
                                 if ($record->user) {
                                     return $record->user->name . $phoneStr;
                                 }
-                                return $record->customer_name ? $record->customer_name . $phoneStr . ' (Đã xóa)' : '-';
+                                return $record->customer_name ? $record->customer_name . $phoneStr : '-';
                             })
                             ->url(fn ($record): ?string => $record->user_id && $record->user
                                 ? CustomerResource::getUrl('edit', ['record' => $record->user_id])
@@ -64,7 +64,7 @@ class BookingInfoList
                                 }
                                 if ($record->ktv_name) {
                                     $phone = $record->ktv_phone ? " ({$record->ktv_phone})" : "";
-                                    return $record->ktv_name . $phone . ' (Đã xóa)';
+                                    return $record->ktv_name . $phone;
                                 }
                                 return '-';
                             })
