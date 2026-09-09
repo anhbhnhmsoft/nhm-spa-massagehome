@@ -25,6 +25,11 @@ class ServiceRequestController extends BaseController
      */
     public function store(Request $request): JsonResponse
     {
+        $resolvedServiceId = $this->resolveServiceOrCategoryId($request->input('service_id'));
+        if ($resolvedServiceId) {
+            $request->merge(['service_id' => $resolvedServiceId]);
+        }
+
         $validator = Validator::make($request->all(), [
             'service_id' => [
                 'required',
@@ -165,4 +170,41 @@ class ServiceRequestController extends BaseController
             message: __('admin.service_request.messages.respond_success')
         );
     }
+
+    /**
+     * Tự động giải quyết ID của Dịch vụ hoặc Danh mục (xử lý sai số làm tròn số float 64-bit từ JavaScript)
+     */
+    protected function resolveServiceOrCategoryId(mixed $value): ?string
+    {
+        if (empty($value)) {
+            return null;
+        }
+
+        $strVal = (string) $value;
+
+        // 1. Kiểm tra khớp chính xác ID
+        if (Category::where('id', $strVal)->exists() || Service::where('id', $strVal)->exists()) {
+            return $strVal;
+        }
+
+        // 2. Nếu client JavaScript (Number) bị làm tròn số dấu phẩy động 64-bit BigInt (Number.MAX_SAFE_INTEGER = 9e15)
+        if (is_numeric($strVal) && (float) $strVal > 1e12) {
+            $num = (float) $strVal;
+            $min = sprintf('%.0f', $num - 256);
+            $max = sprintf('%.0f', $num + 256);
+
+            $matchedCat = Category::whereBetween('id', [$min, $max])->first();
+            if ($matchedCat) {
+                return (string) $matchedCat->id;
+            }
+
+            $matchedService = Service::whereBetween('id', [$min, $max])->first();
+            if ($matchedService) {
+                return (string) $matchedService->id;
+            }
+        }
+
+        return null;
+    }
 }
+
