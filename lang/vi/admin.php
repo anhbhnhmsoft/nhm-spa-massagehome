@@ -1334,6 +1334,7 @@ return
                 'booking_created_success' => 'Đã tự động tạo Booking mới thành công từ Yêu cầu dịch vụ.',
                 'already_matched' => 'Yêu cầu dịch vụ này đã được Matching hoặc đã tạo Booking.',
                 'proposal_not_found' => 'Chưa có đề xuất KTV nào được gửi hoặc chấp nhận cho yêu cầu này.',
+                'not_found' => 'Yêu cầu dịch vụ không tồn tại.',
             ],
         ],
         'invitation_status' => [

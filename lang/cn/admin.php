@@ -1319,6 +1319,7 @@ return
                 'booking_created_success' => '已根据服务需求自动创建新订单。',
                 'already_matched' => '此需求已匹配完成或已生成订单。',
                 'proposal_not_found' => '未找到此需求的技师推荐或尚未被接受。',
+                'not_found' => '服务需求不存在。',
             ],
         ],
         'invitation_status' => [

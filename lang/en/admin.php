@@ -1321,6 +1321,7 @@ return
                 'booking_created_success' => 'New booking auto-created from service request.',
                 'already_matched' => 'This request has already been matched or converted to a booking.',
                 'proposal_not_found' => 'No KTV proposal has been sent or accepted for this request yet.',
+                'not_found' => 'Service request not found.',
             ],
         ],
         'invitation_status' => [
