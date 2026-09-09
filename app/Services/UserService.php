@@ -477,18 +477,45 @@ class UserService extends BaseService
         try {
             DB::beginTransaction();
             $user = Auth::user();
-            $checkAddress = $this->userAddressRepository->query()
-                ->where('user_id', $user->id)
-                ->where('latitude', $data['latitude'])
-                ->where('longitude', $data['longitude'])
-                ->first();
-            if ($checkAddress) {
+            $userId = $user ? $user->id : ($data['user_id'] ?? null);
+            if (!$userId) {
                 return ServiceReturn::error(
-                    message: __("common_error.address_exists")
+                    message: __("common_error.unauthorized")
                 );
             }
+
+            // Chỉ kiểm tra trùng trong danh sách địa chỉ đã lưu (is_primary = false)
+            // Không kiểm tra với is_primary = true (vì đó là vị trí GPS hiện tại tự động gửi bởi app)
+            $checkAddress = $this->userAddressRepository->query()
+                ->where('user_id', $userId)
+                ->where('is_primary', false)
+                ->where(function ($q) use ($data) {
+                    $q->where(function ($sub) use ($data) {
+                        $sub->where('latitude', $data['latitude'])
+                            ->where('longitude', $data['longitude']);
+                    })->orWhere('address', $data['address']);
+                })
+                ->first();
+
+            if ($checkAddress) {
+                // Nếu địa chỉ này đã có trong danh sách đã lưu, cập nhật ghi chú (desc) và trả về thành công
+                $checkAddress->update([
+                    'desc' => !empty($data['desc']) ? $data['desc'] : $checkAddress->desc,
+                    'address' => $data['address'] ?? $checkAddress->address,
+                    'latitude' => $data['latitude'] ?? $checkAddress->latitude,
+                    'longitude' => $data['longitude'] ?? $checkAddress->longitude,
+                ]);
+
+                DB::commit();
+
+                return ServiceReturn::success(
+                    data: $checkAddress,
+                    message: __("common.success.data_created")
+                );
+            }
+
             $preparedData = [
-                'user_id' => $user->id,
+                'user_id' => $userId,
                 'address' => $data['address'],
                 'latitude' => $data['latitude'],
                 'longitude' => $data['longitude'],
