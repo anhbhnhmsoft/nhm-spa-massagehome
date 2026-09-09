@@ -1,3 +1,5 @@
+@use('App\Enums\ProposalStatus')
+
 <div class="space-y-4">
     <div class="p-3 bg-gray-50 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-lg text-sm space-y-1.5">
         <p><strong class="text-gray-700 dark:text-gray-300">{{ __('admin.service_request.fields.customer') }}:</strong> <span class="font-medium text-gray-900 dark:text-white">{{ $record->customer?->name }}</span></p>
@@ -22,13 +24,13 @@
             <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                 @forelse($proposals as $p)
                     @php
-                        $statusEnum = $p->status instanceof \App\Enums\ProposalStatus 
+                        $statusEnum = $p->status instanceof ProposalStatus 
                             ? $p->status 
-                            : (is_numeric($p->status) ? \App\Enums\ProposalStatus::tryFrom((int)$p->status) : null);
+                            : (is_numeric($p->status) ? ProposalStatus::tryFrom((int)$p->status) : null);
                         $statusLabel = $statusEnum ? $statusEnum->label() : ($p->status ?? '—');
                         $statusColor = $statusEnum ? $statusEnum->color() : 'gray';
                     @endphp
-                    <tr class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+                    <tr class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                         <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">
                             {{ $p->ktv?->name ?? 'N/A' }}
                         </td>

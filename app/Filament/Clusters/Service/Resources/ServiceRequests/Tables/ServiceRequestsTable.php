@@ -158,13 +158,13 @@ class ServiceRequestsTable
                     ->color('primary')
                     ->form([
                         Placeholder::make('previous_proposals')
-                            ->label(__('admin.service_request.fields.previous_proposals'))
+                            ->hiddenLabel()
                             ->visible(fn (?ServiceRequest $record) => $record && $record->proposals()->exists())
                             ->content(function (?ServiceRequest $record) {
                                 if (!$record) {
                                     return null;
                                 }
-                                $proposals = $record->proposals()->with(['ktv', 'cskh'])->latest()->get();
+                                $proposals = $record->proposals()->with(['ktv.profile', 'cskh'])->latest()->get();
                                 if ($proposals->isEmpty()) {
                                     return null;
                                 }
