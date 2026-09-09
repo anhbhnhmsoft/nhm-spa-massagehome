@@ -47,7 +47,7 @@ class ServiceRequest extends Model
     protected $casts = [
         'customer_id' => 'string',
         'cskh_id' => 'string',
-        'service_id' => 'integer',
+        'service_id' => 'string',
         'preferred_techniques' => 'array',
         'preferred_ktv_ids' => 'array',
         'latitude' => 'decimal:8',
@@ -75,11 +75,19 @@ class ServiceRequest extends Model
     }
 
     /**
-     * Dịch vụ mong muốn
+     * Dịch vụ mong muốn (nếu service_id thuộc bảng services)
      */
     public function service(): BelongsTo
     {
         return $this->belongsTo(Service::class, 'service_id', 'id');
+    }
+
+    /**
+     * Danh mục Dịch vụ mong muốn (nếu service_id thuộc bảng categories)
+     */
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class, 'service_id', 'id');
     }
 
     /**

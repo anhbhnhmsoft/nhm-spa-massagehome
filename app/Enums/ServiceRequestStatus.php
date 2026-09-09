@@ -37,6 +37,21 @@ enum ServiceRequestStatus: int
     }
 
     /**
+     * Màu sắc hiển thị badge
+     */
+    public function color(): string
+    {
+        return match ($this) {
+            self::NEW => 'gray',
+            self::ASSIGNED => 'warning',
+            self::SEARCHING_KTV => 'info',
+            self::PROPOSAL_SENT, self::WAITING_CUSTOMER_CONFIRM => 'primary',
+            self::MATCHED, self::BOOKING_CREATED => 'success',
+            self::CLOSED, self::CANCELED => 'danger',
+        };
+    }
+
+    /**
      * Chuyển đổi danh sách Enum thành mảng Select Options cho Filament Form
      */
     public static function toOptions(): array

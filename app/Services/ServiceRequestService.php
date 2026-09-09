@@ -11,9 +11,11 @@ use App\Enums\UrgencyLevel;
 use App\Events\ProposalRespondedEvent;
 use App\Events\ServiceRequestCreatedEvent;
 use App\Events\ServiceRequestProposedEvent;
+use App\Models\Category;
 use App\Models\ServiceBooking;
 use App\Models\ServiceRequest;
 use App\Models\ServiceRequestProposal;
+use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -34,13 +36,32 @@ class ServiceRequestService extends BaseService
                 UrgencyLevel::SCHEDULED => isset($data['preferred_date']) ? Carbon::parse($data['preferred_date'])->endOfDay() : now()->addDays(2),
             };
 
+            $province = $data['province'] ?? null;
+            $ward = $data['ward'] ?? null;
+
+            if (empty($province) || empty($ward)) {
+                $customer = User::with('profile')->find($customerId);
+                $province = $province ?: ($customer?->province ?? $customer?->profile?->province);
+                $ward = $ward ?: ($customer?->ward ?? $customer?->profile?->ward);
+            }
+
+            if ((empty($province) || empty($ward)) && !empty($data['address'])) {
+                $addressParts = array_map('trim', explode(',', $data['address']));
+                if (count($addressParts) >= 2) {
+                    $province = $province ?: end($addressParts);
+                    $ward = $ward ?: $addressParts[count($addressParts) - 2];
+                }
+            }
+
             $request = ServiceRequest::create([
                 'customer_id' => $customerId,
-                'service_id' => $data['service_id'],
+                'service_id' => (string) $data['service_id'],
                 'preferred_techniques' => $data['preferred_techniques'] ?? [],
                 'province_code' => $data['province_code'] ?? null,
                 'district_code' => $data['district_code'] ?? null,
                 'ward_code' => $data['ward_code'] ?? null,
+                'province' => $province,
+                'ward' => $ward,
                 'address' => $data['address'] ?? null,
                 'latitude' => $data['latitude'] ?? null,
                 'longitude' => $data['longitude'] ?? null,
@@ -55,7 +76,7 @@ class ServiceRequestService extends BaseService
 
             ServiceRequestCreatedEvent::dispatch($request);
 
-            return ServiceReturn::success($request->load(['service', 'customer']));
+            return ServiceReturn::success($request->load(['service', 'category', 'customer']));
         } catch (\Throwable $e) {
             return ServiceReturn::error($e->getMessage());
         }
@@ -67,7 +88,7 @@ class ServiceRequestService extends BaseService
     public function getCustomerRequests(string $customerId): ServiceReturn
     {
         try {
-            $requests = ServiceRequest::with(['service', 'proposals.ktv', 'cskh'])
+            $requests = ServiceRequest::with(['service.category', 'category', 'proposals.ktv', 'cskh'])
                 ->where('customer_id', $customerId)
                 ->orderBy('created_at', 'desc')
                 ->get();
@@ -84,7 +105,7 @@ class ServiceRequestService extends BaseService
     public function getKtvProposals(string $ktvId): ServiceReturn
     {
         try {
-            $proposals = ServiceRequestProposal::with(['serviceRequest.service', 'serviceRequest.customer', 'cskh'])
+            $proposals = ServiceRequestProposal::with(['serviceRequest.service.category', 'serviceRequest.category', 'serviceRequest.customer', 'cskh'])
                 ->where('ktv_id', $ktvId)
                 ->orderBy('created_at', 'desc')
                 ->get();
@@ -235,8 +256,8 @@ class ServiceRequestService extends BaseService
                 : now()->addHour();
 
             $categoryId = $request->service?->category_id ?? $request->service_id;
-            if (!\App\Models\Category::where('id', $categoryId)->exists()) {
-                $categoryId = \App\Models\Category::first()?->id;
+            if (!Category::where('id', $categoryId)->exists()) {
+                $categoryId = Category::first()?->id;
             }
 
             $booking = ServiceBooking::create([

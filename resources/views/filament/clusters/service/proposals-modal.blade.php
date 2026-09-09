@@ -1,8 +1,12 @@
 <div class="space-y-4">
-    <div class="p-3 bg-gray-50 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-lg text-sm space-y-1">
+    <div class="p-3 bg-gray-50 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-lg text-sm space-y-1.5">
         <p><strong class="text-gray-700 dark:text-gray-300">{{ __('admin.service_request.fields.customer') }}:</strong> <span class="font-medium text-gray-900 dark:text-white">{{ $record->customer?->name }}</span></p>
-        <p><strong class="text-gray-700 dark:text-gray-300">{{ __('admin.service_request.fields.service') }}:</strong> <span class="font-medium text-gray-900 dark:text-white">{{ is_array($record->service?->category?->name) ? ($record->service?->category?->name[app()->getLocale()] ?? $record->service?->category?->name['vi'] ?? reset($record->service->category->name)) : $record->service?->category?->name }}</span></p>
-        <p><strong class="text-gray-700 dark:text-gray-300">{{ __('admin.service_request.modal.request_status') }}:</strong> <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-primary-100 text-primary-800 dark:bg-primary-900/50 dark:text-primary-300">{{ $record->status->label() }}</span></p>
+        @php
+            $cat = $record->category ?? $record->service?->category;
+            $serviceName = $cat ? (is_array($cat->name) ? ($cat->name[app()->getLocale()] ?? $cat->name['vi'] ?? reset($cat->name)) : $cat->name) : '—';
+        @endphp
+        <p><strong class="text-gray-700 dark:text-gray-300">{{ __('admin.service_request.fields.service') }}:</strong> <span class="font-medium text-gray-900 dark:text-white">{{ $serviceName }}</span></p>
+        <div class="flex items-center gap-2"><strong class="text-gray-700 dark:text-gray-300">{{ __('admin.service_request.modal.request_status') }}:</strong> <x-filament::badge :color="$record->status->color()">{{ $record->status->label() }}</x-filament::badge></div>
     </div>
 
     <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
@@ -17,6 +21,13 @@
             </thead>
             <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                 @forelse($proposals as $p)
+                    @php
+                        $statusEnum = $p->status instanceof \App\Enums\ProposalStatus 
+                            ? $p->status 
+                            : (is_numeric($p->status) ? \App\Enums\ProposalStatus::tryFrom((int)$p->status) : null);
+                        $statusLabel = $statusEnum ? $statusEnum->label() : ($p->status ?? '—');
+                        $statusColor = $statusEnum ? $statusEnum->color() : 'gray';
+                    @endphp
                     <tr class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
                         <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">
                             {{ $p->ktv?->name ?? 'N/A' }}
@@ -25,19 +36,9 @@
                             {{ $p->cskh?->name ?? 'System' }}
                         </td>
                         <td class="px-4 py-3">
-                            @php
-                                $statusValue = $p->status?->value;
-                                $statusClass = match($statusValue) {
-                                    1 => 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
-                                    2 => 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300',
-                                    3, 5 => 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300',
-                                    4 => 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
-                                    default => 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-                                };
-                            @endphp
-                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold {{ $statusClass }}">
-                                {{ $p->status?->label() }}
-                            </span>
+                            <x-filament::badge :color="$statusColor">
+                                {{ $statusLabel }}
+                            </x-filament::badge>
                         </td>
                         <td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
                             {{ $p->created_at?->format('H:i d/m/Y') }}

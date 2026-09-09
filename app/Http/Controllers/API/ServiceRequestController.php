@@ -5,6 +5,8 @@ namespace App\Http\Controllers\API;
 use App\Core\Controller\BaseController;
 use App\Enums\KtvTechnique;
 use App\Enums\UrgencyLevel;
+use App\Models\Category;
+use App\Models\Service;
 use App\Services\ServiceRequestService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -24,7 +26,17 @@ class ServiceRequestController extends BaseController
     public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'service_id' => 'required|integer|exists:services,id',
+            'service_id' => [
+                'required',
+                function ($attribute, $value, $fail) {
+                    $strVal = (string) $value;
+                    $existsInServices = Service::where('id', $strVal)->exists();
+                    $existsInCategories = Category::where('id', $strVal)->exists();
+                    if (!$existsInServices && !$existsInCategories) {
+                        $fail(__('validation.exists', ['attribute' => $attribute]));
+                    }
+                },
+            ],
             'preferred_techniques' => 'nullable|array',
             'preferred_techniques.*' => ['string', Rule::in(KtvTechnique::values())],
             'province_code' => 'nullable|string',
