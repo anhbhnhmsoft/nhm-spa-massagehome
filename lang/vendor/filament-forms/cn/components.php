@@ -678,6 +678,7 @@ return [
 
         'max_items_message' => '只能选择 :count 个。',
 
+        'no_options_message' => '暂无可用选项。',
         'no_search_results_message' => '没有选项匹配您的搜索',
 
         'placeholder' => '选择选项',

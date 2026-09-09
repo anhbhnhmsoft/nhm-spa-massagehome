@@ -225,6 +225,13 @@ class ServiceRequestsTable
                                         })->get();
                                 }
 
+                                // Nếu trong Tỉnh/Thành phố của khách vẫn chưa có KTV, lấy toàn bộ KTV đang hoạt động trên hệ thống để CSKH có thể linh hoạt chọn đề xuất
+                                if ($ktvs->isEmpty()) {
+                                    $ktvs = User::where('role', UserRole::KTV->value)
+                                        ->where('is_active', true)
+                                        ->get();
+                                }
+
                                 return $ktvs->mapWithKeys(function ($ktv) {
                                     $isOnline = $ktv->is_online ?? true;
                                     $statusBadge = $isOnline
@@ -242,6 +249,8 @@ class ServiceRequestsTable
                                 });
                             })
                             ->searchable()
+                            ->searchPrompt(__('admin.service_request.action.search_ktv_prompt'))
+                            ->noOptionsMessage(__('admin.service_request.action.no_ktv_available'))
                             ->required(),
                     ])
                     ->action(function (ServiceRequest $record, array $data, ServiceRequestService $service) {
@@ -296,7 +305,7 @@ class ServiceRequestsTable
                     ->color('info')
                     ->modalHeading(__('admin.service_request.action.invite_history'))
                     ->modalSubmitAction(false)
-                    ->modalCancelActionLabel(__('common.action.close'))
+                    ->modalCancelActionLabel(__('admin.service_request.modal.close'))
                     ->modalContent(function (ServiceRequest $record) {
                         $proposals = $record->proposals()->with(['ktv', 'cskh'])->latest()->get();
                         return view('filament.clusters.service.proposals-modal', [

@@ -1317,6 +1317,8 @@ return
             'action' => [
                 'recommend_ktv' => 'Chọn KTV đề xuất (Lọc theo Khu vực Khách)',
                 'invite_history' => 'Lịch sử Đề xuất',
+                'no_ktv_available' => 'Không có KTV nào khả dụng trên hệ thống',
+                'search_ktv_prompt' => 'Nhập tên hoặc số điện thoại để tìm KTV...',
             ],
             'modal' => [
                 'request_status' => 'Trạng thái Yêu cầu',

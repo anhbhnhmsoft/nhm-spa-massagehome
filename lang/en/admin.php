@@ -1304,6 +1304,8 @@ return
             'action' => [
                 'recommend_ktv' => 'Select Recommended KTV (Filtered by Customer Area)',
                 'invite_history' => 'Recommendation History',
+                'no_ktv_available' => 'No active KTVs available in the system',
+                'search_ktv_prompt' => 'Type name or phone to search KTV...',
             ],
             'modal' => [
                 'request_status' => 'Request Status',

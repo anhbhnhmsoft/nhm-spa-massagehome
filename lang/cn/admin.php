@@ -1302,6 +1302,8 @@ return
             'action' => [
                 'recommend_ktv' => '选择推荐技师 (按客户区域筛选)',
                 'invite_history' => '推荐历史',
+                'no_ktv_available' => '系统中暂无可用技师',
+                'search_ktv_prompt' => '输入技师姓名或电话进行搜索...',
             ],
             'modal' => [
                 'request_status' => '需求状态',
