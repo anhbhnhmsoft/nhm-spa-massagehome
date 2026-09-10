@@ -27,7 +27,8 @@ class ServiceRequestProposal extends Model
     ];
 
     protected $casts = [
-        'request_id' => 'integer',
+        'id' => 'string',
+        'request_id' => 'string',
         'ktv_id' => 'string',
         'cskh_id' => 'string',
         'status' => ProposalStatus::class,

@@ -97,7 +97,7 @@ class ServiceRequestController extends BaseController
     /**
      * Khách hàng Phản hồi (Đồng ý / Từ chối) KTV do CSKH đề xuất
      */
-    public function respondProposalByCustomer(Request $request, int $proposalId): JsonResponse
+    public function respondProposalByCustomer(Request $request, int|string $proposalId): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'accept' => 'required|boolean',
@@ -144,7 +144,7 @@ class ServiceRequestController extends BaseController
     /**
      * KTV Phản hồi Lời mời đề xuất (Đồng ý / Từ chối)
      */
-    public function respondProposalByKtv(Request $request, int $proposalId): JsonResponse
+    public function respondProposalByKtv(Request $request, int|string $proposalId): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'accept' => 'required|boolean',

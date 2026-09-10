@@ -45,6 +45,7 @@ class ServiceRequest extends Model
     ];
 
     protected $casts = [
+        'id' => 'string',
         'customer_id' => 'string',
         'cskh_id' => 'string',
         'service_id' => 'string',

@@ -158,12 +158,26 @@ class ServiceRequestService extends BaseService
     /**
      * KTV Phản hồi Lời mời đề xuất (Chấp nhận / Từ chối)
      */
-    public function ktvRespondProposal(int $proposalId, string $ktvId, bool $accept): ServiceReturn
+    public function ktvRespondProposal(int|string $proposalId, string $ktvId, bool $accept): ServiceReturn
     {
         try {
             return DB::transaction(function () use ($proposalId, $ktvId, $accept) {
                 $proposal = ServiceRequestProposal::with('serviceRequest')->lockForUpdate()->find($proposalId);
-                if (!$proposal || $proposal->ktv_id !== $ktvId) {
+
+                // Fallback nếu client JavaScript bị làm tròn số dấu phẩy động 64-bit BigInt (Number.MAX_SAFE_INTEGER)
+                if (!$proposal && is_numeric($proposalId) && (float) $proposalId > 1e12) {
+                    $num = (float) $proposalId;
+                    $min = sprintf('%.0f', $num - 256);
+                    $max = sprintf('%.0f', $num + 256);
+
+                    $proposal = ServiceRequestProposal::with('serviceRequest')
+                        ->where('ktv_id', (string) $ktvId)
+                        ->whereBetween('id', [$min, $max])
+                        ->lockForUpdate()
+                        ->first();
+                }
+
+                if (!$proposal || (string) $proposal->ktv_id !== (string) $ktvId) {
                     return ServiceReturn::error(__('admin.service_request.messages.proposal_not_found'));
                 }
 
@@ -190,12 +204,26 @@ class ServiceRequestService extends BaseService
     /**
      * Khách hàng Phản hồi Đề xuất KTV (Chấp nhận / Từ chối)
      */
-    public function customerRespondProposal(int $proposalId, string $customerId, bool $accept): ServiceReturn
+    public function customerRespondProposal(int|string $proposalId, string $customerId, bool $accept): ServiceReturn
     {
         try {
             return DB::transaction(function () use ($proposalId, $customerId, $accept) {
                 $proposal = ServiceRequestProposal::with('serviceRequest')->lockForUpdate()->find($proposalId);
-                if (!$proposal || $proposal->serviceRequest->customer_id !== $customerId) {
+
+                // Fallback nếu client JavaScript bị làm tròn số dấu phẩy động 64-bit BigInt (Number.MAX_SAFE_INTEGER)
+                if (!$proposal && is_numeric($proposalId) && (float) $proposalId > 1e12) {
+                    $num = (float) $proposalId;
+                    $min = sprintf('%.0f', $num - 256);
+                    $max = sprintf('%.0f', $num + 256);
+
+                    $proposal = ServiceRequestProposal::with('serviceRequest')
+                        ->whereHas('serviceRequest', fn($q) => $q->where('customer_id', (string) $customerId))
+                        ->whereBetween('id', [$min, $max])
+                        ->lockForUpdate()
+                        ->first();
+                }
+
+                if (!$proposal || (string) $proposal->serviceRequest?->customer_id !== (string) $customerId) {
                     return ServiceReturn::error(__('admin.service_request.messages.proposal_not_found'));
                 }
 
