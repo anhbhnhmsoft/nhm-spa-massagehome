@@ -14,6 +14,7 @@ class CustomerCrmData extends Model
 
     protected $table = 'customer_crm_data';
     protected $primaryKey = 'user_id';
+    protected $keyType = 'string';
 
     public $incrementing = false;
 

@@ -142,7 +142,7 @@ class ProactiveMatchingService extends BaseService
     /**
      * Khách hàng Phản hồi Lời mời từ KTV (Chấp nhận ➔ Auto-Booking 1-Click / Từ chối)
      */
-    public function customerRespondInvite(int $inviteId, string $customerId, bool $accept): ServiceReturn
+    public function customerRespondInvite(int|string $inviteId, string $customerId, bool $accept): ServiceReturn
     {
         try {
             return DB::transaction(function () use ($inviteId, $customerId, $accept) {
@@ -150,7 +150,20 @@ class ProactiveMatchingService extends BaseService
                     ->lockForUpdate()
                     ->find($inviteId);
 
-                if (!$invite || $invite->customer_id !== $customerId || $invite->status !== InvitationStatus::PENDING) {
+                // Fallback nếu client JavaScript bị làm tròn số dấu phẩy động 64-bit BigInt
+                if (!$invite && is_numeric($inviteId) && (float) $inviteId > 1e12) {
+                    $num = (float) $inviteId;
+                    $min = sprintf('%.0f', $num - 256);
+                    $max = sprintf('%.0f', $num + 256);
+
+                    $invite = KtvProactiveInvite::with(['ktv', 'serviceRequest'])
+                        ->where('customer_id', (string) $customerId)
+                        ->whereBetween('id', [$min, $max])
+                        ->lockForUpdate()
+                        ->first();
+                }
+
+                if (!$invite || (string) $invite->customer_id !== (string) $customerId || $invite->status !== InvitationStatus::PENDING) {
                     return ServiceReturn::error(__('admin.proactive_invite.messages.invite_not_found'));
                 }
 

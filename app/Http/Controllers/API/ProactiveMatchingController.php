@@ -96,7 +96,7 @@ class ProactiveMatchingController extends BaseController
     /**
      * Khách hàng Phản hồi Lời mời từ KTV (Đồng ý / Từ chối)
      */
-    public function respondInvite(Request $request, int $inviteId): JsonResponse
+    public function respondInvite(Request $request, int|string $inviteId): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'accept' => 'required|boolean',

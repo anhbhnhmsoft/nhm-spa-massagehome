@@ -27,7 +27,8 @@ class KtvProactiveInvite extends Model
     ];
 
     protected $casts = [
-        'request_id' => 'integer',
+        'id' => 'string',
+        'request_id' => 'string',
         'ktv_id' => 'string',
         'customer_id' => 'string',
         'status' => InvitationStatus::class,

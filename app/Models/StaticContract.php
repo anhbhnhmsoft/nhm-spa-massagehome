@@ -33,4 +33,8 @@ class StaticContract extends Model
         'note',
         'path',
     ];
+
+    protected $casts = [
+        'id' => 'string',
+    ];
 }
