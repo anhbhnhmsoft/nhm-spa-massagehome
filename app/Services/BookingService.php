@@ -62,8 +62,7 @@ class BookingService extends BaseService
         protected ServiceRepository               $serviceRepository,
         protected UserKtvScheduleRepository       $userKtvScheduleRepository,
         protected BookingApplicationRepository    $bookingApplicationRepository,
-    )
-    {
+    ) {
         parent::__construct();
     }
 
@@ -169,8 +168,7 @@ class BookingService extends BaseService
      */
     public function bookService(
         array $data
-    ): ServiceReturn
-    {
+    ): ServiceReturn {
 
         return $this->execute(
             callback: function () use ($data) {
@@ -263,8 +261,7 @@ class BookingService extends BaseService
                 !in_array($userCurrent->role, [UserRole::CUSTOMER->value, UserRole::KTV->value])
                 || ($userCurrent->role === UserRole::CUSTOMER->value && $booking->user_id !== $userCurrent->id)
                 || ($userCurrent->role === UserRole::KTV->value && $booking->ktv_user_id !== $userCurrent->id)
-            )
-            {
+            ) {
                 throw new ServiceException(
                     message: __("booking.not_permission")
                 );
@@ -553,7 +550,7 @@ class BookingService extends BaseService
     public function finishBooking(int $bookingId): ServiceReturn
     {
         return $this->execute(
-            callback: fn () => $this->finishBookingInternal($bookingId),
+            callback: fn() => $this->finishBookingInternal($bookingId),
             useTransaction: true
         );
     }
@@ -561,7 +558,7 @@ class BookingService extends BaseService
     public function finishBookingBySystem(int $bookingId): ServiceReturn
     {
         return $this->execute(
-            callback: fn () => $this->finishBookingInternal($bookingId, true),
+            callback: fn() => $this->finishBookingInternal($bookingId, true),
             useTransaction: true
         );
     }
@@ -713,8 +710,7 @@ class BookingService extends BaseService
     public function handleReassignBooking(
         int  $bookingId,
         int $newKtvId
-    ): ServiceReturn
-    {
+    ): ServiceReturn {
         return $this->execute(function () use ($bookingId,  $newKtvId) {
             // Tìm booking với lock để tránh race condition
             $booking = $this->bookingRepository->query()
@@ -778,7 +774,6 @@ class BookingService extends BaseService
                     ]
                 );
             }
-
         });
     }
 
@@ -914,5 +909,4 @@ class BookingService extends BaseService
             'ktvAddress' => $ktvAddress,
         ];
     }
-
 }

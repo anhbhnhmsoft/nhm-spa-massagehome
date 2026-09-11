@@ -44,7 +44,7 @@ class ChatService extends BaseService
      * @param int $userId
      * @return ServiceReturn
      */
-    public function getOrCreateRoom(int $userId): ServiceReturn
+    public function getOrCreateRoom(int|string $userId): ServiceReturn
     {
         return $this->execute(function () use ($userId) {
             // Check Auth & Token
@@ -64,7 +64,8 @@ class ChatService extends BaseService
                 $partnerQuery->where('role', UserRole::KTV->value);
             }
             // Tìm đối phương
-            $partner = $partnerQuery->where('id', $userId)->first();
+            $partner = $partnerQuery->where('id', $userId)->first()
+                ?? $this->userRepository->queryUser()->where('id', $userId)->first();
             if (!$partner) {
                 throw new ServiceException(message: __('error.user_not_found'));
             }
