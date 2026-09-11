@@ -1286,6 +1286,7 @@ return
                 'customer' => 'Customer',
                 'cskh' => 'Assigned CSKH',
                 'service' => 'Requested Service',
+                'duration' => 'Duration',
                 'techniques' => 'Requested Techniques',
                 'address' => 'Service Location',
                 'preferred_date' => 'Preferred Date',
@@ -1324,6 +1325,8 @@ return
                 'already_matched' => 'This request has already been matched or converted to a booking.',
                 'proposal_not_found' => 'No KTV proposal has been sent or accepted for this request yet.',
                 'not_found' => 'Service request not found.',
+                'category_price_not_configured' => 'The service ":name" does not have configured prices in the system. Please configure its price list in Admin.',
+                'category_not_found' => 'The requested service category was not found.',
             ],
         ],
         'invitation_status' => [

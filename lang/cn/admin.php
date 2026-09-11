@@ -1284,6 +1284,7 @@ return
                 'customer' => '客户',
                 'cskh' => '负责客服',
                 'service' => '期望服务',
+                'duration' => '时长',
                 'techniques' => '要求手法',
                 'address' => '服务地址',
                 'preferred_date' => '预约日期',
@@ -1322,6 +1323,8 @@ return
                 'already_matched' => '此需求已匹配完成或已生成订单。',
                 'proposal_not_found' => '未找到此需求的技师推荐或尚未被接受。',
                 'not_found' => '服务需求不存在。',
+                'category_price_not_configured' => '服务类型 ":name" 尚未在系统中配置价格表。请在后台管理中配置价格。',
+                'category_not_found' => '未找到与需求相对应的服务类型。',
             ],
         ],
         'invitation_status' => [

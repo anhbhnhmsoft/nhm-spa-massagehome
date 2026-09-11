@@ -328,9 +328,7 @@ class ServiceRequestService extends BaseService
             }
 
             if (!$category) {
-                return ServiceReturn::error(__('admin.service_request.messages.category_not_found', [
-                    'default' => 'Không tìm thấy loại dịch vụ tương ứng với yêu cầu.'
-                ]));
+                return ServiceReturn::error(__('admin.service_request.messages.category_not_found'));
             }
 
             $finalCategoryId = (string) $category->id;
@@ -348,11 +346,12 @@ class ServiceRequestService extends BaseService
                 ?? $category->prices()->first();
 
             if (!$categoryPrice || (float) $categoryPrice->price <= 0) {
+                $locale = app()->getLocale();
                 $catName = is_array($category->name)
-                    ? ($category->name['vi'] ?? reset($category->name))
+                    ? ($category->name[$locale] ?? $category->name['vi'] ?? reset($category->name))
                     : ($category->name ?? $finalCategoryId);
 
-                return ServiceReturn::error(__('Loại dịch vụ ":name" chưa được thiết lập bảng giá (category_prices) trong hệ thống. Vui lòng cấu hình bảng giá trong Admin.', [
+                return ServiceReturn::error(__('admin.service_request.messages.category_price_not_configured', [
                     'name' => $catName
                 ]));
             }

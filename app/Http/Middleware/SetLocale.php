@@ -18,15 +18,17 @@ class SetLocale
     public function handle(Request $request, Closure $next): Response
     {
         $locale = Language::VIETNAMESE->value;
-        $user = auth('sanctum')->user();
-        if ($user) {
-            $locale = $user->language ?? $locale;
-        }else {
-            $locate = $request->query('locate');
-            if (Helper::checkLanguage($locate)) {
-                $locale = $locate;
+        $locate = $request->query('locate') ?? $request->header('X-Locale');
+
+        if (Helper::checkLanguage($locate)) {
+            $locale = $locate;
+        } else {
+            $user = auth('sanctum')->user();
+            if ($user && !empty($user->language) && Helper::checkLanguage($user->language)) {
+                $locale = $user->language;
             }
         }
+
         app()->setLocale($locale);
         return $next($request);
     }

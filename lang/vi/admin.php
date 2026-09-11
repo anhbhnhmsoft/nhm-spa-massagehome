@@ -1299,6 +1299,7 @@ return
                 'customer' => 'Khách hàng',
                 'cskh' => 'CSKH phụ trách',
                 'service' => 'Dịch vụ mong muốn',
+                'duration' => 'Thời lượng',
                 'techniques' => 'Kỹ thuật yêu cầu',
                 'address' => 'Địa chỉ phục vụ',
                 'preferred_date' => 'Ngày hẹn',
@@ -1337,6 +1338,8 @@ return
                 'already_matched' => 'Yêu cầu dịch vụ này đã được Matching hoặc đã tạo Booking.',
                 'proposal_not_found' => 'Chưa có đề xuất KTV nào được gửi hoặc chấp nhận cho yêu cầu này.',
                 'not_found' => 'Yêu cầu dịch vụ không tồn tại.',
+                'category_price_not_configured' => 'Loại dịch vụ ":name" chưa được thiết lập bảng giá (category_prices) trong hệ thống. Vui lòng cấu hình bảng giá trong Admin.',
+                'category_not_found' => 'Không tìm thấy loại dịch vụ tương ứng với yêu cầu.',
             ],
         ],
         'invitation_status' => [
