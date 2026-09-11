@@ -62,6 +62,7 @@ class ServiceRequestService extends BaseService
             $request = ServiceRequest::create([
                 'customer_id' => $customerId,
                 'service_id' => (string) $data['service_id'],
+                'duration' => isset($data['duration']) ? (int) $data['duration'] : 60,
                 'preferred_techniques' => $data['preferred_techniques'] ?? [],
                 'province_code' => $data['province_code'] ?? null,
                 'district_code' => $data['district_code'] ?? null,
@@ -279,6 +280,7 @@ class ServiceRequestService extends BaseService
     public function createBookingFromRequest(ServiceRequest $request, string $ktvId): ServiceReturn
     {
         try {
+            // 1. Xác định thời gian đặt lịch & khung giờ (start_time, end_time)
             $startTime = '09:00';
             if (!empty($request->time_slot)) {
                 $parts = explode('-', $request->time_slot);
@@ -289,33 +291,79 @@ class ServiceRequestService extends BaseService
                 ? Carbon::parse($request->preferred_date->format('Y-m-d') . ' ' . $startTime)
                 : now()->addHour();
 
-            // 1. Xác định Category chuẩn
+            // 2. Xác định Loại dịch vụ (Category) chuẩn xác từ service_id
+            $category = null;
             $categoryId = $request->service_id;
-            if (!$categoryId || !Category::where('id', $categoryId)->exists()) {
-                $categoryId = Category::first()?->id;
+
+            // 2.1. Tra cứu trực tiếp trong Category nếu service_id là Category ID
+            if (!empty($categoryId)) {
+                $category = Category::with('prices')->find($categoryId);
             }
 
-            // 2. Tra cứu Thời lượng và Giá dịch vụ từ bảng category_prices
-            $duration = 60; // Mặc định 60 phút
-            $categoryPrice = null;
-            if ($categoryId) {
-                $categoryPrice = CategoryPrice::where('category_id', $categoryId)
-                    ->where('duration', 60)
-                    ->first()
-                    ?? CategoryPrice::where('category_id', $categoryId)->oldest('duration')->first();
-
-                if ($categoryPrice) {
-                    $duration = (int) $categoryPrice->duration;
+            // 2.2. Nếu không có, kiểm tra nếu service_id là ID của bảng services (dịch vụ KTV đăng ký)
+            if (!$category && !empty($categoryId)) {
+                $service = Service::with('category.prices')->find($categoryId);
+                if ($service && $service->category) {
+                    $category = $service->category;
                 }
             }
 
-            $basePrice = (float) ($categoryPrice?->price ?? 0);
-            if ($basePrice <= 0) {
-                // Giá niêm yết mặc định của dịch vụ nếu bảng giá chưa cấu hình chi tiết
-                $basePrice = 350000;
+            // 2.3. Fallback qua các quan hệ đã nạp trước trên ServiceRequest
+            if (!$category) {
+                if ($request->relationLoaded('category') && $request->category) {
+                    $category = $request->category;
+                } elseif ($request->relationLoaded('service') && $request->service?->category) {
+                    $category = $request->service->category;
+                }
             }
 
-            // 3. Lấy địa chỉ KTV & Tính toán phí di chuyển
+            // 2.4. Nếu vẫn chưa xác định được và có ktvId, tìm dịch vụ KTV này cung cấp
+            if (!$category && !empty($ktvId)) {
+                $ktvService = Service::with('category.prices')
+                    ->where('user_id', (string) $ktvId)
+                    ->first();
+                if ($ktvService && $ktvService->category) {
+                    $category = $ktvService->category;
+                }
+            }
+
+            if (!$category) {
+                return ServiceReturn::error(__('admin.service_request.messages.category_not_found', [
+                    'default' => 'Không tìm thấy loại dịch vụ tương ứng với yêu cầu.'
+                ]));
+            }
+
+            $finalCategoryId = (string) $category->id;
+
+            // 3. Tra cứu Thời lượng và Giá dịch vụ trực tiếp từ bảng category_prices cấu hình theo loại dịch vụ này
+            // Ưu tiên thời lượng khách hàng đã chọn trong ServiceRequest, fallback về 60 phút hoặc gói đầu tiên
+            $requestedDuration = (int) ($request->duration ?: 60);
+
+            $categoryPrice = CategoryPrice::where('category_id', $finalCategoryId)
+                ->where('duration', $requestedDuration)
+                ->first()
+                ?? CategoryPrice::where('category_id', $finalCategoryId)->where('duration', 60)->first()
+                ?? CategoryPrice::where('category_id', $finalCategoryId)->oldest('duration')->first()
+                ?? $category->cheapestPrice
+                ?? $category->prices()->first();
+
+            if (!$categoryPrice || (float) $categoryPrice->price <= 0) {
+                $catName = is_array($category->name)
+                    ? ($category->name['vi'] ?? reset($category->name))
+                    : ($category->name ?? $finalCategoryId);
+
+                return ServiceReturn::error(__('Loại dịch vụ ":name" chưa được thiết lập bảng giá (category_prices) trong hệ thống. Vui lòng cấu hình bảng giá trong Admin.', [
+                    'name' => $catName
+                ]));
+            }
+
+            $duration = (int) $categoryPrice->duration;
+            $basePrice = (float) $categoryPrice->price;
+
+            $startTimeCarbon = $bookingTime->copy();
+            $endTimeCarbon = $bookingTime->copy()->addMinutes($duration);
+
+            // 4. Lấy địa chỉ KTV & Tính toán phí di chuyển
             $ktvAddress = UserAddress::where('user_id', $ktvId)->where('is_primary', true)->first()
                 ?? UserAddress::where('user_id', $ktvId)->first();
 
@@ -343,12 +391,15 @@ class ServiceRequestService extends BaseService
                 }
             }
 
+            // 5. Tạo ServiceBooking với đầy đủ thông tin chuẩn xác
             $booking = ServiceBooking::create([
                 'user_id' => $request->customer_id,
                 'ktv_user_id' => $ktvId,
-                'category_id' => $categoryId,
+                'category_id' => $finalCategoryId,
                 'duration' => $duration,
                 'booking_time' => $bookingTime,
+                'start_time' => $startTimeCarbon,
+                'end_time' => $endTimeCarbon,
                 'address' => $request->address ?? '',
                 'latitude' => $custLat,
                 'longitude' => $custLng,
@@ -362,9 +413,9 @@ class ServiceRequestService extends BaseService
                 'note' => $request->note,
             ]);
 
-            // Cộng thêm performed_count của service cho KTV
+            // 6. Cộng thêm performed_count của service cho KTV nếu có
             Service::where('user_id', $ktvId)
-                ->where('category_id', $categoryId)
+                ->where('category_id', $finalCategoryId)
                 ->increment('performed_count');
 
             $request->status = ServiceRequestStatus::BOOKING_CREATED;

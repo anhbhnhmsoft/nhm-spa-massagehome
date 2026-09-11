@@ -79,6 +79,13 @@ class ServiceRequestsTable
                         });
                     }),
 
+                TextColumn::make('duration')
+                    ->label(__('admin.common.form.duration'))
+                    ->formatStateUsing(fn ($state) => ($state ?: 60) . ' ' . __('admin.common.minute'))
+                    ->badge()
+                    ->color('info')
+                    ->alignCenter(),
+
                 TextColumn::make('urgency_level')
                     ->label(__('admin.service_request.fields.urgency_level'))
                     ->badge()

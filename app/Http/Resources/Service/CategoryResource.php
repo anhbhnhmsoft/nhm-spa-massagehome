@@ -22,6 +22,7 @@ class CategoryResource extends JsonResource
             'description' => $this->description,
             'image_url' => $this->image_url ? Helper::getPublicUrl($this->image_url) : null,
             'usage_count' => $this->usage_count,
+            'prices' => CategoryPriceResource::collection($this->prices),
         ];
     }
 }
