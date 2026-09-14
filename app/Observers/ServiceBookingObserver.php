@@ -3,9 +3,11 @@
 namespace App\Observers;
 
 use App\Enums\BookingStatus;
+use App\Enums\ServiceRequestStatus;
 use App\Models\Category;
 use App\Models\CustomerCrmData;
 use App\Models\ServiceBooking;
+use App\Models\ServiceRequest;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 
@@ -62,6 +64,13 @@ class ServiceBookingObserver
     {
         if ($booking->wasChanged('status')) {
             $statusValue = is_object($booking->status) ? $booking->status->value : (int) $booking->status;
+
+            // Tự động đóng Yêu cầu dịch vụ liên kết khi đơn hàng hoàn thành hoặc bị hủy
+            if (in_array($statusValue, [BookingStatus::COMPLETED->value, BookingStatus::CANCELED->value])) {
+                ServiceRequest::where('booking_id', $booking->id)
+                    ->where('status', ServiceRequestStatus::BOOKING_CREATED)
+                    ->update(['status' => ServiceRequestStatus::CLOSED]);
+            }
 
             if ($statusValue === BookingStatus::COMPLETED->value) {
                 $this->recalculateCustomerCrmData((string) $booking->user_id);

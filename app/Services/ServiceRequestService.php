@@ -417,6 +417,7 @@ class ServiceRequestService extends BaseService
                 ->where('category_id', $finalCategoryId)
                 ->increment('performed_count');
 
+            $request->booking_id = $booking->id;
             $request->status = ServiceRequestStatus::BOOKING_CREATED;
             $request->save();
 

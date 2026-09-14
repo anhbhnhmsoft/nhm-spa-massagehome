@@ -12,6 +12,7 @@ use App\Services\ServiceRequestService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Support\Colors\Color;
 use Filament\Tables\Columns\BadgeColumn;
@@ -28,6 +29,7 @@ class ServiceRequestsTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->recordUrl(null)
             ->modifyQueryUsing(fn (Builder $query) => $query->with(['customer', 'service.category', 'category', 'cskh', 'proposals.ktv']))
             ->columns([
                 TextColumn::make('id')
@@ -106,7 +108,8 @@ class ServiceRequestsTable
                         ServiceRequestStatus::PROPOSAL_SENT, ServiceRequestStatus::WAITING_CUSTOMER_CONFIRM => 'primary',
                         ServiceRequestStatus::MATCHED => 'success',
                         ServiceRequestStatus::BOOKING_CREATED => 'success',
-                        ServiceRequestStatus::CLOSED, ServiceRequestStatus::CANCELED => 'danger',
+                        ServiceRequestStatus::CLOSED => 'gray',
+                        ServiceRequestStatus::CANCELED => 'danger',
                     })
                     ->formatStateUsing(fn (ServiceRequestStatus $state) => $state->label()),
 
@@ -120,9 +123,31 @@ class ServiceRequestsTable
                 TextColumn::make('cskh_note')
                     ->label(__('admin.service_request.fields.cskh_notes'))
                     ->limit(25)
-                    ->tooltip(fn (Model $record): ?string => !empty($record->cskh_note) ? $record->cskh_note : null)
                     ->placeholder('—')
-                    ->toggleable(),
+                    ->tooltip(fn (Model $record): ?string => !empty($record->cskh_note) ? $record->cskh_note : __('admin.customer.fields.cskh_notes_helper'))
+                    ->toggleable()
+                    ->action(
+                        Action::make('edit_cskh_note_column')
+                            ->label(__('admin.service_request.fields.cskh_notes'))
+                            ->modalHeading(__('admin.service_request.fields.cskh_notes'))
+                            ->form([
+                                Textarea::make('cskh_note')
+                                    ->label(__('admin.service_request.fields.cskh_notes'))
+                                    ->rows(5)
+                                    ->default(fn (ServiceRequest $record) => $record->cskh_note)
+                                    ->helperText(__('admin.customer.fields.cskh_notes_helper')),
+                            ])
+                            ->action(function (ServiceRequest $record, array $data): void {
+                                $record->update([
+                                    'cskh_note' => $data['cskh_note'] ?? null,
+                                ]);
+                                Notification::make()
+                                    ->title(__('admin.service_request.fields.cskh_notes'))
+                                    ->body(__('admin.notification.success.update_success'))
+                                    ->success()
+                                    ->send();
+                            })
+                    ),
 
                 TextColumn::make('cskh.name')
                     ->label(__('admin.service_request.fields.cskh'))

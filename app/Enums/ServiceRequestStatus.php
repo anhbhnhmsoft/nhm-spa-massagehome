@@ -47,7 +47,8 @@ enum ServiceRequestStatus: int
             self::SEARCHING_KTV => 'info',
             self::PROPOSAL_SENT, self::WAITING_CUSTOMER_CONFIRM => 'primary',
             self::MATCHED, self::BOOKING_CREATED => 'success',
-            self::CLOSED, self::CANCELED => 'danger',
+            self::CLOSED => 'gray',
+            self::CANCELED => 'danger',
         };
     }
 

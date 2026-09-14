@@ -23,6 +23,7 @@ class ServiceRequest extends Model
 
     protected $fillable = [
         'customer_id',
+        'booking_id',
         'cskh_id',
         'service_id',
         'duration',
@@ -48,6 +49,7 @@ class ServiceRequest extends Model
     protected $casts = [
         'id' => 'string',
         'customer_id' => 'string',
+        'booking_id' => 'string',
         'cskh_id' => 'string',
         'service_id' => 'string',
         'duration' => 'integer',
@@ -60,6 +62,14 @@ class ServiceRequest extends Model
         'status' => ServiceRequestStatus::class,
         'expires_at' => 'datetime',
     ];
+
+    /**
+     * Đơn đặt lịch được tạo từ yêu cầu này
+     */
+    public function booking(): BelongsTo
+    {
+        return $this->belongsTo(ServiceBooking::class, 'booking_id', 'id');
+    }
 
     /**
      * Khách hàng tạo yêu cầu

@@ -116,5 +116,9 @@ class ServiceBooking extends Model
         return $this->hasMany(BookingApplication::class, 'booking_id');
     }
 
-
+    // Yêu cầu dịch vụ liên kết (nếu được tạo từ CSKH Matching)
+    public function serviceRequest()
+    {
+        return $this->hasOne(ServiceRequest::class, 'booking_id', 'id');
+    }
 }

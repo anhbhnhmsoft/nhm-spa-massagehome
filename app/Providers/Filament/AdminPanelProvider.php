@@ -88,6 +88,10 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->maxContentWidth(Width::Full)
             ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn(): View => view('filament.hooks.sticky-table-scrollbar'),
+            )
+            ->renderHook(
                 'panels::body.end',
                 fn(): string => Blade::render(<<<'BLADE'
     <script>
