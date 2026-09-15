@@ -44,7 +44,7 @@ class ServiceRequestController extends BaseController
             ],
             'duration' => 'nullable|integer|min:15|max:360',
             'preferred_techniques' => 'nullable|array',
-            'preferred_techniques.*' => ['string', Rule::in(KtvTechnique::values())],
+            'preferred_techniques.*' => ['integer', Rule::in(KtvTechnique::values())],
             'province_code' => 'nullable|string',
             'district_code' => 'nullable|string',
             'ward_code' => 'nullable|string',

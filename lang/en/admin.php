@@ -1307,6 +1307,9 @@ return
                 'invite_history' => 'Recommendation History',
                 'no_ktv_available' => 'No active KTVs available in the system',
                 'search_ktv_prompt' => 'Type name or phone to search KTV...',
+                'cancel_request' => 'Cancel request',
+                'cancel_heading' => 'Cancel service request',
+                'cancel_description' => 'The request will be marked as Canceled and any pending KTV proposals will expire. Are you sure?',
             ],
             'modal' => [
                 'request_status' => 'Request Status',
@@ -1318,6 +1321,7 @@ return
                 'close' => 'Close',
             ],
             'messages' => [
+                'cancel_success' => 'Service request canceled.',
                 'create_success' => 'Service request submitted successfully! CSKH will contact you soon.',
                 'propose_success' => 'KTV proposal sent successfully.',
                 'respond_success' => 'Proposal response updated successfully.',

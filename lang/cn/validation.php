@@ -2,6 +2,8 @@
 
 return [
     'required' => '此信息为必填项。',
+    'in' => '所选值无效。',
+    'integer' => '该值必须是整数。',
     'phone' => [
         'required' => '无效的电话号码。',
         'required_if' => '当您使用邮箱注册时，电话号码为必填项。',

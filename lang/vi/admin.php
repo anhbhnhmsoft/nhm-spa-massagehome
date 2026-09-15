@@ -1320,6 +1320,9 @@ return
                 'invite_history' => 'Lịch sử Đề xuất',
                 'no_ktv_available' => 'Không có KTV nào khả dụng trên hệ thống',
                 'search_ktv_prompt' => 'Nhập tên hoặc số điện thoại để tìm KTV...',
+                'cancel_request' => 'Huỷ yêu cầu',
+                'cancel_heading' => 'Huỷ yêu cầu dịch vụ',
+                'cancel_description' => 'Yêu cầu sẽ chuyển sang trạng thái Đã huỷ và các đề xuất KTV đang chờ sẽ hết hạn. Bạn chắc chắn muốn huỷ?',
             ],
             'modal' => [
                 'request_status' => 'Trạng thái Yêu cầu',
@@ -1331,6 +1334,7 @@ return
                 'close' => 'Đóng',
             ],
             'messages' => [
+                'cancel_success' => 'Đã huỷ yêu cầu dịch vụ.',
                 'create_success' => 'Gửi yêu cầu dịch vụ thành công! CSKH sẽ liên hệ và tìm KTV phù hợp.',
                 'propose_success' => 'Đã gửi đề xuất KTV thành công.',
                 'respond_success' => 'Đã cập nhật trạng thái phản hồi.',

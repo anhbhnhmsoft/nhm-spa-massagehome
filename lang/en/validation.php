@@ -2,6 +2,8 @@
 
 return [
     'required' => 'This information is required.',
+    'in' => 'The selected value is invalid.',
+    'integer' => 'The value must be an integer.',
     'phone' => [
         'required' => 'Invalid phone number.',
         'required_if' => 'Phone number is required when you register with email.',

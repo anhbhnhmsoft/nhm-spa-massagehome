@@ -476,7 +476,7 @@ class KTVController extends BaseController
         $validator = Validator::make($request->all(), [
             'contact_phone' => 'nullable|string|max:20',
             'techniques' => 'nullable|array',
-            'techniques.*' => ['string', Rule::in(KtvTechnique::values())],
+            'techniques.*' => ['integer', Rule::in(KtvTechnique::values())],
             'strength_service_ids' => 'nullable|array|max:3',
             'strength_service_ids.*' => 'integer',
             'province_code' => 'nullable|string',

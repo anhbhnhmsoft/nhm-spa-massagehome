@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\Service\Resources\ServiceRequests\Tables;
 
+use App\Enums\KtvTechnique;
 use App\Enums\ProposalStatus;
 use App\Enums\ServiceRequestStatus;
 use App\Enums\UrgencyLevel;
@@ -22,6 +23,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\HtmlString;
 
 class ServiceRequestsTable
@@ -80,6 +82,28 @@ class ServiceRequestsTable
                             });
                         });
                     }),
+
+                TextColumn::make('preferred_techniques')
+                    ->label(__('admin.service_request.fields.techniques'))
+                    ->badge()
+                    ->color('gray')
+                    ->formatStateUsing(function ($state): string {
+                        // Dữ liệu cũ có thể lưu mã chuỗi thay vì id
+                        $technique = is_numeric($state)
+                            ? KtvTechnique::tryFrom((int) $state)
+                            : match ($state) {
+                                'acupressure' => KtvTechnique::ACUPRESSURE,
+                                'massage' => KtvTechnique::MASSAGE,
+                                'therapy' => KtvTechnique::THERAPY,
+                                'stretching' => KtvTechnique::STRETCHING,
+                                'essential_oil', 'aroma_relax' => KtvTechnique::ESSENTIAL_OIL,
+                                default => null,
+                            };
+                        return $technique?->label() ?? (string) $state;
+                    })
+                    ->placeholder('—')
+                    ->wrap()
+                    ->toggleable(),
 
                 TextColumn::make('duration')
                     ->label(__('admin.common.form.duration'))
@@ -344,6 +368,35 @@ class ServiceRequestsTable
                             'record' => $record,
                             'proposals' => $proposals,
                         ]);
+                    }),
+
+                Action::make('cancel_request')
+                    ->label(__('admin.service_request.action.cancel_request'))
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->visible(fn (ServiceRequest $record) => in_array($record->status, [
+                        ServiceRequestStatus::NEW,
+                        ServiceRequestStatus::ASSIGNED,
+                        ServiceRequestStatus::SEARCHING_KTV,
+                        ServiceRequestStatus::PROPOSAL_SENT,
+                        ServiceRequestStatus::WAITING_CUSTOMER_CONFIRM,
+                    ]))
+                    ->requiresConfirmation()
+                    ->modalHeading(__('admin.service_request.action.cancel_heading'))
+                    ->modalDescription(__('admin.service_request.action.cancel_description'))
+                    ->action(function (ServiceRequest $record) {
+                        DB::transaction(function () use ($record) {
+                            $record->proposals()
+                                ->whereIn('status', [ProposalStatus::PROPOSED->value, ProposalStatus::KTV_ACCEPTED->value])
+                                ->update(['status' => ProposalStatus::EXPIRED->value]);
+
+                            $record->update(['status' => ServiceRequestStatus::CANCELED]);
+                        });
+
+                        Notification::make()
+                            ->title(__('admin.service_request.messages.cancel_success'))
+                            ->success()
+                            ->send();
                     }),
             ]);
     }

@@ -2,6 +2,8 @@
 
 return [
     'required' => 'Thông tin này là bắt buộc.',
+    'in' => 'Giá trị không hợp lệ.',
+    'integer' => 'Giá trị phải là số nguyên.',
     'phone' => [
         'required' => 'Bạn hãy nhập số điện thoại.',
         'required_if' => 'Số điện thoại là bắt buộc khi bạn đăng ký bằng Email.',

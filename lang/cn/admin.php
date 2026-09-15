@@ -1305,6 +1305,9 @@ return
                 'invite_history' => '推荐历史',
                 'no_ktv_available' => '系统中暂无可用技师',
                 'search_ktv_prompt' => '输入技师姓名或电话进行搜索...',
+                'cancel_request' => '取消需求',
+                'cancel_heading' => '取消服务需求',
+                'cancel_description' => '该需求将被标记为已取消，所有待处理的技师推荐将失效。确定要取消吗？',
             ],
             'modal' => [
                 'request_status' => '需求状态',
@@ -1316,6 +1319,7 @@ return
                 'close' => '关闭',
             ],
             'messages' => [
+                'cancel_success' => '服务需求已取消。',
                 'create_success' => '服务需求提交成功！客服将尽快联系并为您寻找合适技师。',
                 'propose_success' => '已成功向客户发送技师推荐。',
                 'respond_success' => '已更新回复状态。',
