@@ -32,6 +32,7 @@ class ServiceRequestsTable
     {
         return $table
             ->recordUrl(null)
+            ->defaultSort('created_at', 'desc')
             ->modifyQueryUsing(fn (Builder $query) => $query->with(['customer', 'service.category', 'category', 'cskh', 'proposals.ktv']))
             ->columns([
                 TextColumn::make('id')
