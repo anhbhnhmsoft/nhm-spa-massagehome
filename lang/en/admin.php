@@ -1322,6 +1322,7 @@ return
             ],
             'messages' => [
                 'cancel_success' => 'Service request canceled.',
+                'already_has_active_request' => 'You already have a service request in progress. Please wait for CSKH to finish it before sending a new one.',
                 'create_success' => 'Service request submitted successfully! CSKH will contact you soon.',
                 'propose_success' => 'KTV proposal sent successfully.',
                 'respond_success' => 'Proposal response updated successfully.',

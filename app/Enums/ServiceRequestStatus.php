@@ -82,4 +82,18 @@ enum ServiceRequestStatus: int
     {
         return array_column(self::cases(), 'value');
     }
+
+    /**
+     * Các trạng thái yêu cầu còn đang mở (chưa ghép KTV, chưa đóng/huỷ)
+     */
+    public static function openStatuses(): array
+    {
+        return [
+            self::NEW,
+            self::ASSIGNED,
+            self::SEARCHING_KTV,
+            self::PROPOSAL_SENT,
+            self::WAITING_CUSTOMER_CONFIRM,
+        ];
+    }
 }

@@ -1335,6 +1335,7 @@ return
             ],
             'messages' => [
                 'cancel_success' => 'Đã huỷ yêu cầu dịch vụ.',
+                'already_has_active_request' => 'Bạn đang có một yêu cầu dịch vụ chưa hoàn tất. Vui lòng chờ CSKH xử lý xong trước khi gửi yêu cầu mới.',
                 'create_success' => 'Gửi yêu cầu dịch vụ thành công! CSKH sẽ liên hệ và tìm KTV phù hợp.',
                 'propose_success' => 'Đã gửi đề xuất KTV thành công.',
                 'respond_success' => 'Đã cập nhật trạng thái phản hồi.',

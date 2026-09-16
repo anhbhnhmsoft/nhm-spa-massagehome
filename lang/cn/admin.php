@@ -1320,6 +1320,7 @@ return
             ],
             'messages' => [
                 'cancel_success' => '服务需求已取消。',
+                'already_has_active_request' => '您已有一个正在处理中的服务需求，请等待客服处理完成后再提交新的需求。',
                 'create_success' => '服务需求提交成功！客服将尽快联系并为您寻找合适技师。',
                 'propose_success' => '已成功向客户发送技师推荐。',
                 'respond_success' => '已更新回复状态。',

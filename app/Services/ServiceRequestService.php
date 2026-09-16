@@ -33,6 +33,13 @@ class ServiceRequestService extends BaseService
     public function createRequest(array $data, string $customerId): ServiceReturn
     {
         try {
+            $hasOpenRequest = ServiceRequest::where('customer_id', $customerId)
+                ->whereIn('status', ServiceRequestStatus::openStatuses())
+                ->exists();
+            if ($hasOpenRequest) {
+                return ServiceReturn::error(__('admin.service_request.messages.already_has_active_request'));
+            }
+
             $urgencyValue = isset($data['urgency_level']) ? (int)$data['urgency_level'] : UrgencyLevel::NEED_NOW->value;
             $urgency = UrgencyLevel::tryFrom($urgencyValue) ?? UrgencyLevel::NEED_NOW;
 

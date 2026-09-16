@@ -374,13 +374,7 @@ class ServiceRequestsTable
                     ->label(__('admin.service_request.action.cancel_request'))
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
-                    ->visible(fn (ServiceRequest $record) => in_array($record->status, [
-                        ServiceRequestStatus::NEW,
-                        ServiceRequestStatus::ASSIGNED,
-                        ServiceRequestStatus::SEARCHING_KTV,
-                        ServiceRequestStatus::PROPOSAL_SENT,
-                        ServiceRequestStatus::WAITING_CUSTOMER_CONFIRM,
-                    ]))
+                    ->visible(fn (ServiceRequest $record) => in_array($record->status, ServiceRequestStatus::openStatuses()))
                     ->requiresConfirmation()
                     ->modalHeading(__('admin.service_request.action.cancel_heading'))
                     ->modalDescription(__('admin.service_request.action.cancel_description'))
