@@ -3,13 +3,11 @@ module.exports = {
     apps: [
         {
             name: "laravel-node-server",
-            script: "./node_modules/tsx/dist/cli.mjs",
-            args: "./node_server/index.ts",
-            interpreter: "node",
+            script: "npm",
+            args: "run node-server",
             cwd: "./",
             env: {
-                NODE_ENV: "production",
-                TS_NODE_PROJECT: "./node_server/tsconfig.json"
+                NODE_ENV: "production"
             }
         }
     ]
