@@ -164,7 +164,9 @@ class CustomerForm
                             ->label(__('admin.customer.fields.preferred_techniques'))
                             ->multiple()
                             ->options(KtvTechnique::toOptions())
-                            ->placeholder(__('common.placeholder.select')),
+                            ->placeholder(__('common.placeholder.select'))
+                            ->formatStateUsing(fn ($state) => KtvTechnique::normalizeList($state))
+                            ->dehydrateStateUsing(fn ($state) => KtvTechnique::normalizeList($state)),
                         Select::make('preferred_time_slots')
                             ->label(__('admin.customer.fields.preferred_time_slots'))
                             ->multiple()

@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Enums\CustomerRank;
 use App\Enums\DemandStatus;
+use App\Enums\KtvTechnique;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -64,7 +66,6 @@ class CustomerCrmData extends Model
         'assigned_cskh_id' => 'string',
         'languages' => 'array',
         'preferred_services' => 'array',
-        'preferred_techniques' => 'array',
         'preferred_time_slots' => 'array',
         'favorite_ktv_ids' => 'array',
         'frequent_booking_hours' => 'array',
@@ -75,6 +76,28 @@ class CustomerCrmData extends Model
         'first_booking_at' => 'datetime',
         'last_booking_at' => 'datetime',
     ];
+
+    /**
+     * Getter & Setter cho preferred_techniques: Luôn chuẩn hóa về mảng ID số nguyên hợp lệ của KtvTechnique
+     */
+    protected function preferredTechniques(): Attribute
+    {
+        return Attribute::make(
+            get: function ($value) {
+                if (blank($value)) {
+                    return [];
+                }
+                $decoded = is_string($value) ? json_decode($value, true) : $value;
+                return KtvTechnique::normalizeList($decoded);
+            },
+            set: function ($value) {
+                if (blank($value)) {
+                    return json_encode([]);
+                }
+                return json_encode(KtvTechnique::normalizeList($value));
+            }
+        );
+    }
 
     public function user()
     {

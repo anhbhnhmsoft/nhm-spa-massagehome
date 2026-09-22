@@ -89,18 +89,7 @@ class ServiceRequestsTable
                     ->badge()
                     ->color('gray')
                     ->formatStateUsing(function ($state): string {
-                        // Dữ liệu cũ có thể lưu mã chuỗi thay vì id
-                        $technique = is_numeric($state)
-                            ? KtvTechnique::tryFrom((int) $state)
-                            : match ($state) {
-                                'acupressure' => KtvTechnique::ACUPRESSURE,
-                                'massage' => KtvTechnique::MASSAGE,
-                                'therapy' => KtvTechnique::THERAPY,
-                                'stretching' => KtvTechnique::STRETCHING,
-                                'essential_oil', 'aroma_relax' => KtvTechnique::ESSENTIAL_OIL,
-                                default => null,
-                            };
-                        return $technique?->label() ?? (string) $state;
+                        return KtvTechnique::labelFrom($state);
                     })
                     ->placeholder('—')
                     ->wrap()

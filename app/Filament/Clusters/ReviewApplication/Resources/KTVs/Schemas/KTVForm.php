@@ -153,7 +153,9 @@ class KTVForm
                                     CheckboxList::make('techniques')
                                         ->label(__('admin.ktv_apply.fields.techniques'))
                                         ->options(KtvTechnique::toOptions())
-                                        ->columns(3),
+                                        ->columns(3)
+                                        ->formatStateUsing(fn ($state) => KtvTechnique::normalizeList($state))
+                                        ->dehydrateStateUsing(fn ($state) => KtvTechnique::normalizeList($state)),
                                     Select::make('strength_service_ids')
                                         ->label(__('admin.ktv_apply.fields.strength_service_ids'))
                                         ->multiple()
@@ -171,7 +173,9 @@ class KTVForm
                                     CheckboxList::make('service_locations')
                                         ->label(__('admin.ktv_apply.fields.service_locations'))
                                         ->options(KtvServiceLocation::toOptions())
-                                        ->columns(2),
+                                        ->columns(2)
+                                        ->formatStateUsing(fn ($state) => KtvServiceLocation::normalizeList($state))
+                                        ->dehydrateStateUsing(fn ($state) => KtvServiceLocation::normalizeList($state)),
                                     Select::make('work_province')
                                         ->label(__('admin.ktv_apply.fields.work_province'))
                                         ->searchable()

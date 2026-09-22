@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Core\GenerateId\HasBigIntId;
+use App\Enums\KtvServiceLocation;
+use App\Enums\KtvTechnique;
 use App\Enums\ReviewApplicationStatus;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Translatable\HasTranslations;
@@ -65,11 +67,53 @@ class UserReviewApplication extends Model
         'portrait_verified_at' => 'datetime',
         'certificate_verified' => 'boolean',
         'certificates' => 'array',
-        'techniques' => 'array',
         'strength_service_ids' => 'array',
         'priority_areas' => 'array',
-        'service_locations' => 'array',
     ];
+
+    /**
+     * Getter & Setter cho techniques: Luôn chuẩn hóa về mảng ID số nguyên hợp lệ của KtvTechnique
+     */
+    protected function techniques(): Attribute
+    {
+        return Attribute::make(
+            get: function ($value) {
+                if (blank($value)) {
+                    return [];
+                }
+                $decoded = is_string($value) ? json_decode($value, true) : $value;
+                return KtvTechnique::normalizeList($decoded);
+            },
+            set: function ($value) {
+                if (blank($value)) {
+                    return json_encode([]);
+                }
+                return json_encode(KtvTechnique::normalizeList($value));
+            }
+        );
+    }
+
+    /**
+     * Getter & Setter cho service_locations: Luôn chuẩn hóa về mảng ID số nguyên hợp lệ của KtvServiceLocation
+     */
+    protected function serviceLocations(): Attribute
+    {
+        return Attribute::make(
+            get: function ($value) {
+                if (blank($value)) {
+                    return [];
+                }
+                $decoded = is_string($value) ? json_decode($value, true) : $value;
+                return KtvServiceLocation::normalizeList($decoded);
+            },
+            set: function ($value) {
+                if (blank($value)) {
+                    return json_encode([]);
+                }
+                return json_encode(KtvServiceLocation::normalizeList($value));
+            }
+        );
+    }
 
     /**
      * Getter & Setter cho work_wards: Luôn trả về 1 Phường/Xã (chuỗi đơn) cho giao diện
