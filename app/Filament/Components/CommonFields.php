@@ -42,7 +42,8 @@ class CommonFields
             ->searchable() // Filament sẽ tự động search theo titleAttribute (name)
             ->preload() // Load trước một ít dữ liệu để chọn nhanh
             ->placeholder(__('common.placeholder.select'))
-            ->disabled(fn($livewire) => $livewire instanceof ViewRecord)
+            ->disabled()
+            ->dehydrated(false)
             ->columnSpan(1);
     }
 
