@@ -27,6 +27,8 @@ use Illuminate\Support\Facades\Auth;
 
 class DashboardService extends BaseService
 {
+    private const KTV_ESTIMATED_COST_RATE = 0.6;
+
     public function __construct(
         protected BookingRepository               $bookingRepository,
         protected UserRepository                  $userRepository,
@@ -56,6 +58,24 @@ class DashboardService extends BaseService
             // Lấy thống kê doanh thu và chi phí
             $revenue = $this->walletTransactionRepository->getFinancialDashboardStats($start, $end);
 
+            $completedBookingTotal = (float) $this->bookingRepository->query()
+                ->where('status', BookingStatus::COMPLETED->value)
+                ->whereBetween('created_at', [$start, $end])
+                ->sum('price');
+            $estimatedTechnicalCost = round(
+                $completedBookingTotal * self::KTV_ESTIMATED_COST_RATE,
+                2,
+            );
+            $actualTechnicalServiceCost = (float) $this->walletTransactionRepository->query()
+                ->where('status', WalletTransactionStatus::COMPLETED->value)
+                ->where('type', WalletTransactionType::PAYMENT_FOR_KTV->value)
+                ->whereBetween('created_at', [$start, $end])
+                ->sum('point_amount');
+            $operationCost = round(
+                (float) $revenue->operation_cost - $actualTechnicalServiceCost + $estimatedTechnicalCost,
+                2,
+            );
+
             return ServiceReturn::success([
                 'system_inout' =>[
                     'total_income' => (float) ($incomeOutcome->total_income ?? 0),
@@ -63,9 +83,9 @@ class DashboardService extends BaseService
                 ],
                 'revenue' => [
                     'total_revenue' => (float) $revenue->total_revenue,
-                    'operation_cost' => (float) $revenue->operation_cost,
-                    'profit' => round($revenue->total_revenue - $revenue->operation_cost, 2),
-                    'technical_cost' => (float) $revenue->technical_cost,
+                    'operation_cost' => $operationCost,
+                    'profit' => round($revenue->total_revenue - $operationCost, 2),
+                    'technical_cost' => $estimatedTechnicalCost,
                     'customer_cost' => (float) $revenue->customer_cost,
                     'transportation_cost' => (float) $revenue->transportation_cost,
                     'agency_cost' => (float) $revenue->agency_cost,
