@@ -1284,6 +1284,7 @@ return
             'plural' => 'Service Requests',
             'fields' => [
                 'customer' => 'Customer',
+                'customer_phone' => 'Customer Phone',
                 'cskh' => 'Assigned CSKH',
                 'service' => 'Requested Service',
                 'duration' => 'Duration',

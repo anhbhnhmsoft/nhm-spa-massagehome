@@ -7,6 +7,7 @@ use App\Enums\ProposalStatus;
 use App\Enums\ServiceRequestStatus;
 use App\Enums\UrgencyLevel;
 use App\Enums\UserRole;
+use App\Filament\Clusters\User\Resources\Customers\CustomerResource;
 use App\Models\ServiceRequest;
 use App\Models\User;
 use App\Services\ServiceRequestService;
@@ -43,7 +44,12 @@ class ServiceRequestsTable
                     ->label(__('admin.service_request.fields.customer'))
                     ->searchable()
                     ->sortable(),
-
+                
+                TextColumn::make('customer.phone')
+                    ->label(__('admin.service_request.fields.customer_phone'))
+                    ->searchable()
+                    ->url(fn (ServiceRequest $record) => CustomerResource::getUrl('edit', ['record' => $record->customer_id]))
+                    ->sortable(),
                 TextColumn::make('province')
                     ->label(__('admin.service_request.fields.province'))
                     ->default('—')
