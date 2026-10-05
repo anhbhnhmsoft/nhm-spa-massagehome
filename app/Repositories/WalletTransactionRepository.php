@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Core\BaseRepository;
 use App\Core\Helper;
+use App\Enums\BookingStatus;
 use App\Enums\DateRangeDashboard;
 use App\Enums\PaymentType;
 use App\Enums\UserRole;
@@ -108,6 +109,18 @@ class WalletTransactionRepository extends BaseRepository
             ->selectRaw("
             SUM(CASE
                 WHEN wallet_transactions.type IN (" . implode(',', $revenueStatus) . ")
+                     AND (
+                         wallet_transactions.type NOT IN (
+                             " . WalletTransactionType::PAYMENT->value . ",
+                             " . WalletTransactionType::PAYMENT_FEE_TRANSPORT->value . "
+                         )
+                         OR EXISTS (
+                             SELECT 1
+                             FROM service_bookings
+                             WHERE service_bookings.id = wallet_transactions.foreign_key
+                               AND service_bookings.status = ?
+                         )
+                     )
                 THEN wallet_transactions.point_amount
                 ELSE 0
             END) as total_revenue,
@@ -157,6 +170,7 @@ class WalletTransactionRepository extends BaseRepository
                 ELSE 0
             END) as technical_cost
             ", [
+                BookingStatus::COMPLETED->value,
                 UserRole::CUSTOMER->value,
                 UserRole::AGENCY->value,
                 UserRole::KTV->value
