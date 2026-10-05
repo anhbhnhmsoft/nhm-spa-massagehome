@@ -9,12 +9,14 @@ use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
 use App\Enums\BookingStatus;
+use App\Enums\ConfigName;
 use App\Enums\DangerSupportStatus;
 use App\Enums\DateRangeDashboard;
 use App\Enums\UserRole;
 use App\Enums\WalletTransactionType;
 use App\Enums\WalletTransactionStatus;
 use App\Models\User;
+use App\Services\ConfigService;
 use App\Repositories\BookingRepository;
 use App\Repositories\DangerSupportRepository;
 use App\Repositories\ReviewRepository;
@@ -23,10 +25,11 @@ use App\Repositories\UserReviewApplicationRepository;
 use App\Repositories\WalletRepository;
 use App\Repositories\WalletTransactionRepository;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Auth;
 
 class DashboardService extends BaseService
 {
+    private const KTV_ESTIMATED_COST_RATE = 0.6;
+
     public function __construct(
         protected BookingRepository               $bookingRepository,
         protected UserRepository                  $userRepository,
@@ -35,6 +38,7 @@ class DashboardService extends BaseService
         protected ReviewRepository                $reviewRepository,
         protected WalletRepository                $walletRepository,
         protected DangerSupportRepository         $dangerSupportRepository,
+        protected ConfigService                   $configService,
     ) {
         parent::__construct();
     }
@@ -55,6 +59,26 @@ class DashboardService extends BaseService
 
             // Lấy thống kê doanh thu và chi phí
             $revenue = $this->walletTransactionRepository->getFinancialDashboardStats($start, $end);
+            
+            $rate_income_ktv =( 100 - $this->configService->getConfigValue(ConfigName::DISCOUNT_RATE) ) / 100 ?? self::KTV_ESTIMATED_COST_RATE;
+
+            $completedBookingTotal = (float) $this->bookingRepository->query()
+                ->where('status', BookingStatus::COMPLETED->value)
+                ->whereBetween('created_at', [$start, $end])
+                ->sum('price');
+            $estimatedTechnicalCost = round(
+                $completedBookingTotal * $rate_income_ktv,
+                2,
+            );
+            $actualTechnicalServiceCost = (float) $this->walletTransactionRepository->query()
+                ->where('status', WalletTransactionStatus::COMPLETED->value)
+                ->where('type', WalletTransactionType::PAYMENT_FOR_KTV->value)
+                ->whereBetween('created_at', [$start, $end])
+                ->sum('point_amount');
+            $operationCost = round(
+                (float) $revenue->operation_cost - $actualTechnicalServiceCost + $estimatedTechnicalCost,
+                2,
+            );
 
             return ServiceReturn::success([
                 'system_inout' =>[
@@ -63,9 +87,9 @@ class DashboardService extends BaseService
                 ],
                 'revenue' => [
                     'total_revenue' => (float) $revenue->total_revenue,
-                    'operation_cost' => (float) $revenue->operation_cost,
-                    'profit' => round($revenue->total_revenue - $revenue->operation_cost, 2),
-                    'technical_cost' => (float) $revenue->technical_cost,
+                    'operation_cost' => $operationCost,
+                    'profit' => round($revenue->total_revenue - $operationCost, 2),
+                    'technical_cost' => $estimatedTechnicalCost,
                     'customer_cost' => (float) $revenue->customer_cost,
                     'transportation_cost' => (float) $revenue->transportation_cost,
                     'agency_cost' => (float) $revenue->agency_cost,

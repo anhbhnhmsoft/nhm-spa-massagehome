@@ -28,7 +28,7 @@ return [
         'title_operation_system' => 'Chi phí',
 
         'agency_cost' => 'Chi phí đại lý',
-        'ktv_cost' => 'Chi phí kỹ thuật viên',
+        'ktv_cost' => 'Chi phí kỹ thuật viên tạm tính (60%)',
         'customer_cost' => 'Chi phí người dùng',
         'transportation_cost' => 'Chi phí di chuyển',
         'discount_cost' => 'Chi phí giảm giá',
