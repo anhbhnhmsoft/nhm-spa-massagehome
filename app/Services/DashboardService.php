@@ -56,21 +56,30 @@ class DashboardService extends BaseService
             // Lấy thống kê doanh thu và chi phí
             $revenue = $this->walletTransactionRepository->getFinancialDashboardStats($start, $end);
 
+            $grossRevenue = (float) ($revenue->total_revenue ?? 0);
+            $refundCost = (float) ($revenue->refund_cost ?? 0);
+            // Doanh thu thuần = Doanh thu phát sinh trừ đi các khoản hoàn tiền
+            $netRevenue = round($grossRevenue - $refundCost, 2);
+            $operationCost = (float) ($revenue->operation_cost ?? 0);
+            // Lợi nhuận = Doanh thu thuần - Chi phí vận hành thực tế
+            $profit = round($netRevenue - $operationCost, 2);
+
             return ServiceReturn::success([
                 'system_inout' =>[
                     'total_income' => (float) ($incomeOutcome->total_income ?? 0),
                     'total_outcome' => (float) ($incomeOutcome->total_outcome ?? 0),
                 ],
                 'revenue' => [
-                    'total_revenue' => (float) $revenue->total_revenue,
-                    'operation_cost' => (float) $revenue->operation_cost,
-                    'profit' => round($revenue->total_revenue - $revenue->operation_cost, 2),
-                    'technical_cost' => (float) $revenue->technical_cost,
-                    'customer_cost' => (float) $revenue->customer_cost,
-                    'transportation_cost' => (float) $revenue->transportation_cost,
-                    'agency_cost' => (float) $revenue->agency_cost,
-                    'refund_cost' => (float) $revenue->refund_cost,
-                    'discount_cost' => (float) $revenue->discount_cost,
+                    'gross_revenue' => $grossRevenue,
+                    'total_revenue' => $netRevenue,
+                    'operation_cost' => $operationCost,
+                    'profit' => $profit,
+                    'technical_cost' => (float) ($revenue->technical_cost ?? 0),
+                    'customer_cost' => (float) ($revenue->customer_cost ?? 0),
+                    'transportation_cost' => (float) ($revenue->transportation_cost ?? 0),
+                    'agency_cost' => (float) ($revenue->agency_cost ?? 0),
+                    'refund_cost' => $refundCost,
+                    'discount_cost' => (float) ($revenue->discount_cost ?? 0),
                 ],
             ]);
         } catch (\Exception $exception) {

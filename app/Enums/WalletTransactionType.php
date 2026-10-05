@@ -186,10 +186,7 @@ enum WalletTransactionType: int
             self::PAYMENT_KTV_EARN_TRANSPORT->value,
             self::REFERRAL_KTV->value,
             self::REFERRAL_INVITE_KTV_REWARD->value,
-            self::REFUND->value, // Hoàn tiền cho customer
-            self::PAYMENT_REFUND_KTV_FOR_BOOKING_CANCEL->value, // Hoàn tiền cho KTV khi hủy booking
-            self::REFUND_CUSTOMER_TRANSPORT->value,  // Hoàn tiền di chuyển cho khách hàng
-            self::SUBTRACT_MONEY_DISCOUNT_SERVICE->value, // Trừ tiền giảm giá dịch vụ(tức là + tiền vào ví khách hàng phần tiền giảm giá)
+            self::SUBTRACT_MONEY_DISCOUNT_SERVICE->value, // Trừ tiền giảm giá dịch vụ (phần tiền giảm giá tài trợ cho khách hàng)
         ];
     }
 
@@ -235,10 +232,11 @@ enum WalletTransactionType: int
     public static function technicalCostStatus(): array
     {
         return [
+            self::PAYMENT_FOR_KTV->value,
+            self::PAYMENT_KTV_EARN_TRANSPORT->value,
             self::AFFILIATE->value,
             self::REFERRAL_KTV->value,
             self::REFERRAL_INVITE_KTV_REWARD->value,
-            self::PAYMENT_FOR_KTV->value,
         ];
     }
 

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Core\Service\BaseService;
+use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
 use App\Enums\InvitationStatus;
 use App\Enums\NotificationType;
@@ -184,6 +185,9 @@ class ProactiveMatchingService extends BaseService
                         $invite->serviceRequest->save();
 
                         $bookingResult = $this->serviceRequestService->createBookingFromRequest($invite->serviceRequest, $invite->ktv_id);
+                        if ($bookingResult->isError()) {
+                            throw new ServiceException($bookingResult->getMessage());
+                        }
                         $booking = $bookingResult->getData();
                     }
 

@@ -2,17 +2,24 @@
 
 namespace App\Services;
 
+use App\Core\Helper;
 use App\Core\Service\BaseService;
+use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
 use App\Enums\BookingStatus;
+use App\Enums\NotificationType;
+use App\Enums\PaymentType;
 use App\Enums\ProposalStatus;
 use App\Enums\ServiceRequestStatus;
 use App\Enums\UrgencyLevel;
+use App\Enums\WalletTransactionStatus;
+use App\Enums\WalletTransactionType;
 use App\Events\ProposalRespondedEvent;
 use App\Events\ServiceRequestCreatedEvent;
 use App\Events\ServiceRequestProposedEvent;
 use App\Core\Helper\CalculatePrice;
 use App\Enums\ConfigName;
+use App\Jobs\SendNotificationJob;
 use App\Models\Category;
 use App\Models\CategoryPrice;
 use App\Models\Service;
@@ -21,12 +28,24 @@ use App\Models\ServiceRequest;
 use App\Models\ServiceRequestProposal;
 use App\Models\User;
 use App\Models\UserAddress;
+use App\Repositories\WalletRepository;
+use App\Repositories\WalletTransactionRepository;
 use App\Services\ConfigService;
+use App\Services\Validator\WalletValidator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class ServiceRequestService extends BaseService
 {
+    public function __construct(
+        protected WalletRepository $walletRepository,
+        protected WalletTransactionRepository $walletTransactionRepository,
+        protected ConfigService $configService,
+        protected WalletValidator $walletValidator,
+    ) {
+        parent::__construct();
+    }
+
     /**
      * Khách hàng tạo Yêu cầu dịch vụ mới
      */
@@ -38,6 +57,44 @@ class ServiceRequestService extends BaseService
                 ->exists();
             if ($hasOpenRequest) {
                 return ServiceReturn::error(__('admin.service_request.messages.already_has_active_request'));
+            }
+
+            // 1. Kiểm tra số dư ví tối thiểu của khách hàng trước khi cho phép tạo yêu cầu dịch vụ
+            $requestedDuration = isset($data['duration']) ? (int) $data['duration'] : 60;
+            $serviceId = (string) ($data['service_id'] ?? '');
+            $category = null;
+            if (!empty($serviceId)) {
+                $category = Category::with('prices')->find($serviceId);
+                if (!$category) {
+                    $svc = Service::with('category.prices')->find($serviceId);
+                    $category = $svc?->category;
+                }
+            }
+
+            if ($category) {
+                $catPrice = CategoryPrice::where('category_id', (string) $category->id)
+                    ->where('duration', $requestedDuration)
+                    ->first()
+                    ?? CategoryPrice::where('category_id', (string) $category->id)->where('duration', 60)->first()
+                    ?? CategoryPrice::where('category_id', (string) $category->id)->oldest('duration')->first()
+                    ?? $category->cheapestPrice
+                    ?? $category->prices()->first();
+
+                if ($catPrice && (float) $catPrice->price > 0) {
+                    $minRequired = (float) $catPrice->price;
+                    $wallet = $this->walletRepository->getWalletByUserId($customerId);
+                    $balance = (float) ($wallet?->balance ?? 0);
+                    if ($balance < $minRequired) {
+                        return ServiceReturn::error(
+                            __('booking.error.user_not_enough_money', [
+                                'balance' => Helper::formatPrice($balance),
+                                'price' => Helper::formatPrice($minRequired),
+                                'coupon_discount' => Helper::formatPrice(0),
+                                'price_move' => Helper::formatPrice(0),
+                            ]) ?: ("Số dư ví không đủ (Hiện có: " . number_format($balance, 0, ',', '.') . " đ, Cần tối thiểu: " . number_format($minRequired, 0, ',', '.') . " đ). Vui lòng nạp tiền vào ví trước khi gửi yêu cầu dịch vụ!")
+                        );
+                    }
+                }
             }
 
             $urgencyValue = isset($data['urgency_level']) ? (int)$data['urgency_level'] : UrgencyLevel::NEED_NOW->value;
@@ -257,6 +314,9 @@ class ServiceRequestService extends BaseService
 
                     // Tự động tạo ServiceBooking 1-Click
                     $bookingResult = $this->createBookingFromRequest($request, $proposal->ktv_id);
+                    if ($bookingResult->isError()) {
+                        throw new ServiceException($bookingResult->getMessage());
+                    }
 
                     ProposalRespondedEvent::dispatch($proposal, 'customer', true);
 
@@ -397,7 +457,31 @@ class ServiceRequestService extends BaseService
                 }
             }
 
-            // 5. Tạo ServiceBooking với đầy đủ thông tin chuẩn xác
+            // 5. Kiểm tra số dư ví và trừ tiền khách hàng
+            $totalBookingPrice = CalculatePrice::totalBookingPrice(
+                price: $basePrice,
+                priceDiscount: 0,
+                priceTransportation: $priceTransportation,
+            );
+
+            $walletCustomer = $this->walletRepository->getWalletByUserId(
+                userId: $request->customer_id,
+                lockForUpdate: true,
+            );
+            if (!$walletCustomer) {
+                return ServiceReturn::error(__('booking.payment.wallet_customer_not_found'));
+            }
+
+            if ($walletCustomer->balance < $totalBookingPrice) {
+                return ServiceReturn::error(__('booking.error.user_not_enough_money', [
+                    'balance' => Helper::formatPrice($walletCustomer->balance),
+                    'price' => Helper::formatPrice($basePrice),
+                    'coupon_discount' => Helper::formatPrice(0),
+                    'price_move' => Helper::formatPrice($priceTransportation),
+                ]));
+            }
+
+            // 6. Tạo ServiceBooking với đầy đủ thông tin chuẩn xác
             $booking = ServiceBooking::create([
                 'user_id' => $request->customer_id,
                 'ktv_user_id' => $ktvId,
@@ -416,10 +500,47 @@ class ServiceRequestService extends BaseService
                 'price' => $basePrice,
                 'price_discount' => 0,
                 'price_transportation' => $priceTransportation,
+                'payment_type' => PaymentType::BY_POINTS->value,
                 'note' => $request->note,
             ]);
 
-            // 6. Cộng thêm performed_count của service cho KTV nếu có
+            // 7. Trừ tiền ví của khách hàng
+            $walletCustomer->balance -= $totalBookingPrice;
+            $walletCustomer->save();
+
+            // 8. Tạo bản ghi giao dịch WalletTransaction
+            $exchangeRate = (float) $this->configService->getConfigValue(ConfigName::EXCHANGE_RATE_POINT);
+            if ($exchangeRate <= 0) {
+                $exchangeRate = 1;
+            }
+
+            $this->walletTransactionRepository->create([
+                'wallet_id' => $walletCustomer->id,
+                'foreign_key' => (string) $booking->id,
+                'money_amount' => $basePrice * $exchangeRate,
+                'exchange_rate_point' => $exchangeRate,
+                'point_amount' => $basePrice,
+                'type' => WalletTransactionType::PAYMENT->value,
+                'status' => WalletTransactionStatus::COMPLETED->value,
+                'transaction_code' => Helper::createDescPayment(PaymentType::BY_POINTS),
+                'expired_at' => now(),
+            ]);
+
+            if ($priceTransportation > 0) {
+                $this->walletTransactionRepository->create([
+                    'wallet_id' => $walletCustomer->id,
+                    'foreign_key' => (string) $booking->id,
+                    'money_amount' => $priceTransportation * $exchangeRate,
+                    'exchange_rate_point' => $exchangeRate,
+                    'point_amount' => $priceTransportation,
+                    'type' => WalletTransactionType::PAYMENT_FEE_TRANSPORT->value,
+                    'status' => WalletTransactionStatus::COMPLETED->value,
+                    'transaction_code' => Helper::createDescPayment(PaymentType::BY_POINTS),
+                    'expired_at' => now(),
+                ]);
+            }
+
+            // 9. Cộng thêm performed_count của service cho KTV nếu có
             Service::where('user_id', $ktvId)
                 ->where('category_id', $finalCategoryId)
                 ->increment('performed_count');
@@ -427,6 +548,28 @@ class ServiceRequestService extends BaseService
             $request->booking_id = $booking->id;
             $request->status = ServiceRequestStatus::BOOKING_CREATED;
             $request->save();
+
+            // 10. Bắn notification cho khách hàng và KTV
+            SendNotificationJob::dispatch(
+                userId: $booking->user_id,
+                type: NotificationType::BOOKING_SUCCESS,
+                data: [
+                    'booking_id' => $booking->id,
+                    'category_id' => $booking->category_id,
+                    'booking_time' => $booking->booking_time->format('Y-m-d H:i:s'),
+                    'price' => $booking->price,
+                ]
+            );
+
+            SendNotificationJob::dispatch(
+                userId: $booking->ktv_user_id,
+                type: NotificationType::NEW_BOOKING_REQUEST,
+                data: [
+                    'booking_id' => $booking->id,
+                    'customer_name' => $booking->user->name ?? '',
+                    'booking_time' => $booking->booking_time->format('Y-m-d H:i:s'),
+                ]
+            );
 
             return ServiceReturn::success($booking);
         } catch (\Throwable $e) {
