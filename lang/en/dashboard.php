@@ -28,7 +28,7 @@ return [
         'title_operation_system' => 'Operating cost',
 
         'agency_cost' => 'Agency cost',
-        'ktv_cost' => 'Estimated technician cost (60%)',
+        'ktv_cost' => 'Estimated technician cost',
         'customer_cost' => 'Customer cost',
         'transportation_cost' => 'Transportation cost',
         'discount_cost' => 'Discount cost',

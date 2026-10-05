@@ -47,7 +47,7 @@ return [
         'title_operation_system' => '运营成本',
 
         'agency_cost' => '代理成本',
-        'ktv_cost' => '技师预估成本（60%）',
+        'ktv_cost' => '技师预估成本',
         'customer_cost' => '客户成本',
         'transportation_cost' => '运输成本',
         'discount_cost' => '折扣成本',
