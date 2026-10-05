@@ -1297,6 +1297,7 @@ return
             'plural' => 'Danh sách Yêu cầu dịch vụ',
             'fields' => [
                 'customer' => 'Khách hàng',
+                'customer_phone' => 'Số điện thoại khách',
                 'cskh' => 'CSKH phụ trách',
                 'service' => 'Dịch vụ mong muốn',
                 'duration' => 'Thời lượng',

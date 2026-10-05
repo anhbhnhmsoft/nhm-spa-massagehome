@@ -1282,6 +1282,7 @@ return
             'plural' => '服务需求列表',
             'fields' => [
                 'customer' => '客户',
+                'customer_phone' => '客户电话',
                 'cskh' => '负责客服',
                 'service' => '期望服务',
                 'duration' => '时长',
