@@ -9,12 +9,14 @@ use App\Core\Service\BaseService;
 use App\Core\Service\ServiceException;
 use App\Core\Service\ServiceReturn;
 use App\Enums\BookingStatus;
+use App\Enums\ConfigName;
 use App\Enums\DangerSupportStatus;
 use App\Enums\DateRangeDashboard;
 use App\Enums\UserRole;
 use App\Enums\WalletTransactionType;
 use App\Enums\WalletTransactionStatus;
 use App\Models\User;
+use App\Services\ConfigService;
 use App\Repositories\BookingRepository;
 use App\Repositories\DangerSupportRepository;
 use App\Repositories\ReviewRepository;
@@ -23,7 +25,6 @@ use App\Repositories\UserReviewApplicationRepository;
 use App\Repositories\WalletRepository;
 use App\Repositories\WalletTransactionRepository;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Auth;
 
 class DashboardService extends BaseService
 {
@@ -37,6 +38,7 @@ class DashboardService extends BaseService
         protected ReviewRepository                $reviewRepository,
         protected WalletRepository                $walletRepository,
         protected DangerSupportRepository         $dangerSupportRepository,
+        protected ConfigService                   $configService,
     ) {
         parent::__construct();
     }
@@ -57,13 +59,15 @@ class DashboardService extends BaseService
 
             // Lấy thống kê doanh thu và chi phí
             $revenue = $this->walletTransactionRepository->getFinancialDashboardStats($start, $end);
+            
+            $rate_income_ktv =( 100 - $this->configService->getConfigValue(ConfigName::DISCOUNT_RATE) ) / 100 ?? self::KTV_ESTIMATED_COST_RATE;
 
             $completedBookingTotal = (float) $this->bookingRepository->query()
                 ->where('status', BookingStatus::COMPLETED->value)
                 ->whereBetween('created_at', [$start, $end])
                 ->sum('price');
             $estimatedTechnicalCost = round(
-                $completedBookingTotal * self::KTV_ESTIMATED_COST_RATE,
+                $completedBookingTotal * $rate_income_ktv,
                 2,
             );
             $actualTechnicalServiceCost = (float) $this->walletTransactionRepository->query()
