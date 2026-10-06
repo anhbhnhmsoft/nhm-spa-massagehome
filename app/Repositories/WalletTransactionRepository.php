@@ -74,11 +74,8 @@ class WalletTransactionRepository extends BaseRepository
      */
     public function getFinancialDashboardStats(Carbon $from, Carbon $to)
     {
-        // Tổng giá trị đơn đã thanh toán, kể cả đơn sau đó bị hủy.
-        $orderRevenueTypes = [
-            WalletTransactionType::PAYMENT->value,
-            WalletTransactionType::PAYMENT_FEE_TRANSPORT->value,
-        ];
+        // Tổng tiền thu về từ các loại transaction doanh thu.
+        $revenueStatus = WalletTransactionType::revenueStatus();
 
         // Trạng thái chi phí vận hành
         $operationCostTypes = WalletTransactionType::operationCostStatus();
@@ -109,7 +106,7 @@ class WalletTransactionRepository extends BaseRepository
             ->whereBetween('wallet_transactions.created_at', [$from, $to])
             ->selectRaw("
             SUM(CASE
-                WHEN wallet_transactions.type IN (" . implode(',', $orderRevenueTypes) . ")
+                WHEN wallet_transactions.type IN (" . implode(',', $revenueStatus) . ")
                 THEN wallet_transactions.point_amount
                 ELSE 0
             END) as total_revenue,
