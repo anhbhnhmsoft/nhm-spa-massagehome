@@ -60,34 +60,36 @@ class DashboardService extends BaseService
             // Lấy thống kê doanh thu và chi phí
             $revenue = $this->walletTransactionRepository->getFinancialDashboardStats($start, $end);
             
-            $rate_income_ktv =( 100 - $this->configService->getConfigValue(ConfigName::DISCOUNT_RATE) ) / 100 ?? self::KTV_ESTIMATED_COST_RATE;
+            $discountRate = (float) $this->configService->getConfigValue(ConfigName::DISCOUNT_RATE);
+            $rate_income_ktv = $discountRate >= 0
+                ? (100 - $discountRate) / 100
+                : self::KTV_ESTIMATED_COST_RATE;
 
             $completedBookingTotal = (float) $this->bookingRepository->query()
                 ->where('status', BookingStatus::COMPLETED->value)
                 ->whereBetween('created_at', [$start, $end])
                 ->sum('price');
-            $completedTransportationTotal = (float) $this->bookingRepository->query()
-                ->where('status', BookingStatus::COMPLETED->value)
-                ->whereBetween('created_at', [$start, $end])
-                ->sum('price_transportation');
-            $completedOrderRevenue = round(
-                $completedBookingTotal + $completedTransportationTotal,
-                2,
-            );
             $estimatedTechnicalCost = round(
                 $completedBookingTotal * $rate_income_ktv,
                 2,
             );
-            $actualTechnicalServiceCost = (float) $this->walletTransactionRepository->query()
-                ->where('status', WalletTransactionStatus::COMPLETED->value)
-                ->where('type', WalletTransactionType::PAYMENT_FOR_KTV->value)
-                ->whereBetween('created_at', [$start, $end])
-                ->sum('point_amount');
+            $refundCost = (float) ($revenue->refund_cost ?? 0);
+            $agencyCost = (float) ($revenue->agency_cost ?? 0);
+            $customerCost = (float) ($revenue->customer_cost ?? 0);
+            $transportationCost = (float) ($revenue->transportation_cost ?? 0);
+            $discountCost = (float) ($revenue->discount_cost ?? 0);
             $operationCost = round(
-                (float) $revenue->operation_cost - $actualTechnicalServiceCost + $estimatedTechnicalCost,
+                $estimatedTechnicalCost
+                + $agencyCost
+                + $customerCost
+                + $transportationCost
+                + $discountCost,
                 2,
             );
-            $netProfit = round($completedOrderRevenue - $operationCost, 2);
+            $netProfit = round(
+                (float) $revenue->total_revenue - $refundCost - $operationCost,
+                2,
+            );
 
             return ServiceReturn::success([
                 'system_inout' =>[
@@ -99,11 +101,11 @@ class DashboardService extends BaseService
                     'operation_cost' => $operationCost,
                     'profit' => $netProfit,
                     'technical_cost' => $estimatedTechnicalCost,
-                    'customer_cost' => (float) $revenue->customer_cost,
-                    'transportation_cost' => (float) $revenue->transportation_cost,
-                    'agency_cost' => (float) $revenue->agency_cost,
-                    'refund_cost' => (float) $revenue->refund_cost,
-                    'discount_cost' => (float) $revenue->discount_cost,
+                    'customer_cost' => $customerCost,
+                    'transportation_cost' => $transportationCost,
+                    'agency_cost' => $agencyCost,
+                    'refund_cost' => $refundCost,
+                    'discount_cost' => $discountCost,
                 ],
             ]);
         } catch (\Exception $exception) {
