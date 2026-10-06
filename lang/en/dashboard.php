@@ -21,7 +21,7 @@ return [
         'total_outcome_desc' => 'Total outcome system',
 
         'total_revenue' => 'Total revenue system',
-        'total_revenue_desc' => 'Total revenue system',
+        'total_revenue_desc' => 'Total money received from revenue transactions',
         'operation_cost' => 'Operating cost',
         'profit' => 'Profit',
 

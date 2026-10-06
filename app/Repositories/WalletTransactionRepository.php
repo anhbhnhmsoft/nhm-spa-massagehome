@@ -4,9 +4,7 @@ namespace App\Repositories;
 
 use App\Core\BaseRepository;
 use App\Core\Helper;
-use App\Enums\BookingStatus;
 use App\Enums\DateRangeDashboard;
-use App\Enums\PaymentType;
 use App\Enums\UserRole;
 use App\Enums\WalletTransactionStatus;
 use App\Enums\WalletTransactionType;
@@ -76,8 +74,11 @@ class WalletTransactionRepository extends BaseRepository
      */
     public function getFinancialDashboardStats(Carbon $from, Carbon $to)
     {
-        // Trạng thái lợi nhuận
-        $revenueStatus = WalletTransactionType::revenueStatus();
+        // Tổng giá trị đơn đã thanh toán, kể cả đơn sau đó bị hủy.
+        $orderRevenueTypes = [
+            WalletTransactionType::PAYMENT->value,
+            WalletTransactionType::PAYMENT_FEE_TRANSPORT->value,
+        ];
 
         // Trạng thái chi phí vận hành
         $operationCostTypes = WalletTransactionType::operationCostStatus();
@@ -108,19 +109,7 @@ class WalletTransactionRepository extends BaseRepository
             ->whereBetween('wallet_transactions.created_at', [$from, $to])
             ->selectRaw("
             SUM(CASE
-                WHEN wallet_transactions.type IN (" . implode(',', $revenueStatus) . ")
-                     AND (
-                         wallet_transactions.type NOT IN (
-                             " . WalletTransactionType::PAYMENT->value . ",
-                             " . WalletTransactionType::PAYMENT_FEE_TRANSPORT->value . "
-                         )
-                         OR EXISTS (
-                             SELECT 1
-                             FROM service_bookings
-                             WHERE service_bookings.id = wallet_transactions.foreign_key
-                               AND service_bookings.status = ?
-                         )
-                     )
+                WHEN wallet_transactions.type IN (" . implode(',', $orderRevenueTypes) . ")
                 THEN wallet_transactions.point_amount
                 ELSE 0
             END) as total_revenue,
@@ -170,7 +159,6 @@ class WalletTransactionRepository extends BaseRepository
                 ELSE 0
             END) as technical_cost
             ", [
-                BookingStatus::COMPLETED->value,
                 UserRole::CUSTOMER->value,
                 UserRole::AGENCY->value,
                 UserRole::KTV->value

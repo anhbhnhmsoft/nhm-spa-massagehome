@@ -21,7 +21,7 @@ return [
         'total_outcome_desc' => 'Tổng tiền rút ra khỏi hệ thống',
 
         'total_revenue' => 'Tổng doanh thu',
-        'total_revenue_desc' => 'Tổng doanh thu từ hệ thống',
+        'total_revenue_desc' => 'Tổng tiền thu về từ các giao dịch doanh thu',
         'operation_cost' => 'Chi phí vận hành',
         'profit' => 'Lợi nhuận',
 
