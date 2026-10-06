@@ -40,7 +40,7 @@ return [
         'total_outcome_desc' => '总支出系统',
 
         'total_revenue' => '总收益系统',
-        'total_revenue_desc' => '总收益系统',
+        'total_revenue_desc' => '收入交易收到的总金额',
         'operation_cost' => '运营成本',
         'profit' => '利润',
 

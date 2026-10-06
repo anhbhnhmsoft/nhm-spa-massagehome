@@ -128,6 +128,8 @@ class DashboardService extends BaseService
             $confirmedBooking = $stats->confirmed ?? 0;
             // Số đơn hàng đang tiến hành
             $ongoingBooking   = $stats->ongoing ?? 0;
+            // Số đơn hàng đang chờ hủy
+            $waitingCancelBooking = $stats->waiting_cancel ?? 0;
             // Số đơn hàng đã hoàn thành
             $completedBooking = $stats->completed ?? 0;
             // Số đơn hàng đã hủy và hoàn tiền
@@ -140,6 +142,7 @@ class DashboardService extends BaseService
                 'pending_booking' => $pendingBooking,
                 'confirmed_booking' => $confirmedBooking,
                 'ongoing_booking' => $ongoingBooking,
+                'waiting_cancel_booking' => $waitingCancelBooking,
                 'completed_booking' => $completedBooking,
                 'canceled_booking' => $canceledBooking,
                 'payment_failed_booking' => $paymentFailedBooking,
