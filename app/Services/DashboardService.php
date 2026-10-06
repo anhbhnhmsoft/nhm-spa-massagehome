@@ -66,6 +66,14 @@ class DashboardService extends BaseService
                 ->where('status', BookingStatus::COMPLETED->value)
                 ->whereBetween('created_at', [$start, $end])
                 ->sum('price');
+            $completedTransportationTotal = (float) $this->bookingRepository->query()
+                ->where('status', BookingStatus::COMPLETED->value)
+                ->whereBetween('created_at', [$start, $end])
+                ->sum('price_transportation');
+            $completedOrderRevenue = round(
+                $completedBookingTotal + $completedTransportationTotal,
+                2,
+            );
             $estimatedTechnicalCost = round(
                 $completedBookingTotal * $rate_income_ktv,
                 2,
@@ -79,6 +87,7 @@ class DashboardService extends BaseService
                 (float) $revenue->operation_cost - $actualTechnicalServiceCost + $estimatedTechnicalCost,
                 2,
             );
+            $netProfit = round($completedOrderRevenue - $operationCost, 2);
 
             return ServiceReturn::success([
                 'system_inout' =>[
@@ -88,7 +97,7 @@ class DashboardService extends BaseService
                 'revenue' => [
                     'total_revenue' => (float) $revenue->total_revenue,
                     'operation_cost' => $operationCost,
-                    'profit' => round($revenue->total_revenue - $operationCost, 2),
+                    'profit' => $netProfit,
                     'technical_cost' => $estimatedTechnicalCost,
                     'customer_cost' => (float) $revenue->customer_cost,
                     'transportation_cost' => (float) $revenue->transportation_cost,
