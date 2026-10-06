@@ -529,7 +529,18 @@ class TransactionJobService extends BaseService
             ->where('type', WalletTransactionType::PAYMENT_FEE_TRANSPORT->value)
             ->first();
 
-        if (!$transactionOfCustomer || !$transactionTransportOfCustomer) {
+        $hasRefundAmount = array_key_exists('amount_pay_back_to_client', $data);
+        $amountPayBackToClient = $hasRefundAmount
+            ? max((float) $data['amount_pay_back_to_client'], 0)
+            : 0;
+        $amountPayToKtv = max((float) ($data['amount_pay_to_ktv'] ?? 0), 0);
+
+        // A cancellation with no refund does not need original payment rows.
+        // Still require them whenever money is requested for either party.
+        if (
+            (!$transactionOfCustomer || !$transactionTransportOfCustomer)
+            && (!$hasRefundAmount || $amountPayBackToClient > 0 || $amountPayToKtv > 0)
+        ) {
             throw new ServiceException(
                 message: __("error.transaction_not_found")
             );
@@ -551,13 +562,18 @@ class TransactionJobService extends BaseService
         }
 
         // Lấy tỷ giá đổi tiền
-        $exchangeRatePoint = $transactionOfCustomer->exchange_rate_point;
-        $exchangeRatePointTransport = $transactionTransportOfCustomer->exchange_rate_point;
-        $customerPaidTotal = (float) $transactionOfCustomer->point_amount + (float) $transactionTransportOfCustomer->point_amount;
+        $exchangeRatePoint = (float) (
+            $transactionOfCustomer?->exchange_rate_point
+            ?? $transactionTransportOfCustomer?->exchange_rate_point
+            ?? 1
+        );
+        $customerPaidTotal = $transactionOfCustomer && $transactionTransportOfCustomer
+            ? (float) $transactionOfCustomer->point_amount + (float) $transactionTransportOfCustomer->point_amount
+            : 0;
 
         // Số tiền hoàn tiền cho khách hàng
-        $amountPayBackToClient = isset($data['amount_pay_back_to_client'])
-            ? max((float) $data['amount_pay_back_to_client'], 0)
+        $amountPayBackToClient = $hasRefundAmount
+            ? $amountPayBackToClient
             : $customerPaidTotal;
         $amountPayBackToClient = min($amountPayBackToClient, $customerPaidTotal);
         if ($amountPayBackToClient > 0) {
@@ -579,8 +595,6 @@ class TransactionJobService extends BaseService
         $clientWallet->save();
 
         // Số tiền trả cho kỹ thuật viên
-        $amountPayToKtv = max((int) ($data['amount_pay_to_ktv'] ?? 0), 0);
-
         // Nếu Số tiền trả cho kỹ thuật viên lớn hơn 0
         if ($amountPayToKtv > 0) {
                     // Lấy ví kỹ thuật viên
