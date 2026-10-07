@@ -55,11 +55,38 @@ class WalletTransactionRepository extends BaseRepository
         $incomeTypes = WalletTransactionType::incomeStatus();
         // Trạng thái tiền ra system
         $outcomeTypes = WalletTransactionType::outcomeStatus();
+        $walletCreditTypes = array_unique(array_merge(
+            WalletTransactionType::incomeStatus(),
+            [
+                WalletTransactionType::AFFILIATE->value,
+                WalletTransactionType::PAYMENT_FOR_KTV->value,
+                WalletTransactionType::REFUND->value,
+                WalletTransactionType::REFERRAL_KTV->value,
+                WalletTransactionType::REFERRAL_INVITE_KTV_REWARD->value,
+                WalletTransactionType::PAYMENT_KTV_EARN_TRANSPORT->value,
+                WalletTransactionType::REFUND_CUSTOMER_TRANSPORT->value,
+                WalletTransactionType::PAYMENT_REFUND_KTV_FOR_BOOKING_CANCEL->value,
+                WalletTransactionType::SUBTRACT_MONEY_DISCOUNT_SERVICE->value,
+            ],
+        ));
+        $walletDebitTypes = [
+            WalletTransactionType::WITHDRAWAL->value,
+            WalletTransactionType::PAYMENT->value,
+            WalletTransactionType::RETRIEVE_PAYMENT_REFUND_KTV->value,
+            WalletTransactionType::FEE_WITHDRAW->value,
+            WalletTransactionType::PAYMENT_FEE_TRANSPORT->value,
+            WalletTransactionType::REFUND_MONEY_DISCOUNT_SERVICE->value,
+        ];
 
         return $this->query()
             ->selectRaw("
                 SUM(CASE WHEN type IN (" . implode(',', $incomeTypes) . ") THEN point_amount ELSE 0 END) as total_income,
-                SUM(CASE WHEN type IN (" . implode(',', $outcomeTypes) . ") THEN point_amount ELSE 0 END) as total_outcome
+                SUM(CASE WHEN type IN (" . implode(',', $outcomeTypes) . ") THEN point_amount ELSE 0 END) as total_outcome,
+                SUM(CASE
+                    WHEN type IN (" . implode(',', $walletCreditTypes) . ") THEN point_amount
+                    WHEN type IN (" . implode(',', $walletDebitTypes) . ") THEN -point_amount
+                    ELSE 0
+                END) as wallet_liability_change
             ")
             ->where('status', WalletTransactionStatus::COMPLETED->value)
             ->whereBetween('created_at', [$from, $to])

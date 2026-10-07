@@ -19,11 +19,14 @@ return [
         'total_income_desc' => 'total income system',
         'total_outcome' => 'Total outcome system',
         'total_outcome_desc' => 'Total outcome system',
+        'net_cash_flow' => 'Net cash flow',
+        'wallet_liability_change' => 'Increase in wallet liabilities',
+        'cash_profit' => 'Cash profit',
 
         'total_revenue' => 'Total revenue system',
         'total_revenue_desc' => 'Total money received from revenue transactions',
         'operation_cost' => 'Operating cost',
-        'profit' => 'Profit',
+        'profit' => 'Transaction profit',
 
         'title_operation_system' => 'Operating cost',
 

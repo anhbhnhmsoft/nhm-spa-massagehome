@@ -9,6 +9,7 @@ use App\Filament\Clusters\Service\Resources\Bookings\BookingResource;
 use App\Filament\Components\CommonActions;
 use App\Jobs\WalletTransactionBookingJob;
 use App\Models\WalletTransaction;
+use App\Core\Helper\CalculatePrice;
 use Filament\Notifications\Notification;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Placeholder;
@@ -54,15 +55,34 @@ class ViewBooking extends ViewRecord
                 ->modalSubmitActionLabel(__('admin.booking.actions.confirm_cancel'))
                 ->modalCancelActionLabel(__('admin.common.action.cancel'))
                 ->form(function ($record) {
-                    $serviceTransaction = WalletTransaction::query()
+                    $transactions = WalletTransaction::query()
                         ->where('foreign_key', $record->id)
-                        ->where('type', WalletTransactionType::PAYMENT->value)
-                        ->first();
-                    $transportTransaction = WalletTransaction::query()
-                        ->where('foreign_key', $record->id)
-                        ->where('type', WalletTransactionType::PAYMENT_FEE_TRANSPORT->value)
-                        ->first();
-                    $customerPaidTotal = (float) ($serviceTransaction?->point_amount ?? 0) + (float) ($transportTransaction?->point_amount ?? 0);
+                        ->where('status', \App\Enums\WalletTransactionStatus::COMPLETED->value)
+                        ->get();
+                    $customerChargeTotal = (float) $transactions
+                        ->whereIn('type', [
+                            WalletTransactionType::PAYMENT->value,
+                            WalletTransactionType::PAYMENT_FEE_TRANSPORT->value,
+                        ])
+                        ->sum('point_amount');
+                    $customerDiscountTotal = (float) $transactions
+                        ->where('type', WalletTransactionType::SUBTRACT_MONEY_DISCOUNT_SERVICE->value)
+                        ->sum('point_amount');
+                    $customerPaidTotal = CalculatePrice::totalBookingPrice(
+                        price: $customerChargeTotal,
+                        priceDiscount: $customerDiscountTotal,
+                        priceTransportation: 0,
+                    );
+                    $customerRefundedTotal = (float) $transactions
+                        ->whereIn('type', [
+                            WalletTransactionType::REFUND->value,
+                            WalletTransactionType::REFUND_CUSTOMER_TRANSPORT->value,
+                        ])
+                        ->sum('point_amount');
+                    $remainingRefund = CalculatePrice::remainingRefundAmount(
+                        customerPaidTotal: $customerPaidTotal,
+                        alreadyRefundedTotal: $customerRefundedTotal,
+                    );
 
                     return [
                         Placeholder::make('customer_paid_total')
@@ -71,9 +91,9 @@ class ViewBooking extends ViewRecord
                         TextInput::make('amount_pay_back_to_client')
                             ->label(__('admin.booking.fields.amount_pay_back_to_client'))
                             ->numeric()
-                            ->default((string) $customerPaidTotal)
+                            ->default((string) $remainingRefund)
                             ->minValue(0)
-                            ->maxValue($customerPaidTotal),
+                            ->maxValue($remainingRefund),
                         Toggle::make('pay_to_ktv')
                             ->label(__('admin.booking.fields.pay_to_ktv'))
                             ->default(false)

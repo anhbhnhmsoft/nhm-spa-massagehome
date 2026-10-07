@@ -97,6 +97,20 @@ class CalculatePrice
         return $price + $priceTransportation - $priceDiscount;
     }
 
+    public static function remainingRefundAmount(
+        float $customerPaidTotal,
+        float $alreadyRefundedTotal,
+        ?float $requestedRefundAmount = null,
+    ): float {
+        $remaining = max(0, $customerPaidTotal - $alreadyRefundedTotal);
+
+        if ($requestedRefundAmount === null) {
+            return round($remaining, 2);
+        }
+
+        return round(min(max(0, $requestedRefundAmount), $remaining), 2);
+    }
+
     /**
      * Tính giá trị giảm giá dựa trên mã giảm giá và giá trị đơn hàng.
      * @param Coupon $coupon

@@ -19,3 +19,13 @@ it('recognizes revenue transactions without treating refunds as operation costs'
         ->not->toContain(WalletTransactionType::REFUND_CUSTOMER_TRANSPORT->value)
         ->not->toContain(WalletTransactionType::PAYMENT_REFUND_KTV_FOR_BOOKING_CANCEL->value);
 });
+
+it('tracks the wallet liability delta for cash profit', function () {
+    $range = DateRangeDashboard::ALL->getDateRange();
+    $queries = DB::connection()->pretend(fn () => app(WalletTransactionRepository::class)
+        ->getFinancialInOutStats($range['from'], $range['to']));
+
+    expect($queries[0]['query'])
+        ->toContain('wallet_liability_change')
+        ->toContain('-point_amount');
+});

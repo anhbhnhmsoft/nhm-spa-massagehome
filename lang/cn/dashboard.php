@@ -38,11 +38,14 @@ return [
         'total_income_desc' => '总收入系统',
         'total_outcome' => '总支出系统',
         'total_outcome_desc' => '总支出系统',
+        'net_cash_flow' => '净现金流',
+        'wallet_liability_change' => '应付钱包余额增加',
+        'cash_profit' => '现金利润',
 
         'total_revenue' => '总收益系统',
         'total_revenue_desc' => '收入交易收到的总金额',
         'operation_cost' => '运营成本',
-        'profit' => '利润',
+        'profit' => '交易利润',
 
         'title_operation_system' => '运营成本',
 
