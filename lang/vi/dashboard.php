@@ -19,11 +19,14 @@ return [
         'total_income_desc' => 'tổng tiền nguồn tiền nạp vào hệ thống',
         'total_outcome' => 'Tổng tiền rút ra khỏi hệ thống',
         'total_outcome_desc' => 'Tổng tiền rút ra khỏi hệ thống',
+        'net_cash_flow' => 'Dòng tiền ròng',
+        'wallet_liability_change' => 'Tăng số dư phải trả',
+        'cash_profit' => 'Lợi nhuận tiền mặt',
 
         'total_revenue' => 'Tổng doanh thu',
         'total_revenue_desc' => 'Tổng tiền thu về từ các giao dịch doanh thu',
         'operation_cost' => 'Chi phí vận hành',
-        'profit' => 'Lợi nhuận',
+        'profit' => 'Lợi nhuận theo giao dịch',
 
         'title_operation_system' => 'Chi phí',
 

@@ -95,6 +95,18 @@ class DashboardService extends BaseService
                 'system_inout' =>[
                     'total_income' => (float) ($incomeOutcome->total_income ?? 0),
                     'total_outcome' => (float) ($incomeOutcome->total_outcome ?? 0),
+                    'net_cash_flow' => round(
+                        (float) ($incomeOutcome->total_income ?? 0)
+                        - (float) ($incomeOutcome->total_outcome ?? 0),
+                        2,
+                    ),
+                    'wallet_liability_change' => (float) ($incomeOutcome->wallet_liability_change ?? 0),
+                    'cash_profit' => round(
+                        (float) ($incomeOutcome->total_income ?? 0)
+                        - (float) ($incomeOutcome->total_outcome ?? 0)
+                        - (float) ($incomeOutcome->wallet_liability_change ?? 0),
+                        2,
+                    ),
                 ],
                 'revenue' => [
                     'total_revenue' => (float) $revenue->total_revenue,

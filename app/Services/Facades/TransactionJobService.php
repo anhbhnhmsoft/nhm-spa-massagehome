@@ -499,7 +499,8 @@ class TransactionJobService extends BaseService
     protected function processAutomaticCancelRefund($booking, array $data): bool
     {
         // chuyển trạng thái đơn hàng sang đã hủy
-        if ($booking->status !== BookingStatus::CANCELED->value) {
+        $wasAlreadyCanceled = $booking->status === BookingStatus::CANCELED->value;
+        if (!$wasAlreadyCanceled) {
             $booking->status = BookingStatus::CANCELED->value;
             $booking->save();
         }
@@ -511,71 +512,58 @@ class TransactionJobService extends BaseService
                 'is_working' => true,
             ]);
 
-        // Lấy ví khách hàng
-        $clientWallet = $this->walletRepository->getWalletByUserId($booking->user_id);
+        // Lock the wallet and all booking transactions before calculating the remaining refund.
+        $clientWallet = $this->walletRepository->getWalletByUserId(
+            userId: $booking->user_id,
+            lockForUpdate: true,
+        );
         if (!$clientWallet) {
             throw new ServiceException(
                 message: __("booking.payment.wallet_customer_not_found")
             );
         }
-        // Lấy transaction gốc để tham khảo (chỉ đọc, không sửa)
-        $transactionOfCustomer = $this->walletTransactionRepository->query()
-            ->where("foreign_key", $booking->id)
-            ->where('type', WalletTransactionType::PAYMENT->value)
-            ->first();
-        // Lấy transaction phí di chuyển để tham khảo (chỉ đọc, không sửa)
-        $transactionTransportOfCustomer = $this->walletTransactionRepository->query()
-            ->where("foreign_key", $booking->id)
-            ->where('type', WalletTransactionType::PAYMENT_FEE_TRANSPORT->value)
-            ->first();
 
         $hasRefundAmount = array_key_exists('amount_pay_back_to_client', $data);
-        $amountPayBackToClient = $hasRefundAmount
+        $requestedRefundAmount = $hasRefundAmount
             ? max((float) $data['amount_pay_back_to_client'], 0)
-            : 0;
-        $amountPayToKtv = max((float) ($data['amount_pay_to_ktv'] ?? 0), 0);
-
-        // A cancellation with no refund does not need original payment rows.
-        // Still require them whenever money is requested for either party.
-        if (
-            (!$transactionOfCustomer || !$transactionTransportOfCustomer)
-            && (!$hasRefundAmount || $amountPayBackToClient > 0 || $amountPayToKtv > 0)
-        ) {
-            throw new ServiceException(
-                message: __("error.transaction_not_found")
-            );
-        }
-
-
-
-        // Tránh hoàn tiền trùng nếu retry job hoặc gọi lặp.
-        $alreadyRefunded = $this->walletTransactionRepository->query()
+            : null;
+        $transactions = $this->walletTransactionRepository->query()
             ->where('foreign_key', $booking->id)
+            ->where('status', WalletTransactionStatus::COMPLETED->value)
+            ->lockForUpdate()
+            ->get();
+
+        $customerChargeTotal = (float) $transactions
+            ->whereIn('type', [
+                WalletTransactionType::PAYMENT->value,
+                WalletTransactionType::PAYMENT_FEE_TRANSPORT->value,
+            ])
+            ->sum('point_amount');
+        $customerDiscountTotal = (float) $transactions
+            ->where('type', WalletTransactionType::SUBTRACT_MONEY_DISCOUNT_SERVICE->value)
+            ->sum('point_amount');
+        $customerPaidTotal = CalculatePrice::totalBookingPrice(
+            price: $customerChargeTotal,
+            priceDiscount: $customerDiscountTotal,
+            priceTransportation: 0,
+        );
+        $customerRefundedTotal = (float) $transactions
             ->whereIn('type', [
                 WalletTransactionType::REFUND->value,
                 WalletTransactionType::REFUND_CUSTOMER_TRANSPORT->value,
-                WalletTransactionType::REFUND_MONEY_DISCOUNT_SERVICE->value,
             ])
-            ->exists();
-        if ($alreadyRefunded) {
-            return true;
-        }
-
-        // Lấy tỷ giá đổi tiền
+            ->sum('point_amount');
+        $amountPayBackToClient = CalculatePrice::remainingRefundAmount(
+            customerPaidTotal: $customerPaidTotal,
+            alreadyRefundedTotal: $customerRefundedTotal,
+            requestedRefundAmount: $requestedRefundAmount,
+        );
         $exchangeRatePoint = (float) (
-            $transactionOfCustomer?->exchange_rate_point
-            ?? $transactionTransportOfCustomer?->exchange_rate_point
+            $transactions->firstWhere('type', WalletTransactionType::PAYMENT->value)?->exchange_rate_point
+            ?? $transactions->firstWhere('type', WalletTransactionType::PAYMENT_FEE_TRANSPORT->value)?->exchange_rate_point
             ?? 1
         );
-        $customerPaidTotal = $transactionOfCustomer && $transactionTransportOfCustomer
-            ? (float) $transactionOfCustomer->point_amount + (float) $transactionTransportOfCustomer->point_amount
-            : 0;
 
-        // Số tiền hoàn tiền cho khách hàng
-        $amountPayBackToClient = $hasRefundAmount
-            ? $amountPayBackToClient
-            : $customerPaidTotal;
-        $amountPayBackToClient = min($amountPayBackToClient, $customerPaidTotal);
         if ($amountPayBackToClient > 0) {
             // tạo transaction hoàn tiền tổng cho khách hàng
             $this->walletTransactionRepository->create([
@@ -594,11 +582,18 @@ class TransactionJobService extends BaseService
         }
         $clientWallet->save();
 
-        // Số tiền trả cho kỹ thuật viên
-        // Nếu Số tiền trả cho kỹ thuật viên lớn hơn 0
+        $requestedKtvPayment = max((float) ($data['amount_pay_to_ktv'] ?? 0), 0);
+        $alreadyPaidToKtv = (float) $transactions
+            ->where('type', WalletTransactionType::PAYMENT_REFUND_KTV_FOR_BOOKING_CANCEL->value)
+            ->sum('point_amount');
+        $amountPayToKtv = round(max(0, $requestedKtvPayment - $alreadyPaidToKtv), 2);
+
+        // Nếu số tiền trả bổ sung cho kỹ thuật viên lớn hơn 0
         if ($amountPayToKtv > 0) {
-                    // Lấy ví kỹ thuật viên
-                    $ktvWallet = $this->walletRepository->getWalletByUserId($booking->ktv_user_id);
+                    $ktvWallet = $this->walletRepository->getWalletByUserId(
+                        userId: $booking->ktv_user_id,
+                        lockForUpdate: true,
+                    );
                     if (!$ktvWallet) {
                         throw new ServiceException(
                             message: __("booking.payment.wallet_technician_not_found")
@@ -607,8 +602,8 @@ class TransactionJobService extends BaseService
                     $this->walletTransactionRepository->create([
                         'wallet_id' => $ktvWallet->id,
                         'type' => WalletTransactionType::PAYMENT_REFUND_KTV_FOR_BOOKING_CANCEL->value,
-                        'point_amount' => $amountPayToKtv * $exchangeRatePoint,
-                        'money_amount' => $amountPayToKtv,
+                        'point_amount' => $amountPayToKtv,
+                        'money_amount' => $amountPayToKtv * $exchangeRatePoint,
                         'exchange_rate_point' => $exchangeRatePoint,
                         'status' => WalletTransactionStatus::COMPLETED->value,
                         'transaction_code' => Helper::createDescPayment(PaymentType::REFUND),
@@ -623,11 +618,15 @@ class TransactionJobService extends BaseService
 
         // Hoàn lại mã giảm giá nếu booking có dùng coupon
         if (!empty($booking->coupon_id)) {
+            $couponUsedQuery = $this->couponUsedRepository->query()
+                ->where('coupon_id', $booking->coupon_id)
+                ->where('booking_id', $booking->id);
+            $couponWasUsed = $couponUsedQuery->exists();
             $coupon = $this->couponRepository->query()
                 ->lockForUpdate()
                 ->find($booking->coupon_id);
 
-            if ($coupon) {
+            if ($coupon && $couponWasUsed) {
                 // Giảm used_count về lại (không để âm)
                 $coupon->used_count = max(0, $coupon->used_count - 1);
                 $coupon->save();
@@ -637,16 +636,17 @@ class TransactionJobService extends BaseService
                     ->updateExistingPivot($coupon->id, ['is_used' => false]);
 
                 // Xóa lịch sử sử dụng coupon cho booking này
-                $this->couponUsedRepository->query()
-                    ->where('coupon_id', $coupon->id)
-                    ->where('booking_id', $booking->id)
-                    ->delete();
+                $couponUsedQuery->delete();
                 // Xóa lịch sử giao dịch giảm giá
                 $this->walletTransactionRepository->query()
                     ->where('foreign_key', $booking->id)
                     ->where('type', WalletTransactionType::SUBTRACT_MONEY_DISCOUNT_SERVICE->value)
                     ->delete();
             }
+        }
+
+        if ($wasAlreadyCanceled && $amountPayBackToClient <= 0 && $amountPayToKtv <= 0) {
+            return true;
         }
 
         // Gửi thông báo cho khách hàng

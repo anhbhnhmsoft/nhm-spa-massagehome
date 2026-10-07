@@ -56,6 +56,12 @@ class GeneralStats extends BaseWidget
                                 ->color('primary'),
                             Stat::make(__('dashboard.general_stat.total_outcome'), Helper::formatPrice($systemInout['total_outcome']))
                                 ->color('danger'),
+                            Stat::make(__('dashboard.general_stat.net_cash_flow'), Helper::formatPrice($systemInout['net_cash_flow']))
+                                ->color('info'),
+                            Stat::make(__('dashboard.general_stat.wallet_liability_change'), Helper::formatPrice($systemInout['wallet_liability_change']))
+                                ->color('warning'),
+                            Stat::make(__('dashboard.general_stat.cash_profit'), Helper::formatPrice($systemInout['cash_profit']))
+                                ->color('success'),
                         ]),
 
                     // Doanh số hệ thống
