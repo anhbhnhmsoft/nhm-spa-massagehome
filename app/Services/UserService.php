@@ -195,7 +195,9 @@ class UserService extends BaseService
 
                 // Tạo lịch làm việc mặc định cho KTV
                 if ($apply->role === UserRole::KTV->value) {
-                    $user->schedule()->create([
+                    $user->schedule()->updateOrCreate([
+                        'ktv_id' => $user->id,
+                    ], [
                         'is_working' => true,
                         'working_schedule' => KTVConfigSchedules::getDefaultSchema(),
                     ]);
