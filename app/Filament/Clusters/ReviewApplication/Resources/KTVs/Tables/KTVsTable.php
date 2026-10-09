@@ -11,6 +11,7 @@ use App\Filament\Components\CommonFields;
 use App\Services\ProvinceService;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
@@ -21,6 +22,7 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
 
 class KTVsTable
 {
@@ -51,6 +53,10 @@ class KTVsTable
                 TextColumn::make('phone')
                     ->searchable()
                     ->label(__('admin.common.table.phone')),
+                TextColumn::make('created_at')
+                    ->label(__('admin.common.table.application_date'))
+                    ->dateTime('d/m/Y H:i')
+                    ->sortable(),
                 TextColumn::make('profile.gender')
                     ->label(__('admin.common.table.gender'))
                     ->formatStateUsing(fn($state) => Gender::getLabel($state)),
@@ -192,6 +198,32 @@ class KTVsTable
                         }
                         if (!empty($data['work_ward'])) {
                             $indicators[] = __('admin.ktv_apply.fields.work_wards') . ': ' . $data['work_ward'];
+                        }
+                        return $indicators;
+                    }),
+                Filter::make('created_at')
+                    ->label(__('admin.common.table.application_date'))
+                    ->columns(2)
+                    ->schema([
+                        DatePicker::make('from')
+                            ->label(__('admin.common.filter.from_date'))
+                            ->placeholder('DD/MM/YYYY'),
+                        DatePicker::make('until')
+                            ->label(__('admin.common.filter.to_date'))
+                            ->placeholder('DD/MM/YYYY'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when($data['from'] ?? null, fn (Builder $query, $date) => $query->whereDate('created_at', '>=', $date))
+                            ->when($data['until'] ?? null, fn (Builder $query, $date) => $query->whereDate('created_at', '<=', $date));
+                    })
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+                        if ($data['from'] ?? null) {
+                            $indicators[] = __('admin.common.filter.from') . ' ' . Carbon::parse($data['from'])->format('d/m/Y');
+                        }
+                        if ($data['until'] ?? null) {
+                            $indicators[] = __('admin.common.filter.to') . ' ' . Carbon::parse($data['until'])->format('d/m/Y');
                         }
                         return $indicators;
                     }),
