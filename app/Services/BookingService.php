@@ -489,12 +489,6 @@ class BookingService extends BaseService
                     message: __("common_error.unauthorized")
                 );
             }
-            $bookingTime = Carbon::make($booking->booking_time);
-            // Không cho phép làm lịch của ngày mai hoặc ngày hôm qua
-            if (!$bookingTime->isToday()) {
-                throw new ServiceException(message: __("booking.only_start_today_bookings"));
-            }
-
             // Gửi thông báo cho khách hàng biết rằng lịch đã bắt đầu
             SendNotificationJob::dispatch(
                 userId: $booking->user_id,
